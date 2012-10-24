@@ -63,6 +63,8 @@ import au.com.bytecode.opencsv.CSVReader;
  */
 public class CSVParser extends AbstractParser {
 
+  // TODO: make column names and separator char and comment chars, etc configurable
+
   protected AtomicLong numRecords = new AtomicLong();
 
   private static final MediaType MEDIATYPE_CSV = MediaType.parse("text/csv");
