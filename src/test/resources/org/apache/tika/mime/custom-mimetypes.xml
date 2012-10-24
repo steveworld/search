@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info>
+
+  <mime-type type="text/csv">
+    <glob pattern="*.csv"/>
+  </mime-type>
+
+  <mime-type type="avro/binary">
+    <magic priority="50">
+      <match value="0x4f626a01" type="string" offset="0"/>       
+    </magic>
+    <glob pattern="*.avro"/>
+  </mime-type>
+
+</mime-info>

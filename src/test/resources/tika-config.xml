@@ -1,0 +1,54 @@
+<!-- 
+Tika configuration file listing the parsers to be registered.
+If multiple parsers support the same MIME type, the parser is chosen that is closest to the bottom in this config file.
+-->
+<properties> 
+  <parsers> 
+    <parser class="org.apache.tika.parser.asm.ClassParser"/>
+    <parser class="org.apache.tika.parser.audio.AudioParser"/>
+    <parser class="org.apache.tika.parser.audio.MidiParser"/>
+    <parser class="org.apache.tika.parser.crypto.Pkcs7Parser"/>
+    <parser class="org.apache.tika.parser.dwg.DWGParser"/>
+    <parser class="org.apache.tika.parser.epub.EpubParser"/>
+    <parser class="org.apache.tika.parser.executable.ExecutableParser"/>
+    <parser class="org.apache.tika.parser.feed.FeedParser"/>
+    <parser class="org.apache.tika.parser.font.AdobeFontMetricParser"/>
+    <parser class="org.apache.tika.parser.font.TrueTypeParser"/>
+    <parser class="org.apache.tika.parser.html.HtmlParser"/>
+    <parser class="org.apache.tika.parser.image.ImageParser"/>
+    <parser class="org.apache.tika.parser.image.PSDParser"/>
+    <parser class="org.apache.tika.parser.image.TiffParser"/>
+    <parser class="org.apache.tika.parser.iptc.IptcAnpaParser"/>
+    <parser class="org.apache.tika.parser.iwork.IWorkPackageParser"/>
+    <parser class="org.apache.tika.parser.jpeg.JpegParser"/>
+    <parser class="org.apache.tika.parser.mail.RFC822Parser"/>
+    <parser class="org.apache.tika.parser.mbox.MboxParser"/>
+    <parser class="org.apache.tika.parser.microsoft.OfficeParser"/>
+    <parser class="org.apache.tika.parser.microsoft.TNEFParser"/>
+    <parser class="org.apache.tika.parser.microsoft.ooxml.OOXMLParser"/>
+    <parser class="org.apache.tika.parser.mp3.Mp3Parser"/>
+    <parser class="org.apache.tika.parser.mp4.MP4Parser"/>
+    <parser class="org.apache.tika.parser.hdf.HDFParser"/>
+    <parser class="org.apache.tika.parser.netcdf.NetCDFParser"/>
+    <parser class="org.apache.tika.parser.odf.OpenDocumentParser"/>
+    <parser class="org.apache.tika.parser.pdf.PDFParser"/>
+    <parser class="org.apache.tika.parser.pkg.CompressorParser"/>
+    <parser class="org.apache.tika.parser.pkg.PackageParser"/>
+    <parser class="org.apache.tika.parser.rtf.RTFParser"/>
+    <parser class="org.apache.tika.parser.txt.TXTParser"/>
+    <parser class="org.apache.tika.parser.video.FLVParser"/>
+    <parser class="org.apache.tika.parser.xml.DcXMLParser"/>
+    <parser class="org.apache.tika.parser.xml.FictionBookParser"/>
+    <parser class="org.apache.tika.parser.chm.ChmParser"/>
+    <!--<parser class="org.apache.tika.parser.csv.ASVParser2"/>--> 
+    <parser class="org.apache.tika.parser.csv.CSVParser"/> 
+    <parser class="org.apache.tika.parser.avro.AvroParser"/> 
+    
+    <!--
+    <parser class="org.apache.tika.parser.audio.AudioParser"> 
+      <mime>audio/x-aiff</mime>
+    </parser>
+    -->
+  </parsers> 
+  <!--<mimeTypeRepository resource="org/apache/tika/mime/custom-mimetypes.xml"-->
+</properties>
