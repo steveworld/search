@@ -99,10 +99,11 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
     stop(60, TimeUnit.SECONDS);
   }
   
+  /* start() and stop() are called from an arbitrary async Flume management thread */
   public synchronized void stop(long timeout, TimeUnit timeunit) {
-    isStopping.countDown(); // start() and stop() are called from an arbitrary async Flume management thread
+    isStopping.countDown(); // signal other thread that it should exit process() ASAP
     try {
-      if (!isStopped.await(timeout, timeunit)) { // give Flume management thread some time to exit process() gracefully
+      if (!isStopped.await(timeout, timeunit)) { // give other thread some time to exit process() gracefully
         LOGGER.warn("Failed to stop gracefully. Now shutting down anyway.");
       }
     } catch (InterruptedException e) {
@@ -128,7 +129,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
       tx.begin();
       int batchSize = getBatchSize();
       for (int i = 0; i < batchSize; i++) { // repeatedly take and process events from the Flume queue
-        synchronized (this) {
+        synchronized (this) { // are we asked to return control ASAP?
           if (isStopping.await(0, TimeUnit.NANOSECONDS) || isStopped.await(0, TimeUnit.NANOSECONDS)) {
             break;
           }
@@ -148,9 +149,9 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
         commitSolr();
       }
       tx.commit();
-      synchronized (this) {
-        if (isStopping.await(0, TimeUnit.NANOSECONDS)) {
-          isStopped.countDown();
+      synchronized (this) { 
+        if (isStopping.await(0, TimeUnit.NANOSECONDS)) { // are we asked to return control ASAP?
+          isStopped.countDown(); // signal to other thread that we're done
         }
       }
       return Status.READY;
@@ -162,6 +163,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
     }    
   }
 
+  /** Returns the number of events to take per flume transaction */
   protected int getBatchSize() {
     return 1000;
   }
