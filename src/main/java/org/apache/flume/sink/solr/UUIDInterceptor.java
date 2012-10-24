@@ -26,8 +26,6 @@ import java.util.Map;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.interceptor.Interceptor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.fasterxml.uuid.EthernetAddress;
 import com.fasterxml.uuid.Generators;
@@ -37,14 +35,14 @@ import com.fasterxml.uuid.impl.TimeBasedGenerator;
 /** Flume interceptor that adds a unique id to the set of Flume event headers */
 public class UUIDInterceptor implements Interceptor {
 
+  private String headerName;
   private final RandomBasedGenerator randomBasedUuidGenerator = Generators.randomBasedGenerator();
   private final TimeBasedGenerator timeBasedUuidGenerator = Generators.timeBasedGenerator(EthernetAddress.fromInterface());
 
-  public static final String SOLR_ID_HEADER_NAME = "id"; // TODO: make this configurable via context
-  
-  private static final Logger LOGGER = LoggerFactory.getLogger(UUIDInterceptor.class);
+  public static final String SOLR_ID_HEADER_NAME = "id"; // TODO: move this elsewhere
   
   private UUIDInterceptor(Context context) {
+    headerName = context.getString("headerName", SOLR_ID_HEADER_NAME);
   }
 
   @Override
@@ -63,8 +61,8 @@ public class UUIDInterceptor implements Interceptor {
   @Override
   public Event intercept(Event event) {
     Map<String, String> headers = event.getHeaders();
-    if (!headers.containsKey(SOLR_ID_HEADER_NAME)) {
-      headers.put(SOLR_ID_HEADER_NAME, generateUUID());
+    if (!headers.containsKey(headerName)) {
+      headers.put(headerName, generateUUID());
     }
     return event;
   }
@@ -104,8 +102,6 @@ public class UUIDInterceptor implements Interceptor {
     @Override
     public void configure(Context context) {
       this.context = context;
-//      String tikaConfigLoc = context.getString("foo.bar");
-      /// ...
     }
     
   }
