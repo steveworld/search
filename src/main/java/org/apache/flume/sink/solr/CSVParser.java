@@ -47,7 +47,8 @@ import org.xml.sax.SAXException;
 import au.com.bytecode.opencsv.CSVReader;
 
 /**
- * Comma separate values parser. Converts records to solr documents and loads them into Solr.
+ * Comma separated values parser that extracts search documents from CSV records (using Apache Tika and Solr Cell) and
+ * loads them into Solr.
  * 
  * The text encoding of the document stream is
  * automatically detected based on the byte patterns found at the
