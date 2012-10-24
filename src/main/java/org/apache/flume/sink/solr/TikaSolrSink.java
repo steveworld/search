@@ -83,7 +83,7 @@ import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 
 /**
- * Flume sink that extracts search documents from Apache Flume events (using Apache Tika and Solr Cell), optionally
+ * Flume sink that extracts search documents from Apache Flume events (using Apache Tika and Solr Cell), 
  * transforms them and loads them into Apache Solr.
  */
 public class TikaSolrSink extends SimpleSolrSink implements Configurable {
