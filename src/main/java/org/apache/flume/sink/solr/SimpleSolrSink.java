@@ -45,8 +45,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Flume sink that extracts search documents from Apache Flume event headers, optionally transforms them and loads
- * them into Apache Solr.
+ * Flume sink that extracts search documents from Apache Flume events, optionally transforms them and loads them into
+ * Apache Solr.
  */
 public class SimpleSolrSink extends AbstractSink implements Configurable {
   
@@ -145,7 +145,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
       
       if (numLoadedDocs > 0) {
         numLoadedDocs = 0;
-        commit();
+        commitSolr();
       }
       tx.commit();
       synchronized (this) {
@@ -210,7 +210,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
    * Sends any outstanding documents to solr and waits for a positive or negative ack (i.e. exception) from solr.
    * Depending on the outcome the caller should then commit or rollback the current flume transaction correspondingly.
    */
-  protected void commit() {
+  protected void commitSolr() {
     SolrServer s = getSolrServer();
     if (s instanceof ConcurrentUpdateSolrServer) {
       try {
