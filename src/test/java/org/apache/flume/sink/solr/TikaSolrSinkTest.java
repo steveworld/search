@@ -74,17 +74,17 @@ import com.fasterxml.uuid.EthernetAddress;
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.NoArgGenerator;
 
-public class SolrSinkTest extends SolrTestCaseJ4 {
+public class TikaSolrSinkTest extends SolrTestCaseJ4 {
 
   private EmbeddedSource source;
-  private TikaSolrSink sink;
+  private SimpleSolrSink sink;
 
   private static final String EXTERNAL_SOLR_SERVER_URL = System.getProperty("externalSolrServer");
 //private static final String EXTERNAL_SOLR_SERVER_URL = "http://127.0.0.1:8983/solr";
   private static final String RESOURCES_DIR = "target/test-classes";
 //private static final String RESOURCES_DIR = "src/test/resources";
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(SolrSinkTest.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(TikaSolrSinkTest.class);
 
   @BeforeClass
   public static void beforeClass() throws Exception {

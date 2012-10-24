@@ -285,7 +285,7 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
 
       ParseContext ctx = new ParseContext();//TODO: should we design a way to pass in parse context?
       ctx.set(Parser.class, parser); // necessary for gzipped files or tar files, etc! copied from TikaCLI
-      ctx.set(TikaSolrSink.class, this);
+      ctx.set(SimpleSolrSink.class, this);
       ctx.set(SolrContentHandler.class, handler);
       ctx.set(AtomicLong.class, new AtomicLong());
       

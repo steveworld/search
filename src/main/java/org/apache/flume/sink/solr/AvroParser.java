@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.tika.parser.avro;
+package org.apache.flume.sink.solr;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -44,9 +44,6 @@ import org.apache.avro.generic.GenericEnumSymbol;
 import org.apache.avro.generic.GenericFixed;
 import org.apache.avro.io.DatumReader;
 import org.apache.flume.FlumeException;
-import org.apache.flume.sink.solr.MultiDocumentParserMarker;
-import org.apache.flume.sink.solr.TikaSolrSink;
-import org.apache.flume.sink.solr.UUIDInterceptor;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.handler.extraction.SolrContentHandler;
@@ -70,7 +67,7 @@ public class AvroParser extends AbstractParser {
 
   private static final MediaType MEDIATYPE_AVRO = MediaType.parse("avro/binary"); // TODO: also support JSON via avro/text?
   private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MEDIATYPE_AVRO);
-  private static final Logger LOGGER = LoggerFactory.getLogger(TikaSolrSink.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(AvroParser.class);
   private static final long serialVersionUID = -6656103329236898910L;
 
   @Override
@@ -167,7 +164,7 @@ public class AvroParser extends AbstractParser {
       doc.setField(UUIDInterceptor.SOLR_ID_HEADER_NAME, UUIDInterceptor.generateUUID(id, num = numRecords.getAndIncrement()));
       LOGGER.debug("record #{} loading doc: {}", num, doc);
     }
-    TikaSolrSink sink = context.get(TikaSolrSink.class);
+    SimpleSolrSink sink = context.get(SimpleSolrSink.class);
     sink.load(docs);
   }
   

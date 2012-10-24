@@ -16,12 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.tika.parser.csv;
+package org.apache.flume.sink.solr;
 
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,9 +27,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.flume.sink.solr.MultiDocumentParserMarker;
-import org.apache.flume.sink.solr.TikaSolrSink;
-import org.apache.flume.sink.solr.UUIDInterceptor;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.handler.extraction.SolrContentHandler;
@@ -73,7 +68,7 @@ public class CSVParser extends AbstractParser {
   private static final MediaType MEDIATYPE_CSV = MediaType.parse("text/csv");
   private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MEDIATYPE_CSV);
   private static final ServiceLoader LOADER = new ServiceLoader(CSVParser.class.getClassLoader());
-  private static final Logger LOGGER = LoggerFactory.getLogger(TikaSolrSink.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CSVParser.class);
   private static final long serialVersionUID = -6656103329236888910L;
 
   @Override
@@ -174,18 +169,18 @@ public class CSVParser extends AbstractParser {
       doc.setField(UUIDInterceptor.SOLR_ID_HEADER_NAME, UUIDInterceptor.generateUUID(id, num = numRecords.getAndIncrement()));
       LOGGER.debug("record #{} loading doc: {}", num, doc);
     }
-    TikaSolrSink sink = context.get(TikaSolrSink.class);
+    SimpleSolrSink sink = context.get(SimpleSolrSink.class);
     sink.load(docs);    
   }
 
-  private static void debugTmp() throws IOException {
-    int skipLines = 0;
-    CSVReader reader = new CSVReader(new FileReader("yourfile.csv"), ',', au.com.bytecode.opencsv.CSVParser.DEFAULT_QUOTE_CHARACTER, skipLines);
-    String[] columns;
-    while ((columns = reader.readNext()) != null) {
-      System.out.println("line: "+ Arrays.asList(columns));
-    }
-    reader.close();
-  }
+//  private static void debugTmp() throws IOException {
+//    int skipLines = 0;
+//    CSVReader reader = new CSVReader(new FileReader("yourfile.csv"), ',', au.com.bytecode.opencsv.CSVParser.DEFAULT_QUOTE_CHARACTER, skipLines);
+//    String[] columns;
+//    while ((columns = reader.readNext()) != null) {
+//      System.out.println("line: "+ Arrays.asList(columns));
+//    }
+//    reader.close();
+//  }
   
 }
