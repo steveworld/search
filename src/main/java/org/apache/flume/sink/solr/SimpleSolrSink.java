@@ -45,7 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Flume sink that extracts search documents from Apache Flume events, optionally transforms them and loads them into
+ * Flume sink that extracts search documents from Apache Flume events, transforms them and loads them into
  * Apache Solr.
  */
 public class SimpleSolrSink extends AbstractSink implements Configurable {
