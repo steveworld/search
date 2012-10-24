@@ -59,7 +59,8 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 /**
- * Avro binary format parser; converts records to solr documents and loads them into Solr.
+ * Avro binary format parser that extracts search documents from Avro records (using Apache Tika and Solr Cell) and
+ * loads them into Solr.
  */
 public class AvroParser extends AbstractParser {
   
@@ -76,7 +77,7 @@ public class AvroParser extends AbstractParser {
   }
 
   @Override
-  /** Processes the given Avro file and writes XML into the given SAX handler */
+  /** Processes the given Avro file and converts records to solr documents and loads them into Solr */
   public void parse(InputStream in, ContentHandler handler, Metadata metadata, ParseContext context)
       throws IOException, SAXException, TikaException {
     try {
