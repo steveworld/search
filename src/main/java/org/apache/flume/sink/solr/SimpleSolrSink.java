@@ -192,7 +192,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
       doc.setField(entry.getKey(), entry.getValue());
     }
     if (event.getBody() != null) {
-      doc.setField("binaryContent", event.getBody());
+      doc.setField("body", event.getBody());
     }
     return Collections.singletonList(doc);
   }
