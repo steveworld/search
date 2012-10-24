@@ -19,8 +19,6 @@
 package org.apache.flume.sink.solr;
 
 
-import static org.apache.flume.interceptor.TimestampInterceptor.Constants.TIMESTAMP;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
