@@ -19,6 +19,8 @@
 package org.apache.flume.sink.solr;
 
 
+import static org.apache.flume.interceptor.TimestampInterceptor.Constants.TIMESTAMP;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,10 +34,14 @@ import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.RandomBasedGenerator;
 import com.fasterxml.uuid.impl.TimeBasedGenerator;
 
-/** Flume interceptor that adds a unique id to the set of Flume event headers */
+/**
+ * Flume Interceptor that sets a universally unique identifier on all events that are intercepted. 
+ * By default this event header is named "id".
+ */
 public class UUIDInterceptor implements Interceptor {
 
   private String headerName;
+  private boolean preserveExisting;
   private final RandomBasedGenerator randomBasedUuidGenerator = Generators.randomBasedGenerator();
   private final TimeBasedGenerator timeBasedUuidGenerator = Generators.timeBasedGenerator(EthernetAddress.fromInterface());
 
@@ -43,6 +49,7 @@ public class UUIDInterceptor implements Interceptor {
   
   private UUIDInterceptor(Context context) {
     headerName = context.getString("headerName", SOLR_ID_HEADER_NAME);
+    preserveExisting = context.getBoolean("preserveExisting", true);
   }
 
   @Override
@@ -61,7 +68,9 @@ public class UUIDInterceptor implements Interceptor {
   @Override
   public Event intercept(Event event) {
     Map<String, String> headers = event.getHeaders();
-    if (!headers.containsKey(headerName)) {
+    if (preserveExisting && headers.containsKey(headerName)) {
+      // we must preserve the existing id
+    } else {
       headers.put(headerName, generateUUID());
     }
     return event;
