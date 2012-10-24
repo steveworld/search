@@ -6,7 +6,7 @@
 
 - To generate jar files:
 
-    mvn test assembly:single
+    mvn package
 
 - To generate documentation into the doc/ directory:
 

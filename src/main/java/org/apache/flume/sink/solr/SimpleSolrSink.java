@@ -104,7 +104,9 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
     isStopping.countDown(); // signal other thread that it should exit process() ASAP
     try {
       if (!isStopped.await(timeout, timeunit)) { // give other thread some time to exit process() gracefully
-        LOGGER.warn("Failed to stop gracefully. Now shutting down anyway.");
+        if (timeout != 0) {
+          LOGGER.warn("Failed to stop gracefully. Now shutting down anyway.");
+        }
       }
     } catch (InterruptedException e) {
       throw new FlumeException(e);
