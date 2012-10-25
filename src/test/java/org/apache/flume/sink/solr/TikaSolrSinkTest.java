@@ -48,7 +48,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.channel.ChannelProcessor;
-import org.apache.flume.channel.PseudoTxnMemoryChannel;
+import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
@@ -57,7 +57,6 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
-import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -115,7 +114,7 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
     Map<String, String> channelContext = new HashMap();
     channelContext.put("capacity", "1000000");
     channelContext.put("keep-alive", "0"); // for faster tests
-    Channel channel = new PseudoTxnMemoryChannel();
+    Channel channel = new MemoryChannel();
     Configurables.configure(channel, new Context(channelContext));
  
     sink = new TikaSolrSink(solrServer);
