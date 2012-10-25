@@ -185,7 +185,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
     loadTimer.addAndGet(System.nanoTime() - startTime);
   }
 
-  /** Extracts the given Flume event into zero or more Solr documents */
+  /** Extracts the given Flume event and maps it into zero or more Solr documents */
   protected List<SolrInputDocument> extract(Event event) {
     SolrInputDocument doc = new SolrInputDocument();
     for (Entry<String, String> entry : event.getHeaders().entrySet()) {

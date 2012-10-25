@@ -171,10 +171,7 @@ public class AvroParser extends AbstractParser {
   
   /** Writes the given Avro datum into the given SAX handler, using the given Avro schema */
   protected void serializeToXML(Object datum, Schema schema, XHTMLContentHandler handler) throws SAXException {
-    /*
-      RECORD, ENUM, ARRAY, MAP, UNION, FIXED, STRING, BYTES,
-      INT, LONG, FLOAT, DOUBLE, BOOLEAN, NULL;
-    */
+    // RECORD, ENUM, ARRAY, MAP, UNION, FIXED, STRING, BYTES, INT, LONG, FLOAT, DOUBLE, BOOLEAN, NULL
     switch (schema.getType()) {
     case RECORD: {
       Record record = (Record) datum;

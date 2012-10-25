@@ -225,7 +225,7 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
   }
 
   @Override
-  protected List<SolrInputDocument> extract(final Event event) {
+  protected List<SolrInputDocument> extract(Event event) {    
     Parser parser = autoDetectParser;
     String streamMediaType = event.getHeaders().get(ExtractingParams.STREAM_TYPE);
     if (streamMediaType != null) {
