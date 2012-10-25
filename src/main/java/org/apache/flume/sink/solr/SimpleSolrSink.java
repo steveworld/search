@@ -214,7 +214,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
    * Sends any outstanding documents to solr and waits for a positive or negative ack (i.e. exception) from solr.
    * Depending on the outcome the caller should then commit or rollback the current flume transaction correspondingly.
    */
-  protected void commitSolr() {
+  public void commitSolr() {
     SolrServer s = getSolrServer();
     if (s instanceof ConcurrentUpdateSolrServer) {
       try {
