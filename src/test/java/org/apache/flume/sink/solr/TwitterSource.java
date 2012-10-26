@@ -217,18 +217,23 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
     }
   }
 
-  private byte[] serializeToAvro(Schema avroSchema, List<Record> docList) throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    DatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>(avroSchema);
-    DataFileWriter<GenericRecord>  dataFileWriter = new DataFileWriter<GenericRecord>(writer);
-    dataFileWriter.create(avroSchema, out);       
-    for (Record doc2 : docList) {
-      dataFileWriter.append(doc2);
+  private String nextLine(BufferedReader reader) throws IOException {
+    String line;
+    while ((line = reader.readLine()) != null) {
+      if (line.length() > 0)
+        break; // ignore empty lines
     }
-    dataFileWriter.close();
-    return out.toByteArray();
-  }
+    if (line == null)
+      return null;
+    Integer.parseInt(line); // sanity check
 
+    while ((line = reader.readLine()) != null) {
+      if (line.length() > 0)
+        break; // ignore empty lines
+    }
+    return line;
+  }
+  
   private Record extractRecord(String idPrefix, Schema avroSchema, JsonNode rootNode) {
     JsonNode user = rootNode.get("user");
     JsonNode idNode = rootNode.get("id_str");    
@@ -257,24 +262,19 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
     tryAddString(doc, "user_name", user.get("name"));
     return doc;
   }
-
-  private String nextLine(BufferedReader reader) throws IOException {
-    String line;
-    while ((line = reader.readLine()) != null) {
-      if (line.length() > 0)
-        break; // ignore empty lines
-    }
-    if (line == null)
-      return null;
-    Integer.parseInt(line); // sanity check
-
-    while ((line = reader.readLine()) != null) {
-      if (line.length() > 0)
-        break; // ignore empty lines
-    }
-    return line;
-  }
   
+  private byte[] serializeToAvro(Schema avroSchema, List<Record> docList) throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>(avroSchema);
+    DataFileWriter<GenericRecord>  dataFileWriter = new DataFileWriter<GenericRecord>(writer);
+    dataFileWriter.create(avroSchema, out);       
+    for (Record doc2 : docList) {
+      dataFileWriter.append(doc2);
+    }
+    dataFileWriter.close();
+    return out.toByteArray();
+  }
+
   private Schema createAvroSchema() {
     Schema avroSchema = Schema.createRecord("Doc", "adoc", null, false);
     List<Field> fields = new ArrayList<Field>();
