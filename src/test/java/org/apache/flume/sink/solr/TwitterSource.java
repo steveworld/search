@@ -81,8 +81,8 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
   private long rawBytes = 0;
   
   // Fri May 14 02:52:55 +0000 2010
-  private SimpleDateFormat _formatterFrom = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy");
-  private SimpleDateFormat _formatterTo = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+  private SimpleDateFormat formatterFrom = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy");
+  private SimpleDateFormat formatterTo = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
   private DecimalFormat numFormatter = new DecimalFormat("###,###.###");
 
   private static int REPORT_INTERVAL = 100;
@@ -146,7 +146,7 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
         if (entity != null) {
           InputStream in = entity.getContent();
           try {
-            List<Record> docList = new ArrayList();
+            List<Record> docs = new ArrayList();
             BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));          
             while (true) {
               if (isStopping.await(0, TimeUnit.NANOSECONDS)) {
@@ -164,20 +164,20 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
               if (json == null) {
                 break;
               }
-              rawBytes += json.length();
+              JsonNode rootNode = mapper.readValue(json, JsonNode.class); // src can be a File, URL, InputStream etc
+              rawBytes += json.length();              
               
-              JsonNode rootNode = mapper.readValue(json, JsonNode.class); // src can be a File, URL, InputStream etc  
               Record doc = extractRecord("", avroSchema, rootNode);
               if (doc == null) {
                 continue; // skip
               }
               
-              docList.add(doc);            
-              if (docList.size() >= batchSize) {
-                byte[] bytes = serializeToAvro(avroSchema, docList);              
+              docs.add(doc);            
+              if (docs.size() >= batchSize) {
+                byte[] bytes = serializeToAvro(avroSchema, docs);              
                 Event event = EventBuilder.withBody(bytes);
                 getChannelProcessor().processEvent(event); // send event to downstream flume sink    
-                docList.clear();
+                docs.clear();
               }
               
               docCount++;
@@ -311,7 +311,7 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
       return;
     }
     try {
-      doc.put(solr_field, _formatterTo.format(_formatterFrom.parse(val.trim())));
+      doc.put(solr_field, formatterTo.format(formatterFrom.parse(val.trim())));
     } catch (Exception e) {
       LOGGER.warn("Could not parse date " + val);
       exceptionCount++;
