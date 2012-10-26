@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
@@ -82,7 +83,7 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
 //private static final String EXTERNAL_SOLR_SERVER_URL = "http://127.0.0.1:8983/solr";
   private static final String RESOURCES_DIR = "target/test-classes";
 //private static final String RESOURCES_DIR = "src/test/resources";
-
+  private static final AtomicInteger SEQ_NUM = new AtomicInteger();
   private static final Logger LOGGER = LoggerFactory.getLogger(TikaSolrSinkTest.class);
 
   @BeforeClass
@@ -115,11 +116,11 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
     channelContext.put("capacity", "1000000");
     channelContext.put("keep-alive", "0"); // for faster tests
     Channel channel = new MemoryChannel();
+    channel.setName(channel.getClass().getName() + SEQ_NUM.getAndIncrement());
     Configurables.configure(channel, new Context(channelContext));
  
     sink = new TikaSolrSink(solrServer);
     sink.configure(new Context(context));
-    Configurables.configure(sink, new Context());
     sink.setChannel(channel);
     sink.start();
     
