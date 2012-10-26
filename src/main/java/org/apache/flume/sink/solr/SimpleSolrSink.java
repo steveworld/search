@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
@@ -179,9 +180,18 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
         }
       }
       return Status.READY;
-    } catch (Exception e) {
+    } catch (Throwable t) {
       tx.rollback();
-      throw new EventDeliveryException(e);
+      if (t instanceof Error) {
+        throw (Error) t;
+      } else if (t instanceof ChannelException) {
+        LOGGER.error("Solr Sink " + getName() + ": Unable to get event from" +
+            " channel " + ch.getName() + ". Exception follows.", t);
+        return Status.BACKOFF;
+      } else {
+        // destroyConnection();
+        throw new EventDeliveryException("Failed to send events", t);
+      }
     } finally {
       tx.close();
     }    
