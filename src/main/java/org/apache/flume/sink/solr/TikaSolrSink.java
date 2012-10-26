@@ -122,6 +122,7 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
   
   @Override
   public void configure(Context context) {
+    super.configure(context);
     try {
       String solrHome = context.getString(SOLR_CLIENT_HOME);
       if (solrHome != null) {
