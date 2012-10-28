@@ -94,7 +94,7 @@
     <dependency> <!-- see http://wiki.fasterxml.com/JacksonHome -->
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.1.0</version>
+      <version>2.0.6</version>
       <scope>test</scope>
     </dependency>
     <dependency> <!-- see http://opencsv.sourceforge.net -->
@@ -111,7 +111,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.8.2</version>
+      <version>4.10</version>
       <scope>test</scope>
     </dependency>
     -->

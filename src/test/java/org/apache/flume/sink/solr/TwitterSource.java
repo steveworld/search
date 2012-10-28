@@ -69,7 +69,8 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
 
   private String url = "https://stream.twitter.com/1/statuses/sample.json?delimited=length";
   private Credentials userNameAndPassword;
-  private int batchSize = 100;
+  private int maxBatchSize = 1000;
+  private int maxBatchDurationMillis = 1000;
 
   private CountDownLatch isStopping = new CountDownLatch(0);
   
@@ -98,7 +99,8 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
     String password = context.getString("password");
     userNameAndPassword = new UsernamePasswordCredentials(userName, password);
     url = context.getString("url", url);
-    batchSize = context.getInteger("batchSize", batchSize);
+    maxBatchSize = context.getInteger("maxBatchSize", maxBatchSize);
+    maxBatchDurationMillis = context.getInteger("maxBatchDurationMillis", maxBatchDurationMillis);    
   }
   
   @Override
@@ -131,6 +133,7 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
     totalTextIndexed = 0;
     skippedDocs = 0;
     rawBytes = 0;
+    long batchEndTime = System.currentTimeMillis() + maxBatchDurationMillis;
     AbstractHttpClient httpClient = new DefaultHttpClient(); // uses HTTP persistent connections by default, uses TCP_NODELAY = true by default
     httpClient.getCredentialsProvider().setCredentials(AuthScope.ANY, userNameAndPassword);
     //httpClient.getParams().setParameter(CoreConnectionPNames.TCP_NODELAY, false);  
@@ -173,7 +176,8 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
               }
               
               docs.add(doc);            
-              if (docs.size() >= batchSize) {
+              if (docs.size() >= maxBatchSize || System.currentTimeMillis() >= batchEndTime) {
+                batchEndTime = System.currentTimeMillis() + maxBatchDurationMillis;
                 byte[] bytes = serializeToAvro(avroSchema, docs);              
                 Event event = EventBuilder.withBody(bytes);
                 getChannelProcessor().processEvent(event); // send event to downstream flume sink    
@@ -249,7 +253,6 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
     tryAddInt(doc, "retweet_count", rootNode.get("retweet_count"));
     tryAddBool(doc, "retweeted", rootNode.get("retweeted"));
     tryAddLong(doc, "in_reply_to_user_id", rootNode.get("in_reply_to_user_id"));
-    tryAddLong(doc, "in_reply_to_status_id", rootNode.get("in_reply_to_status_id"));
     tryAddLong(doc, "in_reply_to_status_id", rootNode.get("in_reply_to_status_id"));
     tryAddString(doc, "media_url_https", rootNode.get("media_url_https"));
     tryAddString(doc, "expanded_url", rootNode.get("expanded_url"));    

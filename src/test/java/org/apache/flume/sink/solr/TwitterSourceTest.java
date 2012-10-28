@@ -18,6 +18,7 @@
  */
 package org.apache.flume.sink.solr;
 
+import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -50,7 +51,7 @@ public class TwitterSourceTest {
     Context context = new Context();
     context.put("username", username);
     context.put("password", password);
-    context.put("batchSize", "10");
+    context.put("maxBatchDurationMillis", "1000");
     
     TwitterSource source = new TwitterSource();
     source.configure(context);
@@ -79,6 +80,12 @@ public class TwitterSourceTest {
     source.stop();
     sinkRunner.stop();
     sink.stop();
+  }
+  
+  @Test
+  public void testCarrotDateFormatBug() throws Exception {
+    SimpleDateFormat formatterFrom = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy");
+    formatterFrom.parse("Fri Oct 26 22:53:55 +0000 2012");
   }
 
 }

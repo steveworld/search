@@ -43,10 +43,8 @@ public class UUIDInterceptor implements Interceptor {
   private final RandomBasedGenerator randomBasedUuidGenerator = Generators.randomBasedGenerator();
   private final TimeBasedGenerator timeBasedUuidGenerator = Generators.timeBasedGenerator(EthernetAddress.fromInterface());
 
-  public static final String SOLR_ID_HEADER_NAME = "id"; // TODO: move this elsewhere
-  
-  private UUIDInterceptor(Context context) {
-    headerName = context.getString("headerName", SOLR_ID_HEADER_NAME);
+  protected UUIDInterceptor(Context context) {
+    headerName = context.getString("headerName", "id");
     preserveExisting = context.getBoolean("preserveExisting", true);
   }
 
@@ -59,8 +57,8 @@ public class UUIDInterceptor implements Interceptor {
     //return UUID.randomUUID().toString();
   }
   
-  public static String generateUUID(String prefix, long sequenceNumber) {
-    return prefix + "#" + sequenceNumber;
+  protected boolean isMatch(Event event) {
+    return true;
   }
   
   @Override
@@ -68,7 +66,7 @@ public class UUIDInterceptor implements Interceptor {
     Map<String, String> headers = event.getHeaders();
     if (preserveExisting && headers.containsKey(headerName)) {
       // we must preserve the existing id
-    } else {
+    } else if (isMatch(event)) {
       headers.put(headerName, generateUUID());
     }
     return event;
