@@ -122,7 +122,7 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
     sink = new TikaSolrSink(solrServer);
     sink.configure(new Context(context));
     sink.setChannel(channel);
-    sink.start();
+//    sink.start();
     
     source = new EmbeddedSource(sink);    
     ChannelSelector rcs = new ReplicatingChannelSelector();

@@ -64,8 +64,6 @@ import org.xml.sax.SAXException;
  */
 public class AvroParser extends AbstractParser {
   
-  protected AtomicLong numRecords = new AtomicLong();
-
   private static final MediaType MEDIATYPE_AVRO = MediaType.parse("avro/binary"); // TODO: also support JSON via avro/text?
   private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MEDIATYPE_AVRO);
   private static final Logger LOGGER = LoggerFactory.getLogger(AvroParser.class);
@@ -92,7 +90,6 @@ public class AvroParser extends AbstractParser {
     throws IOException, SAXException {
  
     context.set(MultiDocumentParserMarker.class, new MultiDocumentParserMarker()); // TODO hack alert!    
-    numRecords = context.get(AtomicLong.class); // TODO hack alert!
 
     // Avro requires a SeekableInput so looks like we need to first fetch it all into a buffer. 
     // TODO optimize via a new custom SeekableInput impl
@@ -129,7 +126,7 @@ public class AvroParser extends AbstractParser {
   /** Processes the given Avro record */
   protected void process(Record record, XHTMLContentHandler handler, Metadata metadata, ParseContext context)
       throws IOException, SAXException, SolrServerException {
-    LOGGER.debug("record #{}: {}", numRecords, record);
+    LOGGER.debug("record #{}: {}", context.get(AtomicLong.class), record); // hack alert!
     List<SolrInputDocument> docs = extract(record, handler, metadata, context);
     docs = transform(docs, metadata, context);
     load(docs, metadata, context); 
@@ -158,14 +155,7 @@ public class AvroParser extends AbstractParser {
 
   /** Loads the given documents into Solr */
   protected void load(List<SolrInputDocument> docs, Metadata metadata, ParseContext context) throws IOException, SolrServerException {
-    for (SolrInputDocument doc : docs) {        
-      // TODO: figure out name of unique key from IndexSchema
-      String id = doc.getFieldValue(UUIDInterceptor.SOLR_ID_HEADER_NAME).toString();
-      long num;
-      doc.setField(UUIDInterceptor.SOLR_ID_HEADER_NAME, UUIDInterceptor.generateUUID(id, num = numRecords.getAndIncrement()));
-      LOGGER.debug("record #{} loading doc: {}", num, doc);
-    }
-    SimpleSolrSink sink = context.get(SimpleSolrSink.class);
+    TikaSolrSink sink = context.get(TikaSolrSink.class);
     sink.load(docs);
   }
   

@@ -44,6 +44,7 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.CloudSolrServer;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.MapSolrParams;
@@ -59,6 +60,7 @@ import org.apache.solr.handler.extraction.RegexRulesPasswordProvider;
 import org.apache.solr.handler.extraction.SolrContentHandler;
 import org.apache.solr.request.SolrRequestHandler;
 import org.apache.solr.schema.IndexSchema;
+import org.apache.solr.schema.SchemaField;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
@@ -99,6 +101,7 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
   private SolrParams params = new MapSolrParams(new HashMap());
   private AutoDetectParser autoDetectParser;  
   private Collection<String> dateFormats = DateUtil.DEFAULT_DATE_FORMATS;
+  private ParseContext ctx;
     
   private static final XPathParser PARSER = new XPathParser("xhtml", XHTMLContentHandler.XHTML);
 
@@ -226,6 +229,16 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
   }
 
   @Override
+  public void process(Event event) throws IOException, SolrServerException {
+    ctx = new ParseContext(); //TODO: should we design a way to pass in parse context?
+    try {
+      super.process(event);
+    } finally {
+      ctx = null;
+    }    
+  }
+  
+  @Override
   protected List<SolrInputDocument> extract(Event event) {    
     Parser parser = autoDetectParser;
     String streamMediaType = event.getHeaders().get(ExtractingParams.STREAM_TYPE);
@@ -263,13 +276,13 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
     try {
       inputStream = TikaInputStream.get(event.getBody(), metadata);
       for (Entry<String, String> entry : event.getHeaders().entrySet()) {
-        metadata.set(entry.getKey(), entry.getValue());
+        if (entry.getKey().equals(schema.getUniqueKeyField().getName())) {
+          ctx.set(String.class, entry.getValue()); // TODO: hack alert!
+        } else {
+          metadata.set(entry.getKey(), entry.getValue());
+        }
       }
-      
-      String xpathExpr = params.get(ExtractingParams.XPATH_EXPRESSION);
-//    String xpathExpr = "/xhtml:html/xhtml:body/xhtml:div/descendant:node()"; // params.get(ExtractingParams.XPATH_EXPRESSION);
-//      boolean extractOnly = params.getBool(ExtractingParams.EXTRACT_ONLY, false);
-      
+            
       SolrContentHandler handler = createSolrContentHandler(metadata);
       ContentHandler parsingHandler = handler;
       StringWriter debugWriter = null;
@@ -279,15 +292,18 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
         parsingHandler = new TeeContentHandler(parsingHandler, serializer); 
       }
 
+      String xpathExpr = params.get(ExtractingParams.XPATH_EXPRESSION);
+//    String xpathExpr = "/xhtml:html/xhtml:body/xhtml:div/descendant:node()"; // params.get(ExtractingParams.XPATH_EXPRESSION);
+//      boolean extractOnly = params.getBool(ExtractingParams.EXTRACT_ONLY, false);
       if (xpathExpr != null) {
         Matcher matcher = PARSER.parse(xpathExpr);
         parsingHandler = new MatchingContentHandler(parsingHandler, matcher);
       }
 
-      ParseContext ctx = new ParseContext();//TODO: should we design a way to pass in parse context?
       ctx.set(Parser.class, parser); // necessary for gzipped files or tar files, etc! copied from TikaCLI
-      ctx.set(SimpleSolrSink.class, this);
+      ctx.set(TikaSolrSink.class, this);
       ctx.set(SolrContentHandler.class, handler);
+      ctx.set(IndexSchema.class, schema);
       ctx.set(AtomicLong.class, new AtomicLong());
       
       try {
@@ -323,8 +339,28 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
     }
   }
 
+  @Override
+  public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
+    AtomicLong numRecords = ctx.get(AtomicLong.class); // TODO: hack alert!
+    for (SolrInputDocument doc : docs) {
+      long num = numRecords.getAndIncrement();
+      LOGGER.debug("record #{} loading before doc: {}", num, doc);
+      SchemaField uniqueKey = ctx.get(IndexSchema.class).getUniqueKeyField();
+      if (uniqueKey != null && !doc.containsKey(uniqueKey.getName())) {
+        String id = ctx.get(String.class);
+        if (id == null) {
+          throw new IllegalStateException("Event header " + uniqueKey.getName()
+              + " must not be null as it is needed as a basis for a unique key for solr doc: " + doc);
+        }
+        doc.setField(uniqueKey.getName(), id + "#" + num);
+      }
+      LOGGER.debug("record #{} loading doc: {}", num, doc);
+    }
+    super.load(docs);
+  }
+
   protected SolrContentHandler createSolrContentHandler(Metadata metadata) {
-    return new SolrContentHandler(metadata, params, schema, dateFormats);
+    return new TrimSolrContentHandler(metadata, params, schema, dateFormats);
   }
 
   protected void addPasswordHandler(String resourceName, ParseContext ctx) throws FileNotFoundException {
