@@ -344,7 +344,7 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
     AtomicLong numRecords = ctx.get(AtomicLong.class); // TODO: hack alert!
     for (SolrInputDocument doc : docs) {
       long num = numRecords.getAndIncrement();
-      LOGGER.debug("record #{} loading before doc: {}", num, doc);
+//      LOGGER.debug("record #{} loading before doc: {}", num, doc);
       SchemaField uniqueKey = ctx.get(IndexSchema.class).getUniqueKeyField();
       if (uniqueKey != null && !doc.containsKey(uniqueKey.getName())) {
         String id = ctx.get(String.class);
