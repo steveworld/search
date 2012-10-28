@@ -135,10 +135,10 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
   public Status process() throws EventDeliveryException {    
     Channel ch = getChannel();
     Transaction tx = ch.getTransaction();
+    int numEventsTaken = 0;
     try {
       tx.begin();
       int batchSize = getBatchSize();
-      int numEventsTaken = 0;
       for (int i = 0; i < batchSize; i++) { // repeatedly take and process events from the Flume queue
         synchronized (this) { // are we asked to return control ASAP?
           if (isStopping.await(0, TimeUnit.NANOSECONDS) || isStopped.await(0, TimeUnit.NANOSECONDS)) {
@@ -173,13 +173,6 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
         commitSolr();
       }
       tx.commit();
-      solrSinkCounter.addToEventDrainSuccessCount(numEventsTaken);
-      synchronized (this) { 
-        if (isStopping.await(0, TimeUnit.NANOSECONDS)) { // are we asked to return control ASAP?
-          isStopped.countDown(); // signal to other thread that we're done
-        }
-      }
-      return Status.READY;
     } catch (Throwable t) {
       tx.rollback();
       if (t instanceof Error) {
@@ -195,6 +188,18 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
     } finally {
       tx.close();
     }    
+    
+    solrSinkCounter.addToEventDrainSuccessCount(numEventsTaken);
+    synchronized (this) { 
+      try {
+        if (isStopping.await(0, TimeUnit.NANOSECONDS)) { // are we asked to return control ASAP?
+          isStopped.countDown(); // signal to other thread that we're done
+        }
+      } catch (InterruptedException e) {
+        ; // ignore
+      }
+    }
+    return Status.READY;
   }
 
   /** Returns the number of events to take per flume transaction */
