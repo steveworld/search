@@ -44,6 +44,7 @@
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-ng-core</artifactId>
       <version>${flume.version}</version>
+      <scope>provided</scope>
     </dependency>    
     <dependency> <!-- http://flume.apache.org -->
       <groupId>org.apache.flume</groupId>
@@ -69,17 +70,25 @@
       <artifactId>tika-parsers</artifactId>
       <version>${tika.version}</version>
     </dependency>
+    -->
     <dependency>
       <groupId>org.apache.tika</groupId>
       <artifactId>tika-xmp</artifactId>
-      <version>${tika.version}</version>
+      <version>${tika.version}</version>      
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId> 
+          <artifactId>commons-logging</artifactId> <!-- needed by pdfbox but solr-core replaces it with jcl-over-slf4j -->
+        </exclusion>
+      </exclusions>
     </dependency>
-    -->
+    <!--
     <dependency>
       <groupId>org.apache.tika</groupId>
       <artifactId>tika-app</artifactId>
       <version>${tika.version}</version>
     </dependency>
+    -->
     <dependency> <!-- http://lucene.apache.org/solr -->
       <groupId>org.apache.solr</groupId>
       <artifactId>solr-test-framework</artifactId>
@@ -88,8 +97,29 @@
     </dependency>    
     <dependency> <!-- see http://lucene.apache.org/solr -->
       <groupId>org.apache.solr</groupId>
+      <artifactId>solr-core</artifactId>
+      <version>${solr.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-jdk14</artifactId> <!-- instead use slf4j on top of log4j or logback  -->
+        </exclusion>
+      </exclusions>      
+    </dependency>
+    <dependency> <!-- see http://lucene.apache.org/solr -->
+      <groupId>org.apache.solr</groupId>
       <artifactId>solr-cell</artifactId>
       <version>${solr.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>xerces</groupId>
+          <artifactId>xercesImpl</artifactId> <!-- used by ExtractingDocumentLoader but we never call it -->
+        </exclusion>
+        <exclusion>
+          <groupId>com.ibm.icu</groupId>
+          <artifactId>icu4j</artifactId> <!-- nothing in solr-cell is using this -->
+        </exclusion>
+      </exclusions>            
     </dependency>
     <dependency> <!-- see http://wiki.fasterxml.com/JacksonHome -->
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -106,6 +136,12 @@
       <groupId>com.fasterxml.uuid</groupId>
       <artifactId>java-uuid-generator</artifactId>
       <version>3.1.3</version>
+      <exclusions>
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId> <!-- not actually required -->
+        </exclusion>
+      </exclusions>      
     </dependency>
     <!--
     <dependency>
@@ -141,6 +177,62 @@
           <showDeprecation>true</showDeprecation>
           <showWarnings>true</showWarnings>
         </configuration>
+      </plugin>
+      
+      <!--  Let's shade dependencies to simplify deployment and avoid version conflicts. 
+            See http://maven.apache.org/plugins/maven-shade-plugin/index.html 
+            and http://maven.apache.org/plugins/maven-shade-plugin/shade-mojo.html -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>1.7.1</version>
+        <configuration>
+          <createDependencyReducedPom>true</createDependencyReducedPom>
+          <filters>
+            <filter>
+              <artifact>*:*</artifact>  
+              <excludes>
+                <exclude>org/slf4j/**</exclude>
+                <exclude>META-INF/*.SF</exclude>
+                <exclude>META-INF/*.DSA</exclude>
+                <exclude>META-INF/*.RSA</exclude>
+              </excludes>
+            </filter>
+          </filters>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <artifactSet>
+                <excludes>
+                  <exclude>org.slf4j:slf4j-api</exclude>            <!-- already provided by flume -->
+                  <exclude>org.apache.flume:flume-ng-core</exclude> <!-- already provided by flume -->
+                </excludes>
+              </artifactSet>
+              
+              <!-- this would cause java.lang.ClassFormatError: Bad string initial value in class file org/apache/flume/sink/solr/TikaSolrSink
+              <relocations>
+                <relocation>
+                  <shadedPattern>org.shaded.sink.solr.</shadedPattern>
+                  <excludes>
+                    <exclude>org.apache.tika.**</exclude>
+                    <exclude>org.apache.solr.**</exclude>
+                    <exclude>org.apache.flume.**</exclude>
+                  </excludes>
+                </relocation>
+              </relocations>
+              -->
+
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>                  
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       
       <plugin>
