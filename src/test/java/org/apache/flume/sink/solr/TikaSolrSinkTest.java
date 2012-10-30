@@ -70,10 +70,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.uuid.EthernetAddress;
-import com.fasterxml.uuid.Generators;
-import com.fasterxml.uuid.NoArgGenerator;
-
 public class TikaSolrSinkTest extends SolrTestCaseJ4 {
 
   private EmbeddedSource source;
@@ -423,24 +419,6 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
     return new Utf8(str);
   }  
 
-//  @Test
-  private void testUUIDGenerationPerformance() throws Exception {    
-    testUUIDGenerationPerformance(Generators.timeBasedGenerator(EthernetAddress.fromInterface()));
-    testUUIDGenerationPerformance(Generators.randomBasedGenerator());
-  }
-  
-  private void testUUIDGenerationPerformance(NoArgGenerator uuidGenerator) throws Exception {
-    long xstartTime = System.currentTimeMillis();
-    int iters = 1000000;
-    int x = 0;
-    for (int i = 0; i < iters; i++) {
-      x += uuidGenerator.generate().toString().length();
-    }
-    System.out.println(x);
-    float secs = (System.currentTimeMillis() - xstartTime) / 1000.0f;
-    System.out.println(uuidGenerator.getClass().getName() + " took " + secs + " secs, iters/sec=" + (iters / secs));
-  }
-  
   // @Test
   private void testQuery() throws Exception {
     String url = "http://127.0.0.1:8983/solr";

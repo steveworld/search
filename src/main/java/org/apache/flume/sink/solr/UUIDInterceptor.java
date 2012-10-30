@@ -100,7 +100,7 @@ public class UUIDInterceptor implements Interceptor {
     public Builder() {}
     
     @Override
-    public Interceptor build() {
+    public UUIDInterceptor build() {
       return new UUIDInterceptor(context);
     }
 
