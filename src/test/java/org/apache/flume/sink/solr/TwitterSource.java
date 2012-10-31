@@ -60,8 +60,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Demo Flume source that connects via HTTP to the 1% sample twitter firehose, continously downloads tweets, converts
+ * Demo Flume source that connects via HTTP to the 1% sample twitter firehose, continously downloads JSON tweets, converts
  * them to Avro format and sends Avro events to a downstream Flume sink.
+
+ * The JSON input format is documented at https://dev.twitter.com/docs/platform-objects/tweets
  * 
  * Requires the username and password of a normal twitter user account.
  */
