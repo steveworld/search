@@ -8,6 +8,10 @@
 
     mvn package
 
+- To generate jar file for test classes:
+
+    mvn jar:test-jar
+
 - To generate documentation into the doc/ directory:
 
     mvn site
