@@ -101,7 +101,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
   
   @Override
   public synchronized void stop() {
-    stop(60, TimeUnit.SECONDS);
+    stop(15, TimeUnit.SECONDS);
   }
   
   /* start() and stop() are called from an arbitrary async Flume management thread */
@@ -138,6 +138,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
     try {
       int numEventsTaken = 0;
       tx.begin();
+      beginSolr();
       int batchSize = getBatchSize();
       for (int i = 0; i < batchSize; i++) { // repeatedly take and process events from the Flume queue
         synchronized (this) { // are we asked to return control ASAP?
@@ -149,7 +150,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
         Event event = ch.take();
         solrSinkCounter.addToTakeNanos(System.nanoTime() - startTime);
         if (event == null) {
-          break;
+          break; // TODO: return Status.BACKOFF in this case?
         }
         numEventsTaken++;
         LOGGER.debug("solr event: {}", event);
@@ -248,6 +249,14 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
     }
   }
 
+  /** Begins a solr transaction */
+  public void beginSolr() {
+    SolrServer s = getSolrServer();
+    if (s instanceof SafeConcurrentUpdateSolrServer) {
+      ((SafeConcurrentUpdateSolrServer) s).clearException();
+    }
+  }
+  
   /**
    * Sends any outstanding documents to solr and waits for a positive or negative ack (i.e. exception) from solr.
    * Depending on the outcome the caller should then commit or rollback the current flume transaction correspondingly.
@@ -255,13 +264,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
   public void commitSolr() {
     SolrServer s = getSolrServer();
     if (s instanceof ConcurrentUpdateSolrServer) {
-      try {
-        ((ConcurrentUpdateSolrServer) s).blockUntilFinished();
-      } finally {
-        if (s instanceof SafeConcurrentUpdateSolrServer) {
-          ((SafeConcurrentUpdateSolrServer) s).clearException();
-        }
-      }
+      ((ConcurrentUpdateSolrServer) s).blockUntilFinished();
     }
   }
   
