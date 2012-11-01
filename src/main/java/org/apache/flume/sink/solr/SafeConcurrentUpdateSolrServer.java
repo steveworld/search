@@ -50,8 +50,6 @@ public class SafeConcurrentUpdateSolrServer extends ConcurrentUpdateSolrServer {
       currentException = ex;
     }
     LOGGER.error("handleError", ex);
-    blockUntilFinished();
-    throw new RuntimeException("should be unreachable");
   }
 
   @Override
