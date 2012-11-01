@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -317,7 +318,7 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
     }
     try {
       doc.put(solr_field, formatterTo.format(formatterFrom.parse(val.trim())));
-    } catch (Exception e) {
+    } catch (ParseException e) {
       LOGGER.warn("Could not parse date " + val);
       exceptionCount++;
     }
