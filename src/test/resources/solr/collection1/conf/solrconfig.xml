@@ -980,18 +980,39 @@
       <str name="lowernames">true</str>
       <str name="uprefix">ignored_</str>
 
+      <str name="fmap.content">text</str>
+
+      <!-- twitter feed schema -->
+      <str name="capture">id</str>
+      <str name="capture">user_friends_count</str>
+      <str name="capture">user_location</str>
+      <str name="capture">user_description</str>
+      <str name="capture">user_statuses_count</str>
+      <str name="capture">user_followers_count</str>
+      <str name="capture">user_name</str>
+      <str name="capture">user_screen_name</str>
+      <str name="capture">created_at</str>
+      <str name="capture">text</str>
+      <str name="capture">retweet_count</str>
+      <str name="capture">retweeted</str>
+      <str name="capture">in_reply_to_user_id</str>
+      <str name="capture">source</str>
+      <str name="capture">in_reply_to_status_id</str>
+      <str name="capture">media_url_https</str>
+      <str name="capture">expanded_url</str>
+      
       <!-- capture link hrefs but ignore div attributes -->
       <!--
       <str name="captureAttr">true</str>
       <str name="fmap.a">links</str>
       <str name="fmap.div">ignored_</str>
-      -->      
-      <str name="fmap.content">text</str>
+      -->            
     </lst>
     <lst name="server">
       <str name="url">http://127.0.0.1:8983/solr/collection1</str>
-      <int name="numThreads">3</int>      
+      <!--<int name="numThreads">2</int>-->      
     </lst>
+    <str name="tika.config">tika-config.xml</str> <!-- relative or absolute path to tika config file --> 
   </requestHandler>
 
 

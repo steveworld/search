@@ -41,6 +41,7 @@
     <avro.version>1.6.3</avro.version>
     <flume.version>1.2.0</flume.version>
     <tika.version>1.2</tika.version>
+    <jackson.scope>test</jackson.scope>
     <shadedPattern>org.shaded.sink.solr</shadedPattern>
   </properties>
   
@@ -134,7 +135,7 @@
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
       <version>2.0.6</version>
-      <scope>test</scope>
+      <scope>${jackson.scope}</scope>
     </dependency>
     <dependency> <!-- see http://opencsv.sourceforge.net -->
       <groupId>net.sf.opencsv</groupId>
@@ -251,6 +252,9 @@
                 <relocation>
                   <pattern>com</pattern>
                   <shadedPattern>${shadedPattern}.com</shadedPattern>
+                  <excludes>
+                    <exclude>com.fasterxml.jackson.**</exclude>
+                  </excludes>                  
                 </relocation>
                 <relocation>
                   <pattern>de</pattern>
