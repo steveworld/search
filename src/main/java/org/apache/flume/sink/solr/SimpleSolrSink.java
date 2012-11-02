@@ -130,7 +130,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
       super.stop();
     }
   }
-  
+
   @Override
   public Status process() throws EventDeliveryException {    
     Channel ch = getChannel();
@@ -139,7 +139,8 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
       int numEventsTaken = 0;
       tx.begin();
       beginSolr();
-      int batchSize = getBatchSize();
+      long batchEndTime = System.currentTimeMillis() + getMaxBatchDurationMillis();
+      int batchSize = getMaxBatchSize();
       for (int i = 0; i < batchSize; i++) { // repeatedly take and process events from the Flume queue
         synchronized (this) { // are we asked to return control ASAP?
           if (isStopping.await(0, TimeUnit.NANOSECONDS) || isStopped.await(0, TimeUnit.NANOSECONDS)) {
@@ -155,6 +156,9 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
         numEventsTaken++;
         LOGGER.debug("solr event: {}", event);
         process(event);
+        if (System.currentTimeMillis() >= batchEndTime) {
+          break;
+        }
       }
       
       // update metrics
@@ -202,11 +206,16 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
     }        
   }
 
-  /** Returns the number of events to take per flume transaction */
-  protected int getBatchSize() {
+  /** Returns the maximum number of events to take per flume transaction */
+  protected int getMaxBatchSize() {
     return 1000;
   }
   
+  /** Returns the maximum duration per flume transaction */
+  protected long getMaxBatchDurationMillis() {
+    return 10 * 1000;
+  }
+
   /** Extracts, transforms and loads the given Flume event into Solr */
   public void process(Event event) throws IOException, SolrServerException {
     LOGGER.debug("threadId: {}", Thread.currentThread().getId());
