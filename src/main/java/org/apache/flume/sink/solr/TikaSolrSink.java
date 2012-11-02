@@ -95,7 +95,7 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
   protected int solrServerNumThreads = 2;
   protected int solrServerQueueLength = solrServerNumThreads;
   protected int solrServerBatchSize = 1000;
-  protected long solrServerBatchDurationMillis = 60 * 1000;
+  protected long solrServerBatchDurationMillis = 10 * 1000;
   
   private TikaConfig config;
   private IndexSchema schema;
