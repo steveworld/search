@@ -49,7 +49,7 @@ public class UUIDInterceptorTest {
     context.put("preserveExisting", "true");
     Event event = new SimpleEvent();
     event.getHeaders().put(ID, "foo");
-    Assert.assertTrue(build(context).intercept(event).getHeaders().get(ID).equals("foo"));
+    Assert.assertEquals("foo", build(context).intercept(event).getHeaders().get(ID));
   }
 
   private UUIDInterceptor build(Context context) {
