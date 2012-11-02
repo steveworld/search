@@ -46,13 +46,13 @@
   </properties>
   
   <dependencies>
-    <dependency> <!-- http://flume.apache.org -->
+    <dependency> <!-- see http://flume.apache.org -->
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-ng-core</artifactId>
       <version>${flume.version}</version>
       <scope>provided</scope>
     </dependency>    
-    <dependency> <!-- http://flume.apache.org -->
+    <dependency> <!-- see http://flume.apache.org -->
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-ng-tests</artifactId>
       <version>${flume.version}</version>
@@ -99,7 +99,7 @@
       <version>${tika.version}</version>
     </dependency>
     -->
-    <dependency> <!-- http://lucene.apache.org/solr -->
+    <dependency> <!-- see http://lucene.apache.org/solr -->
       <groupId>org.apache.solr</groupId>
       <artifactId>solr-test-framework</artifactId>
       <version>${solr.version}</version>
