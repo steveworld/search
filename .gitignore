@@ -12,6 +12,7 @@ target
 build
 test-output
 .surefire-*
+dependency-reduced-pom.xml
 
 # Eclipse
 .classpath
