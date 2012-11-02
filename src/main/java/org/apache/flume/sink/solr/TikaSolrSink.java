@@ -95,6 +95,7 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
   protected int solrServerNumThreads = 2;
   protected int solrServerQueueLength = solrServerNumThreads;
   protected int solrServerBatchSize = 1000;
+  protected long solrServerBatchDurationMillis = 60 * 1000;
   
   private TikaConfig config;
   private IndexSchema schema;
@@ -111,6 +112,7 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
   public static final String SOLR_SERVER_QUEUE_LENGTH = "queueLength";
   public static final String SOLR_SERVER_NUM_THREADS = "numThreads";
   public static final String SOLR_SERVER_BATCH_SIZE = "batchSize";
+  public static final String SOLR_SERVER_BATCH_DURATION_MILLIS = "batchDurationMillis";
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TikaSolrSink.class);
 
@@ -168,6 +170,7 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
               solrServerNumThreads = solrServerParams.getInt(SOLR_SERVER_NUM_THREADS, solrServerNumThreads);
               solrServerQueueLength = solrServerParams.getInt(SOLR_SERVER_QUEUE_LENGTH, solrServerNumThreads);
               solrServerBatchSize = solrServerParams.getInt(SOLR_SERVER_BATCH_SIZE, solrServerBatchSize);
+              solrServerBatchDurationMillis = solrServerParams.getInt(SOLR_SERVER_BATCH_DURATION_MILLIS, (int) solrServerBatchDurationMillis);
             }
             
             String tikaConfigLoc = (String) initArgs.get(ExtractingRequestHandler.CONFIG_LOCATION);
@@ -224,8 +227,13 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
   }  
 
   @Override
-  protected int getBatchSize() {
+  protected int getMaxBatchSize() {
     return solrServerBatchSize;
+  }
+  
+  @Override
+  protected long getMaxBatchDurationMillis() {
+    return solrServerBatchDurationMillis;
   }
 
   @Override
