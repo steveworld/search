@@ -37,13 +37,6 @@ public class MediaTypeInterceptorTest {
   private static final String RESOURCES_DIR = "target/test-classes";
   
   @Test
-  public void testXML() throws Exception {    
-    Context context = createContext();
-    Event event = EventBuilder.withBody("<?xml version=\"1.0\"?>\n<foo/>".getBytes("UTF-8"));
-    Assert.assertEquals("application/xml", detect(context, event));
-  }
-
-  @Test
   public void testPlainText() throws Exception {    
     Context context = createContext();
     Event event = EventBuilder.withBody("foo".getBytes("UTF-8"));
@@ -55,6 +48,32 @@ public class MediaTypeInterceptorTest {
     Context context = createContext();
     Event event = EventBuilder.withBody(new byte[] {3, 4, 5, 6});
     Assert.assertEquals("application/octet-stream", detect(context, event));
+  }
+
+  @Test
+  public void testXML() throws Exception {    
+    Context context = createContext();
+    Event event = EventBuilder.withBody("<?xml version=\"1.0\"?><foo/>".getBytes("UTF-8"));
+    Assert.assertEquals("application/xml", detect(context, event));
+  }
+
+  public void testXML11() throws Exception {    
+    Context context = createContext();
+    Event event = EventBuilder.withBody("<?xml version=\"1.1\"?><foo/>".getBytes("UTF-8"));
+    Assert.assertEquals("application/xml", detect(context, event));
+  }
+
+  public void testXMLAnyVersion() throws Exception {    
+    Context context = createContext();
+    Event event = EventBuilder.withBody("<?xml version=\"\"?><foo/>".getBytes("UTF-8"));
+    Assert.assertEquals("application/xml", detect(context, event));
+  }
+
+  @Test
+  public void testXMLasTextPlain() throws Exception {    
+    Context context = createContext();
+    Event event = EventBuilder.withBody("<foo/>".getBytes("UTF-8"));
+    Assert.assertEquals("text/plain", detect(context, event));
   }
 
   @Test
