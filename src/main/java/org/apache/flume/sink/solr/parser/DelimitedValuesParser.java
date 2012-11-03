@@ -148,7 +148,7 @@ public class DelimitedValuesParser extends AbstractParser {
     return supportedMediaTypes;
   }
 
-  public void setSupportedMediaTypes(Set<MediaType> supportedMediaTypes) {
+  public void setSupportedTypes(Set<MediaType> supportedMediaTypes) {
     this.supportedMediaTypes = supportedMediaTypes;
   }
 

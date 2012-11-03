@@ -31,7 +31,7 @@ public class CSVParser extends DelimitedValuesParser {
 
   public CSVParser() {
     setSeparatorChar(',');
-    setSupportedMediaTypes(Collections.singleton(MediaType.parse("text/csv")));
+    setSupportedTypes(Collections.singleton(MediaType.parse("text/csv")));
   }
   
 }
