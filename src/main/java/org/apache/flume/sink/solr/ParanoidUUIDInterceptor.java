@@ -19,74 +19,32 @@
 package org.apache.flume.sink.solr;
 
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
 import org.apache.flume.Context;
-import org.apache.flume.Event;
 import org.apache.flume.interceptor.Interceptor;
 
+import com.fasterxml.uuid.EthernetAddress;
+import com.fasterxml.uuid.Generators;
+import com.fasterxml.uuid.impl.RandomBasedGenerator;
+import com.fasterxml.uuid.impl.TimeBasedGenerator;
+
 /**
- * Flume Interceptor that sets a universally unique identifier on all events that are intercepted. 
+ * Flume Interceptor that sets an extremely strong universally unique identifier on all events that are intercepted. 
  * By default this event header is named "id".
  */
-public class UUIDInterceptor implements Interceptor {
+public class ParanoidUUIDInterceptor extends UUIDInterceptor {
 
-  private String headerName;
-  private boolean preserveExisting;
-  private String prefix;
+  private final RandomBasedGenerator randomBasedUuidGenerator = Generators.randomBasedGenerator();
+  private final TimeBasedGenerator timeBasedUuidGenerator = Generators.timeBasedGenerator(EthernetAddress.fromInterface());
 
-  protected UUIDInterceptor(Context context) {
-    headerName = context.getString("headerName", "id");
-    preserveExisting = context.getBoolean("preserveExisting", true);
-    prefix = context.getString("prefix", "");
+  protected ParanoidUUIDInterceptor(Context context) {
+    super(context);
   }
 
   @Override
-  public void initialize() {
-  }
-
-  protected String getPrefix() {
-    return prefix;
-  }
-  
   protected String generateUUID() {
-    return getPrefix() + UUID.randomUUID().toString();
+    return getPrefix() + timeBasedUuidGenerator.generate().toString() + "#" + randomBasedUuidGenerator.generate().toString();
   }
   
-  protected boolean isMatch(Event event) {
-    return true;
-  }
-  
-  @Override
-  public Event intercept(Event event) {
-    Map<String, String> headers = event.getHeaders();
-    if (preserveExisting && headers.containsKey(headerName)) {
-      // we must preserve the existing id
-    } else if (isMatch(event)) {
-      headers.put(headerName, generateUUID());
-    }
-    return event;
-  }
-  
-  @Override
-  public List<Event> intercept(List<Event> events) {
-    List results = new ArrayList(events.size());
-    for (Event event : events) {
-      event = intercept(event);
-      if (event != null) {
-        results.add(event);
-      }      
-    }
-    return results;
-  }
-
-  @Override
-  public void close() {
-  }
-
   
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
@@ -99,8 +57,8 @@ public class UUIDInterceptor implements Interceptor {
     public Builder() {}
     
     @Override
-    public UUIDInterceptor build() {
-      return new UUIDInterceptor(context);
+    public ParanoidUUIDInterceptor build() {
+      return new ParanoidUUIDInterceptor(context);
     }
 
     @Override
