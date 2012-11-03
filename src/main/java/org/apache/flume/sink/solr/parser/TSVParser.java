@@ -31,7 +31,7 @@ public class TSVParser extends DelimitedValuesParser {
 
   public TSVParser() {
     setSeparatorChar('\t');
-    setSupportedMediaTypes(Collections.singleton(MediaType.parse("text/tsv")));
+    setSupportedTypes(Collections.singleton(MediaType.parse("text/tsv")));
   }
   
 }
