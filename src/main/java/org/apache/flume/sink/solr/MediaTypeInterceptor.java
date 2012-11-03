@@ -41,9 +41,9 @@ import org.apache.tika.mime.MediaType;
  * Flume Interceptor that sets a media type aka MIME type on events that are intercepted.
  * <p>
  * Type detection is based on Apache Tika, which considers the file name pattern via the
- * {@link Metadata#RESOURCE_NAME_KEY} input event header, as well as magic byte patterns at the beginning of the event
- * body. The type mapping is customizable via the tika-mimetypes.xml and custom-mimetypes.xml and tika-config.xml config
- * files, and can be specified via the "tika.config" context parameter.
+ * {@link Metadata#RESOURCE_NAME_KEY} and {@link Metadata#CONTENT_TYPE} input event header, as well as magic byte
+ * patterns at the beginning of the event body. The type mapping is customizable via the tika-mimetypes.xml and
+ * custom-mimetypes.xml and tika-config.xml config files, and can be specified via the "tika.config" context parameter.
  * <p>
  * By default the output event header is named "stream.type".
  * <p>
