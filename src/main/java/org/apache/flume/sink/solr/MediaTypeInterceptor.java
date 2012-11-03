@@ -45,7 +45,7 @@ import org.apache.tika.mime.MediaType;
  * body. The type mapping is customizable via the tika-mimetypes.xml and custom-mimetypes.xml and tika-config.xml config
  * files, and can be specified via the "tika.config" context parameter.
  * <p>
- * By default the ouput event header is named "stream.type".
+ * By default the output event header is named "stream.type".
  * <p>
  * For background see http://en.wikipedia.org/wiki/Internet_media_type
  */
