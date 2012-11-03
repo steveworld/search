@@ -95,6 +95,13 @@ public class MediaTypeInterceptorTest {
       Event event = EventBuilder.withBody(body, headers);
       Assert.assertEquals(files[i+2], detect(context, event));
     }
+    
+    for (int i = 0; i < files.length; i += 3) {
+      byte[] body = FileUtils.readFileToByteArray(new File(files[i+0]));
+      Map headers = Collections.singletonMap(Metadata.RESOURCE_NAME_KEY, new File(files[i+0]).getPath());
+      Event event = EventBuilder.withBody(body, headers);
+      Assert.assertEquals(files[i+2], detect(context, event));
+    }
   }
 
   private Context createContext() {
