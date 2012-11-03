@@ -39,7 +39,8 @@ public class UUIDInterceptorTest {
     context.put("headerName", ID);
     context.put("preserveExisting", "true");
     Event event = new SimpleEvent();
-    Assert.assertTrue(build(context).intercept(event).getHeaders().get(ID).startsWith("ss#"));
+    Assert.assertTrue(build(context).intercept(event).getHeaders().get(ID).length() > 0);
+    Assert.assertTrue(buildParanoid(context).intercept(event).getHeaders().get(ID).length() > 0);
   }
 
   @Test
@@ -50,12 +51,29 @@ public class UUIDInterceptorTest {
     Event event = new SimpleEvent();
     event.getHeaders().put(ID, "foo");
     Assert.assertEquals("foo", build(context).intercept(event).getHeaders().get(ID));
+    Assert.assertEquals("foo", buildParanoid(context).intercept(event).getHeaders().get(ID));
+  }
+
+  public void testPrefix() throws Exception {    
+    Context context = new Context();
+    context.put("headerName", ID);
+    context.put("prefix", "bar#");
+    Event event = new SimpleEvent();
+    Assert.assertTrue(build(context).intercept(event).getHeaders().get(ID).startsWith("bar#"));
+    Assert.assertTrue(buildParanoid(context).intercept(event).getHeaders().get(ID).startsWith("bar#"));
   }
 
   private UUIDInterceptor build(Context context) {
     UUIDInterceptor.Builder builder = new UUIDInterceptor.Builder();
     builder.configure(context);
     UUIDInterceptor interceptor = builder.build();
+    return interceptor;
+  }
+  
+  private ParanoidUUIDInterceptor buildParanoid(Context context) {
+    ParanoidUUIDInterceptor.Builder builder = new ParanoidUUIDInterceptor.Builder();
+    builder.configure(context);
+    ParanoidUUIDInterceptor interceptor = builder.build();
     return interceptor;
   }
   
