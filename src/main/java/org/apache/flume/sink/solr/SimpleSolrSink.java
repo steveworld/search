@@ -218,7 +218,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
 
   /** Extracts, transforms and loads the given Flume event into Solr */
   public void process(Event event) throws IOException, SolrServerException {
-    LOGGER.debug("threadId: {}", Thread.currentThread().getId());
+//    LOGGER.debug("threadId: {}", Thread.currentThread().getId());
     
     long startTime = System.nanoTime();
     List<SolrInputDocument> docs = extract(event); // TODO: use queue to support parallel ETL across multiple CPUs?

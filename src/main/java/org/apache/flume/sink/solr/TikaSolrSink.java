@@ -97,7 +97,7 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
   protected int solrServerBatchSize = 1000;
   protected long solrServerBatchDurationMillis = 10 * 1000;
   
-  private TikaConfig config;
+  private TikaConfig tikaConfig;
   private IndexSchema schema;
   private SolrParams params = new MapSolrParams(new HashMap());
   private AutoDetectParser autoDetectParser;  
@@ -201,15 +201,19 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
     }
     
     try {
-      config = new TikaConfig();
+      tikaConfig = new TikaConfig();
     } catch (TikaException e) {
       throw new ConfigurationException(e);
     } catch (IOException e) {
       throw new ConfigurationException(e);
     }
-    autoDetectParser = new AutoDetectParser(config);
+    autoDetectParser = new AutoDetectParser(tikaConfig);
   }
 
+  protected TikaConfig getTikaConfig() {
+    return tikaConfig;
+  }
+  
   @Override
   protected SolrServer createSolrServer() {
     if (zkConnectString != null) {
@@ -248,17 +252,7 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
   
   @Override
   protected List<SolrInputDocument> extract(Event event) {    
-    Parser parser = autoDetectParser;
-    String streamMediaType = event.getHeaders().get(ExtractingParams.STREAM_TYPE);
-    if (streamMediaType != null) {
-      //Cache?  Parsers are lightweight to construct and thread-safe, so I'm told
-      MediaType mt = MediaType.parse(streamMediaType.trim().toLowerCase(Locale.ROOT));
-      parser = new DefaultParser(config.getMediaTypeRegistry()).getParsers().get(mt);
-      if (parser == null) {
-        throw new FlumeException("Stream media type of " + streamMediaType + " didn't match any known parsers. Please supply a better " + ExtractingParams.STREAM_TYPE + " parameter.");
-      }
-    }
-    
+    Parser parser = detectParser(event);    
     Metadata metadata = new Metadata();
 
     // If you specify the resource name (the filename, roughly) with this parameter,
@@ -345,6 +339,20 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
         }
       }
     }
+  }
+
+  protected Parser detectParser(Event event) {
+    Parser parser = autoDetectParser;
+    String streamMediaType = event.getHeaders().get(ExtractingParams.STREAM_TYPE);
+    if (streamMediaType != null) {
+      //Cache?  Parsers are lightweight to construct and thread-safe, so I'm told
+      MediaType mt = MediaType.parse(streamMediaType.trim().toLowerCase(Locale.ROOT));
+      parser = new DefaultParser(getTikaConfig().getMediaTypeRegistry()).getParsers().get(mt);
+      if (parser == null) {
+        throw new FlumeException("Stream media type of " + streamMediaType + " didn't match any known parsers. Please supply a better " + ExtractingParams.STREAM_TYPE + " parameter.");
+      }
+    }
+    return parser;
   }
 
   @Override
