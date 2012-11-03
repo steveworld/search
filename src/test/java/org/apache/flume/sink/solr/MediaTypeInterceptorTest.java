@@ -51,6 +51,13 @@ public class MediaTypeInterceptorTest {
   }
 
   @Test
+  public void testNullType() throws Exception {    
+    Context context = createContext();
+    Event event = EventBuilder.withBody(null);
+    Assert.assertEquals("application/octet-stream", detect(context, event));
+  }
+
+  @Test
   public void testXML() throws Exception {    
     Context context = createContext();
     Event event = EventBuilder.withBody("<?xml version=\"1.0\"?><foo/>".getBytes("UTF-8"));

@@ -18,6 +18,8 @@
  */
 package org.apache.flume.sink.solr;
 
+import java.util.UUID;
+
 import junit.framework.Assert;
 
 import org.apache.flume.Context;
@@ -28,6 +30,7 @@ import org.junit.Test;
 import com.fasterxml.uuid.EthernetAddress;
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.NoArgGenerator;
+import com.fasterxml.uuid.UUIDType;
 
 public class UUIDInterceptorTest {
 
@@ -77,9 +80,19 @@ public class UUIDInterceptorTest {
   }
   
 //  @Test
-  private void testUUIDGenerationPerformance() throws Exception {    
+  public void testUUIDGenerationPerformance() throws Exception {    
     testUUIDGenerationPerformance(Generators.timeBasedGenerator(EthernetAddress.fromInterface()));
     testUUIDGenerationPerformance(Generators.randomBasedGenerator());
+    testUUIDGenerationPerformance(new NoArgGenerator() {      
+      @Override
+      public UUIDType getType() {
+        return UUIDType.RANDOM_BASED;
+      }      
+      @Override
+      public UUID generate() {
+        return UUID.randomUUID();
+      }
+    });
   }
   
   private void testUUIDGenerationPerformance(NoArgGenerator uuidGenerator) throws Exception {
