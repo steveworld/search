@@ -183,8 +183,9 @@ public class DelimitedValuesParser extends AbstractParser {
       long recNum = 0;
       while ((colValues = csvReader.readNext()) != null) {
         if (recNum == 0 && columnNamesHeaderPrefix != null && colValues.length > 0 && colValues[0].startsWith(columnNamesHeaderPrefix)) {
-          colNames = new String[colValues.length - 1]; // exclude prefix from the names
-          System.arraycopy(colValues, 1, colNames, 0, colNames.length);
+          int offset = columnNamesHeaderPrefix.length() == 0 ? 0 : 1; // exclude prefix field from the names?
+          colNames = new String[colValues.length - offset]; 
+          System.arraycopy(colValues, offset, colNames, 0, colNames.length);
           for (int i = 0; i < colNames.length; i++) {
             colNames[i] = trim(colNames[i]);
           }
@@ -211,7 +212,7 @@ public class DelimitedValuesParser extends AbstractParser {
       reader.close();
     }
   }
-  
+
   protected String normalize(String str) {
     return str;
   }
@@ -219,8 +220,8 @@ public class DelimitedValuesParser extends AbstractParser {
   private String trim(String str) {
     return trim ? str.trim() : str;
   }
-
-  protected CSVReader createCSVReader(AutoDetectReader reader, Metadata metadata, ParseContext context) {
+  
+  private CSVReader createCSVReader(AutoDetectReader reader, Metadata metadata, ParseContext context) {
     return new CSVReader(reader, separatorChar, quoteChar, numLeadingLinesToSkip);
   }
 
