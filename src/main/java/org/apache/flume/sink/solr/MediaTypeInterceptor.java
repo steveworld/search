@@ -96,9 +96,9 @@ public class MediaTypeInterceptor implements Interceptor {
    * @return detected media type, or <code>application/octet-stream</code>
    */
   protected String getMediaType(Event event) {    
+    InputStream in = event.getBody() == null ? null : new ByteArrayInputStream(event.getBody());
+    Metadata metadata = getMetadata(event);
     try {
-      InputStream in = event.getBody() == null ? null : new ByteArrayInputStream(event.getBody());
-      Metadata metadata = getMetadata(event);
       MediaType mediaType = getDetector().detect(in, metadata);
       return mediaType.toString();
     } catch (IOException e) {
