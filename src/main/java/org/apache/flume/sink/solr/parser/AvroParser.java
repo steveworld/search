@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.flume.sink.solr;
+package org.apache.flume.sink.solr.parser;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -44,6 +44,8 @@ import org.apache.avro.generic.GenericEnumSymbol;
 import org.apache.avro.generic.GenericFixed;
 import org.apache.avro.io.DatumReader;
 import org.apache.flume.FlumeException;
+import org.apache.flume.sink.solr.MultiDocumentParserMarker;
+import org.apache.flume.sink.solr.TikaSolrSink;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.handler.extraction.SolrContentHandler;

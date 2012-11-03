@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.flume.sink.solr;
+package org.apache.flume.sink.solr.parser;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,6 +27,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.flume.sink.solr.MultiDocumentParserMarker;
+import org.apache.flume.sink.solr.TikaSolrSink;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.handler.extraction.SolrContentHandler;
@@ -50,6 +52,11 @@ import au.com.bytecode.opencsv.CSVReader;
  * Comma separated values parser that extracts search documents from CSV records (using Apache Tika and Solr Cell) and
  * loads them into Solr.
  * 
+ * For the format see http://en.wikipedia.org/wiki/Comma-separated_values
+ * and http://www.creativyst.com/Doc/Articles/CSV/CSV01.htm
+ * and http://ostermiller.org/utils/CSV.html
+ * and http://www.ricebridge.com/products/csvman/demo.htm
+ * 
  * The text encoding of the document stream is
  * automatically detected based on the byte patterns found at the
  * beginning of the stream and the given document metadata, most
@@ -62,19 +69,87 @@ import au.com.bytecode.opencsv.CSVReader;
  *   <dd><code>text/csv; charset=...</code></dd>
  * </dl>
  */
-public class CSVParser extends AbstractParser {
+public class DelimitedValuesParser extends AbstractParser {
 
-  // TODO: make column names and separator char and comment chars, etc configurable
-
-  private static final MediaType MEDIATYPE_CSV = MediaType.parse("text/csv");
-  private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MEDIATYPE_CSV);
-  private static final ServiceLoader LOADER = new ServiceLoader(CSVParser.class.getClassLoader());
-  private static final Logger LOGGER = LoggerFactory.getLogger(CSVParser.class);
+  private char separatorChar = ',';
+  private int numLeadingLinesToSkip = 0;
+  private String[] columnNames = new String[0];
+  private String columnNamesHeaderPrefix = null;
+  private char quoteChar = au.com.bytecode.opencsv.CSVParser.DEFAULT_QUOTE_CHARACTER;
+  private String commentChars = "!#;";
+  private boolean trim = true;  
+  private Set<MediaType> supportedMediaTypes;
+  
+  private static final ServiceLoader LOADER = new ServiceLoader(DelimitedValuesParser.class.getClassLoader());
+  private static final Logger LOGGER = LoggerFactory.getLogger(DelimitedValuesParser.class);
   private static final long serialVersionUID = -6656103329236888910L;
+
+  public DelimitedValuesParser() {
+  }
+  
+  public char getSeparatorChar() {
+    return separatorChar;
+  }
+
+  public void setSeparatorChar(char separatorChar) {
+    this.separatorChar = separatorChar;
+  }
+
+  public int getNumLeadingLinesToSkip() {
+    return numLeadingLinesToSkip;
+  }
+
+  public void setNumLeadingLinesToSkip(int numLeadingLinesToSkip) {
+    this.numLeadingLinesToSkip = numLeadingLinesToSkip;
+  }
+
+  public String[] getColumnNames() {
+    return columnNames;
+  }
+
+  public void setColumnNames(String[] columnNames) {
+    this.columnNames = columnNames;
+  }
+
+  public String getColumnNamesHeaderPrefix() {
+    return columnNamesHeaderPrefix;
+  }
+
+  public void setColumnNamesHeaderPrefix(String columnNamesHeaderPrefix) {
+    this.columnNamesHeaderPrefix = columnNamesHeaderPrefix;
+  }
+
+  public char getQuoteChar() {
+    return quoteChar;
+  }
+
+  public void setQuoteChar(char quoteChar) {
+    this.quoteChar = quoteChar;
+  }
+
+  public String getCommentChars() {
+    return commentChars;
+  }
+
+  public void setCommentChars(String commentChars) {
+    this.commentChars = commentChars;
+  }
+
+  public boolean isTrim() {
+    return trim;
+  }
+
+  public void setTrim(boolean trim) {
+    this.trim = trim;
+  }
 
   @Override
   public Set<MediaType> getSupportedTypes(ParseContext context) {
-    return SUPPORTED_TYPES;
+    return supportedMediaTypes;
+  }
+
+  public void setSupportedMediaTypes(Set<MediaType> supportedMediaTypes) {
+    this.supportedMediaTypes = supportedMediaTypes;
   }
 
   @Override
@@ -91,26 +166,41 @@ public class CSVParser extends AbstractParser {
   
   protected void parse2(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
     throws IOException, TikaException {
-    //if (true) throw new RuntimeException("reached csvparser");
+    //if (true) throw new RuntimeException("reached delimitedvaluesparser");
  
     context.set(MultiDocumentParserMarker.class, new MultiDocumentParserMarker()); // TODO hack alert!    
     
     // Automatically detect the character encoding
     AutoDetectReader reader = new AutoDetectReader(new CloseShieldInputStream(stream), metadata, LOADER);
     try {
-      metadata.set(Metadata.CONTENT_TYPE, MEDIATYPE_CSV.toString());
+      metadata.set(Metadata.CONTENT_TYPE, supportedMediaTypes.iterator().next().toString());
       XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
 
       CSVReader csvReader = createCSVReader(reader, metadata, context);
-      String[] columnNames = csvReader.readNext();
       Map<String, String> record = new LinkedHashMap();
-      String[] columnValues;
-      while ((columnValues = csvReader.readNext()) != null) {
+      String[] colNames = columnNames;
+      String[] colValues;
+      long recNum = 0;
+      while ((colValues = csvReader.readNext()) != null) {
+        if (recNum == 0 && columnNamesHeaderPrefix != null && colValues.length > 0 && colValues[0].startsWith(columnNamesHeaderPrefix)) {
+          colNames = new String[colValues.length - 1]; // exclude prefix from the names
+          System.arraycopy(colValues, 1, colNames, 0, colNames.length);
+          for (int i = 0; i < colNames.length; i++) {
+            colNames[i] = trim(colNames[i]);
+          }
+          recNum++;
+          continue; // it is a header line
+        }
+        if (colValues.length > 0 && colValues[0].length() > 0 && commentChars.indexOf(colValues[0].charAt(0)) >= 0) {
+          continue; // it is a comment line
+        }
         record.clear();
-        for (int i = 0; i < columnValues.length; i++) {
-          record.put(columnNames[i], columnValues[i]);
+        for (int i = 0; i < colValues.length; i++) {
+          String columnName = i < colNames.length ? colNames[i] : "col" + i;
+          record.put(columnName, normalize(trim(colValues[i])));
         }
         process(record, xhtml, metadata, context);
+        recNum++;
       }
       csvReader.close();
     } catch (Exception e) {
@@ -121,12 +211,17 @@ public class CSVParser extends AbstractParser {
       reader.close();
     }
   }
+  
+  protected String normalize(String str) {
+    return str;
+  }
+  
+  private String trim(String str) {
+    return trim ? str.trim() : str;
+  }
 
   protected CSVReader createCSVReader(AutoDetectReader reader, Metadata metadata, ParseContext context) {
-    // TODO: optionally get separator and skipLines and fieldNames from ParseContext and/or Event header?
-    int skipLines = 0;
-    CSVReader csvReader = new CSVReader(reader, ',', au.com.bytecode.opencsv.CSVParser.DEFAULT_QUOTE_CHARACTER, skipLines);
-    return csvReader;
+    return new CSVReader(reader, separatorChar, quoteChar, numLeadingLinesToSkip);
   }
 
   /** Processes the given record */

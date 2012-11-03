@@ -40,8 +40,10 @@ If multiple parsers support the same MIME type, the parser is chosen that is clo
     <parser class="org.apache.tika.parser.xml.DcXMLParser"/>
     <parser class="org.apache.tika.parser.xml.FictionBookParser"/>
     <parser class="org.apache.tika.parser.chm.ChmParser"/>
-    <parser class="org.apache.flume.sink.solr.CSVParser"/> 
-    <parser class="org.apache.flume.sink.solr.AvroParser"/> 
+    
+    <parser class="org.apache.flume.sink.solr.parser.AvroParser"/> 
+    <parser class="org.apache.flume.sink.solr.parser.CSVParser"/> 
+    <parser class="org.apache.flume.sink.solr.parser.TSVParser"/> 
     
     <!--
     <parser class="org.apache.tika.parser.audio.AudioParser"> 

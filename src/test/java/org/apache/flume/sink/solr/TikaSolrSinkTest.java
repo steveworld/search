@@ -179,9 +179,9 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
       };
       Map<String,Integer> numRecords = new HashMap();
       numRecords.put(path + "/sample-statuses-20120906-141433.avro", 2);
-      numRecords.put(path + "/cars.csv", 4);
-      numRecords.put(path + "/cars.csv.gz", 4);
-      numRecords.put(path + "/cars.tar.gz", 2);
+      numRecords.put(path + "/cars.csv", 5);
+      numRecords.put(path + "/cars.csv.gz", 5);
+      numRecords.put(path + "/cars.tar.gz", 4);
       
       for (String file : files) {
         File f = new File(file);
