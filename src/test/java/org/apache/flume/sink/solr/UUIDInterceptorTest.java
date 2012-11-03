@@ -54,6 +54,7 @@ public class UUIDInterceptorTest {
     Assert.assertEquals("foo", buildParanoid(context).intercept(event).getHeaders().get(ID));
   }
 
+  @Test
   public void testPrefix() throws Exception {    
     Context context = new Context();
     context.put("headerName", ID);
@@ -66,15 +67,13 @@ public class UUIDInterceptorTest {
   private UUIDInterceptor build(Context context) {
     UUIDInterceptor.Builder builder = new UUIDInterceptor.Builder();
     builder.configure(context);
-    UUIDInterceptor interceptor = builder.build();
-    return interceptor;
+    return builder.build();
   }
   
   private ParanoidUUIDInterceptor buildParanoid(Context context) {
     ParanoidUUIDInterceptor.Builder builder = new ParanoidUUIDInterceptor.Builder();
     builder.configure(context);
-    ParanoidUUIDInterceptor interceptor = builder.build();
-    return interceptor;
+    return builder.build();
   }
   
 //  @Test

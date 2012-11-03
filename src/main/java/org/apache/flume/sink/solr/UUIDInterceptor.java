@@ -37,7 +37,7 @@ public class UUIDInterceptor implements Interceptor {
   private String headerName;
   private boolean preserveExisting;
   private String prefix;
-
+  
   protected UUIDInterceptor(Context context) {
     headerName = context.getString("headerName", "id");
     preserveExisting = context.getBoolean("preserveExisting", true);
