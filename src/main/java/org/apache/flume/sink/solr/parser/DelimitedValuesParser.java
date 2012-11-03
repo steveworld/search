@@ -119,14 +119,6 @@ public class DelimitedValuesParser extends AbstractParser {
     this.columnNamesHeaderPrefix = columnNamesHeaderPrefix;
   }
 
-  public char getQuoteChar() {
-    return quoteChar;
-  }
-
-  public void setQuoteChar(char quoteChar) {
-    this.quoteChar = quoteChar;
-  }
-
   public String getCommentChars() {
     return commentChars;
   }
@@ -183,14 +175,19 @@ public class DelimitedValuesParser extends AbstractParser {
       long recNum = 0;
       while ((colValues = csvReader.readNext()) != null) {
         if (recNum == 0 && columnNamesHeaderPrefix != null && colValues.length > 0 && colValues[0].startsWith(columnNamesHeaderPrefix)) {
-          int offset = columnNamesHeaderPrefix.length() == 0 ? 0 : 1; // exclude prefix field from the names?
+          int offset = 0; // it is a header line
+          if (colValues[0].equals(columnNamesHeaderPrefix)) { 
+            offset = 1; // exclude prefix field from the names
+          } else {
+            colValues[0] = colValues[0].substring(columnNamesHeaderPrefix.length()); // exclude prefix substring from name
+          }
           colNames = new String[colValues.length - offset]; 
           System.arraycopy(colValues, offset, colNames, 0, colNames.length);
           for (int i = 0; i < colNames.length; i++) {
             colNames[i] = trim(colNames[i]);
           }
           recNum++;
-          continue; // it is a header line
+          continue;
         }
         if (colValues.length > 0 && colValues[0].length() > 0 && commentChars.indexOf(colValues[0].charAt(0)) >= 0) {
           continue; // it is a comment line
