@@ -51,6 +51,13 @@ public class MediaTypeInterceptorTest {
   }
 
   @Test
+  public void testUnknownEmptyType() throws Exception {    
+    Context context = createContext();
+    Event event = EventBuilder.withBody(new byte[0]);
+    Assert.assertEquals("application/octet-stream", detect(context, event));
+  }
+
+  @Test
   public void testNullType() throws Exception {    
     Context context = createContext();
     Event event = EventBuilder.withBody(null);

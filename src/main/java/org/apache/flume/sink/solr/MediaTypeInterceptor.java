@@ -96,8 +96,9 @@ public class MediaTypeInterceptor implements Interceptor {
    * Detects the content type of the given input event. Returns <code>application/octet-stream</code> if the type of the
    * event can not be detected.
    * <p>
-   * If the event body is not <code>null</code> the detector may read bytes from the start of the body stream to help in
-   * type detection.
+   * It is legal for the event headers to be empty. It is legal for the event body to be <code>null</code> or an empty
+   * array. If the event body is not <code>null</code> the detector may read bytes from the start of the body stream to
+   * help in type detection.
    * 
    * @return detected media type, or <code>application/octet-stream</code>
    */
