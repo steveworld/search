@@ -39,8 +39,8 @@ public class UUIDInterceptorTest {
   @Test
   public void testBasic() throws Exception {    
     Context context = new Context();
-    context.put("headerName", ID);
-    context.put("preserveExisting", "true");
+    context.put(UUIDInterceptor.HEADER_NAME, ID);
+    context.put(UUIDInterceptor.PRESERVE_EXISTING_NAME, "true");
     Event event = new SimpleEvent();
     Assert.assertTrue(build(context).intercept(event).getHeaders().get(ID).length() > 0);
     Assert.assertTrue(buildParanoid(context).intercept(event).getHeaders().get(ID).length() > 0);
@@ -49,8 +49,8 @@ public class UUIDInterceptorTest {
   @Test
   public void testPreserveExisting() throws Exception {    
     Context context = new Context();
-    context.put("headerName", ID);
-    context.put("preserveExisting", "true");
+    context.put(UUIDInterceptor.HEADER_NAME, ID);
+    context.put(UUIDInterceptor.PRESERVE_EXISTING_NAME, "true");
     Event event = new SimpleEvent();
     event.getHeaders().put(ID, "foo");
     Assert.assertEquals("foo", build(context).intercept(event).getHeaders().get(ID));
@@ -60,8 +60,8 @@ public class UUIDInterceptorTest {
   @Test
   public void testPrefix() throws Exception {    
     Context context = new Context();
-    context.put("headerName", ID);
-    context.put("prefix", "bar#");
+    context.put(UUIDInterceptor.HEADER_NAME, ID);
+    context.put(UUIDInterceptor.PREFIX_NAME, "bar#");
     Event event = new SimpleEvent();
     Assert.assertTrue(build(context).intercept(event).getHeaders().get(ID).startsWith("bar#"));
     Assert.assertTrue(buildParanoid(context).intercept(event).getHeaders().get(ID).startsWith("bar#"));
