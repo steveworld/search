@@ -38,10 +38,14 @@ public class UUIDInterceptor implements Interceptor {
   private boolean preserveExisting;
   private String prefix;
   
+  public static final String HEADER_NAME = "headerName";
+  public static final String PRESERVE_EXISTING_NAME = "preserveExisting";
+  public static final String PREFIX_NAME = "prefix";
+
   protected UUIDInterceptor(Context context) {
-    headerName = context.getString("headerName", "id");
-    preserveExisting = context.getBoolean("preserveExisting", true);
-    prefix = context.getString("prefix", "");
+    headerName = context.getString(HEADER_NAME, "id");
+    preserveExisting = context.getBoolean(PRESERVE_EXISTING_NAME, true);
+    prefix = context.getString(PREFIX_NAME, "");
   }
 
   @Override

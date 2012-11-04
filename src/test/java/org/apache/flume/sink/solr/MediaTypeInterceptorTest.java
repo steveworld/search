@@ -33,7 +33,7 @@ import org.junit.Test;
 
 public class MediaTypeInterceptorTest {
 
-  private static final String ID = "stream.type";
+  private static final String ID = MediaTypeInterceptor.DEFAULT_EVENT_HEADER_NAME;
   private static final String RESOURCES_DIR = "target/test-classes";
   
   @Test
@@ -132,8 +132,8 @@ public class MediaTypeInterceptorTest {
 
   private Context createContext() {
     Context context = new Context();
-    context.put("headerName", ID);
-    context.put("preserveExisting", "true");
+    context.put(MediaTypeInterceptor.HEADER_NAME, ID);
+    context.put(MediaTypeInterceptor.PRESERVE_EXISTING_NAME, "true");
     return context;
   }
 

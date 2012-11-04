@@ -38,14 +38,15 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
 /**
- * Flume Interceptor that sets a media type aka MIME type on events that are intercepted.
+ * Flume Interceptor that auto-detects and sets a media type aka MIME type on events that are intercepted.
  * <p>
  * Type detection is based on Apache Tika, which considers the file name pattern via the
  * {@link Metadata#RESOURCE_NAME_KEY} and {@link Metadata#CONTENT_TYPE} input event headers, as well as magic byte
- * patterns at the beginning of the event body. The type mapping is customizable via the tika-mimetypes.xml and
- * custom-mimetypes.xml and tika-config.xml config files, and can be specified via the "tika.config" context parameter.
+ * patterns at the beginning of the event body. The type detection and mapping is customizable via the
+ * tika-mimetypes.xml and custom-mimetypes.xml and tika-config.xml config files, and can be specified via the
+ * "tika.config" context parameter.
  * <p>
- * By default the output event header is named "stream.type".
+ * By default the output event header is named {@link MediaTypeInterceptor#DEFAULT_EVENT_HEADER_NAME}.
  * <p>
  * For background see http://en.wikipedia.org/wiki/Internet_media_type
  */
@@ -56,13 +57,18 @@ public class MediaTypeInterceptor implements Interceptor {
   private boolean includeHeaders;
   private Detector detector;
   
-  private static final String DEFAULT_HEADER_NAME = "stream.type"; // ExtractingParams.STREAM_TYPE;
+  public static final String HEADER_NAME = "headerName";
+  public static final String PRESERVE_EXISTING_NAME = "preserveExisting";
+  public static final String INCLUDE_HEADER_NAME = "includeHeaders";
+  public static final String TIKA_CONFIG_LOCATION = "tika.config"; // ExtractingRequestHandler.CONFIG_LOCATION  
+  
+  public static final String DEFAULT_EVENT_HEADER_NAME = "stream.type"; // ExtractingParams.STREAM_TYPE;
   
   protected MediaTypeInterceptor(Context context) {
-    headerName = context.getString("headerName", DEFAULT_HEADER_NAME); 
-    preserveExisting = context.getBoolean("preserveExisting", true);
-    includeHeaders = context.getBoolean("includeHeaders", true);
-    String tikaConfigFilePath = context.getString("tika.config"); // ExtractingRequestHandler.CONFIG_LOCATION
+    headerName = context.getString(HEADER_NAME, DEFAULT_EVENT_HEADER_NAME); 
+    preserveExisting = context.getBoolean(PRESERVE_EXISTING_NAME, true);
+    includeHeaders = context.getBoolean(INCLUDE_HEADER_NAME, true);
+    String tikaConfigFilePath = context.getString(TIKA_CONFIG_LOCATION);
     if (tikaConfigFilePath != null) {
       System.setProperty("tika.config", tikaConfigFilePath); // see TikaConfig() no-arg constructor impl
     }
