@@ -121,6 +121,7 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
         return Collections.singletonList(solrServer);
       }
     };
+    sink.setName(channel.getClass().getName() + SEQ_NUM.getAndIncrement());
     sink.configure(new Context(context));
     sink.setChannel(channel);
     sink.start();
