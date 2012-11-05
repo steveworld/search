@@ -1010,11 +1010,7 @@
     </lst>
     <lst name="server">
       <str name="url">http://127.0.0.1:8983/solr/collection1</str>
-      <!--<int name="numThreads">2</int>-->      
-      <!--<int name="batchSize">1000</int>-->      
-      <!--<int name="batchDurationMillis">10000</int>-->      
     </lst>
-    <str name="tika.config">tika-config.xml</str> <!-- relative or absolute path to tika config file --> 
   </requestHandler>
 
 

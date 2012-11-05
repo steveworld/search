@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -53,6 +54,8 @@ import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
 import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
@@ -61,7 +64,6 @@ import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.common.SolrDocument;
 import org.apache.tika.metadata.Metadata;
 import org.junit.After;
 import org.junit.Before;
@@ -76,7 +78,7 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
   private SimpleSolrSink sink;
 
   private static final String EXTERNAL_SOLR_SERVER_URL = System.getProperty("externalSolrServer");
-//private static final String EXTERNAL_SOLR_SERVER_URL = "http://127.0.0.1:8983/solr";
+//  private static final String EXTERNAL_SOLR_SERVER_URL = "http://127.0.0.1:8983/solr";
   private static final String RESOURCES_DIR = "target/test-classes";
 //private static final String RESOURCES_DIR = "src/test/resources";
   private static final AtomicInteger SEQ_NUM = new AtomicInteger();
@@ -95,17 +97,17 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    System.setProperty("tika.config", "src/test/resources/tika-config.xml");
-    Map context = new HashMap();
-    context.put(TikaSolrSink.SOLR_CLIENT_HOME, RESOURCES_DIR + "/solr/collection1");
+    final Map context = new HashMap();
+    context.put(TikaSolrSink.TIKA_CONFIG_LOCATION, "src/test/resources/tika-config.xml");
+    context.put(TikaSolrSink.SOLR_COLLECTION_LIST + ".testcoll." + TikaSolrSink.SOLR_CLIENT_HOME, RESOURCES_DIR + "/solr/collection1");
     
-    SolrServer solrServer;
+    final SolrServer solrServer;
     if (EXTERNAL_SOLR_SERVER_URL != null) {
       //solrServer = new ConcurrentUpdateSolrServer(EXTERNAL_SOLR_SERVER_URL, 2, 2);
       solrServer = new SafeConcurrentUpdateSolrServer(EXTERNAL_SOLR_SERVER_URL, 2, 2);
       //solrServer = new HttpSolrServer(EXTERNAL_SOLR_SERVER_URL);
     } else {
-      solrServer = new EmbeddedSolrServer(h.getCoreContainer(), "");
+      solrServer = new TestEmbeddedSolrServer(h.getCoreContainer(), "");
     }
 
     Map<String, String> channelContext = new HashMap();
@@ -115,10 +117,15 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
     channel.setName(channel.getClass().getName() + SEQ_NUM.getAndIncrement());
     Configurables.configure(channel, new Context(channelContext));
  
-    sink = new TikaSolrSink(solrServer);
+    sink = new TikaSolrSink() {
+      @Override
+      protected List<SolrServer> createTestSolrServers() {
+        return Collections.singletonList(solrServer);
+      }
+    };
     sink.configure(new Context(context));
     sink.setChannel(channel);
-//    sink.start();
+    sink.start();
     
     source = new EmbeddedSource(sink);    
     ChannelSelector rcs = new ReplicatingChannelSelector();
@@ -134,8 +141,11 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
   }
 
   private void deleteAllDocuments() throws SolrServerException, IOException {
-    sink.getSolrServer().deleteByQuery("*:*"); // delete everything!
-    sink.getSolrServer().commit();
+    for (SolrCollection collection : sink.getSolrCollections().values()) {
+      SolrServer s = collection.getSolrServer();
+      s.deleteByQuery("*:*"); // delete everything!
+      s.commit();
+    }
   }
 
   @After
@@ -160,8 +170,8 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
     int numDocs = 0;
     long startTime = System.currentTimeMillis();
     
-    assertEquals(numDocs, queryResultSetSize("text:*"));      
-//  assertQ(req("text:*"), "//*[@numFound='0']");
+    assertEquals(numDocs, queryResultSetSize("*:*"));      
+//  assertQ(req("*:*"), "//*[@numFound='0']");
     for (int i = 0; i < 1; i++) {
       String path = RESOURCES_DIR + "/test-documents";
       String[] files = new String[] {
@@ -195,13 +205,65 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
         } else {
           numDocs++;
         }
-        assertEquals(numDocs, queryResultSetSize("text:*"));
+        assertEquals(numDocs, queryResultSetSize("*:*"));
       }
       LOGGER.trace("iter: {}", i);
     }
     LOGGER.trace("all done with put at {}", System.currentTimeMillis() - startTime);
-    assertEquals(numDocs, queryResultSetSize("text:*"));
+    assertEquals(numDocs, queryResultSetSize("*:*"));
     LOGGER.trace("sink: ", sink);
+  }
+
+//  @Test
+  public void benchmarkDocumentTypes() throws Exception {
+    int iters = 200;
+    
+    LogManager.getLogger(getClass().getPackage().getName()).setLevel(Level.INFO);
+    
+    assertEquals(0, queryResultSetSize("*:*"));      
+    String path = RESOURCES_DIR + "/test-documents";
+    String[] files = new String[] {
+//        path + "/testBMPfp.txt",
+//        path + "/boilerplate.html",
+//        path + "/NullHeader.docx",
+//        path + "/testWORD_various.doc",          
+//        path + "/testPDF.pdf",
+//        path + "/testJPEG_EXIF.jpg",
+//        path + "/testXML.xml",          
+//        path + "/cars.csv",
+//        path + "/cars.csv.gz",
+//        path + "/cars.tar.gz",
+//        path + "/sample-statuses-20120906-141433.avro",
+        path + "/sample-statuses-20120906-141433-medium.avro",
+    };
+    
+    List<Event> events = new ArrayList();
+    for (String file : files) {
+      File f = new File(file);
+      byte[] body = FileUtils.readFileToByteArray(f);
+      Event event = EventBuilder.withBody(body);
+//      event.getHeaders().put(Metadata.RESOURCE_NAME_KEY, f.getName());
+      events.add(event);
+    }
+    
+    long startTime = System.currentTimeMillis();
+    for (int i = 0; i < iters; i++) {
+      if (i % 10000 == 0) {
+        LOGGER.info("iter: {}", i);
+      }
+      for (Event event : events) {
+        event = EventBuilder.withBody(event.getBody(), new HashMap(event.getHeaders()));
+        event.getHeaders().put("id", UUID.randomUUID().toString());
+        load(event);
+      }
+    }
+    
+    float secs = (System.currentTimeMillis() - startTime) / 1000.0f;
+    long numDocs = queryResultSetSize("*:*");
+    LOGGER.info("Took secs: " + secs + ", iters/sec: " + (iters/secs));
+    LOGGER.info("Took secs: " + secs + ", docs/sec: " + (numDocs/secs));
+    LOGGER.info("Iterations: " + iters + ", numDocs: " + numDocs);
+    LOGGER.info("sink: ", sink);
   }
 
   @Test
@@ -381,23 +443,23 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
 
     Event event = EventBuilder.withBody(bout.toByteArray());
     load(event);
-    assertEquals(records.length, queryResultSetSize("text:*"));
+    assertEquals(records.length, queryResultSetSize("*:*"));
 
-    if (false) {
-      commit();
-      QueryResponse rsp = sink.getSolrServer().query(new SolrQuery("text:*").setRows(Integer.MAX_VALUE));
-      if (records.length == 1) {
-        Record record = records[0];
-        SolrDocument doc = rsp.getResults().get(0);
-        for (Field field : record.getSchema().getFields()) {
-          Object recordValue = record.get(field.name());
-          String docValue = doc.getFieldValue("text").toString();
-          if (!docValue.contains(recordValue.toString())) {
-            assertTrue("mismatch on field " + field.name() + ", recordValue=" + recordValue + ", docValue=" + docValue, docValue.contains(recordValue.toString()));
-          }
-        }
-      }
-    }
+//    if (false) {
+//      commit();
+//      QueryResponse rsp = sink.getSolrServer().query(new SolrQuery("*:*").setRows(Integer.MAX_VALUE));
+//      if (records.length == 1) {
+//        Record record = records[0];
+//        SolrDocument doc = rsp.getResults().get(0);
+//        for (Field field : record.getSchema().getFields()) {
+//          Object recordValue = record.get(field.name());
+//          String docValue = doc.getFieldValue("text").toString();
+//          if (!docValue.contains(recordValue.toString())) {
+//            assertTrue("mismatch on field " + field.name() + ", recordValue=" + recordValue + ", docValue=" + docValue, docValue.contains(recordValue.toString()));
+//          }
+//        }
+//      }
+//    }
   }
   
   private void load(Event event) throws EventDeliveryException {
@@ -405,14 +467,20 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
   }
 
   private void commit() throws SolrServerException, IOException {
-    sink.getSolrServer().commit(true, false, true);
+    for (SolrCollection collection : sink.getSolrCollections().values()) {
+      collection.getSolrServer().commit(true, false, true);
+    }
   }
   
   private int queryResultSetSize(String query) throws SolrServerException, IOException {
     commit();
-    QueryResponse rsp = sink.getSolrServer().query(new SolrQuery(query).setRows(Integer.MAX_VALUE));
-    LOGGER.debug("rsp: {}", rsp);
-    return rsp.getResults().size();
+    int size = 0;
+    for (SolrCollection collection : sink.getSolrCollections().values()) {
+      QueryResponse rsp = collection.getSolrServer().query(new SolrQuery(query).setRows(Integer.MAX_VALUE));
+      LOGGER.debug("rsp: {}", rsp);
+      size += rsp.getResults().size();
+    }
+    return size;
   }
   
   private static Utf8 str(String str) {
@@ -425,7 +493,7 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
     HttpSolrServer server = new HttpSolrServer(url);
     server.setParser(new XMLResponseParser());
     server.deleteByQuery("*:*"); // delete everything!
-    QueryResponse rsp = server.query(new SolrQuery("text:*"));
+    QueryResponse rsp = server.query(new SolrQuery("*:*"));
     assertEquals(0, rsp.getResults().size());
   }
 

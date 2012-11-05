@@ -20,11 +20,13 @@ package org.apache.flume.sink.solr;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
@@ -35,12 +37,8 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.sink.AbstractSink;
-import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
-import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
-import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,30 +49,50 @@ import org.slf4j.LoggerFactory;
  */
 public class SimpleSolrSink extends AbstractSink implements Configurable {
   
-  private SolrServer server; // proxy to remote solr
-  private CountDownLatch isStopping = new CountDownLatch(1); // indicates we should shutdown ASAP
-  private CountDownLatch isStopped = new CountDownLatch(1); // indicates we are stopped
-  private int numLoadedDocs = 0; // number of documents loaded in the current transaction
-      
-  protected SimpleSolrSinkCounter solrSinkCounter; // metrics
+  private Map<String, SolrCollection> solrCollections; // proxies to remote solr
+  private Context context;
+  private CountDownLatch isStopping = new CountDownLatch(1); // indicates we should shutdown ASAP. TODO: unnecessary? let's ask flumers
+  private CountDownLatch isStopped = new CountDownLatch(1); // indicates we are stopped. TODO: unnecessary? let's ask flumers
+  private SimpleSolrSinkCounter solrSinkCounter; // TODO: replace with http://metrics.codahale.com
   
-  private static final AtomicInteger SEQ_NUM = new AtomicInteger();
+  private static final AtomicLong SEQ_NUM = new AtomicLong();
   private static final Logger LOGGER = LoggerFactory.getLogger(SimpleSolrSink.class);
 
   public SimpleSolrSink() {
-    this(null);
-  }
-  
-  /** For testing only */
-  protected SimpleSolrSink(SolrServer server) {
-    this.server = server;
   }
   
   @Override
   public void configure(Context context) {
+    this.context = context;
     if (solrSinkCounter == null) {
       solrSinkCounter = new SimpleSolrSinkCounter("" + getName() + "#" + SEQ_NUM.getAndIncrement());
     }
+  }
+  
+  /** Returns the Flume configuration settings */
+  protected Context getContext() {
+    return context;
+  }
+
+  /** Returns the Solr collection proxies to which this sink can route Solr documents */
+  protected final Map<String, SolrCollection> getSolrCollections() {
+    return solrCollections;
+  }
+  
+  /** Creates the Solr collection proxies to which this sink can route Solr documents; override to customize */
+  protected Map<String, SolrCollection> createSolrCollections() {
+    String solrServerUrl = "http://127.0.0.1:8983/solr/collection1";
+    return Collections.singletonMap(solrServerUrl, new SolrCollection(solrServerUrl, new HttpSolrServer(solrServerUrl)));
+  }
+  
+  /** Returns the maximum number of events to take per flume transaction; override to customize */
+  protected int getMaxBatchSize() {
+    return 1000;
+  }
+  
+  /** Returns the maximum duration per flume transaction; override to customize */
+  protected long getMaxBatchDurationMillis() {
+    return 10 * 1000;
   }
 
   @Override
@@ -83,22 +101,13 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
     solrSinkCounter.start();
     isStopping = new CountDownLatch(1);
     isStopped = new CountDownLatch(1);
-    if (server == null) {
-      server = createSolrServer();
+    if (solrCollections == null) {
+      solrCollections = Collections.unmodifiableMap(new LinkedHashMap(createSolrCollections()));
     }
     super.start();
     LOGGER.info("Solr sink {} started.", getName());
   }
 
-  protected SolrServer getSolrServer() {
-    return server;
-  }
-  
-  protected SolrServer createSolrServer() {
-    String solrServerUrl = "http://127.0.0.1:8983/solr/collection1";
-    return new HttpSolrServer(solrServerUrl);
-  }
-  
   @Override
   public synchronized void stop() {
     stop(15, TimeUnit.SECONDS);
@@ -119,14 +128,13 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
     }
     
     try {
-      SolrServer s = getSolrServer();
-      if (s != null && (!(s instanceof EmbeddedSolrServer))) {
-        s.shutdown();
+      for (SolrCollection collection : getSolrCollections().values()) {
+        collection.shutdown();
       }
       solrSinkCounter.stop();
       LOGGER.info("Solr sink {} stopped. Metrics: {}, {}", getName(), solrSinkCounter);
     } finally {
-      server = null;
+      solrCollections = null;
       super.stop();
     }
   }
@@ -138,7 +146,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
     try {
       int numEventsTaken = 0;
       tx.begin();
-      beginSolr();
+      beginSolrTransaction();
       long batchEndTime = System.currentTimeMillis() + getMaxBatchDurationMillis();
       int batchSize = getMaxBatchSize();
       for (int i = 0; i < batchSize; i++) { // repeatedly take and process events from the Flume queue
@@ -151,7 +159,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
         Event event = ch.take();
         solrSinkCounter.addToTakeNanos(System.nanoTime() - startTime);
         if (event == null) {
-          break; // TODO: return Status.BACKOFF in this case?
+          break;
         }
         numEventsTaken++;
         LOGGER.debug("solr event: {}", event);
@@ -171,15 +179,11 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
         solrSinkCounter.incrementBatchCompleteCount();
       }
       solrSinkCounter.addToEventDrainAttemptCount(numEventsTaken);
-
       
-      if (numLoadedDocs > 0) {
-        numLoadedDocs = 0;
-        commitSolr();
-      }
+      commitSolrTransaction();
       tx.commit();
       solrSinkCounter.addToEventDrainSuccessCount(numEventsTaken);
-      return Status.READY;
+      return numEventsTaken == 0 ? Status.BACKOFF : Status.READY;
     } catch (Throwable t) {
       tx.rollback();
       if (t instanceof Error) {
@@ -189,7 +193,6 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
             " channel " + ch.getName() + ". Exception follows.", t);
         return Status.BACKOFF;
       } else {
-        // destroyConnection();
         throw new EventDeliveryException("Failed to send events", t);
       }
     } finally {
@@ -206,27 +209,16 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
     }        
   }
 
-  /** Returns the maximum number of events to take per flume transaction */
-  protected int getMaxBatchSize() {
-    return 1000;
-  }
-  
-  /** Returns the maximum duration per flume transaction */
-  protected long getMaxBatchDurationMillis() {
-    return 10 * 1000;
-  }
-
   /** Extracts, transforms and loads the given Flume event into Solr */
   public void process(Event event) throws IOException, SolrServerException {
-//    LOGGER.debug("threadId: {}", Thread.currentThread().getId());
-    
+//    LOGGER.debug("threadId: {}", Thread.currentThread().getId());    
     long startTime = System.nanoTime();
     List<SolrInputDocument> docs = extract(event); // TODO: use queue to support parallel ETL across multiple CPUs?
     solrSinkCounter.addToExtractNanos(System.nanoTime() - startTime);
     
     startTime = System.nanoTime();
     docs = transform(docs);
-    solrSinkCounter.addToExtractNanos(System.nanoTime() - startTime);
+    solrSinkCounter.addToTransformNanos(System.nanoTime() - startTime);
 
     startTime = System.nanoTime();
     load(docs);
@@ -252,17 +244,20 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
   
   /** Loads the given documents into Solr */
   public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
-    if (docs.size() > 0) {
-      UpdateResponse rsp = getSolrServer().add(docs);
-      numLoadedDocs += docs.size();
+    for (String collectionName : getSolrCollections().keySet()) {
+      load(docs, collectionName);
     }
   }
 
+  /** Loads the given documents into the specified Solr collection */
+  public void load(List<SolrInputDocument> docs, String collectionName) throws IOException, SolrServerException {
+    getSolrCollections().get(collectionName).load(docs);
+  }
+
   /** Begins a solr transaction */
-  public void beginSolr() {
-    SolrServer s = getSolrServer();
-    if (s instanceof SafeConcurrentUpdateSolrServer) {
-      ((SafeConcurrentUpdateSolrServer) s).clearException();
+  public void beginSolrTransaction() {
+    for (SolrCollection collection : getSolrCollections().values()) {
+      collection.beginSolrTransaction();
     }
   }
   
@@ -270,17 +265,16 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
    * Sends any outstanding documents to solr and waits for a positive or negative ack (i.e. exception) from solr.
    * Depending on the outcome the caller should then commit or rollback the current flume transaction correspondingly.
    */
-  public void commitSolr() {
-    SolrServer s = getSolrServer();
-    if (s instanceof ConcurrentUpdateSolrServer) {
-      ((ConcurrentUpdateSolrServer) s).blockUntilFinished();
+  public void commitSolrTransaction() {
+    for (SolrCollection collection : getSolrCollections().values()) {
+      collection.commitSolrTransaction();
     }
   }
   
   @Override
   public String toString() {
     String shortClassName = getClass().getName().substring(getClass().getName().lastIndexOf('.') + 1);
-    return shortClassName + " " + getName(); // + " { solrServer: " + getSolrServer() + " }";
+    return shortClassName + " " + getName(); // + " { solrServers: " + getSolrServers() + " }";
   }
   
 }
