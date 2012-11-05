@@ -98,6 +98,7 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
   private TikaConfig tikaConfig;
   private AutoDetectParser autoDetectParser;  
   private ParseContext parseContext;
+  private ParseInfo parseInfo;
     
   private static final XPathParser PARSER = new XPathParser("xhtml", XHTMLContentHandler.XHTML);
 
@@ -305,25 +306,27 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
 
   @Override
   public void process(Event event) throws IOException, SolrServerException {
-    parseContext = new ParseContext();
-    parseContext.set(ParseInfo.class, new ParseInfo(event, this)); // ParseInfo is more practical than ParseContext
+    parseInfo = new ParseInfo(event, this);
+    parseContext = new ParseContext();    
+    parseContext.set(ParseInfo.class, parseInfo); // ParseInfo is more practical than ParseContext
     try {
       super.process(event);
     } finally {
+      parseInfo = null;
       parseContext = null;
     }    
   }
   
   protected final ParseInfo getParseInfo() {
-    return parseContext.get(ParseInfo.class);
+    return parseInfo;
   }
   
   @Override
   protected List<SolrInputDocument> extract(Event event) {    
     Parser parser = detectParser(event);    
     parseContext.set(Parser.class, parser); // necessary for gzipped files or tar files, etc! copied from TikaCLI
-    ParseInfo info = getParseInfo();
     Metadata metadata = new Metadata();
+    ParseInfo info = getParseInfo();
     info.setMetadata(metadata);
 
     // If you specify the resource name (the filename, roughly) with this parameter,
@@ -435,14 +438,13 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
   public void load(List<SolrInputDocument> docs, String collectionName) throws IOException, SolrServerException {
     SolrCollection coll = getSolrCollections().get(collectionName);
     assert coll != null;
-    ParseInfo info = getParseInfo();
-    AtomicLong numRecords = info.getRecordNumber();
+    AtomicLong numRecords = getParseInfo().getRecordNumber();
     for (SolrInputDocument doc : docs) {
       long num = numRecords.getAndIncrement();
 //      LOGGER.debug("record #{} loading before doc: {}", num, doc);
       SchemaField uniqueKey = coll.getSchema().getUniqueKeyField();
       if (uniqueKey != null && !doc.containsKey(uniqueKey.getName())) {
-        String id = info.getId();
+        String id = getParseInfo().getId();
         if (id == null) {
           throw new IllegalStateException("Event header " + uniqueKey.getName()
               + " must not be null as it is needed as a basis for a unique key for solr doc: " + doc);
