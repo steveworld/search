@@ -20,11 +20,10 @@ package org.apache.flume.sink.solr;
 
 import java.util.UUID;
 
-import junit.framework.Assert;
-
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.SimpleEvent;
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.fasterxml.uuid.EthernetAddress;
@@ -32,7 +31,7 @@ import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.NoArgGenerator;
 import com.fasterxml.uuid.UUIDType;
 
-public class UUIDInterceptorTest {
+public class UUIDInterceptorTest extends Assert {
 
   private static final String ID = "id";
   
@@ -42,8 +41,8 @@ public class UUIDInterceptorTest {
     context.put(UUIDInterceptor.HEADER_NAME, ID);
     context.put(UUIDInterceptor.PRESERVE_EXISTING_NAME, "true");
     Event event = new SimpleEvent();
-    Assert.assertTrue(build(context).intercept(event).getHeaders().get(ID).length() > 0);
-    Assert.assertTrue(buildParanoid(context).intercept(event).getHeaders().get(ID).length() > 0);
+    assertTrue(build(context).intercept(event).getHeaders().get(ID).length() > 0);
+    assertTrue(buildParanoid(context).intercept(event).getHeaders().get(ID).length() > 0);
   }
 
   @Test
@@ -53,8 +52,8 @@ public class UUIDInterceptorTest {
     context.put(UUIDInterceptor.PRESERVE_EXISTING_NAME, "true");
     Event event = new SimpleEvent();
     event.getHeaders().put(ID, "foo");
-    Assert.assertEquals("foo", build(context).intercept(event).getHeaders().get(ID));
-    Assert.assertEquals("foo", buildParanoid(context).intercept(event).getHeaders().get(ID));
+    assertEquals("foo", build(context).intercept(event).getHeaders().get(ID));
+    assertEquals("foo", buildParanoid(context).intercept(event).getHeaders().get(ID));
   }
 
   @Test
@@ -63,8 +62,8 @@ public class UUIDInterceptorTest {
     context.put(UUIDInterceptor.HEADER_NAME, ID);
     context.put(UUIDInterceptor.PREFIX_NAME, "bar#");
     Event event = new SimpleEvent();
-    Assert.assertTrue(build(context).intercept(event).getHeaders().get(ID).startsWith("bar#"));
-    Assert.assertTrue(buildParanoid(context).intercept(event).getHeaders().get(ID).startsWith("bar#"));
+    assertTrue(build(context).intercept(event).getHeaders().get(ID).startsWith("bar#"));
+    assertTrue(buildParanoid(context).intercept(event).getHeaders().get(ID).startsWith("bar#"));
   }
 
   private UUIDInterceptor build(Context context) {

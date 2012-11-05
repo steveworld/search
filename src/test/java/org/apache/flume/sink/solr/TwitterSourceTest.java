@@ -34,9 +34,10 @@ import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.sink.DefaultSinkProcessor;
 import org.apache.flume.sink.LoggerSink;
+import org.junit.Assert;
 import org.junit.Test;
 
-public class TwitterSourceTest {
+public class TwitterSourceTest extends Assert {
 
   @Test
   public void testBasic() throws Exception {

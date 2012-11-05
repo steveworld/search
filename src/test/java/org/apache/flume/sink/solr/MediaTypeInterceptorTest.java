@@ -22,16 +22,15 @@ import java.io.File;
 import java.util.Collections;
 import java.util.Map;
 
-import junit.framework.Assert;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
 import org.apache.tika.metadata.Metadata;
+import org.junit.Assert;
 import org.junit.Test;
 
-public class MediaTypeInterceptorTest {
+public class MediaTypeInterceptorTest extends Assert {
 
   private static final String ID = MediaTypeInterceptor.DEFAULT_EVENT_HEADER_NAME;
   private static final String RESOURCES_DIR = "target/test-classes";
@@ -40,54 +39,54 @@ public class MediaTypeInterceptorTest {
   public void testPlainText() throws Exception {    
     Context context = createContext();
     Event event = EventBuilder.withBody("foo".getBytes("UTF-8"));
-    Assert.assertEquals("text/plain", detect(context, event));
+    assertEquals("text/plain", detect(context, event));
   }
 
   @Test
   public void testUnknownType() throws Exception {    
     Context context = createContext();
     Event event = EventBuilder.withBody(new byte[] {3, 4, 5, 6});
-    Assert.assertEquals("application/octet-stream", detect(context, event));
+    assertEquals("application/octet-stream", detect(context, event));
   }
 
   @Test
   public void testUnknownEmptyType() throws Exception {    
     Context context = createContext();
     Event event = EventBuilder.withBody(new byte[0]);
-    Assert.assertEquals("application/octet-stream", detect(context, event));
+    assertEquals("application/octet-stream", detect(context, event));
   }
 
   @Test
   public void testNullType() throws Exception {    
     Context context = createContext();
     Event event = EventBuilder.withBody(null);
-    Assert.assertEquals("application/octet-stream", detect(context, event));
+    assertEquals("application/octet-stream", detect(context, event));
   }
 
   @Test
   public void testXML() throws Exception {    
     Context context = createContext();
     Event event = EventBuilder.withBody("<?xml version=\"1.0\"?><foo/>".getBytes("UTF-8"));
-    Assert.assertEquals("application/xml", detect(context, event));
+    assertEquals("application/xml", detect(context, event));
   }
 
   public void testXML11() throws Exception {    
     Context context = createContext();
     Event event = EventBuilder.withBody("<?xml version=\"1.1\"?><foo/>".getBytes("UTF-8"));
-    Assert.assertEquals("application/xml", detect(context, event));
+    assertEquals("application/xml", detect(context, event));
   }
 
   public void testXMLAnyVersion() throws Exception {    
     Context context = createContext();
     Event event = EventBuilder.withBody("<?xml version=\"\"?><foo/>".getBytes("UTF-8"));
-    Assert.assertEquals("application/xml", detect(context, event));
+    assertEquals("application/xml", detect(context, event));
   }
 
   @Test
   public void testXMLasTextPlain() throws Exception {    
     Context context = createContext();
     Event event = EventBuilder.withBody("<foo/>".getBytes("UTF-8"));
-    Assert.assertEquals("text/plain", detect(context, event));
+    assertEquals("text/plain", detect(context, event));
   }
 
   @Test
@@ -95,7 +94,7 @@ public class MediaTypeInterceptorTest {
     Context context = createContext();
     Event event = EventBuilder.withBody("foo".getBytes("UTF-8"));
     event.getHeaders().put(ID, "fooType");
-    Assert.assertEquals("fooType", detect(context, event));
+    assertEquals("fooType", detect(context, event));
   }
   
   @Test
@@ -119,21 +118,21 @@ public class MediaTypeInterceptorTest {
     for (int i = 0; i < files.length; i += 3) {
       byte[] body = FileUtils.readFileToByteArray(new File(files[i+0]));
       Event event = EventBuilder.withBody(body);
-      Assert.assertEquals(files[i+1], detect(context, event));
+      assertEquals(files[i+1], detect(context, event));
     }
     
     for (int i = 0; i < files.length; i += 3) {
       byte[] body = FileUtils.readFileToByteArray(new File(files[i+0]));
       Map headers = Collections.singletonMap(Metadata.RESOURCE_NAME_KEY, new File(files[i+0]).getName());
       Event event = EventBuilder.withBody(body, headers);
-      Assert.assertEquals(files[i+2], detect(context, event));
+      assertEquals(files[i+2], detect(context, event));
     }
     
     for (int i = 0; i < files.length; i += 3) {
       byte[] body = FileUtils.readFileToByteArray(new File(files[i+0]));
       Map headers = Collections.singletonMap(Metadata.RESOURCE_NAME_KEY, new File(files[i+0]).getPath());
       Event event = EventBuilder.withBody(body, headers);
-      Assert.assertEquals(files[i+2], detect(context, event));
+      assertEquals(files[i+2], detect(context, event));
     }
   }
 
