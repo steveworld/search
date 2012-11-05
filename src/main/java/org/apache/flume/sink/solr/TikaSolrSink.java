@@ -169,6 +169,11 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
   
   @Override
   protected Map<String, SolrCollection> createSolrCollections() {
+    /*
+     * TODO: need to add an API to solrj that allows fetching IndexSchema from the remote Solr server. Plus move Solr
+     * cell params out of solrconfig.xml into a nice HOCON config file. This would allow us to have a single source of
+     * truth, simplify and make it unnecessary to parse schema.xml and solrconfig.xml on the client side.
+     */
     Context context = getContext();
     List<SolrServer> testServers = createTestSolrServers();
     Map<String, SolrCollection> collections = new LinkedHashMap();
