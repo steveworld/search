@@ -29,7 +29,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.Schema;
@@ -44,8 +43,7 @@ import org.apache.avro.generic.GenericEnumSymbol;
 import org.apache.avro.generic.GenericFixed;
 import org.apache.avro.io.DatumReader;
 import org.apache.flume.FlumeException;
-import org.apache.flume.sink.solr.MultiDocumentParserMarker;
-import org.apache.flume.sink.solr.TikaSolrSink;
+import org.apache.flume.sink.solr.ParseInfo;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.handler.extraction.SolrContentHandler;
@@ -91,7 +89,7 @@ public class AvroParser extends AbstractParser {
   protected void parse2(InputStream in, ContentHandler handler, Metadata metadata, ParseContext context)
     throws IOException, SAXException {
  
-    context.set(MultiDocumentParserMarker.class, new MultiDocumentParserMarker()); // TODO hack alert!    
+    getParseInfo(context).setMultiDocumentParser(true); // TODO hack alert!    
 
     // Avro requires a SeekableInput so looks like we need to first fetch it all into a buffer. 
     // TODO optimize via a new custom SeekableInput impl
@@ -124,11 +122,17 @@ public class AvroParser extends AbstractParser {
       }
     }
   }
+  
+  protected ParseInfo getParseInfo(ParseContext context) {
+    return context.get(ParseInfo.class);
+  }
 
   /** Processes the given Avro record */
   protected void process(Record record, XHTMLContentHandler handler, Metadata metadata, ParseContext context)
       throws IOException, SAXException, SolrServerException {
-    LOGGER.debug("record #{}: {}", context.get(AtomicLong.class), record); // hack alert!
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("record #{}: {}", getParseInfo(context).getRecordNumber(), record);
+    }
     List<SolrInputDocument> docs = extract(record, handler, metadata, context);
     docs = transform(docs, metadata, context);
     load(docs, metadata, context);
@@ -137,7 +141,7 @@ public class AvroParser extends AbstractParser {
   /** Extracts zero or more Solr documents from the given Avro record */
   protected List<SolrInputDocument> extract(Record record, XHTMLContentHandler handler, Metadata metadata, ParseContext context)
        throws SAXException {
-    SolrContentHandler solrHandler = context.get(SolrContentHandler.class);
+    SolrContentHandler solrHandler = getParseInfo(context).getSolrContentHandler();
     handler.startDocument();
     solrHandler.startDocument(); // this is necessary because handler.startDocument() does not delegate all the way down to solrHandler
     handler.startElement("p");
@@ -157,8 +161,7 @@ public class AvroParser extends AbstractParser {
 
   /** Loads the given documents into Solr */
   protected void load(List<SolrInputDocument> docs, Metadata metadata, ParseContext context) throws IOException, SolrServerException {
-    TikaSolrSink sink = context.get(TikaSolrSink.class);
-    sink.load(docs);
+    getParseInfo(context).getSink().load(docs);
   }
   
   /** Writes the given Avro datum into the given SAX handler, using the given Avro schema */
@@ -260,21 +263,5 @@ public class AvroParser extends AbstractParser {
       throw new RuntimeException(e); // unreachable
     }
   }
-
-//  private void processMetaKeys(XHTMLContentHandler xhtml, FileReader<Record> reader) throws SAXException {
-//    if (reader instanceof DataFileReader) {
-//      DataFileReader dataReader = (DataFileReader) reader;
-//      Map<String, String> metaKeys = new LinkedHashMap();
-//      for (Object key : dataReader.getMetaKeys()) {
-//        String metaValue = dataReader.getMetaString(key.toString());
-//        metaKeys.put(key.toString(), metaValue);
-//      }
-//      xhtml.startElement("metaKeys");
-//      for (Map.Entry<String, String> entry: metaKeys.entrySet()) {
-//        xhtml.element(entry.getKey(), entry.getValue());
-//      }
-//      xhtml.endElement("metaKeys");          
-//    }
-//  }
 
 }

@@ -25,10 +25,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.flume.sink.solr.MultiDocumentParserMarker;
-import org.apache.flume.sink.solr.TikaSolrSink;
+import org.apache.flume.sink.solr.ParseInfo;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.handler.extraction.SolrContentHandler;
@@ -158,9 +156,8 @@ public class DelimitedValuesParser extends AbstractParser {
   
   protected void parse2(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
     throws IOException, TikaException {
-    //if (true) throw new RuntimeException("reached delimitedvaluesparser");
- 
-    context.set(MultiDocumentParserMarker.class, new MultiDocumentParserMarker()); // TODO hack alert!    
+
+    getParseInfo(context).setMultiDocumentParser(true); // TODO hack alert!    
     
     // Automatically detect the character encoding
     AutoDetectReader reader = new AutoDetectReader(new CloseShieldInputStream(stream), metadata, LOADER);
@@ -210,6 +207,10 @@ public class DelimitedValuesParser extends AbstractParser {
     }
   }
 
+  protected ParseInfo getParseInfo(ParseContext context) {
+    return context.get(ParseInfo.class);
+  }
+
   protected String normalize(String str) {
     return str;
   }
@@ -225,7 +226,9 @@ public class DelimitedValuesParser extends AbstractParser {
   /** Processes the given record */
   protected void process(Map<String, String> record, XHTMLContentHandler handler, Metadata metadata, ParseContext context)
       throws IOException, SAXException, SolrServerException {     
-    LOGGER.debug("record #{}: {}", context.get(AtomicLong.class), record); // hack alert!
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("record #{}: {}", getParseInfo(context).getRecordNumber(), record);
+    }
     List<SolrInputDocument> docs = extract(record, handler, metadata, context);
     docs = transform(docs, metadata, context);
     load(docs, metadata, context); 
@@ -234,7 +237,7 @@ public class DelimitedValuesParser extends AbstractParser {
   /** Extracts zero or more Solr documents from the given record */
   protected List<SolrInputDocument> extract(Map<String, String> record, XHTMLContentHandler handler, Metadata metadata, ParseContext context)
        throws SAXException {
-    SolrContentHandler solrHandler = context.get(SolrContentHandler.class);
+    SolrContentHandler solrHandler = getParseInfo(context).getSolrContentHandler();
     handler.startDocument();
     solrHandler.startDocument(); // this is necessary because handler.startDocument() does not delegate all the way down to solrHandler
     handler.startElement("p");
@@ -255,8 +258,7 @@ public class DelimitedValuesParser extends AbstractParser {
 
   /** Loads the given documents into Solr */
   protected void load(List<SolrInputDocument> docs, Metadata metadata, ParseContext context) throws IOException, SolrServerException {
-    TikaSolrSink sink = context.get(TikaSolrSink.class);
-    sink.load(docs);
+    getParseInfo(context).getSink().load(docs);
   }
 
 //  private static void debugTmp() throws IOException {
