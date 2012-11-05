@@ -67,8 +67,8 @@ public class SolrCollection {
   /** Loads the given documents into Solr */
   public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
     if (docs.size() > 0) {
-      UpdateResponse rsp = server.add(docs);
       numLoadedDocs += docs.size();
+      UpdateResponse rsp = server.add(docs);
     }
   }
 

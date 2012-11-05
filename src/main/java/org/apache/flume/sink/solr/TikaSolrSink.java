@@ -300,7 +300,8 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
 
   @Override
   public void process(Event event) throws IOException, SolrServerException {
-    parseContext = new ParseContext(); //TODO: should we design a way to pass in parse context?
+    parseContext = new ParseContext();
+    parseContext.set(ParseInfo.class, new ParseInfo(event, this)); // ParseInfo is more practical than ParseContext
     try {
       super.process(event);
     } finally {
@@ -308,11 +309,17 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
     }    
   }
   
+  protected final ParseInfo getParseInfo() {
+    return parseContext.get(ParseInfo.class);
+  }
+  
   @Override
   protected List<SolrInputDocument> extract(Event event) {    
     Parser parser = detectParser(event);    
-    SolrCollection coll = detectSolrCollection(event, parser);    
+    parseContext.set(Parser.class, parser); // necessary for gzipped files or tar files, etc! copied from TikaCLI
+    ParseInfo info = getParseInfo();
     Metadata metadata = new Metadata();
+    info.setMetadata(metadata);
 
     // If you specify the resource name (the filename, roughly) with this parameter,
     // then Tika can make use of it in guessing the appropriate MIME type
@@ -333,18 +340,19 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
       metadata.add(Metadata.CONTENT_ENCODING, charset);
     }
 
+    info.setSolrCollection(detectSolrCollection(event, parser));
     InputStream inputStream = null;
     try {
       inputStream = TikaInputStream.get(event.getBody(), metadata);
       for (Entry<String, String> entry : event.getHeaders().entrySet()) {
-        if (entry.getKey().equals(coll.getSchema().getUniqueKeyField().getName())) {
-          parseContext.set(String.class, entry.getValue()); // TODO: hack alert!
+        if (entry.getKey().equals(info.getSolrCollection().getSchema().getUniqueKeyField().getName())) {
+          info.setId(entry.getValue()); // TODO: hack alert!
         } else {
           metadata.set(entry.getKey(), entry.getValue());
         }
       }
             
-      SolrContentHandler handler = createSolrContentHandler(metadata, coll);
+      SolrContentHandler handler = createSolrContentHandler();
       ContentHandler parsingHandler = handler;
       StringWriter debugWriter = null;
       if (LOGGER.isDebugEnabled()) {
@@ -353,24 +361,20 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
         parsingHandler = new TeeContentHandler(parsingHandler, serializer); 
       }
 
-      String xpathExpr = coll.getSolrParams().get(ExtractingParams.XPATH_EXPRESSION);
+      String xpathExpr = info.getSolrCollection().getSolrParams().get(ExtractingParams.XPATH_EXPRESSION);
 //    String xpathExpr = "/xhtml:html/xhtml:body/xhtml:div/descendant:node()"; // params.get(ExtractingParams.XPATH_EXPRESSION);
       if (xpathExpr != null) {
         Matcher matcher = PARSER.parse(xpathExpr);
         parsingHandler = new MatchingContentHandler(parsingHandler, matcher);
       }
 
-      parseContext.set(Parser.class, parser); // necessary for gzipped files or tar files, etc! copied from TikaCLI
-      parseContext.set(TikaSolrSink.class, this);
-      parseContext.set(SolrContentHandler.class, handler);
-      parseContext.set(IndexSchema.class, coll.getSchema());
-      parseContext.set(AtomicLong.class, new AtomicLong());
+      info.setSolrContentHandler(handler);
       
       try {
-        addPasswordHandler(resourceName, parseContext, coll);
+        addPasswordHandler(resourceName);
         parser.parse(inputStream, parsingHandler, metadata, parseContext);
       } catch (Exception e) {
-        boolean ignoreTikaException = coll.getSolrParams().getBool(ExtractingParams.IGNORE_TIKA_EXCEPTION, false);
+        boolean ignoreTikaException = info.getSolrCollection().getSolrParams().getBool(ExtractingParams.IGNORE_TIKA_EXCEPTION, false);
         if (ignoreTikaException) {
           LOGGER.warn(new StringBuilder("skip extracting text due to ").append(e.getLocalizedMessage())
               .append(". metadata=").append(metadata.toString()).toString());
@@ -381,7 +385,7 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
       
       LOGGER.debug("debug XML doc: {}", debugWriter);        
       
-      if (parseContext.get(MultiDocumentParserMarker.class) != null) {
+      if (info.isMultiDocumentParser()) {
         return Collections.EMPTY_LIST;
       }
       
@@ -418,16 +422,22 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
   }
 
   @Override
+  public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
+    load(docs, getParseInfo().getSolrCollection().getName());
+  }
+  
+  @Override
   public void load(List<SolrInputDocument> docs, String collectionName) throws IOException, SolrServerException {
     SolrCollection coll = getSolrCollections().get(collectionName);
     assert coll != null;
-    AtomicLong numRecords = parseContext.get(AtomicLong.class); // TODO: hack alert!
+    ParseInfo info = getParseInfo();
+    AtomicLong numRecords = info.getRecordNumber();
     for (SolrInputDocument doc : docs) {
       long num = numRecords.getAndIncrement();
 //      LOGGER.debug("record #{} loading before doc: {}", num, doc);
       SchemaField uniqueKey = coll.getSchema().getUniqueKeyField();
       if (uniqueKey != null && !doc.containsKey(uniqueKey.getName())) {
-        String id = parseContext.get(String.class);
+        String id = info.getId();
         if (id == null) {
           throw new IllegalStateException("Event header " + uniqueKey.getName()
               + " must not be null as it is needed as a basis for a unique key for solr doc: " + doc);
@@ -439,13 +449,15 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
     super.load(docs, collectionName);
   }
 
-  protected SolrContentHandler createSolrContentHandler(Metadata metadata, SolrCollection coll) {
-    return new TrimSolrContentHandler(metadata, coll.getSolrParams(), coll.getSchema(), coll.getDateFormats());
+  protected SolrContentHandler createSolrContentHandler() {
+    ParseInfo info = getParseInfo();
+    SolrCollection coll = info.getSolrCollection();
+    return new TrimSolrContentHandler(info.getMetadata(), coll.getSolrParams(), coll.getSchema(), coll.getDateFormats());
   }
 
-  protected void addPasswordHandler(String resourceName, ParseContext ctx, SolrCollection coll) throws FileNotFoundException {
+  protected void addPasswordHandler(String resourceName) throws FileNotFoundException {
     RegexRulesPasswordProvider epp = new RegexRulesPasswordProvider();
-    String pwMapFile = coll.getSolrParams().get(ExtractingParams.PASSWORD_MAP_FILE);
+    String pwMapFile = getParseInfo().getSolrCollection().getSolrParams().get(ExtractingParams.PASSWORD_MAP_FILE);
     if (pwMapFile != null && pwMapFile.length() > 0) {
       InputStream is = new BufferedInputStream(new FileInputStream(pwMapFile)); // getResourceLoader().openResource(pwMapFile);
       if (is != null) {
@@ -453,12 +465,12 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
         epp.parse(is);
       }
     }
-    ctx.set(PasswordProvider.class, epp);
-    String resourcePassword = coll.getSolrParams().get(ExtractingParams.RESOURCE_PASSWORD);
+    parseContext.set(PasswordProvider.class, epp);
+    String resourcePassword = getParseInfo().getSolrCollection().getSolrParams().get(ExtractingParams.RESOURCE_PASSWORD);
     if (resourcePassword != null) {
       epp.setExplicitPassword(resourcePassword);
       LOGGER.debug("Literal password supplied for file {}", resourceName);
     }
   }
-  
+    
 }
