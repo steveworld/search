@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.solr.handler.extraction.SolrContentHandler;
 import org.apache.tika.metadata.Metadata;
@@ -60,6 +61,10 @@ public final class ParseInfo {
 
   public SimpleSolrSink getSink() {
     return sink;
+  }
+
+  public Context getContext() {
+    return sink.getContext();
   }
 
   public String getId() {
