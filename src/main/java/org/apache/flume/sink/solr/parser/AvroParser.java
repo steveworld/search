@@ -131,7 +131,7 @@ public class AvroParser extends AbstractParser {
     LOGGER.debug("record #{}: {}", context.get(AtomicLong.class), record); // hack alert!
     List<SolrInputDocument> docs = extract(record, handler, metadata, context);
     docs = transform(docs, metadata, context);
-    load(docs, metadata, context); 
+    load(docs, metadata, context);
   }
 
   /** Extracts zero or more Solr documents from the given Avro record */
