@@ -163,147 +163,6 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
     return solrServerBatchDurationMillis;
   }
 
-  /** For test injection only */
-  protected List<SolrServer> createTestSolrServers() {
-    return Collections.EMPTY_LIST;
-  }
-  
-  @Override
-  protected Map<String, SolrCollection> createSolrCollections() {
-    /*
-     * TODO: need to add an API to solrj that allows fetching IndexSchema from the remote Solr server. Plus move Solr
-     * cell params out of solrconfig.xml into a nice HOCON config file. This would allow us to have a single source of
-     * truth, simplify and make it unnecessary to parse schema.xml and solrconfig.xml on the client side.
-     */
-    Context context = getContext();
-    List<SolrServer> testServers = createTestSolrServers();
-    Map<String, SolrCollection> collections = new LinkedHashMap();
-    Map<String, String> subContext = context.getSubProperties(SOLR_COLLECTION_LIST + ".");
-    Set<String> collectionNames = new LinkedHashSet();
-    for (String name : subContext.keySet()) {
-      collectionNames.add(name.substring(0, name.indexOf('.')));
-    }
-    if (collectionNames.size() == 0) {
-      throw new ConfigurationException("Missing collection specification in configuration: " + context);
-    }
-    
-    int i = 0;
-    for (String collectionName : collectionNames) {
-      String solrHome = null;
-      for (Map.Entry<String,String> entry : subContext.entrySet()) {
-        if (entry.getKey().equals(collectionName + "." + SOLR_CLIENT_HOME)) {
-          solrHome = entry.getValue();
-          assert solrHome != null;
-          break;
-        }          
-      }
-      
-      LOGGER.debug("solrHome: {}", solrHome);
-      SolrParams params = new MapSolrParams(new HashMap());
-      String zkConnectString = null;
-      String solrServerUrl = "http://127.0.0.1:8983/solr/collection1";
-      int solrServerNumThreads = 2;
-      int solrServerQueueLength = solrServerNumThreads;
-      Collection<String> dateFormats = DateUtil.DEFAULT_DATE_FORMATS;
-      IndexSchema schema;
-  
-      String oldSolrHome = null;
-      if (solrHome != null) {
-        oldSolrHome = System.setProperty(SOLR_HOME_PROPERTY_NAME, solrHome);
-      }
-      try {        
-        SolrConfig solrConfig = new SolrConfig();
-        //SolrConfig solrConfig = new SolrConfig("solrconfig.xml");
-        //SolrConfig solrConfig = new SolrConfig("/cloud/apache-solr-4.0.0-BETA/example/solr/collection1", "solrconfig.xml", null);
-        //SolrConfig solrConfig = new SolrConfig("/cloud/apache-solr-4.0.0-BETA/example/solr/collection1/conf/solrconfig.xml");
-        
-        schema = new IndexSchema(solrConfig, null, null);
-        //schema = new IndexSchema(solrConfig, "schema.xml", null);
-        //schema = new IndexSchema(solrConfig, "/cloud/apache-solr-4.0.0-BETA/example/solr/collection1/conf/schema.xml", null);
-  
-        for (PluginInfo pluginInfo : solrConfig.getPluginInfos(SolrRequestHandler.class.getName())) {
-          if ("/update/extract".equals(pluginInfo.name)) {
-            NamedList initArgs = pluginInfo.initArgs;
-            
-            // Copied from StandardRequestHandler 
-            if (initArgs != null) {
-              Object o = initArgs.get("defaults");
-              if (o != null && o instanceof NamedList) {
-                SolrParams defaults = SolrParams.toSolrParams((NamedList)o);              
-                params = defaults;
-              }
-              o = initArgs.get("appends");
-              if (o != null && o instanceof NamedList) {
-                SolrParams appends = SolrParams.toSolrParams((NamedList)o);
-              }
-              o = initArgs.get("invariants");
-              if (o != null && o instanceof NamedList) {
-                SolrParams invariants = SolrParams.toSolrParams((NamedList)o);
-              }
-              o = initArgs.get("server");
-              if (o != null && o instanceof NamedList) {
-                SolrParams solrServerParams = SolrParams.toSolrParams((NamedList)o);
-                zkConnectString = solrServerParams.get(SOLR_ZK_CONNECT_STRING, zkConnectString);
-                solrServerUrl = solrServerParams.get(SOLR_SERVER_URL, solrServerUrl);
-                solrServerNumThreads = solrServerParams.getInt(SOLR_SERVER_NUM_THREADS, solrServerNumThreads);
-                solrServerQueueLength = solrServerParams.getInt(SOLR_SERVER_QUEUE_LENGTH, solrServerNumThreads);
-              }
-              
-              NamedList configDateFormats = (NamedList) initArgs.get(ExtractingRequestHandler.DATE_FORMATS);
-              if (configDateFormats != null && configDateFormats.size() > 0) {
-                dateFormats = new HashSet<String>();
-                Iterator<Map.Entry> it = configDateFormats.iterator();
-                while (it.hasNext()) {
-                  String format = (String) it.next().getValue();
-                  LOGGER.info("Adding Date Format: {}", format);
-                  dateFormats.add(format);
-                }
-              }            
-            }
-            break; // found it
-          }
-        }
-      } catch (ParserConfigurationException e) {
-        throw new ConfigurationException(e);
-      } catch (IOException e) {
-        throw new ConfigurationException(e);
-      } catch (SAXException e) {
-        throw new ConfigurationException(e);
-      } finally { // restore old global state
-        if (solrHome != null) {
-          if (oldSolrHome == null) {
-            System.clearProperty(SOLR_HOME_PROPERTY_NAME);
-          } else {
-            System.setProperty(SOLR_HOME_PROPERTY_NAME, oldSolrHome);
-          }
-        }
-      }
-      
-      SolrCollection solrCollection;
-      if (testServers.size() > 0) {
-        solrCollection = new SolrCollection(collectionName, testServers.get(i));
-      } else if (zkConnectString != null) {
-        try {
-          solrCollection = new SolrCollection(collectionName, new CloudSolrServer(zkConnectString));
-        } catch (MalformedURLException e) {
-          throw new ConfigurationException(e);
-        }
-      } else {
-        //SolrServer server = new HttpSolrServer(solrServerUrl);
-        //SolrServer server = new ConcurrentUpdateSolrServer(solrServerUrl, solrServerQueueLength, solrServerNumThreads);
-        SolrServer server = new SafeConcurrentUpdateSolrServer(solrServerUrl, solrServerQueueLength, solrServerNumThreads);
-        solrCollection = new SolrCollection(collectionName, server);
-        //server.setParser(new XMLResponseParser()); // binary parser is used by default
-      }
-      solrCollection.setSchema(schema);
-      solrCollection.setSolrParams(params);
-      solrCollection.setDateFormats(dateFormats);
-      collections.put(solrCollection.getName(), solrCollection);
-      i++;
-    }
-    return collections;
-  }  
-
   @Override
   public void process(Event event) throws IOException, SolrServerException {
     parseInfo = new ParseInfo(event, this);
@@ -461,6 +320,147 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
     SolrCollection coll = info.getSolrCollection();
     return new TrimSolrContentHandler(info.getMetadata(), coll.getSolrParams(), coll.getSchema(), coll.getDateFormats());
   }
+
+  /** For test injection only */
+  protected List<SolrServer> createTestSolrServers() {
+    return Collections.EMPTY_LIST;
+  }
+  
+  @Override
+  protected Map<String, SolrCollection> createSolrCollections() {
+    /*
+     * TODO: need to add an API to solrj that allows fetching IndexSchema from the remote Solr server. Plus move Solr
+     * cell params out of solrconfig.xml into a nice HOCON config file. This would allow us to have a single source of
+     * truth, simplify and make it unnecessary to parse schema.xml and solrconfig.xml on the client side.
+     */
+    Context context = getContext();
+    List<SolrServer> testServers = createTestSolrServers();
+    Map<String, SolrCollection> collections = new LinkedHashMap();
+    Map<String, String> subContext = context.getSubProperties(SOLR_COLLECTION_LIST + ".");
+    Set<String> collectionNames = new LinkedHashSet();
+    for (String name : subContext.keySet()) {
+      collectionNames.add(name.substring(0, name.indexOf('.')));
+    }
+    if (collectionNames.size() == 0) {
+      throw new ConfigurationException("Missing collection specification in configuration: " + context);
+    }
+    
+    int i = 0;
+    for (String collectionName : collectionNames) {
+      String solrHome = null;
+      for (Map.Entry<String,String> entry : subContext.entrySet()) {
+        if (entry.getKey().equals(collectionName + "." + SOLR_CLIENT_HOME)) {
+          solrHome = entry.getValue();
+          assert solrHome != null;
+          break;
+        }          
+      }
+      
+      LOGGER.debug("solrHome: {}", solrHome);
+      SolrParams params = new MapSolrParams(new HashMap());
+      String zkConnectString = null;
+      String solrServerUrl = "http://127.0.0.1:8983/solr/collection1";
+      int solrServerNumThreads = 2;
+      int solrServerQueueLength = solrServerNumThreads;
+      Collection<String> dateFormats = DateUtil.DEFAULT_DATE_FORMATS;
+      IndexSchema schema;
+  
+      String oldSolrHome = null;
+      if (solrHome != null) {
+        oldSolrHome = System.setProperty(SOLR_HOME_PROPERTY_NAME, solrHome);
+      }
+      try {        
+        SolrConfig solrConfig = new SolrConfig();
+        //SolrConfig solrConfig = new SolrConfig("solrconfig.xml");
+        //SolrConfig solrConfig = new SolrConfig("/cloud/apache-solr-4.0.0-BETA/example/solr/collection1", "solrconfig.xml", null);
+        //SolrConfig solrConfig = new SolrConfig("/cloud/apache-solr-4.0.0-BETA/example/solr/collection1/conf/solrconfig.xml");
+        
+        schema = new IndexSchema(solrConfig, null, null);
+        //schema = new IndexSchema(solrConfig, "schema.xml", null);
+        //schema = new IndexSchema(solrConfig, "/cloud/apache-solr-4.0.0-BETA/example/solr/collection1/conf/schema.xml", null);
+  
+        for (PluginInfo pluginInfo : solrConfig.getPluginInfos(SolrRequestHandler.class.getName())) {
+          if ("/update/extract".equals(pluginInfo.name)) {
+            NamedList initArgs = pluginInfo.initArgs;
+            
+            // Copied from StandardRequestHandler 
+            if (initArgs != null) {
+              Object o = initArgs.get("defaults");
+              if (o != null && o instanceof NamedList) {
+                SolrParams defaults = SolrParams.toSolrParams((NamedList)o);              
+                params = defaults;
+              }
+              o = initArgs.get("appends");
+              if (o != null && o instanceof NamedList) {
+                SolrParams appends = SolrParams.toSolrParams((NamedList)o);
+              }
+              o = initArgs.get("invariants");
+              if (o != null && o instanceof NamedList) {
+                SolrParams invariants = SolrParams.toSolrParams((NamedList)o);
+              }
+              o = initArgs.get("server");
+              if (o != null && o instanceof NamedList) {
+                SolrParams solrServerParams = SolrParams.toSolrParams((NamedList)o);
+                zkConnectString = solrServerParams.get(SOLR_ZK_CONNECT_STRING, zkConnectString);
+                solrServerUrl = solrServerParams.get(SOLR_SERVER_URL, solrServerUrl);
+                solrServerNumThreads = solrServerParams.getInt(SOLR_SERVER_NUM_THREADS, solrServerNumThreads);
+                solrServerQueueLength = solrServerParams.getInt(SOLR_SERVER_QUEUE_LENGTH, solrServerNumThreads);
+              }
+              
+              NamedList configDateFormats = (NamedList) initArgs.get(ExtractingRequestHandler.DATE_FORMATS);
+              if (configDateFormats != null && configDateFormats.size() > 0) {
+                dateFormats = new HashSet<String>();
+                Iterator<Map.Entry> it = configDateFormats.iterator();
+                while (it.hasNext()) {
+                  String format = (String) it.next().getValue();
+                  LOGGER.info("Adding Date Format: {}", format);
+                  dateFormats.add(format);
+                }
+              }            
+            }
+            break; // found it
+          }
+        }
+      } catch (ParserConfigurationException e) {
+        throw new ConfigurationException(e);
+      } catch (IOException e) {
+        throw new ConfigurationException(e);
+      } catch (SAXException e) {
+        throw new ConfigurationException(e);
+      } finally { // restore old global state
+        if (solrHome != null) {
+          if (oldSolrHome == null) {
+            System.clearProperty(SOLR_HOME_PROPERTY_NAME);
+          } else {
+            System.setProperty(SOLR_HOME_PROPERTY_NAME, oldSolrHome);
+          }
+        }
+      }
+      
+      SolrCollection solrCollection;
+      if (testServers.size() > 0) {
+        solrCollection = new SolrCollection(collectionName, testServers.get(i));
+      } else if (zkConnectString != null) {
+        try {
+          solrCollection = new SolrCollection(collectionName, new CloudSolrServer(zkConnectString));
+        } catch (MalformedURLException e) {
+          throw new ConfigurationException(e);
+        }
+      } else {
+        //SolrServer server = new HttpSolrServer(solrServerUrl);
+        //SolrServer server = new ConcurrentUpdateSolrServer(solrServerUrl, solrServerQueueLength, solrServerNumThreads);
+        SolrServer server = new SafeConcurrentUpdateSolrServer(solrServerUrl, solrServerQueueLength, solrServerNumThreads);
+        solrCollection = new SolrCollection(collectionName, server);
+        //server.setParser(new XMLResponseParser()); // binary parser is used by default
+      }
+      solrCollection.setSchema(schema);
+      solrCollection.setSolrParams(params);
+      solrCollection.setDateFormats(dateFormats);
+      collections.put(solrCollection.getName(), solrCollection);
+      i++;
+    }
+    return collections;
+  }  
 
   protected void addPasswordHandler(String resourceName) throws FileNotFoundException {
     RegexRulesPasswordProvider epp = new RegexRulesPasswordProvider();
