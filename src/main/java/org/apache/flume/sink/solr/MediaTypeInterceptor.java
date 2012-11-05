@@ -68,10 +68,12 @@ public class MediaTypeInterceptor implements Interceptor {
     headerName = context.getString(HEADER_NAME, DEFAULT_EVENT_HEADER_NAME); 
     preserveExisting = context.getBoolean(PRESERVE_EXISTING_NAME, true);
     includeHeaders = context.getBoolean(INCLUDE_HEADER_NAME, true);
-    String tikaConfigFilePath = context.getString(TIKA_CONFIG_LOCATION);
+    
+    String tikaConfigFilePath = context.getString(TIKA_CONFIG_LOCATION);    
+    String oldProperty = null;
     if (tikaConfigFilePath != null) {
-      System.setProperty("tika.config", tikaConfigFilePath); // see TikaConfig() no-arg constructor impl
-    }
+      oldProperty = System.setProperty("tika.config", tikaConfigFilePath); // see TikaConfig() no-arg constructor impl
+    }    
     
     TikaConfig tikaConfig;
     try {
@@ -80,6 +82,14 @@ public class MediaTypeInterceptor implements Interceptor {
       throw new ConfigurationException(e);
     } catch (IOException e) {
       throw new ConfigurationException(e);
+    } finally { // restore old global state
+      if (tikaConfigFilePath != null) {
+        if (oldProperty == null) {
+          System.clearProperty("tika.config");
+        } else {
+          System.setProperty("tika.config", oldProperty);
+        }
+      }
     }
     detector = tikaConfig.getDetector();
   }
