@@ -24,16 +24,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
-import org.apache.flume.FlumeException;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.sink.AbstractSink;
@@ -51,11 +47,8 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
   
   private Map<String, SolrCollection> solrCollections; // proxies to remote solr
   private Context context;
-  private CountDownLatch isStopping = new CountDownLatch(1); // indicates we should shutdown ASAP. TODO: unnecessary? let's ask flumers
-  private CountDownLatch isStopped = new CountDownLatch(1); // indicates we are stopped. TODO: unnecessary? let's ask flumers
   private SimpleSolrSinkCounter solrSinkCounter; // TODO: replace with http://metrics.codahale.com
   
-  private static final AtomicLong SEQ_NUM = new AtomicLong();
   private static final Logger LOGGER = LoggerFactory.getLogger(SimpleSolrSink.class);
 
   public SimpleSolrSink() {
@@ -65,7 +58,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
   public void configure(Context context) {
     this.context = context;
     if (solrSinkCounter == null) {
-      solrSinkCounter = new SimpleSolrSinkCounter("" + getName() + "#" + SEQ_NUM.getAndIncrement());
+      solrSinkCounter = new SimpleSolrSinkCounter(getName());
     }
   }
   
@@ -99,8 +92,6 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
   public synchronized void start() {
     LOGGER.info("Starting sink {} ...", this);
     solrSinkCounter.start();
-    isStopping = new CountDownLatch(1);
-    isStopped = new CountDownLatch(1);
     if (solrCollections == null) {
       solrCollections = Collections.unmodifiableMap(new LinkedHashMap(createSolrCollections()));
     }
@@ -110,23 +101,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
 
   @Override
   public synchronized void stop() {
-    stop(15, TimeUnit.SECONDS);
-  }
-  
-  /* start() and stop() are called from an arbitrary async Flume management thread */
-  public synchronized void stop(long timeout, TimeUnit timeunit) {
     LOGGER.info("Solr sink {} stopping...", getName());
-    isStopping.countDown(); // signal other thread that it should exit process() ASAP
-    try {
-      if (!isStopped.await(timeout, timeunit)) { // give other thread some time to exit process() gracefully
-        if (timeout != 0) {
-          LOGGER.warn("Failed to stop gracefully. Now shutting down anyway.");
-        }
-      }
-    } catch (InterruptedException e) {
-      throw new FlumeException(e);
-    }
-    
     try {
       for (SolrCollection collection : getSolrCollections().values()) {
         collection.shutdown();
@@ -140,7 +115,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
   }
 
   @Override
-  public Status process() throws EventDeliveryException {    
+  public synchronized Status process() throws EventDeliveryException {    
     Channel ch = getChannel();
     Transaction tx = ch.getTransaction();
     try {
@@ -150,11 +125,6 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
       long batchEndTime = System.currentTimeMillis() + getMaxBatchDurationMillis();
       int batchSize = getMaxBatchSize();
       for (int i = 0; i < batchSize; i++) { // repeatedly take and process events from the Flume queue
-        synchronized (this) { // are we asked to return control ASAP?
-          if (isStopping.await(0, TimeUnit.NANOSECONDS) || isStopped.await(0, TimeUnit.NANOSECONDS)) {
-            break;
-          }
-        }
         long startTime = System.nanoTime();
         Event event = ch.take();
         solrSinkCounter.addToTakeNanos(System.nanoTime() - startTime);
@@ -197,15 +167,6 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
       }
     } finally {
       tx.close();
-      synchronized (this) { 
-        try {
-          if (isStopping.await(0, TimeUnit.NANOSECONDS)) { // are we asked to return control ASAP?
-            isStopped.countDown(); // signal to other thread that we're done
-          }
-        } catch (InterruptedException e) {
-          ; // ignore
-        }
-      }
     }        
   }
 

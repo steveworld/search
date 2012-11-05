@@ -28,7 +28,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.avro.Schema;
@@ -156,7 +155,7 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
         source = null;
       }
       if (sink != null) {
-        sink.stop(0, TimeUnit.MILLISECONDS);
+        sink.stop();
         sink = null;
       }
     } finally {
