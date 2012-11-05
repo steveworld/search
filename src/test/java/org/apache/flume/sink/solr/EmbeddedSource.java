@@ -26,7 +26,7 @@ import org.apache.flume.EventDrivenSource;
 import org.apache.flume.Sink;
 import org.apache.flume.source.AbstractSource;
 
-public class EmbeddedSource extends AbstractSource implements EventDrivenSource {
+class EmbeddedSource extends AbstractSource implements EventDrivenSource {
 
   private Sink sink;
   

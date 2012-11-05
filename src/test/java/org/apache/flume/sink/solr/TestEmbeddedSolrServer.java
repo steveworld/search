@@ -22,7 +22,7 @@ import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.core.CoreContainer;
 
 /** An EmbeddedSolrServer that supresses shutdown requests as necessary for testing */
-public class TestEmbeddedSolrServer extends EmbeddedSolrServer {
+class TestEmbeddedSolrServer extends EmbeddedSolrServer {
 
   public TestEmbeddedSolrServer(CoreContainer coreContainer, String coreName) {
     super(coreContainer, coreName);    
