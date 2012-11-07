@@ -18,10 +18,14 @@
  */
 package org.apache.flume.sink.solr;
 
+import java.io.IOException;
+
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
+import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.core.CoreContainer;
 
-/** An EmbeddedSolrServer that supresses shutdown requests as necessary for testing */
+/** An EmbeddedSolrServer that supresses shutdown and rollback requests as necessary for testing */
 class TestEmbeddedSolrServer extends EmbeddedSolrServer {
 
   public TestEmbeddedSolrServer(CoreContainer coreContainer, String coreName) {
@@ -31,6 +35,11 @@ class TestEmbeddedSolrServer extends EmbeddedSolrServer {
   @Override
   public void shutdown() {
     ; // NOP
+  }
+
+  @Override
+  public UpdateResponse rollback() throws SolrServerException, IOException {
+    return new UpdateResponse();
   }
 
 }

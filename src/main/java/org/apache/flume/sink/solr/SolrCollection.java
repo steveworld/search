@@ -70,6 +70,18 @@ public class SolrCollection {
     loader.commitTransaction();
   }
   
+  /**
+   * Performs a rollback of all non-committed documents pending.
+   * <p>
+   * Note that this is not a true rollback as in databases. Content you have previously
+   * added may have already been committed due to autoCommit, buffer full, other client performing
+   * a commit etc. So this is only a best-effort rollback, not a rollback in a strict 2PC protocol.
+   * @throws IOException If there is a low-level I/O error.
+   */
+  public void rollback() throws SolrServerException, IOException {
+    loader.rollback();
+  }
+  
   /** Releases allocated resources */
   public void shutdown() {
     loader.shutdown();

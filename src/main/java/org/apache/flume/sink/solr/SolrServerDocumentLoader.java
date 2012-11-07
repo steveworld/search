@@ -69,6 +69,11 @@ public class SolrServerDocumentLoader implements DocumentLoader {
   }
   
   @Override
+  public UpdateResponse rollback() throws SolrServerException, IOException {
+    return server.rollback();
+  }
+  
+  @Override
   public void shutdown() {
     server.shutdown();
   }

@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.SolrPingResponse;
+import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
 
 /**
@@ -41,6 +42,16 @@ public interface DocumentLoader {
    * Depending on the outcome the caller should then commit or rollback the current flume transaction correspondingly.
    */
   public void commitTransaction();
+  
+  /**
+   * Performs a rollback of all non-committed documents pending.
+   * <p>
+   * Note that this is not a true rollback as in databases. Content you have previously
+   * added may have already been committed due to autoCommit, buffer full, other client performing
+   * a commit etc. So this is only a best-effort rollback, not a rollback in a strict 2PC protocol.
+   * @throws IOException If there is a low-level I/O error.
+   */
+  public UpdateResponse rollback() throws SolrServerException, IOException;
   
   /** Releases allocated resources */
   public void shutdown();
