@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.response.SolrPingResponse;
 import org.apache.solr.common.SolrInputDocument;
 
 /**
@@ -43,5 +44,11 @@ public interface DocumentLoader {
   
   /** Releases allocated resources */
   public void shutdown();
+  
+  /**
+   * Issues a ping request to check if the server is alive
+   * @throws IOException If there is a low-level I/O error.
+   */
+  public SolrPingResponse ping() throws SolrServerException, IOException;
   
 }
