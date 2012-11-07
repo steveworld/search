@@ -23,10 +23,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrServer;
-import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.MapSolrParams;
 import org.apache.solr.common.params.SolrParams;
@@ -39,58 +36,47 @@ import org.apache.solr.schema.IndexSchema;
 public class SolrCollection {
 
   private final String name;
-  private final SolrServer server;
+  private final DocumentLoader loader;
   private IndexSchema schema;
   private SolrParams solrParams = new MapSolrParams(new HashMap());
   private Collection<String> dateFormats = DateUtil.DEFAULT_DATE_FORMATS;
-  private long numLoadedDocs = 0; // number of documents loaded in the current transaction
   
-  public SolrCollection(String name, SolrServer server) {
+  public SolrCollection(String name, DocumentLoader loader) {
     if (name == null) {
       throw new IllegalArgumentException();
     }
-    if (server == null) {
+    if (loader == null) {
       throw new IllegalArgumentException();
     }
     this.name = name;
-    this.server = server;
+    this.loader = loader;
   }
   
   /** Begins a Solr transaction */
-  public void beginSolrTransaction() {
-    numLoadedDocs = 0;
-    if (server instanceof SafeConcurrentUpdateSolrServer) {
-      ((SafeConcurrentUpdateSolrServer) server).clearException();
-    }
+  public void beginTransaction() {
+    loader.beginTransaction();
   }
   
   /** Loads the given documents into Solr */
   public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
-    if (docs.size() > 0) {
-      numLoadedDocs += docs.size();
-      UpdateResponse rsp = server.add(docs);
-    }
+    loader.load(docs);
   }
 
   /**
    * Sends any outstanding documents to Solr and waits for a positive or negative ack (i.e. exception) from solr.
    * Depending on the outcome the caller should then commit or rollback the current flume transaction correspondingly.
    */
-  public void commitSolrTransaction() {
-    if (numLoadedDocs > 0) {
-      if (server instanceof ConcurrentUpdateSolrServer) {
-        ((ConcurrentUpdateSolrServer) server).blockUntilFinished();
-      }
-    }
+  public void commitTransaction() {
+    loader.commitTransaction();
   }
   
   /** Releases allocated resources */
   public void shutdown() {
-    server.shutdown();
+    loader.shutdown();
   }
   
-  public SolrServer getSolrServer() {
-    return server;
+  public DocumentLoader getDocumentLoader() {
+    return loader;
   }
   
   public String getName() {

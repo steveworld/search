@@ -75,7 +75,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
   /** Creates the Solr collection proxies to which this sink can route Solr documents; override to customize */
   protected Map<String, SolrCollection> createSolrCollections() {
     String solrServerUrl = "http://127.0.0.1:8983/solr/collection1";
-    return Collections.singletonMap(solrServerUrl, new SolrCollection(solrServerUrl, new HttpSolrServer(solrServerUrl)));
+    return Collections.singletonMap(solrServerUrl, new SolrCollection(solrServerUrl, new SolrServerDocumentLoader(new HttpSolrServer(solrServerUrl))));
   }
   
   /** Returns the maximum number of events to take per flume transaction; override to customize */
@@ -218,7 +218,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
   /** Begins a solr transaction */
   public void beginSolrTransaction() {
     for (SolrCollection collection : getSolrCollections().values()) {
-      collection.beginSolrTransaction();
+      collection.beginTransaction();
     }
   }
   
@@ -228,7 +228,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
    */
   public void commitSolrTransaction() {
     for (SolrCollection collection : getSolrCollections().values()) {
-      collection.commitSolrTransaction();
+      collection.commitTransaction();
     }
   }
   

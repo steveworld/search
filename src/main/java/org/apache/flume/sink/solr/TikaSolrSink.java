@@ -322,7 +322,7 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
   }
 
   /** For test injection only */
-  protected List<SolrServer> createTestSolrServers() {
+  protected List<DocumentLoader> createTestSolrServers() {
     return Collections.EMPTY_LIST;
   }
   
@@ -334,7 +334,7 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
      * truth, simplify and make it unnecessary to parse schema.xml and solrconfig.xml on the client side.
      */
     Context context = getContext();
-    List<SolrServer> testServers = createTestSolrServers();
+    List<DocumentLoader> testServers = createTestSolrServers();
     Map<String, SolrCollection> collections = new LinkedHashMap();
     Map<String, String> subContext = context.getSubProperties(SOLR_COLLECTION_LIST + ".");
     Set<String> collectionNames = new LinkedHashSet();
@@ -442,7 +442,7 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
         solrCollection = new SolrCollection(collectionName, testServers.get(i));
       } else if (zkConnectString != null) {
         try {
-          solrCollection = new SolrCollection(collectionName, new CloudSolrServer(zkConnectString));
+          solrCollection = new SolrCollection(collectionName, new SolrServerDocumentLoader(new CloudSolrServer(zkConnectString)));
         } catch (MalformedURLException e) {
           throw new ConfigurationException(e);
         }
@@ -450,7 +450,7 @@ public class TikaSolrSink extends SimpleSolrSink implements Configurable {
         //SolrServer server = new HttpSolrServer(solrServerUrl);
         //SolrServer server = new ConcurrentUpdateSolrServer(solrServerUrl, solrServerQueueLength, solrServerNumThreads);
         SolrServer server = new SafeConcurrentUpdateSolrServer(solrServerUrl, solrServerQueueLength, solrServerNumThreads);
-        solrCollection = new SolrCollection(collectionName, server);
+        solrCollection = new SolrCollection(collectionName, new SolrServerDocumentLoader(server));
         //server.setParser(new XMLResponseParser()); // binary parser is used by default
       }
       solrCollection.setSchema(schema);

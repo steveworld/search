@@ -117,8 +117,8 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
  
     sink = new TikaSolrSink() {
       @Override
-      protected List<SolrServer> createTestSolrServers() {
-        return Collections.singletonList(solrServer);
+      protected List<DocumentLoader> createTestSolrServers() {
+        return Collections.singletonList((DocumentLoader) new SolrServerDocumentLoader(solrServer));
       }
     };
     sink.setName(sink.getClass().getName() + SEQ_NUM.getAndIncrement());
@@ -141,7 +141,7 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
 
   private void deleteAllDocuments() throws SolrServerException, IOException {
     for (SolrCollection collection : sink.getSolrCollections().values()) {
-      SolrServer s = collection.getSolrServer();
+      SolrServer s = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer();
       s.deleteByQuery("*:*"); // delete everything!
       s.commit();
     }
@@ -467,7 +467,7 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
 
   private void commit() throws SolrServerException, IOException {
     for (SolrCollection collection : sink.getSolrCollections().values()) {
-      collection.getSolrServer().commit(true, false, true);
+      ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().commit(true, false, true);
     }
   }
   
@@ -475,7 +475,7 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
     commit();
     int size = 0;
     for (SolrCollection collection : sink.getSolrCollections().values()) {
-      QueryResponse rsp = collection.getSolrServer().query(new SolrQuery(query).setRows(Integer.MAX_VALUE));
+      QueryResponse rsp = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().query(new SolrQuery(query).setRows(Integer.MAX_VALUE));
       LOGGER.debug("rsp: {}", rsp);
       size += rsp.getResults().size();
     }
