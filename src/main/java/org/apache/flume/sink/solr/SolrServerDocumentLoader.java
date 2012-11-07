@@ -24,6 +24,7 @@ import java.util.List;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrServer;
+import org.apache.solr.client.solrj.response.SolrPingResponse;
 import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
 
@@ -70,6 +71,11 @@ public class SolrServerDocumentLoader implements DocumentLoader {
   @Override
   public void shutdown() {
     server.shutdown();
+  }
+  
+  @Override
+  public SolrPingResponse ping() throws SolrServerException, IOException {
+    return server.ping();
   }
   
   public SolrServer getSolrServer() {
