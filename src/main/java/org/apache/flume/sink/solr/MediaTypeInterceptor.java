@@ -39,6 +39,7 @@ import org.apache.tika.mime.MediaType;
 
 /**
  * Flume Interceptor that auto-detects and sets a media type aka MIME type on events that are intercepted.
+ * This kind of packet sniffing can be used for content based routing in a Flume topology.
  * <p>
  * Type detection is based on Apache Tika, which considers the file name pattern via the
  * {@link Metadata#RESOURCE_NAME_KEY} and {@link Metadata#CONTENT_TYPE} input event headers, as well as magic byte
