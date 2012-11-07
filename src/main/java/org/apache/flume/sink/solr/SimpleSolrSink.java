@@ -88,6 +88,14 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
     return 10 * 1000;
   }
 
+  /**
+   * Returns whether or not we shall log exceptions during cleanup attempts that probably happened as a result of a prior exception;
+   * Override to customize.
+   */
+  protected boolean isLoggingSubsequentExceptions() {
+    return false;
+  }
+
   @Override
   public synchronized void start() {
     LOGGER.info("Starting sink {} ...", this);
@@ -116,17 +124,19 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
 
   @Override
   public synchronized Status process() throws EventDeliveryException {    
-    Channel ch = getChannel();
-    Transaction tx = ch.getTransaction();
+    int batchSize = getMaxBatchSize();
+    long batchEndTime = System.currentTimeMillis() + getMaxBatchDurationMillis();
+    Channel myChannel = getChannel();
+    Transaction txn = myChannel.getTransaction();
+    txn.begin();
+    boolean isSolrTransactionCommitted = true;
     try {
       int numEventsTaken = 0;
-      tx.begin();
       beginSolrTransaction();
-      long batchEndTime = System.currentTimeMillis() + getMaxBatchDurationMillis();
-      int batchSize = getMaxBatchSize();
+      isSolrTransactionCommitted = false;
       for (int i = 0; i < batchSize; i++) { // repeatedly take and process events from the Flume queue
         long startTime = System.nanoTime();
-        Event event = ch.take();
+        Event event = myChannel.take();
         solrSinkCounter.addToTakeNanos(System.nanoTime() - startTime);
         if (event == null) {
           break;
@@ -149,27 +159,59 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
         solrSinkCounter.incrementBatchCompleteCount();
       }
       solrSinkCounter.addToEventDrainAttemptCount(numEventsTaken);
+      solrSinkCounter.addToEventDrainSuccessCount(numEventsTaken); 
       
       commitSolrTransaction();
-      tx.commit();
-      solrSinkCounter.addToEventDrainSuccessCount(numEventsTaken);
+      isSolrTransactionCommitted = true;
+      txn.commit();
       return numEventsTaken == 0 ? Status.BACKOFF : Status.READY;
     } catch (Throwable t) {
-      tx.rollback();
+      // Ooops - need to rollback and perhaps back off
+      try {
+        LOGGER.error("Solr Sink " + getName() + ": Unable to process event from channel " + myChannel.getName()
+            + ". Exception follows.", t);
+      } catch (Throwable t1) {
+        ; // ignore logging error
+      } finally {
+        try {
+          if (!isSolrTransactionCommitted) {
+            rollbackSolrTransaction();
+          }
+        } catch (Throwable t2) {
+          try {
+            if (isLoggingSubsequentExceptions()) { // log and ignore
+              LOGGER.warn("Cannot rollback solr transaction, and there was an exception prior to this exception: ", t2); 
+            }
+          } catch (Throwable t3) {
+            ; // ignore logging error
+          }
+        } finally {
+          try {
+            txn.rollback();
+          } catch (Throwable t4) {
+            try {
+              if (isLoggingSubsequentExceptions()) { // log and ignore
+                LOGGER.warn("Cannot rollback flume transaction, and there was an exception prior to this exception: ", t4); 
+              }
+            } catch (Throwable t5) {
+              ; // ignore logging error
+            }
+          }
+        }
+      }
+      
       if (t instanceof Error) {
-        throw (Error) t;
+        throw (Error) t; // rethrow original exception
       } else if (t instanceof ChannelException) {
-        LOGGER.error("Solr Sink " + getName() + ": Unable to get event from" +
-            " channel " + ch.getName() + ". Exception follows.", t);
         return Status.BACKOFF;
-      } else {
-        throw new EventDeliveryException("Failed to send events", t);
+      } else { 
+        throw new EventDeliveryException("Failed to send events", t); // rethrow
       }
     } finally {
-      tx.close();
-    }        
+      txn.close();
+    }
   }
-
+  
   /** Extracts, transforms and loads the given Flume event into Solr */
   public void process(Event event) throws IOException, SolrServerException {
 //    LOGGER.debug("threadId: {}", Thread.currentThread().getId());    
@@ -229,6 +271,20 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
   public void commitSolrTransaction() {
     for (SolrCollection collection : getSolrCollections().values()) {
       collection.commitTransaction();
+    }
+  }
+  
+  /**
+   * Performs a rollback of all non-committed documents pending.
+   * <p>
+   * Note that this is not a true rollback as in databases. Content you have previously
+   * added may have already been committed due to autoCommit, buffer full, other client performing
+   * a commit etc. So this is only a best-effort rollback, not a rollback in a strict 2PC protocol.
+   * @throws IOException If there is a low-level I/O error.
+   */
+  public void rollbackSolrTransaction() throws SolrServerException, IOException {
+    for (SolrCollection collection : getSolrCollections().values()) {
+      collection.rollback();
     }
   }
   
