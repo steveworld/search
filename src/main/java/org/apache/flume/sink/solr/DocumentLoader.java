@@ -29,7 +29,7 @@ import org.apache.solr.common.SolrInputDocument;
  */
 public interface DocumentLoader {
 
-  /** Begins a Solr transaction */
+  /** Begins a transaction */
   public void beginTransaction();
   
   /** Loads the given documents into the destination */
