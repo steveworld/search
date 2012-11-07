@@ -443,22 +443,6 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
     Event event = EventBuilder.withBody(bout.toByteArray());
     load(event);
     assertEquals(records.length, queryResultSetSize("*:*"));
-
-//    if (false) {
-//      commit();
-//      QueryResponse rsp = sink.getSolrServer().query(new SolrQuery("*:*").setRows(Integer.MAX_VALUE));
-//      if (records.length == 1) {
-//        Record record = records[0];
-//        SolrDocument doc = rsp.getResults().get(0);
-//        for (Field field : record.getSchema().getFields()) {
-//          Object recordValue = record.get(field.name());
-//          String docValue = doc.getFieldValue("text").toString();
-//          if (!docValue.contains(recordValue.toString())) {
-//            assertTrue("mismatch on field " + field.name() + ", recordValue=" + recordValue + ", docValue=" + docValue, docValue.contains(recordValue.toString()));
-//          }
-//        }
-//      }
-//    }
   }
   
   private void load(Event event) throws EventDeliveryException {
