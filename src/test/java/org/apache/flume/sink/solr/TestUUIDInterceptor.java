@@ -31,7 +31,7 @@ import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.NoArgGenerator;
 import com.fasterxml.uuid.UUIDType;
 
-public class UUIDInterceptorTest extends Assert {
+public class TestUUIDInterceptor extends Assert {
 
   private static final String ID = "id";
   

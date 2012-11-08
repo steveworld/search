@@ -30,7 +30,7 @@ import org.apache.tika.metadata.Metadata;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class MediaTypeInterceptorTest extends Assert {
+public class TestMediaTypeInterceptor extends Assert {
 
   private static final String ID = MediaTypeInterceptor.DEFAULT_EVENT_HEADER_NAME;
   private static final String RESOURCES_DIR = "target/test-classes";
