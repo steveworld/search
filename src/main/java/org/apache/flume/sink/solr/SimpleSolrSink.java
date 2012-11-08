@@ -31,6 +31,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Transaction;
+//import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.sink.AbstractSink;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -43,6 +44,7 @@ import org.slf4j.LoggerFactory;
  * Flume sink that extracts search documents from Apache Flume events, transforms them and loads them into
  * Apache Solr.
  */
+//@InterfaceStability.Evolving
 public class SimpleSolrSink extends AbstractSink implements Configurable {
   
   private Map<String, SolrCollection> solrCollections; // proxies to remote solr
