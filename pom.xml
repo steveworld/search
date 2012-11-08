@@ -1,3 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor
+  license agreements. See the NOTICE file distributed with this work for additional
+  information regarding copyright ownership. The ASF licenses this file to
+  You under the Apache License, Version 2.0 (the "License"); you may not use
+  this file except in compliance with the License. You may obtain a copy of
+  the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required
+  by applicable law or agreed to in writing, software distributed under the
+  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
+  OF ANY KIND, either express or implied. See the License for the specific
+  language governing permissions and limitations under the License. -->
+
 <!--
 
 - To build and test:
@@ -31,274 +43,87 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.apache.flume</groupId>
+  <groupId>org.apache.flume.flume-ng-sinks</groupId>
   <artifactId>flume-ng-solr-sink</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <name>Flume NG Solr Sink</name>
+
+  <parent>
+    <artifactId>flume-ng-sinks</artifactId>
+    <groupId>org.apache.flume</groupId>
+    <version>1.4.0-SNAPSHOT</version>
+  </parent>
   
   <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <solr.version>4.0.0</solr.version>
-    <avro.version>1.6.3</avro.version>
-    <flume.version>1.2.0</flume.version>
-    <tika.version>1.2</tika.version>
     <jackson.scope>test</jackson.scope>
-    <shadedPattern>org.shaded.sink.solr</shadedPattern>
   </properties>
   
   <dependencies>
     <dependency> <!-- see http://flume.apache.org -->
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-ng-core</artifactId>
-      <version>${flume.version}</version>
-      <scope>provided</scope>
     </dependency>    
-    <dependency> <!-- see http://flume.apache.org -->
-      <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-tests</artifactId>
-      <version>${flume.version}</version>
-      <scope>test</scope>
-    </dependency>    
-    <!--
-    <dependency> 
-      <groupId>org.apache.solr</groupId>
-      <artifactId>solr-core</artifactId>
-      <version>${solr.version}</version>
-    </dependency>
-    -->
-    <!--
-    <dependency> 
-      <groupId>org.apache.tika</groupId>
-      <artifactId>tika-core</artifactId>
-      <version>${tika.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.tika</groupId>
-      <artifactId>tika-parsers</artifactId>
-      <version>${tika.version}</version>
-    </dependency>
-    -->
-    <dependency>
+
+    <dependency> <!-- see http://tika.apache.org -->
       <groupId>org.apache.tika</groupId>
       <artifactId>tika-xmp</artifactId>
-      <version>${tika.version}</version>      
-      <exclusions>
-        <exclusion>
-          <groupId>commons-logging</groupId> 
-          <artifactId>commons-logging</artifactId> <!-- needed by pdfbox but solr-core replaces it with jcl-over-slf4j -->
-        </exclusion>
-        <exclusion>
-          <groupId>org.apache.geronimo.specs</groupId> 
-          <artifactId>geronimo-stax-api_1.0_spec</artifactId> <!-- needed by tika-parsers but already provided by JDK -->
-        </exclusion>
-      </exclusions>
     </dependency>
-    <!--
-    <dependency>
-      <groupId>org.apache.tika</groupId>
-      <artifactId>tika-app</artifactId>
-      <version>${tika.version}</version>
-    </dependency>
-    -->
+    
     <dependency> <!-- see http://lucene.apache.org/solr -->
       <groupId>org.apache.solr</groupId>
       <artifactId>solr-test-framework</artifactId>
-      <version>${solr.version}</version>
       <scope>test</scope>
     </dependency>    
+    
     <dependency> <!-- see http://lucene.apache.org/solr -->
       <groupId>org.apache.solr</groupId>
       <artifactId>solr-core</artifactId>
-      <version>${solr.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-jdk14</artifactId> <!-- instead use slf4j on top of log4j or logback  -->
-        </exclusion>
-      </exclusions>      
     </dependency>
+    
     <dependency> <!-- see http://lucene.apache.org/solr -->
       <groupId>org.apache.solr</groupId>
       <artifactId>solr-cell</artifactId>
-      <version>${solr.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>xerces</groupId>
-          <artifactId>xercesImpl</artifactId> <!-- used by ExtractingDocumentLoader but we never call it -->
-        </exclusion>
-        <exclusion>
-          <groupId>com.ibm.icu</groupId>
-          <artifactId>icu4j</artifactId> <!-- nothing in solr-cell is using this -->
-        </exclusion>
-      </exclusions>            
     </dependency>
+    
     <dependency> <!-- see http://wiki.fasterxml.com/JacksonHome -->
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.0.6</version>
       <scope>${jackson.scope}</scope>
     </dependency>
+    
     <dependency> <!-- see http://opencsv.sourceforge.net -->
       <groupId>net.sf.opencsv</groupId>
       <artifactId>opencsv</artifactId>
-      <version>2.3</version>
     </dependency>
+    
     <dependency> <!-- see https://github.com/cowtowncoder/java-uuid-generator -->
       <groupId>com.fasterxml.uuid</groupId>
       <artifactId>java-uuid-generator</artifactId>
-      <version>3.1.3</version>
-      <exclusions>
-        <exclusion>
-          <groupId>log4j</groupId>
-          <artifactId>log4j</artifactId> <!-- not actually required -->
-        </exclusion>
-      </exclusions>      
     </dependency>
-    <!--
+    
+    <dependency> <!-- see http://www.slf4j.org -->
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.10</version>
       <scope>test</scope>
     </dependency>
-    -->
+    
+    <dependency> <!-- see http://www.slf4j.org -->
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <scope>test</scope>
+    </dependency>    
+
   </dependencies>
 
   <build>
     <plugins>
-       <!--
-       <plugin>
-          <artifactId>maven-assembly-plugin</artifactId>
-          <configuration>
-            <descriptorRefs>
-              <descriptorRef>jar-with-dependencies</descriptorRef>
-            </descriptorRefs>
-          </configuration>
-      </plugin>
-      -->
-      
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.5.1</version>
-        <configuration>
-          <source>1.6</source>
-          <target>1.6</target>
-          <encoding>UTF-8</encoding>
-          <showDeprecation>true</showDeprecation>
-          <showWarnings>true</showWarnings>
-        </configuration>
-      </plugin>
-      
-      <!--  Let's shade dependencies to simplify deployment and avoid version conflicts. 
-            See http://maven.apache.org/plugins/maven-shade-plugin/index.html 
-            and http://maven.apache.org/plugins/maven-shade-plugin/shade-mojo.html -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>2.0</version>
-        <configuration>
-          <createDependencyReducedPom>true</createDependencyReducedPom>
-          <filters>
-            <filter>
-              <artifact>*:*</artifact>  
-              <excludes>
-                <exclude>org/slf4j/**</exclude> <!-- already provided by flume -->
-                <exclude>org/xml/**</exclude>   <!-- already provided by JDK -->
-                <exclude>org/w3c/**</exclude>   <!-- already provided by JDK -->
-                <!--<exclude>META-INF/**</exclude>-->
-                <exclude>LICENSE</exclude>
-                <exclude>ASL2.0</exclude>
-                <exclude>NOTICE</exclude>
-                <exclude>CHANGES</exclude>
-                <exclude>README</exclude>                
-                <exclude>*.txt</exclude>
-                <exclude>build.properties</exclude>
-                <exclude>META-INF/*.SF</exclude>
-                <exclude>META-INF/*.DSA</exclude>
-                <exclude>META-INF/*.RSA</exclude>
-                
-                <!-- TIKA-763: Workaround to avoid including LGPL classes -->
-                <exclude>ucar/nc2/iosp/fysat/Fysat*.class</exclude>
-                <exclude>ucar/nc2/dataset/transform/VOceanSG1*class</exclude>
-                <exclude>ucar/unidata/geoloc/vertical/OceanSG*.class</exclude>
-              </excludes>
-            </filter>
-          </filters>
-        </configuration>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <artifactSet>
-                <excludes>
-                  <exclude>org.slf4j:slf4j-api</exclude>            <!-- already provided by flume -->
-                  <exclude>org.apache.flume:flume-ng-core</exclude> <!-- already provided by flume -->
-                  <exclude>javax.xml.stream:stax-api</exclude>      <!-- already provided by JDK -->                    
-                  <exclude>stax:stax-api</exclude>                  <!-- already provided by JDK -->                    
-                  <exclude>sax:sax</exclude>                        <!-- already provided by JDK -->                    
-                </excludes>
-              </artifactSet>
-
-              <!-- relocation would cause java.lang.ClassNotFoundException: solr.FastLRUCache on runnning within standalone flume installations -->
-              <!--
-              <relocations>
-                <relocation>
-                  <pattern>au</pattern>
-                  <shadedPattern>${shadedPattern}.au</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>com</pattern>
-                  <shadedPattern>${shadedPattern}.com</shadedPattern>
-                  <excludes>
-                    <exclude>com.fasterxml.jackson.**</exclude>
-                  </excludes>                  
-                </relocation>
-                <relocation>
-                  <pattern>de</pattern>
-                  <shadedPattern>${shadedPattern}.de</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>morfologik</pattern>
-                  <shadedPattern>${shadedPattern}.morfologik</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>net</pattern>
-                  <shadedPattern>${shadedPattern}.net</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org</pattern>
-                  <shadedPattern>${shadedPattern}.org</shadedPattern>
-                  <excludes>
-                    <exclude>org.apache.tika.**</exclude>
-                    <exclude>org.apache.solr.**</exclude>
-                    <exclude>org.apache.lucene.**</exclude>
-                    <exclude>org.apache.flume.**</exclude>
-                    <exclude>org.slf4j.**</exclude>
-                    <exclude>org.xml.sax.**</exclude>
-                    <exclude>org.w3c.**</exclude>
-                    <exclude>solr.**</exclude>
-                  </excludes>
-                </relocation>
-                <relocation>
-                  <pattern>thredds</pattern>
-                  <shadedPattern>${shadedPattern}.thredds</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>ucar</pattern>
-                  <shadedPattern>${shadedPattern}.ucar</shadedPattern>
-                </relocation>
-              </relocations>
-              -->
-              
-              <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-              </transformers>                  
-            </configuration>
-          </execution>
-        </executions>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
       </plugin>
       
       <plugin>
@@ -329,4 +154,5 @@
       </plugin>
     </plugins>
   </build> 
+
 </project>

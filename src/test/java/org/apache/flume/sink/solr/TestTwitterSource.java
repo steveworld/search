@@ -37,7 +37,7 @@ import org.apache.flume.sink.LoggerSink;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TwitterSourceTest extends Assert {
+public class TestTwitterSource extends Assert {
 
   @Test
   public void testBasic() throws Exception {

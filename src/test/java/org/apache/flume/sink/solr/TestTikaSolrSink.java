@@ -70,7 +70,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TikaSolrSinkTest extends SolrTestCaseJ4 {
+public class TestTikaSolrSink extends SolrTestCaseJ4 {
 
   private EmbeddedSource source;
   private SimpleSolrSink sink;
@@ -80,7 +80,7 @@ public class TikaSolrSinkTest extends SolrTestCaseJ4 {
   private static final String RESOURCES_DIR = "target/test-classes";
 //private static final String RESOURCES_DIR = "src/test/resources";
   private static final AtomicInteger SEQ_NUM = new AtomicInteger();
-  private static final Logger LOGGER = LoggerFactory.getLogger(TikaSolrSinkTest.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(TestTikaSolrSink.class);
 
   @BeforeClass
   public static void beforeClass() throws Exception {
