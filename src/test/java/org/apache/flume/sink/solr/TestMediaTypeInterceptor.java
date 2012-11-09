@@ -34,9 +34,10 @@ public class TestMediaTypeInterceptor extends Assert {
 
   private static final String ID = MediaTypeInterceptor.DEFAULT_EVENT_HEADER_NAME;
   private static final String RESOURCES_DIR = "target/test-classes";
+  //private static final String RESOURCES_DIR = "src/test/resources";
   
   @Test
-  public void testPlainText() throws Exception {    
+  public void testPlainText() throws Exception { 
     Context context = createContext();
     Event event = EventBuilder.withBody("foo".getBytes("UTF-8"));
     assertEquals("text/plain", detect(context, event));
@@ -113,6 +114,58 @@ public class TestMediaTypeInterceptor extends Assert {
         path + "/cars.csv.gz", "application/x-gzip", "application/x-gzip",
         path + "/cars.tar.gz", "application/x-gtar", "application/x-gtar",
         path + "/sample-statuses-20120906-141433.avro", "avro/binary", "avro/binary",
+        
+        path + "/testPPT_various.ppt", "application/x-tika-msoffice", "application/vnd.ms-powerpoint",
+        path + "/testPPT_various.pptx", "application/x-tika-ooxml", "application/vnd.openxmlformats-officedocument.presentationml.presentation",        
+        path + "/testEXCEL.xlsx", "application/x-tika-ooxml", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        path + "/testEXCEL.xls", "application/vnd.ms-excel", "application/vnd.ms-excel",
+        path + "/testPages.pages",  "application/zip", "application/vnd.apple.pages",
+        path + "/testNumbers.numbers", "application/zip", "application/vnd.apple.numbers",
+        path + "/testKeynote.key", "application/zip", "application/vnd.apple.keynote",
+        
+        path + "/testRTFVarious.rtf", "application/rtf", "application/rtf",
+        path + "/complex.mbox", "text/plain", "application/mbox",        
+        path + "/test-outlook.msg", "application/x-tika-msoffice", "application/vnd.ms-outlook",
+        path + "/testEMLX.emlx", "message/x-emlx", "message/x-emlx",
+        path + "/testRFC822",  "message/rfc822", "message/rfc822",
+        path + "/rsstest.rss", "application/rss+xml", "application/rss+xml",
+        path + "/testDITA.dita", "application/dita+xml; format=task", "application/dita+xml; format=task",
+        
+        path + "/testMP3i18n.mp3", "audio/mpeg", "audio/mpeg",
+        path + "/testAIFF.aif", "audio/x-aiff", "audio/x-aiff",
+        path + "/testFLAC.flac", "audio/x-flac", "audio/x-flac",
+        path + "/testFLAC.oga", "audio/ogg", "audio/ogg",
+        path + "/testVORBIS.ogg",  "audio/ogg", "audio/ogg",
+        path + "/testMP4.m4a", "audio/mp4", "audio/mp4",
+        path + "/testWAV.wav",  "audio/x-wav", "audio/x-wav",
+        path + "/testWMA.wma",  "audio/x-ms-wma", "audio/x-ms-wma",
+        
+        path + "/testFLV.flv", "video/x-flv", "video/x-flv",
+        path + "/testWMV.wmv",  "video/x-ms-wmv", "video/x-ms-wmv",
+        
+        path + "/testBMP.bmp", "image/x-ms-bmp", "image/x-ms-bmp",
+        path + "/testPNG.png", "image/png", "image/png",        
+        path + "/testPSD.psd", "image/vnd.adobe.photoshop", "image/vnd.adobe.photoshop",        
+        path + "/testSVG.svg", "image/svg+xml", "image/svg+xml",        
+        path + "/testTIFF.tif", "image/tiff", "image/tiff",        
+
+        path + "/test-documents.7z",  "application/x-7z-compressed", "application/x-7z-compressed",
+        path + "/test-documents.cpio",  "application/x-cpio", "application/x-cpio",
+        path + "/test-documents.tar",  "application/x-gtar", "application/x-gtar",
+        path + "/test-documents.tbz2",  "application/x-bzip2", "application/x-bzip2",
+        path + "/test-documents.tgz",  "application/x-gzip", "application/x-gzip",
+        path + "/test-documents.zip",  "application/zip", "application/zip",
+        path + "/test-zip-of-zip.zip",  "application/zip", "application/zip",
+        path + "/testJAR.jar",  "application/zip", "application/java-archive",
+        
+        path + "/testKML.kml",  "application/vnd.google-earth.kml+xml", "application/vnd.google-earth.kml+xml",
+        path + "/testRDF.rdf",  "application/rdf+xml", "application/rdf+xml",
+        path + "/testTrueType.ttf",  "application/x-font-ttf", "application/x-font-ttf",
+        path + "/testVISIO.vsd",  "application/x-tika-msoffice", "application/vnd.visio",
+        path + "/testWAR.war",  "application/zip", "application/x-tika-java-web-archive",
+        path + "/testWindows-x86-32.exe",  "application/x-msdownload; format=pe32", "application/x-msdownload; format=pe32",
+        path + "/testWINMAIL.dat",  "application/vnd.ms-tnef", "application/vnd.ms-tnef",
+        path + "/testWMF.wmf",  "application/x-msmetafile", "application/x-msmetafile",
     };
     
     for (int i = 0; i < files.length; i += 3) {
