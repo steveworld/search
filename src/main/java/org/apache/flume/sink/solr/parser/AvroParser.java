@@ -59,12 +59,12 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 /**
- * Avro binary format parser that extracts search documents from Avro records (using Apache Tika and Solr Cell) and
- * loads them into Solr.
+ * Avro binary format parser that extracts search documents from Avro records
+ * (using Apache Tika and Solr Cell) and loads them into Solr.
  */
 public class AvroParser extends AbstractParser {
-  
-  private static final MediaType MEDIATYPE_AVRO = MediaType.parse("avro/binary"); // TODO: also support JSON via avro/text?
+
+  private static final MediaType MEDIATYPE_AVRO = MediaType.parse("avro/binary"); 
   private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MEDIATYPE_AVRO);
   private static final Logger LOGGER = LoggerFactory.getLogger(AvroParser.class);
   private static final long serialVersionUID = -6656103329236898910L;
@@ -85,21 +85,23 @@ public class AvroParser extends AbstractParser {
       throw new IOException(e);
     }
   }
-  
-  protected void parse2(InputStream in, ContentHandler handler, Metadata metadata, ParseContext context)
-    throws IOException, SAXException {
- 
-    getParseInfo(context).setMultiDocumentParser(true); // TODO hack alert!    
 
-    // Avro requires a SeekableInput so looks like we need to first fetch it all into a buffer. 
-    // TODO optimize via a new custom SeekableInput impl
+  protected void parse2(InputStream in, ContentHandler handler, Metadata metadata, ParseContext context)
+      throws IOException, SAXException {
+
+    getParseInfo(context).setMultiDocumentParser(true); // TODO hack alert!
+
+    /*
+     * Avro requires a SeekableInput so looks like we need to first fetch it all
+     * into a buffer. TODO optimize via a new custom SeekableInput impl
+     */
     byte[] buf = new byte[4 * 1024];
     ByteArrayOutputStream bout = new ByteArrayOutputStream();
     int len;
     while ((len = in.read(buf)) >= 0) {
-      bout.write(buf,  0,  len);
+      bout.write(buf, 0, len);
     }
-    
+
     metadata.set(Metadata.CONTENT_TYPE, MEDIATYPE_AVRO.toString());
     XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
 
@@ -107,7 +109,6 @@ public class AvroParser extends AbstractParser {
     FileReader<Record> reader = null;
     try {
       reader = DataFileReader.openReader(new SeekableByteArrayInput(bout.toByteArray()), datumReader);
-      //processMetaKeys(reader, xhtml);
       Schema schema = reader.getSchema();
       Record record = new GenericData.Record(schema);
       while (reader.hasNext()) {
@@ -122,7 +123,7 @@ public class AvroParser extends AbstractParser {
       }
     }
   }
-  
+
   protected ParseInfo getParseInfo(ParseContext context) {
     return context.get(ParseInfo.class);
   }
@@ -139,8 +140,8 @@ public class AvroParser extends AbstractParser {
   }
 
   /** Extracts zero or more Solr documents from the given Avro record */
-  protected List<SolrInputDocument> extract(Record record, XHTMLContentHandler handler, Metadata metadata, ParseContext context)
-       throws SAXException {
+  protected List<SolrInputDocument> extract(Record record, XHTMLContentHandler handler, Metadata metadata,
+      ParseContext context) throws SAXException {
     SolrContentHandler solrHandler = getParseInfo(context).getSolrContentHandler();
     handler.startDocument();
     solrHandler.startDocument(); // this is necessary because handler.startDocument() does not delegate all the way down to solrHandler
@@ -148,25 +149,33 @@ public class AvroParser extends AbstractParser {
     // TODO: optionally also serialize schema?
     serializeToXML(record, record.getSchema(), handler);
     handler.endElement("p");
-//    handler.endDocument(); // this would cause a bug!
+    // handler.endDocument(); // this would cause a bug!
     solrHandler.endDocument();
     SolrInputDocument doc = solrHandler.newDocument().deepCopy();
     return Collections.singletonList(doc);
   }
-  
-  /** Extension point to transform a list of documents in an application specific way. Does nothing by default */
+
+  /**
+   * Extension point to transform a list of documents in an application specific
+   * way. Does nothing by default
+   */
   protected List<SolrInputDocument> transform(List<SolrInputDocument> docs, Metadata metadata, ParseContext context) {
     return docs;
   }
 
   /** Loads the given documents into Solr */
-  protected void load(List<SolrInputDocument> docs, Metadata metadata, ParseContext context) throws IOException, SolrServerException {
+  protected void load(List<SolrInputDocument> docs, Metadata metadata, ParseContext context) throws IOException,
+      SolrServerException {
     getParseInfo(context).getSink().load(docs);
   }
-  
-  /** Writes the given Avro datum into the given SAX handler, using the given Avro schema */
+
+  /**
+   * Writes the given Avro datum into the given SAX handler, using the given
+   * Avro schema
+   */
   protected void serializeToXML(Object datum, Schema schema, XHTMLContentHandler handler) throws SAXException {
-    // RECORD, ENUM, ARRAY, MAP, UNION, FIXED, STRING, BYTES, INT, LONG, FLOAT, DOUBLE, BOOLEAN, NULL
+    // RECORD, ENUM, ARRAY, MAP, UNION, FIXED, STRING, BYTES, INT, LONG, FLOAT,
+    // DOUBLE, BOOLEAN, NULL
     switch (schema.getType()) {
     case RECORD: {
       Record record = (Record) datum;
@@ -196,9 +205,9 @@ public class AvroParser extends AbstractParser {
       break;
     }
     case MAP: {
-      Map<CharSequence,?> map = (Map<CharSequence,?>) datum;
+      Map<CharSequence, ?> map = (Map<CharSequence, ?>) datum;
       handler.startElement("map");
-      for (Map.Entry<CharSequence,?> entry : map.entrySet()) {
+      for (Map.Entry<CharSequence, ?> entry : map.entrySet()) {
         handler.startElement(entry.getKey().toString());
         serializeToXML(entry.getValue(), schema.getValueType(), handler);
         handler.endElement(entry.getKey().toString());
@@ -252,8 +261,9 @@ public class AvroParser extends AbstractParser {
     case NULL: {
       break;
     }
-    default: throw new AvroRuntimeException("Can't create a: " + schema.getType());
-    }   
+    default:
+      throw new AvroRuntimeException("Can't create a: " + schema.getType());
+    }
   }
 
   private String utf8toString(byte[] bytes) {

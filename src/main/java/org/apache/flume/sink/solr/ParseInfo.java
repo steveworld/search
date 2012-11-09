@@ -29,21 +29,23 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 
 /**
- * Conduit for passing state between parser and sink components in cases where API calls or {@link ParseContext} don't
- * permit direct parameter passing. Basically, this class is a more practical alternative to {@link ParseContext}.
+ * Conduit for passing state between parser and sink components in cases where
+ * API calls or {@link ParseContext} don't permit direct parameter passing.
+ * Basically, this class is a more practical alternative to {@link ParseContext}
+ * .
  */
 public final class ParseInfo {
-  
+
   private final Event event;
   private final SimpleSolrSink sink;
   private String id;
-  private SolrCollection solrCollection;  
-  private SolrContentHandler solrContentHandler;  
+  private SolrCollection solrCollection;
+  private SolrContentHandler solrContentHandler;
   private Metadata metadata;
   private final AtomicLong recordNumber = new AtomicLong();
   private boolean isMultiDocumentParser = false;
   private final Map<String, Object> params = new HashMap();
-  
+
   public ParseInfo(Event event, SimpleSolrSink sink) {
     if (event == null) {
       throw new IllegalArgumentException("Event must not be null");
@@ -54,7 +56,7 @@ public final class ParseInfo {
     this.event = event;
     this.sink = sink;
   }
-  
+
   public Event getEvent() {
     return event;
   }
@@ -116,4 +118,3 @@ public final class ParseInfo {
   }
 
 }
-

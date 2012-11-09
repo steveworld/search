@@ -23,9 +23,11 @@ import org.apache.flume.instrumentation.SinkCounterMBean;
 public interface SimpleSolrSinkCounterMBean extends SinkCounterMBean {
 
   long getTakeMillis();
+
   long getExtractMillis();
+
   long getTransformMillis();
+
   long getLoadMillis();
 
 }
-

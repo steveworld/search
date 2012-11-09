@@ -61,10 +61,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Demo Flume source that connects via HTTP to the 1% sample twitter firehose, continously downloads JSON tweets, converts
- * them to Avro format and sends Avro events to a downstream Flume sink.
-
- * The JSON input format is documented at https://dev.twitter.com/docs/platform-objects/tweets
+ * Demo Flume source that connects via HTTP to the 1% sample twitter firehose,
+ * continously downloads JSON tweets, converts them to Avro format and sends
+ * Avro events to a downstream Flume sink.
+ * 
+ * The JSON input format is documented at
+ * https://dev.twitter.com/docs/platform-objects/tweets
  * 
  * Requires the username and password of a normal twitter user account.
  */
@@ -76,14 +78,14 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
   private int maxBatchDurationMillis = 1000;
 
   private CountDownLatch isStopping = new CountDownLatch(0);
-  
+
   private long docCount = 0;
   private long startTime = 0;
   private long exceptionCount = 0;
   private long totalTextIndexed = 0;
   private long skippedDocs = 0;
   private long rawBytes = 0;
-  
+
   // Fri May 14 02:52:55 +0000 2010
   private SimpleDateFormat formatterFrom = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy");
   private SimpleDateFormat formatterTo = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
@@ -103,9 +105,9 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
     userNameAndPassword = new UsernamePasswordCredentials(userName, password);
     url = context.getString("url", url);
     maxBatchSize = context.getInteger("maxBatchSize", maxBatchSize);
-    maxBatchDurationMillis = context.getInteger("maxBatchDurationMillis", maxBatchDurationMillis);    
+    maxBatchDurationMillis = context.getInteger("maxBatchDurationMillis", maxBatchDurationMillis);
   }
-  
+
   @Override
   public synchronized void start() {
     super.start();
@@ -115,7 +117,7 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
       new Thread(new Runnable() {
         public void run() {
           doRun();
-        }      
+        }
       }).start();
       LOGGER.info("Twitter source {} started.", getName());
     }
@@ -137,26 +139,30 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
     skippedDocs = 0;
     rawBytes = 0;
     long batchEndTime = System.currentTimeMillis() + maxBatchDurationMillis;
-    AbstractHttpClient httpClient = new DefaultHttpClient(); // uses HTTP persistent connections by default, uses TCP_NODELAY = true by default
+
+    // uses HTTP persistent connections by default
+    // uses TCP_NODELAY = true by default    
+    AbstractHttpClient httpClient = new DefaultHttpClient(); 
     httpClient.getCredentialsProvider().setCredentials(AuthScope.ANY, userNameAndPassword);
-    //httpClient.getParams().setParameter(CoreConnectionPNames.TCP_NODELAY, false);  
+    // httpClient.getParams().setParameter(CoreConnectionPNames.TCP_NODELAY, false);
 
     while (true) {
       try {
-        Schema avroSchema = createAvroSchema();    
+        Schema avroSchema = createAvroSchema();
         ObjectMapper mapper = new ObjectMapper();
         HttpGet httpGet = new HttpGet(url);
-        HttpResponse response = httpClient.execute(httpGet);      
-        //int status = response.getStatusLine().getStatusCode();
+        HttpResponse response = httpClient.execute(httpGet);
+        // int status = response.getStatusLine().getStatusCode();
         HttpEntity entity = response.getEntity();
         if (entity != null) {
           InputStream in = entity.getContent();
           try {
             List<Record> docs = new ArrayList();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));          
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
             while (true) {
               if (isStopping.await(0, TimeUnit.NANOSECONDS)) {
-                // Shut down the connection manager to ensure immediate deallocation of all system resources
+                // Shut down the connection manager to ensure immediate
+                // deallocation of all system resources
                 try {
                   httpGet.abort();
                   httpClient.getConnectionManager().shutdown();
@@ -170,23 +176,24 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
               if (json == null) {
                 break;
               }
-              JsonNode rootNode = mapper.readValue(json, JsonNode.class); // src can be a File, URL, InputStream etc
-              rawBytes += json.length();              
-              
+              // src can be a File, URL, InputStream, etc
+              JsonNode rootNode = mapper.readValue(json, JsonNode.class); 
+              rawBytes += json.length();
+
               Record doc = extractRecord("", avroSchema, rootNode);
               if (doc == null) {
                 continue; // skip
               }
-              
-              docs.add(doc);            
+
+              docs.add(doc);
               if (docs.size() >= maxBatchSize || System.currentTimeMillis() >= batchEndTime) {
                 batchEndTime = System.currentTimeMillis() + maxBatchDurationMillis;
-                byte[] bytes = serializeToAvro(avroSchema, docs);              
+                byte[] bytes = serializeToAvro(avroSchema, docs);
                 Event event = EventBuilder.withBody(bytes);
-                getChannelProcessor().processEvent(event); // send event to downstream flume sink    
+                getChannelProcessor().processEvent(event); // send event to downstream flume sink
                 docs.clear();
               }
-              
+
               docCount++;
               if ((docCount % REPORT_INTERVAL) == 0) {
                 LOGGER.info(String.format("Processed %s docs", numFormatter.format(docCount)));
@@ -194,7 +201,7 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
               if ((docCount % STATS_INTERVAL) == 0) {
                 logStats();
               }
-            }    
+            }
           } catch (IOException ex) {
             // In case of an IOException the connection will be released
             // back to the connection manager automatically
@@ -240,10 +247,10 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
     }
     return line;
   }
-  
+
   private Record extractRecord(String idPrefix, Schema avroSchema, JsonNode rootNode) {
     JsonNode user = rootNode.get("user");
-    JsonNode idNode = rootNode.get("id_str");    
+    JsonNode idNode = rootNode.get("id_str");
     if (idNode == null || idNode.textValue() == null) {
       skippedDocs++;
       return null; // skip
@@ -258,7 +265,7 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
     tryAddLong(doc, "in_reply_to_user_id", rootNode.get("in_reply_to_user_id"));
     tryAddLong(doc, "in_reply_to_status_id", rootNode.get("in_reply_to_status_id"));
     tryAddString(doc, "media_url_https", rootNode.get("media_url_https"));
-    tryAddString(doc, "expanded_url", rootNode.get("expanded_url"));    
+    tryAddString(doc, "expanded_url", rootNode.get("expanded_url"));
     tryAddInt(doc, "user_friends_count", user.get("friends_count"));
     tryAddString(doc, "user_location", user.get("location"));
     tryAddString(doc, "user_description", user.get("description"));
@@ -268,12 +275,12 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
     tryAddString(doc, "user_name", user.get("name"));
     return doc;
   }
-  
+
   private byte[] serializeToAvro(Schema avroSchema, List<Record> docList) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     DatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>(avroSchema);
-    DataFileWriter<GenericRecord>  dataFileWriter = new DataFileWriter<GenericRecord>(writer);
-    dataFileWriter.create(avroSchema, out);       
+    DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<GenericRecord>(writer);
+    dataFileWriter.create(avroSchema, out);
     for (Record doc2 : docList) {
       dataFileWriter.append(doc2);
     }
@@ -364,8 +371,8 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
     doc.put(solr_field, val);
     totalTextIndexed += val.length();
   }
-  
-  private void logStats() {    
+
+  private void logStats() {
     double mbIndexed = totalTextIndexed / (1024 * 1024.0);
     long seconds = (System.currentTimeMillis() - startTime) / 1000;
     seconds = Math.max(seconds, 1);

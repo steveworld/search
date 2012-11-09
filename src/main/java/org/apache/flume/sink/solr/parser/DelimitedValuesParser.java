@@ -47,24 +47,23 @@ import org.xml.sax.SAXException;
 import au.com.bytecode.opencsv.CSVReader;
 
 /**
- * Comma separated values parser that extracts search documents from CSV records (using Apache Tika and Solr Cell) and
- * loads them into Solr.
+ * Comma separated values parser that extracts search documents from CSV records
+ * (using Apache Tika and Solr Cell) and loads them into Solr.
  * 
- * For the format see http://en.wikipedia.org/wiki/Comma-separated_values
- * and http://www.creativyst.com/Doc/Articles/CSV/CSV01.htm
- * and http://ostermiller.org/utils/CSV.html
- * and http://www.ricebridge.com/products/csvman/demo.htm
+ * For the format see http://en.wikipedia.org/wiki/Comma-separated_values and
+ * http://www.creativyst.com/Doc/Articles/CSV/CSV01.htm and
+ * http://ostermiller.org/utils/CSV.html and
+ * http://www.ricebridge.com/products/csvman/demo.htm
  * 
- * The text encoding of the document stream is
- * automatically detected based on the byte patterns found at the
- * beginning of the stream and the given document metadata, most
- * notably the <code>charset</code> parameter of a
+ * The text encoding of the document stream is automatically detected based on
+ * the byte patterns found at the beginning of the stream and the given document
+ * metadata, most notably the <code>charset</code> parameter of a
  * {@link Metadata#CONTENT_TYPE} value.
  * <p>
  * This parser sets the following output metadata entries:
  * <dl>
- *   <dt>{@link Metadata#CONTENT_TYPE}</dt>
- *   <dd><code>text/csv; charset=...</code></dd>
+ * <dt>{@link Metadata#CONTENT_TYPE}</dt>
+ * <dd><code>text/csv; charset=...</code></dd>
  * </dl>
  */
 public class DelimitedValuesParser extends AbstractParser {
@@ -75,16 +74,16 @@ public class DelimitedValuesParser extends AbstractParser {
   private String columnNamesHeaderPrefix = null;
   private char quoteChar = au.com.bytecode.opencsv.CSVParser.DEFAULT_QUOTE_CHARACTER;
   private String commentChars = "!#;";
-  private boolean trim = true;  
+  private boolean trim = true;
   private Set<MediaType> supportedMediaTypes;
-  
+
   private static final ServiceLoader LOADER = new ServiceLoader(DelimitedValuesParser.class.getClassLoader());
   private static final Logger LOGGER = LoggerFactory.getLogger(DelimitedValuesParser.class);
   private static final long serialVersionUID = -6656103329236888910L;
 
   public DelimitedValuesParser() {
   }
-  
+
   public char getSeparatorChar() {
     return separatorChar;
   }
@@ -153,12 +152,12 @@ public class DelimitedValuesParser extends AbstractParser {
       throw new IOException(e);
     }
   }
-  
-  protected void parse2(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
-    throws IOException, TikaException {
 
-    getParseInfo(context).setMultiDocumentParser(true); // TODO hack alert!    
-    
+  protected void parse2(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+      throws IOException, TikaException {
+
+    getParseInfo(context).setMultiDocumentParser(true); // TODO hack alert!
+
     // Automatically detect the character encoding
     AutoDetectReader reader = new AutoDetectReader(new CloseShieldInputStream(stream), metadata, LOADER);
     try {
@@ -171,14 +170,16 @@ public class DelimitedValuesParser extends AbstractParser {
       String[] colValues;
       long recNum = 0;
       while ((colValues = csvReader.readNext()) != null) {
-        if (recNum == 0 && columnNamesHeaderPrefix != null && colValues.length > 0 && colValues[0].startsWith(columnNamesHeaderPrefix)) {
+        if (recNum == 0 && columnNamesHeaderPrefix != null && colValues.length > 0
+            && colValues[0].startsWith(columnNamesHeaderPrefix)) {
           int offset = 0; // it is a header line
-          if (colValues[0].equals(columnNamesHeaderPrefix)) { 
+          if (colValues[0].equals(columnNamesHeaderPrefix)) {
             offset = 1; // exclude prefix field from the names
           } else {
-            colValues[0] = colValues[0].substring(columnNamesHeaderPrefix.length()); // exclude prefix substring from name
+            // exclude prefix substring from name
+            colValues[0] = colValues[0].substring(columnNamesHeaderPrefix.length()); 
           }
-          colNames = new String[colValues.length - offset]; 
+          colNames = new String[colValues.length - offset];
           System.arraycopy(colValues, offset, colNames, 0, colNames.length);
           for (int i = 0; i < colNames.length; i++) {
             colNames[i] = trim(colNames[i]);
@@ -214,29 +215,29 @@ public class DelimitedValuesParser extends AbstractParser {
   protected String normalize(String str) {
     return str;
   }
-  
+
   private String trim(String str) {
     return trim ? str.trim() : str;
   }
-  
+
   private CSVReader createCSVReader(AutoDetectReader reader, Metadata metadata, ParseContext context) {
     return new CSVReader(reader, separatorChar, quoteChar, numLeadingLinesToSkip);
   }
 
   /** Processes the given record */
-  protected void process(Map<String, String> record, XHTMLContentHandler handler, Metadata metadata, ParseContext context)
-      throws IOException, SAXException, SolrServerException {     
+  protected void process(Map<String, String> record, XHTMLContentHandler handler, Metadata metadata,
+      ParseContext context) throws IOException, SAXException, SolrServerException {
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("record #{}: {}", getParseInfo(context).getRecordNumber(), record);
     }
     List<SolrInputDocument> docs = extract(record, handler, metadata, context);
     docs = transform(docs, metadata, context);
-    load(docs, metadata, context); 
+    load(docs, metadata, context);
   }
 
   /** Extracts zero or more Solr documents from the given record */
-  protected List<SolrInputDocument> extract(Map<String, String> record, XHTMLContentHandler handler, Metadata metadata, ParseContext context)
-       throws SAXException {
+  protected List<SolrInputDocument> extract(Map<String, String> record, XHTMLContentHandler handler, Metadata metadata,
+      ParseContext context) throws SAXException {
     SolrContentHandler solrHandler = getParseInfo(context).getSolrContentHandler();
     handler.startDocument();
     solrHandler.startDocument(); // this is necessary because handler.startDocument() does not delegate all the way down to solrHandler
@@ -245,30 +246,24 @@ public class DelimitedValuesParser extends AbstractParser {
       handler.element(field.getKey(), field.getValue());
     }
     handler.endElement("p");
-//    handler.endDocument(); // this would cause a bug!
+    // handler.endDocument(); // this would cause a bug!
     solrHandler.endDocument();
     SolrInputDocument doc = solrHandler.newDocument().deepCopy();
     return Collections.singletonList(doc);
   }
-  
-  /** Extension point to transform a list of documents in an application specific way. Does nothing by default */
+
+  /**
+   * Extension point to transform a list of documents in an application specific
+   * way. Does nothing by default
+   */
   protected List<SolrInputDocument> transform(List<SolrInputDocument> docs, Metadata metadata, ParseContext context) {
     return docs;
   }
 
   /** Loads the given documents into Solr */
-  protected void load(List<SolrInputDocument> docs, Metadata metadata, ParseContext context) throws IOException, SolrServerException {
+  protected void load(List<SolrInputDocument> docs, Metadata metadata, ParseContext context) throws IOException,
+      SolrServerException {
     getParseInfo(context).getSink().load(docs);
   }
 
-//  private static void debugTmp() throws IOException {
-//    int skipLines = 0;
-//    CSVReader reader = new CSVReader(new FileReader("yourfile.csv"), ',', au.com.bytecode.opencsv.CSVParser.DEFAULT_QUOTE_CHARACTER, skipLines);
-//    String[] columns;
-//    while ((columns = reader.readNext()) != null) {
-//      System.out.println("line: "+ Arrays.asList(columns));
-//    }
-//    reader.close();
-//  }
-  
 }

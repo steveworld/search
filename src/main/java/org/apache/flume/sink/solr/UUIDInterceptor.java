@@ -18,7 +18,6 @@
  */
 package org.apache.flume.sink.solr;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -29,15 +28,15 @@ import org.apache.flume.Event;
 import org.apache.flume.interceptor.Interceptor;
 
 /**
- * Flume Interceptor that sets a universally unique identifier on all events that are intercepted. 
- * By default this event header is named "id".
+ * Flume Interceptor that sets a universally unique identifier on all events
+ * that are intercepted. By default this event header is named "id".
  */
 public class UUIDInterceptor implements Interceptor {
 
   private String headerName;
   private boolean preserveExisting;
   private String prefix;
-  
+
   public static final String HEADER_NAME = "headerName";
   public static final String PRESERVE_EXISTING_NAME = "preserveExisting";
   public static final String PREFIX_NAME = "prefix";
@@ -55,15 +54,15 @@ public class UUIDInterceptor implements Interceptor {
   protected String getPrefix() {
     return prefix;
   }
-  
+
   protected String generateUUID() {
     return getPrefix() + UUID.randomUUID().toString();
   }
-  
+
   protected boolean isMatch(Event event) {
     return true;
   }
-  
+
   @Override
   public Event intercept(Event event) {
     Map<String, String> headers = event.getHeaders();
@@ -74,7 +73,7 @@ public class UUIDInterceptor implements Interceptor {
     }
     return event;
   }
-  
+
   @Override
   public List<Event> intercept(List<Event> events) {
     List results = new ArrayList(events.size());
@@ -82,7 +81,7 @@ public class UUIDInterceptor implements Interceptor {
       event = intercept(event);
       if (event != null) {
         results.add(event);
-      }      
+      }
     }
     return results;
   }
@@ -99,9 +98,10 @@ public class UUIDInterceptor implements Interceptor {
   public static class Builder implements Interceptor.Builder {
 
     private Context context;
-    
-    public Builder() {}
-    
+
+    public Builder() {
+    }
+
     @Override
     public UUIDInterceptor build() {
       return new UUIDInterceptor(context);
@@ -111,7 +111,7 @@ public class UUIDInterceptor implements Interceptor {
     public void configure(Context context) {
       this.context = context;
     }
-    
+
   }
 
 }

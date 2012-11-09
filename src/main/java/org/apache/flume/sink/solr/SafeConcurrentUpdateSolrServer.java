@@ -24,7 +24,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * ConcurrentUpdateSolrServer that propagates exceptions up to the submitter of requests on blockUntilFinished()
+ * ConcurrentUpdateSolrServer that propagates exceptions up to the submitter of
+ * requests on blockUntilFinished()
  * 
  * TODO: add test that injects an exception at a well defined point
  */
@@ -32,7 +33,7 @@ public class SafeConcurrentUpdateSolrServer extends ConcurrentUpdateSolrServer {
 
   private Throwable currentException = null;
   private final Object myLock = new Object();
-  
+
   private static final Logger LOGGER = LoggerFactory.getLogger(SafeConcurrentUpdateSolrServer.class);
 
   public SafeConcurrentUpdateSolrServer(String solrServerUrl, int queueSize, int threadCount) {
@@ -42,11 +43,11 @@ public class SafeConcurrentUpdateSolrServer extends ConcurrentUpdateSolrServer {
   public SafeConcurrentUpdateSolrServer(String solrServerUrl, HttpClient client, int queueSize, int threadCount) {
     super(solrServerUrl, client, queueSize, threadCount);
   }
-  
+
   @Override
   public void handleError(Throwable ex) {
     assert ex != null;
-    synchronized (myLock) { 
+    synchronized (myLock) {
       currentException = ex;
     }
     LOGGER.error("handleError", ex);
@@ -61,11 +62,11 @@ public class SafeConcurrentUpdateSolrServer extends ConcurrentUpdateSolrServer {
       }
     }
   }
-  
+
   public void clearException() {
     synchronized (myLock) {
       currentException = null;
     }
   }
-  
+
 }

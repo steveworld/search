@@ -18,7 +18,6 @@
  */
 package org.apache.flume.sink.solr;
 
-
 import org.apache.flume.Context;
 import org.apache.flume.interceptor.Interceptor;
 
@@ -28,13 +27,15 @@ import com.fasterxml.uuid.impl.RandomBasedGenerator;
 import com.fasterxml.uuid.impl.TimeBasedGenerator;
 
 /**
- * Flume Interceptor that sets an extremely strong universally unique identifier on all events that are intercepted. 
- * By default this event header is named "id".
+ * Flume Interceptor that sets an extremely strong universally unique identifier
+ * on all events that are intercepted. By default this event header is named
+ * "id".
  */
 public class ParanoidUUIDInterceptor extends UUIDInterceptor {
 
   private final RandomBasedGenerator randomBasedUuidGenerator = Generators.randomBasedGenerator();
-  private final TimeBasedGenerator timeBasedUuidGenerator = Generators.timeBasedGenerator(EthernetAddress.fromInterface());
+  private final TimeBasedGenerator timeBasedUuidGenerator = Generators.timeBasedGenerator(EthernetAddress
+      .fromInterface());
 
   protected ParanoidUUIDInterceptor(Context context) {
     super(context);
@@ -42,9 +43,10 @@ public class ParanoidUUIDInterceptor extends UUIDInterceptor {
 
   @Override
   protected String generateUUID() {
-    return getPrefix() + timeBasedUuidGenerator.generate().toString() + "#" + randomBasedUuidGenerator.generate().toString();
+    return getPrefix() + timeBasedUuidGenerator.generate().toString() + "#"
+        + randomBasedUuidGenerator.generate().toString();
   }
-  
+
   
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
@@ -53,9 +55,10 @@ public class ParanoidUUIDInterceptor extends UUIDInterceptor {
   public static class Builder implements Interceptor.Builder {
 
     private Context context;
-    
-    public Builder() {}
-    
+
+    public Builder() {
+    }
+
     @Override
     public ParanoidUUIDInterceptor build() {
       return new ParanoidUUIDInterceptor(context);
@@ -65,7 +68,7 @@ public class ParanoidUUIDInterceptor extends UUIDInterceptor {
     public void configure(Context context) {
       this.context = context;
     }
-    
+
   }
 
 }
