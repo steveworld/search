@@ -10,37 +10,6 @@
   OF ANY KIND, either express or implied. See the License for the specific
   language governing permissions and limitations under the License. -->
 
-<!--
-
-- To build and test:
-
-    mvn test
-
-- To generate jar files:
-
-    mvn package
-
-- To generate jar file for test classes:
-
-    mvn jar:test-jar
-
-- To generate documentation into the doc/ directory:
-
-    mvn site
-
-- To check which library depends on which other libraries:
-
-    mvn dependency:tree
-
-- To check if there are new library versions available go to http://search.maven.org or run this:
-
-    mvn versions:display-dependency-updates
-    
-- To download source code of dependencies and create/update eclipse .project and .classpath files for dependencies:
-
-    mvn eclipse:eclipse
-    
--->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.apache.flume.flume-ng-sinks</groupId>
@@ -124,33 +93,6 @@
       <plugin>
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-      
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <outputDirectory>${project.build.directory}/lib</outputDirectory>
-          <includeScope>runtime</includeScope>
-        </configuration>
-        
-        <!--
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals> <goal>copy-dependencies</goal> </goals>
-          </execution>
-        </executions>
-        -->
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-eclipse-plugin</artifactId>
-        <version>2.9</version>
-        <configuration>
-          <downloadSources>true</downloadSources>
-        </configuration>
       </plugin>
     </plugins>
   </build> 
