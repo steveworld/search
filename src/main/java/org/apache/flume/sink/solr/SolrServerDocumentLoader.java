@@ -29,13 +29,15 @@ import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
 
 /**
- * A vehicle to load a list of Solr documents into a local or remote {@link SolrServer}.
+ * A vehicle to load a list of Solr documents into a local or remote
+ * {@link SolrServer}.
  */
 public class SolrServerDocumentLoader implements DocumentLoader {
 
   private final SolrServer server; // proxy to local or remote solr server
-  private long numLoadedDocs = 0;  // number of documents loaded in the current transaction
-  
+  private long numLoadedDocs = 0; // number of documents loaded in the current
+                                  // transaction
+
   public SolrServerDocumentLoader(SolrServer server) {
     if (server == null) {
       throw new IllegalArgumentException();
@@ -50,7 +52,7 @@ public class SolrServerDocumentLoader implements DocumentLoader {
       ((SafeConcurrentUpdateSolrServer) server).clearException();
     }
   }
-  
+
   @Override
   public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
     if (docs.size() > 0) {
@@ -67,24 +69,24 @@ public class SolrServerDocumentLoader implements DocumentLoader {
       }
     }
   }
-  
+
   @Override
   public UpdateResponse rollback() throws SolrServerException, IOException {
     return server.rollback();
   }
-  
+
   @Override
   public void shutdown() {
     server.shutdown();
   }
-  
+
   @Override
   public SolrPingResponse ping() throws SolrServerException, IOException {
     return server.ping();
   }
-  
+
   public SolrServer getSolrServer() {
     return server;
   }
-    
+
 }

@@ -27,19 +27,19 @@ import org.apache.solr.schema.SchemaField;
 import org.apache.tika.metadata.Metadata;
 
 /**
- * SolrContentHandler that trims field values on output. This prevents exceptions on parsing integer fields inside Solr
- * server.
+ * SolrContentHandler that trims field values on output. This prevents
+ * exceptions on parsing integer fields inside Solr server.
  */
 public class TrimSolrContentHandler extends SolrContentHandler {
 
   public TrimSolrContentHandler(Metadata metadata, SolrParams params, IndexSchema schema) {
     super(metadata, params, schema);
   }
-  
+
   public TrimSolrContentHandler(Metadata metadata, SolrParams params, IndexSchema schema, Collection<String> dateFormats) {
     super(metadata, params, schema, dateFormats);
   }
-  
+
   protected String transformValue(String val, SchemaField schemaField) {
     return super.transformValue(val, schemaField).trim();
   }

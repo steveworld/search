@@ -25,13 +25,16 @@ import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.core.CoreContainer;
 
-/** An EmbeddedSolrServer that supresses shutdown and rollback requests as necessary for testing */
+/**
+ * An EmbeddedSolrServer that supresses shutdown and rollback requests as
+ * necessary for testing
+ */
 class TestEmbeddedSolrServer extends EmbeddedSolrServer {
 
   public TestEmbeddedSolrServer(CoreContainer coreContainer, String coreName) {
-    super(coreContainer, coreName);    
+    super(coreContainer, coreName);
   }
-  
+
   @Override
   public void shutdown() {
     ; // NOP
@@ -43,4 +46,3 @@ class TestEmbeddedSolrServer extends EmbeddedSolrServer {
   }
 
 }
-

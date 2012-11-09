@@ -34,9 +34,9 @@ import com.fasterxml.uuid.UUIDType;
 public class TestUUIDInterceptor extends Assert {
 
   private static final String ID = "id";
-  
+
   @Test
-  public void testBasic() throws Exception {    
+  public void testBasic() throws Exception {
     Context context = new Context();
     context.put(UUIDInterceptor.HEADER_NAME, ID);
     context.put(UUIDInterceptor.PRESERVE_EXISTING_NAME, "true");
@@ -46,7 +46,7 @@ public class TestUUIDInterceptor extends Assert {
   }
 
   @Test
-  public void testPreserveExisting() throws Exception {    
+  public void testPreserveExisting() throws Exception {
     Context context = new Context();
     context.put(UUIDInterceptor.HEADER_NAME, ID);
     context.put(UUIDInterceptor.PRESERVE_EXISTING_NAME, "true");
@@ -57,7 +57,7 @@ public class TestUUIDInterceptor extends Assert {
   }
 
   @Test
-  public void testPrefix() throws Exception {    
+  public void testPrefix() throws Exception {
     Context context = new Context();
     context.put(UUIDInterceptor.HEADER_NAME, ID);
     context.put(UUIDInterceptor.PREFIX_NAME, "bar#");
@@ -71,29 +71,30 @@ public class TestUUIDInterceptor extends Assert {
     builder.configure(context);
     return builder.build();
   }
-  
+
   private ParanoidUUIDInterceptor buildParanoid(Context context) {
     ParanoidUUIDInterceptor.Builder builder = new ParanoidUUIDInterceptor.Builder();
     builder.configure(context);
     return builder.build();
   }
-  
-//  @Test
-  public void testUUIDGenerationPerformance() throws Exception {    
+
+  // @Test
+  public void testUUIDGenerationPerformance() throws Exception {
     testUUIDGenerationPerformance(Generators.timeBasedGenerator(EthernetAddress.fromInterface()));
     testUUIDGenerationPerformance(Generators.randomBasedGenerator());
-    testUUIDGenerationPerformance(new NoArgGenerator() {      
+    testUUIDGenerationPerformance(new NoArgGenerator() {
       @Override
       public UUIDType getType() {
         return UUIDType.RANDOM_BASED;
-      }      
+      }
+
       @Override
       public UUID generate() {
         return UUID.randomUUID();
       }
     });
   }
-  
+
   private void testUUIDGenerationPerformance(NoArgGenerator uuidGenerator) throws Exception {
     long xstartTime = System.currentTimeMillis();
     int iters = 1000000;

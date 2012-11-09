@@ -53,16 +53,16 @@ public class TestTwitterSource extends Assert {
     context.put("username", username);
     context.put("password", password);
     context.put("maxBatchDurationMillis", "1000");
-    
+
     TwitterSource source = new TwitterSource();
     source.configure(context);
-    
+
     Map<String, String> channelContext = new HashMap();
     channelContext.put("capacity", "1000000");
     channelContext.put("keep-alive", "0"); // for faster tests
     Channel channel = new MemoryChannel();
     Configurables.configure(channel, new Context(channelContext));
- 
+
     Sink sink = new LoggerSink();
     sink.setChannel(channel);
     sink.start();
@@ -70,19 +70,19 @@ public class TestTwitterSource extends Assert {
     proc.setSinks(Collections.singletonList(sink));
     SinkRunner sinkRunner = new SinkRunner(proc);
     sinkRunner.start();
-       
+
     ChannelSelector rcs = new ReplicatingChannelSelector();
     rcs.setChannels(Collections.singletonList(channel));
     ChannelProcessor chp = new ChannelProcessor(rcs);
     source.setChannelProcessor(chp);
     source.start();
-    
+
     Thread.sleep(5000);
     source.stop();
     sinkRunner.stop();
     sink.stop();
   }
-  
+
   @Test
   public void testCarrotDateFormatBug() throws Exception {
     SimpleDateFormat formatterFrom = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy");

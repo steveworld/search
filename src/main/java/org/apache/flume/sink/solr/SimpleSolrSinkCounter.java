@@ -23,62 +23,43 @@ import java.lang.reflect.Array;
 import org.apache.flume.instrumentation.MonitoredCounterGroup;
 
 public class SimpleSolrSinkCounter extends MonitoredCounterGroup implements SimpleSolrSinkCounterMBean {
-  
+
   /*
-   * I wish org.apache.flume.instrumentation.SinkCounter had a public constructor SinkCounter(Type type, String name,
-   * String... attrs) so we could inherit from that rather than copy n' paste it all...
+   * I wish org.apache.flume.instrumentation.SinkCounter had a public
+   * constructor SinkCounter(Type type, String name, String... attrs) so we
+   * could inherit from that rather than copy n' paste it all...
    */
 
-  private static final String COUNTER_TAKE_MICROS =
-      "solrsink.take.micros";
+  private static final String COUNTER_TAKE_MICROS = "solrsink.take.micros";
 
-  private static final String COUNTER_EXTRACT_MICROS =
-      "solrsink.extract.micros";
+  private static final String COUNTER_EXTRACT_MICROS = "solrsink.extract.micros";
 
-  private static final String COUNTER_TRANSFORM_MICROS =
-      "solrsink.transform.micros";
+  private static final String COUNTER_TRANSFORM_MICROS = "solrsink.transform.micros";
 
-  private static final String COUNTER_LOAD_MICROS =
-      "solrsink.load.micros";
+  private static final String COUNTER_LOAD_MICROS = "solrsink.load.micros";
 
+  private static final String[] ATTRIBUTES_2 = { COUNTER_TAKE_MICROS, COUNTER_EXTRACT_MICROS, COUNTER_TRANSFORM_MICROS,
+      COUNTER_LOAD_MICROS };
 
-  private static final String[] ATTRIBUTES_2 = {
-    COUNTER_TAKE_MICROS, COUNTER_EXTRACT_MICROS,
-    COUNTER_TRANSFORM_MICROS, COUNTER_LOAD_MICROS
-  };
+  private static final String COUNTER_CONNECTION_CREATED = "sink.connection.creation.count";
 
+  private static final String COUNTER_CONNECTION_CLOSED = "sink.connection.closed.count";
 
-  private static final String COUNTER_CONNECTION_CREATED =
-      "sink.connection.creation.count";
+  private static final String COUNTER_CONNECTION_FAILED = "sink.connection.failed.count";
 
-  private static final String COUNTER_CONNECTION_CLOSED =
-      "sink.connection.closed.count";
+  private static final String COUNTER_BATCH_EMPTY = "sink.batch.empty";
 
-  private static final String COUNTER_CONNECTION_FAILED =
-      "sink.connection.failed.count";
+  private static final String COUNTER_BATCH_UNDERFLOW = "sink.batch.underflow";
 
-  private static final String COUNTER_BATCH_EMPTY =
-      "sink.batch.empty";
+  private static final String COUNTER_BATCH_COMPLETE = "sink.batch.complete";
 
-  private static final String COUNTER_BATCH_UNDERFLOW =
-      "sink.batch.underflow";
+  private static final String COUNTER_EVENT_DRAIN_ATTEMPT = "sink.event.drain.attempt";
 
-  private static final String COUNTER_BATCH_COMPLETE =
-      "sink.batch.complete";
+  private static final String COUNTER_EVENT_DRAIN_SUCCESS = "sink.event.drain.sucess";
 
-  private static final String COUNTER_EVENT_DRAIN_ATTEMPT =
-      "sink.event.drain.attempt";
-
-  private static final String COUNTER_EVENT_DRAIN_SUCCESS =
-      "sink.event.drain.sucess";
-
-  private static final String[] ATTRIBUTES = {
-    COUNTER_CONNECTION_CREATED, COUNTER_CONNECTION_CLOSED,
-    COUNTER_CONNECTION_FAILED, COUNTER_BATCH_EMPTY,
-    COUNTER_BATCH_UNDERFLOW, COUNTER_BATCH_COMPLETE,
-    COUNTER_EVENT_DRAIN_ATTEMPT, COUNTER_EVENT_DRAIN_SUCCESS
-  };
-
+  private static final String[] ATTRIBUTES = { COUNTER_CONNECTION_CREATED, COUNTER_CONNECTION_CLOSED,
+      COUNTER_CONNECTION_FAILED, COUNTER_BATCH_EMPTY, COUNTER_BATCH_UNDERFLOW, COUNTER_BATCH_COMPLETE,
+      COUNTER_EVENT_DRAIN_ATTEMPT, COUNTER_EVENT_DRAIN_SUCCESS };
 
   public SimpleSolrSinkCounter(String name) {
     super(MonitoredCounterGroup.Type.SINK, name, concat(ATTRIBUTES, ATTRIBUTES_2));
@@ -164,27 +145,26 @@ public class SimpleSolrSinkCounter extends MonitoredCounterGroup implements Simp
     return addAndGet(COUNTER_EVENT_DRAIN_SUCCESS, delta);
   }
 
-
   @Override
   public long getTakeMillis() {
     return get(COUNTER_TAKE_MICROS) / 1000;
   }
-  
+
   @Override
   public long getExtractMillis() {
     return get(COUNTER_EXTRACT_MICROS) / 1000;
   }
-  
+
   @Override
   public long getTransformMillis() {
     return get(COUNTER_TRANSFORM_MICROS) / 1000;
   }
-  
+
   @Override
   public long getLoadMillis() {
     return get(COUNTER_LOAD_MICROS) / 1000;
   }
-  
+
   public long addToTakeNanos(long delta) {
     return addAndGet(COUNTER_TAKE_MICROS, delta / 1000);
   }
@@ -198,7 +178,7 @@ public class SimpleSolrSinkCounter extends MonitoredCounterGroup implements Simp
   }
 
   public long addToLoadNanos(long delta) {
-    return addAndGet(COUNTER_LOAD_MICROS, delta  / 1000);
+    return addAndGet(COUNTER_LOAD_MICROS, delta / 1000);
   }
 
   private static <T> T[] concat(T[]... arrays) {

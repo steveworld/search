@@ -29,19 +29,19 @@ import org.apache.flume.source.AbstractSource;
 class EmbeddedSource extends AbstractSource implements EventDrivenSource {
 
   private Sink sink;
-  
+
   public EmbeddedSource(Sink sink) {
     this.sink = sink;
   }
-  
+
   public void load(Event event) throws EventDeliveryException {
     getChannelProcessor().processEvent(event);
     sink.process();
   }
-  
+
   public void load(List<Event> events) throws EventDeliveryException {
     getChannelProcessor().processEventBatch(events);
     sink.process();
   }
-  
+
 }

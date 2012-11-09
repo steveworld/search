@@ -33,33 +33,40 @@ public interface DocumentLoader {
 
   /** Begins a transaction */
   public void beginTransaction();
-  
+
   /** Loads the given documents into the destination */
   public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException;
 
   /**
-   * Sends any outstanding documents to the destination and waits for a positive or negative ack (i.e. exception).
-   * Depending on the outcome the caller should then commit or rollback the current flume transaction correspondingly.
+   * Sends any outstanding documents to the destination and waits for a positive
+   * or negative ack (i.e. exception). Depending on the outcome the caller
+   * should then commit or rollback the current flume transaction
+   * correspondingly.
    */
   public void commitTransaction();
-  
+
   /**
    * Performs a rollback of all non-committed documents pending.
    * <p>
-   * Note that this is not a true rollback as in databases. Content you have previously
-   * added may have already been committed due to autoCommit, buffer full, other client performing
-   * a commit etc. So this is only a best-effort rollback, not a rollback in a strict 2PC protocol.
-   * @throws IOException If there is a low-level I/O error.
+   * Note that this is not a true rollback as in databases. Content you have
+   * previously added may have already been committed due to autoCommit, buffer
+   * full, other client performing a commit etc. So this is only a best-effort
+   * rollback, not a rollback in a strict 2PC protocol.
+   * 
+   * @throws IOException
+   *           If there is a low-level I/O error.
    */
   public UpdateResponse rollback() throws SolrServerException, IOException;
-  
+
   /** Releases allocated resources */
   public void shutdown();
-  
+
   /**
    * Issues a ping request to check if the server is alive
-   * @throws IOException If there is a low-level I/O error.
+   * 
+   * @throws IOException
+   *           If there is a low-level I/O error.
    */
   public SolrPingResponse ping() throws SolrServerException, IOException;
-  
+
 }
