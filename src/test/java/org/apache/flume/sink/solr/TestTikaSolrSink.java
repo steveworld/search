@@ -166,6 +166,83 @@ public class TestTikaSolrSink extends SolrTestCaseJ4 {
 
   @Test
   public void testDocumentTypes() throws Exception {
+    String path = RESOURCES_DIR + "/test-documents";
+    String[] files = new String[] {
+        path + "/testBMPfp.txt",
+        path + "/boilerplate.html",
+        path + "/NullHeader.docx",
+        path + "/testWORD_various.doc",          
+        path + "/testPDF.pdf",
+        path + "/testJPEG_EXIF.jpg",
+        path + "/testXML.xml",          
+        path + "/cars.csv",
+        path + "/cars.csv.gz",
+        path + "/cars.tar.gz",
+        path + "/sample-statuses-20120906-141433.avro",
+    };
+    testDocumentTypesInternal(files);
+  }
+
+  @Test
+  public void testDocumentTypes2() throws Exception {
+    String path = RESOURCES_DIR + "/test-documents";
+    String[] files = new String[] {
+        path + "/testPPT_various.ppt",
+        path + "/testPPT_various.pptx",        
+        path + "/testEXCEL.xlsx",
+        path + "/testEXCEL.xls", 
+        path + "/testPages.pages", 
+        path + "/testNumbers.numbers", 
+        path + "/testKeynote.key",
+        
+        path + "/testRTFVarious.rtf", 
+        path + "/complex.mbox", 
+        path + "/test-outlook.msg", 
+        path + "/testEMLX.emlx",
+        path + "/testRFC822",  
+        path + "/rsstest.rss", 
+        path + "/testDITA.dita", 
+        
+        path + "/testMP3i18n.mp3", 
+        path + "/testAIFF.aif", 
+        path + "/testFLAC.flac", 
+//        path + "/testFLAC.oga", 
+        path + "/testVORBIS.ogg",  
+        path + "/testMP4.m4a", 
+        path + "/testWAV.wav", 
+        path + "/testWMA.wma", 
+        
+        path + "/testFLV.flv", 
+        path + "/testWMV.wmv", 
+        
+        path + "/testBMP.bmp", 
+        path + "/testPNG.png", 
+        path + "/testPSD.psd",        
+        path + "/testSVG.svg",  
+        path + "/testTIFF.tif",     
+
+        path + "/test-documents.7z", 
+        path + "/test-documents.cpio",
+        path + "/test-documents.tar", 
+        path + "/test-documents.tbz2", 
+        path + "/test-documents.tgz",
+        path + "/test-documents.zip",
+        path + "/test-zip-of-zip.zip",
+        path + "/testJAR.jar",
+        
+        path + "/testKML.kml", 
+        path + "/testRDF.rdf", 
+        path + "/testTrueType.ttf", 
+        path + "/testVISIO.vsd",
+        path + "/testWAR.war", 
+//        path + "/testWindows-x86-32.exe",
+        path + "/testWINMAIL.dat", 
+        path + "/testWMF.wmf", 
+    };   
+    testDocumentTypesInternal(files);
+  }
+
+  private void testDocumentTypesInternal(String[] files) throws Exception {
     int numDocs = 0;
     long startTime = System.currentTimeMillis();
     
@@ -173,19 +250,6 @@ public class TestTikaSolrSink extends SolrTestCaseJ4 {
 //  assertQ(req("*:*"), "//*[@numFound='0']");
     for (int i = 0; i < 1; i++) {
       String path = RESOURCES_DIR + "/test-documents";
-      String[] files = new String[] {
-          path + "/testBMPfp.txt",
-          path + "/boilerplate.html",
-          path + "/NullHeader.docx",
-          path + "/testWORD_various.doc",          
-          path + "/testPDF.pdf",
-          path + "/testJPEG_EXIF.jpg",
-          path + "/testXML.xml",          
-          path + "/cars.csv",
-          path + "/cars.csv.gz",
-          path + "/cars.tar.gz",
-          path + "/sample-statuses-20120906-141433.avro",
-      };
       Map<String,Integer> numRecords = new HashMap();
       numRecords.put(path + "/sample-statuses-20120906-141433.avro", 2);
       numRecords.put(path + "/cars.csv", 5);
