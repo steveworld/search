@@ -33,6 +33,7 @@ import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Transaction;
 //import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.AbstractSink;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
@@ -49,7 +50,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
 
   private Map<String, SolrCollection> solrCollections; // proxies to remote solr
   private Context context;
-  private SimpleSolrSinkCounter solrSinkCounter; // TODO: replace with
+  private SinkCounter solrSinkCounter; // TODO: replace with
                                                  // metrics.codahale.com
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SimpleSolrSink.class);
@@ -61,7 +62,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
   public void configure(Context context) {
     this.context = context;
     if (solrSinkCounter == null) {
-      solrSinkCounter = new SimpleSolrSinkCounter(getName());
+      solrSinkCounter = new SinkCounter(getName());
     }
   }
 
@@ -150,9 +151,7 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
 
       // repeatedly take and process events from the Flume queue
       for (int i = 0; i < batchSize; i++) {
-        long startTime = System.nanoTime();
         Event event = myChannel.take();
-        solrSinkCounter.addToTakeNanos(System.nanoTime() - startTime);
         if (event == null) {
           break;
         }
@@ -232,17 +231,9 @@ public class SimpleSolrSink extends AbstractSink implements Configurable {
   public void process(Event event) throws IOException, SolrServerException {
     // LOGGER.debug("threadId: {}", Thread.currentThread().getId());
     // TODO: use queue to support parallel ETL across multiple CPUs?
-    long startTime = System.nanoTime();
     List<SolrInputDocument> docs = extract(event);
-    solrSinkCounter.addToExtractNanos(System.nanoTime() - startTime);
-
-    startTime = System.nanoTime();
     docs = transform(docs);
-    solrSinkCounter.addToTransformNanos(System.nanoTime() - startTime);
-
-    startTime = System.nanoTime();
     load(docs);
-    solrSinkCounter.addToLoadNanos(System.nanoTime() - startTime);
   }
 
   /**
