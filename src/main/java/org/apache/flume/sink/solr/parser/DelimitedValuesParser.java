@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.flume.sink.solr.ParseInfo;
+import org.apache.flume.sink.solr.indexer.ParseInfo;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.handler.extraction.SolrContentHandler;

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.flume.sink.solr;
+package org.apache.flume.sink.solr.indexer;
 
 import org.apache.http.client.HttpClient;
 import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrServer;

@@ -16,32 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.flume.sink.solr;
+package org.apache.flume.sink.solr.indexer;
 
-import java.util.List;
+/**
+ * Indicates an exception during the configuration phase.
+ */
+public class ConfigurationException extends IndexerException {
 
-import org.apache.flume.Event;
-import org.apache.flume.EventDeliveryException;
-import org.apache.flume.EventDrivenSource;
-import org.apache.flume.Sink;
-import org.apache.flume.source.AbstractSource;
+  /**
+   *
+   */
+  private static final long serialVersionUID = 1L;
 
-class EmbeddedSource extends AbstractSource implements EventDrivenSource {
-
-  private Sink sink;
-
-  public EmbeddedSource(Sink sink) {
-    this.sink = sink;
+  public ConfigurationException(String msg) {
+    super(msg);
   }
 
-  public void load(Event event) throws EventDeliveryException {
-    getChannelProcessor().processEvent(event);
-    sink.process();
+  public ConfigurationException(Throwable t) {
+    super(t);
   }
 
-  public void load(List<Event> events) throws EventDeliveryException {
-    getChannelProcessor().processEventBatch(events);
-    sink.process();
+  public ConfigurationException(String msg, Throwable t) {
+    super(msg, t);
   }
 
 }
