@@ -18,13 +18,9 @@
  */
 package org.apache.flume.sink.solr;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 
-import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.MapSolrParams;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.DateUtil;
@@ -51,46 +47,6 @@ public class SolrCollection {
     }
     this.name = name;
     this.loader = loader;
-  }
-
-  /** Begins a Solr transaction */
-  public void beginTransaction() {
-    loader.beginTransaction();
-  }
-
-  /** Loads the given documents into Solr */
-  public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
-    loader.load(docs);
-  }
-
-  /**
-   * Sends any outstanding documents to Solr and waits for a positive or
-   * negative ack (i.e. exception) from solr. Depending on the outcome the
-   * caller should then commit or rollback the current flume transaction
-   * correspondingly.
-   */
-  public void commitTransaction() {
-    loader.commitTransaction();
-  }
-
-  /**
-   * Performs a rollback of all non-committed documents pending.
-   * <p>
-   * Note that this is not a true rollback as in databases. Content you have
-   * previously added may have already been committed due to autoCommit, buffer
-   * full, other client performing a commit etc. So this is only a best-effort
-   * rollback, not a rollback in a strict 2PC protocol.
-   * 
-   * @throws IOException
-   *           If there is a low-level I/O error.
-   */
-  public void rollback() throws SolrServerException, IOException {
-    loader.rollback();
-  }
-
-  /** Releases allocated resources */
-  public void shutdown() {
-    loader.shutdown();
   }
 
   public DocumentLoader getDocumentLoader() {

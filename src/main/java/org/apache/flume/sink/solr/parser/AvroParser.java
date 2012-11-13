@@ -42,7 +42,7 @@ import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericEnumSymbol;
 import org.apache.avro.generic.GenericFixed;
 import org.apache.avro.io.DatumReader;
-import org.apache.flume.FlumeException;
+import org.apache.flume.sink.solr.IndexerException;
 import org.apache.flume.sink.solr.ParseInfo;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
@@ -116,7 +116,7 @@ public class AvroParser extends AbstractParser {
         process(record, xhtml, metadata, context);
       }
     } catch (SolrServerException e) {
-      throw new FlumeException(e);
+      throw new IndexerException(e);
     } finally {
       if (reader != null) {
         reader.close();
@@ -166,7 +166,7 @@ public class AvroParser extends AbstractParser {
   /** Loads the given documents into Solr */
   protected void load(List<SolrInputDocument> docs, Metadata metadata, ParseContext context) throws IOException,
       SolrServerException {
-    getParseInfo(context).getSink().load(docs);
+    getParseInfo(context).getIndexer().load(docs);
   }
 
   /**

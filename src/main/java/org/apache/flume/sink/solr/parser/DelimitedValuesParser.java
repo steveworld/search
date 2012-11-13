@@ -263,7 +263,7 @@ public class DelimitedValuesParser extends AbstractParser {
   /** Loads the given documents into Solr */
   protected void load(List<SolrInputDocument> docs, Metadata metadata, ParseContext context) throws IOException,
       SolrServerException {
-    getParseInfo(context).getSink().load(docs);
+    getParseInfo(context).getIndexer().load(docs);
   }
 
 }
