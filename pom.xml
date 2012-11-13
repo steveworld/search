@@ -111,6 +111,16 @@
       <groupId>org.apache.solr</groupId>
       <artifactId>solr-cell</artifactId>
       <version>${solr.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>xerces</groupId>
+          <artifactId>xercesImpl</artifactId> <!-- used by ExtractingDocumentLoader but we never call it -->
+        </exclusion>
+        <exclusion>
+          <groupId>com.ibm.icu</groupId>
+          <artifactId>icu4j</artifactId> <!-- nothing in solr-cell is using this -->
+        </exclusion>
+      </exclusions>                  
     </dependency>
     
     <dependency> <!-- see http://wiki.fasterxml.com/JacksonHome -->
