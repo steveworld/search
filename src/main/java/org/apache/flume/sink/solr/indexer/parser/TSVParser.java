@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.flume.sink.solr.parser;
+package org.apache.flume.sink.solr.indexer.parser;
 
 import java.util.Collections;
 
