@@ -126,7 +126,7 @@ public class SolrSink extends AbstractSink implements Configurable {
 
   @Override
   public synchronized void start() {
-    LOGGER.info("Starting sink {} ...", this);
+    LOGGER.info("Starting Solr sink {} ...", this);
     sinkCounter.start();
     indexer.start();
     super.start();
@@ -241,7 +241,7 @@ public class SolrSink extends AbstractSink implements Configurable {
   public String toString() {
     int i = getClass().getName().lastIndexOf('.') + 1;
     String shortClassName = getClass().getName().substring(i);
-    return shortClassName + " " + getName();
+    return getName() + " (" + shortClassName + ")";
   }
 
 }
