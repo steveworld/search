@@ -103,7 +103,7 @@ public class SimpleIndexer {
     }
   }
 
-  /** Extracts, transforms and loads the given Flume event into Solr */
+  /** Extracts, transforms and loads the given event into Solr */
   public void process(StreamEvent event) throws IOException, SolrServerException {
     List<SolrInputDocument> docs = extract(event);
     docs = transform(docs);
@@ -111,7 +111,7 @@ public class SimpleIndexer {
   }
 
   /**
-   * Extracts the given Flume event and maps it into zero or more Solr documents
+   * Extracts the given event and maps it into zero or more Solr documents
    */
   protected List<SolrInputDocument> extract(StreamEvent event) {
     SolrInputDocument doc = new SolrInputDocument();
@@ -162,7 +162,7 @@ public class SimpleIndexer {
   /**
    * Sends any outstanding documents to solr and waits for a positive or
    * negative ack (i.e. exception) from solr. Depending on the outcome the
-   * caller should then commit or rollback the current flume transaction
+   * caller should then commit or rollback the outer (flume) transaction
    * correspondingly.
    */
   public void commitTransaction() {
