@@ -84,20 +84,20 @@ public class SimpleIndexer {
   }
 
   public synchronized void start() {
-    LOGGER.info("Starting ingester {} ...", this);
+    LOGGER.info("Starting indexer {} ...", this);
     if (solrCollections == null) {
       solrCollections = Collections.unmodifiableMap(new LinkedHashMap(createSolrCollections()));
     }
-    LOGGER.info("Ingester {} started.", getName());
+    LOGGER.info("Indexer {} started.", getName());
   }
 
   public synchronized void stop() {
-    LOGGER.info("Ingester {} stopping...", getName());
+    LOGGER.info("Indexer {} stopping...", getName());
     try {
       for (SolrCollection collection : getSolrCollections().values()) {
         collection.getDocumentLoader().shutdown();
       }
-      LOGGER.info("Ingester {} stopped.", getName());
+      LOGGER.info("Indexer {} stopped.", getName());
     } finally {
       solrCollections = null;
     }
@@ -192,7 +192,7 @@ public class SimpleIndexer {
   public String toString() {
     int i = getClass().getName().lastIndexOf('.') + 1;
     String shortClassName = getClass().getName().substring(i);
-    return shortClassName + " " + getName();
+    return getName() + " (" + shortClassName + ")";
   }
 
 }
