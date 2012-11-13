@@ -26,6 +26,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.sink.solr.MediaTypeInterceptor;
 import org.apache.tika.metadata.Metadata;
 import org.junit.Assert;
 import org.junit.Test;

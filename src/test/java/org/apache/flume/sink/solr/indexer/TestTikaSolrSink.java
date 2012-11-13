@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.flume.sink.solr;
+package org.apache.flume.sink.solr.indexer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -53,6 +53,13 @@ import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.sink.solr.SolrSink;
+import org.apache.flume.sink.solr.UUIDInterceptor;
+import org.apache.flume.sink.solr.indexer.DocumentLoader;
+import org.apache.flume.sink.solr.indexer.SafeConcurrentUpdateSolrServer;
+import org.apache.flume.sink.solr.indexer.SolrCollection;
+import org.apache.flume.sink.solr.indexer.SolrServerDocumentLoader;
+import org.apache.flume.sink.solr.indexer.TikaIndexer;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.solr.SolrTestCaseJ4;
@@ -115,7 +122,12 @@ public class TestTikaSolrSink extends SolrTestCaseJ4 {
     channel.setName(channel.getClass().getName() + SEQ_NUM.getAndIncrement());
     Configurables.configure(channel, new Context(channelContext));
  
-    sink = new SolrSink(new TikaIndexer() {
+    class MySolrSink extends SolrSink {
+      public MySolrSink(TikaIndexer indexer) {
+        super(indexer);
+      }
+    }
+    sink = new MySolrSink(new TikaIndexer() {
         @Override
         protected List<DocumentLoader> createTestSolrServers() {
           return Collections.singletonList((DocumentLoader) new SolrServerDocumentLoader(solrServer));
@@ -139,7 +151,7 @@ public class TestTikaSolrSink extends SolrTestCaseJ4 {
     
     deleteAllDocuments();
   }
-
+  
   private void deleteAllDocuments() throws SolrServerException, IOException {
     for (SolrCollection collection : sink.getIndexer().getSolrCollections().values()) {
       SolrServer s = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer();

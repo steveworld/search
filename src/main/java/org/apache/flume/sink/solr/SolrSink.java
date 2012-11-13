@@ -31,6 +31,10 @@ import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.AbstractSink;
+import org.apache.flume.sink.solr.indexer.Configuration;
+import org.apache.flume.sink.solr.indexer.SimpleIndexer;
+import org.apache.flume.sink.solr.indexer.StreamEvent;
+import org.apache.flume.sink.solr.indexer.TikaIndexer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +70,7 @@ public class SolrSink extends AbstractSink implements Configurable {
     this.indexer = indexer;
   }
 
-  protected final SimpleIndexer getIndexer() {
+  public final SimpleIndexer getIndexer() {
     return indexer;
   }
   
