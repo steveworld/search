@@ -66,7 +66,7 @@ public class SimpleIndexer {
   }
 
   /**
-   * Returns the Solr collection proxies to which this sink can route Solr
+   * Returns the Solr collection proxies to which this indexer can route Solr
    * documents
    */
   protected final Map<String, SolrCollection> getSolrCollections() {
@@ -74,7 +74,7 @@ public class SimpleIndexer {
   }
 
   /**
-   * Creates the Solr collection proxies to which this sink can route Solr
+   * Creates the Solr collection proxies to which this indexer can route Solr
    * documents; override to customize
    */
   protected Map<String, SolrCollection> createSolrCollections() {
