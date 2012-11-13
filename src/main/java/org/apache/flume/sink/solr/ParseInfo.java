@@ -22,8 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.flume.Context;
-import org.apache.flume.Event;
 import org.apache.solr.handler.extraction.SolrContentHandler;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -36,8 +34,8 @@ import org.apache.tika.parser.ParseContext;
  */
 public final class ParseInfo {
 
-  private final Event event;
-  private final SimpleSolrSink sink;
+  private final StreamEvent event;
+  private final SimpleIndexer indexer;
   private String id;
   private SolrCollection solrCollection;
   private SolrContentHandler solrContentHandler;
@@ -46,27 +44,27 @@ public final class ParseInfo {
   private boolean isMultiDocumentParser = false;
   private final Map<String, Object> params = new HashMap();
 
-  public ParseInfo(Event event, SimpleSolrSink sink) {
+  public ParseInfo(StreamEvent event, SimpleIndexer indexer) {
     if (event == null) {
       throw new IllegalArgumentException("Event must not be null");
     }
-    if (sink == null) {
-      throw new IllegalArgumentException("Sink must not be null");
+    if (indexer == null) {
+      throw new IllegalArgumentException("Indexer must not be null");
     }
     this.event = event;
-    this.sink = sink;
+    this.indexer = indexer;
   }
 
-  public Event getEvent() {
+  public StreamEvent getEvent() {
     return event;
   }
 
-  public SimpleSolrSink getSink() {
-    return sink;
+  public SimpleIndexer getIndexer() {
+    return indexer;
   }
 
-  public Context getContext() {
-    return sink.getContext();
+  public Configuration getConfig() {
+    return indexer.getConfig();
   }
 
   public String getId() {

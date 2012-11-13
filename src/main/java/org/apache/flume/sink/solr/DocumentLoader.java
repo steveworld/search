@@ -27,7 +27,8 @@ import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
 
 /**
- * A vehicle to load a list of Solr documents into some kind of destination.
+ * A vehicle to load a list of Solr documents into some kind of destination,
+ * such as a SolrServer.
  */
 public interface DocumentLoader {
 
