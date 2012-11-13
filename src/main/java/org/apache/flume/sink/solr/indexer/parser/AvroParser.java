@@ -37,10 +37,10 @@ import org.apache.avro.file.DataFileReader;
 import org.apache.avro.file.FileReader;
 import org.apache.avro.file.SeekableByteArrayInput;
 import org.apache.avro.generic.GenericData;
-import org.apache.avro.generic.GenericData.Record;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericEnumSymbol;
 import org.apache.avro.generic.GenericFixed;
+import org.apache.avro.generic.IndexedRecord;
 import org.apache.avro.io.DatumReader;
 import org.apache.flume.sink.solr.indexer.IndexerException;
 import org.apache.flume.sink.solr.indexer.ParseInfo;
@@ -105,12 +105,12 @@ public class AvroParser extends AbstractParser {
     metadata.set(Metadata.CONTENT_TYPE, MEDIATYPE_AVRO.toString());
     XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
 
-    DatumReader<Record> datumReader = new GenericDatumReader();
-    FileReader<Record> reader = null;
+    DatumReader<IndexedRecord> datumReader = new GenericDatumReader();
+    FileReader<IndexedRecord> reader = null;
     try {
       reader = DataFileReader.openReader(new SeekableByteArrayInput(bout.toByteArray()), datumReader);
-      Schema schema = reader.getSchema();
-      Record record = new GenericData.Record(schema);
+      Schema schema = getSchema(reader, context);
+      IndexedRecord record = new GenericData.Record(schema);
       while (reader.hasNext()) {
         reader.next(record);
         process(record, xhtml, metadata, context);
@@ -124,12 +124,16 @@ public class AvroParser extends AbstractParser {
     }
   }
 
+  protected Schema getSchema(FileReader<IndexedRecord> reader, ParseContext context) {
+    return reader.getSchema();
+  }
+
   protected ParseInfo getParseInfo(ParseContext context) {
     return context.get(ParseInfo.class);
   }
 
   /** Processes the given Avro record */
-  protected void process(Record record, XHTMLContentHandler handler, Metadata metadata, ParseContext context)
+  protected void process(IndexedRecord record, XHTMLContentHandler handler, Metadata metadata, ParseContext context)
       throws IOException, SAXException, SolrServerException {
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("record #{}: {}", getParseInfo(context).getRecordNumber(), record);
@@ -140,7 +144,7 @@ public class AvroParser extends AbstractParser {
   }
 
   /** Extracts zero or more Solr documents from the given Avro record */
-  protected List<SolrInputDocument> extract(Record record, XHTMLContentHandler handler, Metadata metadata,
+  protected List<SolrInputDocument> extract(IndexedRecord record, XHTMLContentHandler handler, Metadata metadata,
       ParseContext context) throws SAXException {
     SolrContentHandler solrHandler = getParseInfo(context).getSolrContentHandler();
     handler.startDocument();
@@ -178,7 +182,7 @@ public class AvroParser extends AbstractParser {
     // DOUBLE, BOOLEAN, NULL
     switch (schema.getType()) {
     case RECORD: {
-      Record record = (Record) datum;
+      IndexedRecord record = (IndexedRecord) datum;
       handler.startElement("record");
       for (Field field : schema.getFields()) {
         handler.startElement(field.name());
