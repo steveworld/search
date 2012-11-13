@@ -109,7 +109,7 @@ public class AvroParser extends AbstractParser {
     FileReader<IndexedRecord> reader = null;
     try {
       reader = DataFileReader.openReader(new SeekableByteArrayInput(bout.toByteArray()), datumReader);
-      Schema schema = getSchema(reader, context);
+      Schema schema = getSchema(reader, metadata, context);
       IndexedRecord record = new GenericData.Record(schema);
       while (reader.hasNext()) {
         reader.next(record);
@@ -124,7 +124,7 @@ public class AvroParser extends AbstractParser {
     }
   }
 
-  protected Schema getSchema(FileReader<IndexedRecord> reader, ParseContext context) {
+  protected Schema getSchema(FileReader<IndexedRecord> reader, Metadata metadata, ParseContext context) {
     return reader.getSchema();
   }
 
