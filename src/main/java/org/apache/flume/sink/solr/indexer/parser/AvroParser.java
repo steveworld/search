@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.generic.GenericContainer;
@@ -277,7 +276,7 @@ public abstract class AvroParser extends AbstractParser {
       break;
     }
     default:
-      throw new AvroRuntimeException("Can't create a: " + schema.getType());
+      throw new IndexerException("Can't create a: " + schema.getType());
     }
   }
 
