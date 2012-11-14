@@ -62,11 +62,11 @@ import org.xml.sax.SAXException;
  * Avro binary format parser that extracts search documents from Avro records
  * (using Apache Tika and Solr Cell) and loads them into Solr.
  */
-public class AvroParser extends AbstractParser {
+public class AvroContainerParser extends AbstractParser {
 
   private static final MediaType MEDIATYPE_AVRO = MediaType.parse("avro/binary"); 
   private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MEDIATYPE_AVRO);
-  private static final Logger LOGGER = LoggerFactory.getLogger(AvroParser.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(AvroContainerParser.class);
   private static final long serialVersionUID = -6656103329236898910L;
 
   @Override
