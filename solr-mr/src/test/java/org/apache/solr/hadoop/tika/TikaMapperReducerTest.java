@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.solr.hadoop.csv;
+package org.apache.solr.hadoop.tika;
 
 import java.util.Map;
 
@@ -26,10 +26,11 @@ import org.apache.hadoop.mrunit.mapreduce.MapDriver;
 import org.apache.hadoop.mrunit.mapreduce.MapReduceDriver;
 import org.apache.hadoop.mrunit.mapreduce.ReduceDriver;
 import org.apache.solr.hadoop.SolrReducer;
+import org.apache.solr.hadoop.tika.TikaMapper;
 import org.junit.Before;
 import org.junit.Test;
 
-public class CSVMapperReducerTest {
+public class TikaMapperReducerTest {
 
   MapDriver<LongWritable, Text, Text, MapWritable> mapDriver;
   ReduceDriver<Text, MapWritable, Text, MapWritable> reduceDriver;
@@ -37,7 +38,7 @@ public class CSVMapperReducerTest {
 
   @Before
   public void setUp() {
-    CSVMapper mapper = new CSVMapper();
+    TikaMapper mapper = new TikaMapper();
     SolrReducer reducer = new SolrReducer();
     mapDriver = MapDriver.newMapDriver(mapper);;
     reduceDriver = ReduceDriver.newReduceDriver(reducer);
