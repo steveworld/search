@@ -44,8 +44,11 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 /**
- * Avro binary format parser that extracts search documents from Avro records
- * (using Apache Tika and Solr Cell) and loads them into Solr.
+ * Avro binary container file format parser that extracts search documents from
+ * Avro records (using Apache Tika and Solr Cell) and loads them into Solr.
+ * 
+ * The schema for reading is retrieved from the container but the schema can
+ * also be overriden.
  */
 public class AvroContainerParser extends AvroParser {
 
