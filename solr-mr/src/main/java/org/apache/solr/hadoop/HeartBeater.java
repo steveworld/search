@@ -18,10 +18,10 @@ package org.apache.solr.hadoop;
 
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.hadoop.util.Progressable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class runs a background thread that once ever 5 seconds checks to see if
@@ -44,7 +44,7 @@ import org.apache.hadoop.util.Progressable;
  * 
  */
 class HeartBeater extends Thread {
-  public static Log LOG = LogFactory.getLog(HeartBeater.class);
+  public static Logger LOG = LoggerFactory.getLogger(HeartBeater.class);
 
   /**
    * count of threads asking for heart beat, at 0 no heart beat done. This could
@@ -140,7 +140,7 @@ class HeartBeater extends Thread {
 
   public void setStatus(String status) {
     if (progress instanceof TaskInputOutputContext) {
-      ((TaskInputOutputContext) progress).setStatus(status);
+      ((TaskInputOutputContext<?,?,?,?>) progress).setStatus(status);
     }
   }
 }

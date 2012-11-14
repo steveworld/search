@@ -29,20 +29,20 @@ import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
 
-  private static final Log LOG = LogFactory.getLog(SolrOutputFormat.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SolrOutputFormat.class);
 
   /**
    * The parameter used to pass the solr config zip file information. This will
@@ -151,7 +151,7 @@ public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
     return new SolrRecordWriter<K, V>(context);
   }
 
-  public static void setupSolrHomeCache(File solrHome, Configuration jobConf)
+  public static void setupSolrHomeCache(File solrHome, Job job)
       throws IOException {
     if (solrHome == null || !(solrHome.exists() && solrHome.isDirectory())) {
       throw new IOException("Invalid solr.home: " + solrHome);
@@ -162,6 +162,7 @@ public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
     // to avoid collisions if multiple jobs are running.
     String hdfsZipName = UUID.randomUUID().toString() + '.'
         + ZIP_FILE_BASE_NAME;
+    Configuration jobConf = job.getConfiguration();
     jobConf.set(ZIP_NAME, hdfsZipName);
 
     Path zipPath = new Path("/tmp", getZipName(jobConf));
@@ -170,9 +171,8 @@ public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
     final URI baseZipUrl = fs.getUri().resolve(
         zipPath.toString() + '#' + getZipName(jobConf));
 
-    DistributedCache.addCacheArchive(baseZipUrl, jobConf);
-    LOG.info("Set Solr cache: "
-        + Arrays.asList(DistributedCache.getCacheArchives(jobConf)));
+    job.addCacheArchive(baseZipUrl);
+    LOG.info("Set Solr cache: " + Arrays.asList(job.getCacheArchives()));
     // Actually send the path for the configuration zip file
     jobConf.set(SETUP_OK, zipPath.toString());
   }

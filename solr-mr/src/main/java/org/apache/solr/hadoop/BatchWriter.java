@@ -25,8 +25,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskID;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -34,12 +32,14 @@ import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.core.SolrCore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Enables adding batches of documents to an EmbeddedSolrServer.
  */
 public class BatchWriter {
-  private static final Log LOG = LogFactory.getLog(BatchWriter.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BatchWriter.class);
 
   final EmbeddedSolrServer solr;
 
@@ -217,22 +217,5 @@ public class BatchWriter {
       throw (IOException) last;
     }
     throw new IOException("Batch Write Failure", last);
-  }
-
-  private synchronized UpdateResponse writeBatch() {
-    UpdateResponse result = null;
-    try {
-      result = solr.add(batchToWrite);
-      //System.out.println("********************* writeBatch size:"
-      //    + batchToWrite.size());
-      batchToWrite.clear();
-    } catch (Exception e) {
-      LOG.error("Batch write failed", e);
-      batchWriteException = e;
-    } finally {
-      this.notifyAll();
-    }
-    return result;
-
   }
 }

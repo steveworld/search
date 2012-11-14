@@ -19,6 +19,7 @@ package org.apache.solr.hadoop;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,10 +37,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
@@ -47,6 +45,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -60,6 +59,8 @@ import org.apache.solr.core.CoreContainer;
 import org.apache.solr.core.CoreDescriptor;
 import org.apache.solr.core.SolrCore;
 import org.apache.solr.core.SolrResourceLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /*
 import org.apache.commons.logging.impl.Jdk14Logger;
 import org.apache.commons.logging.impl.Log4JLogger;
@@ -89,7 +90,7 @@ import org.apache.commons.logging.impl.Log4JLogger;
  * </ul>
  */
 public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
-  static final Log LOG = LogFactory.getLog(SolrRecordWriter.class);
+  static final Logger LOG = LoggerFactory.getLogger(SolrRecordWriter.class);
 
   public final static List<String> allowedConfigDirectories = new ArrayList<String>(
       Arrays.asList(new String[] { "conf", "lib" }));
@@ -154,7 +155,7 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
 
   private BatchWriter batchWriter = null;
 
-  private static HashMap<TaskID, Reducer.Context> contextMap = new HashMap<TaskID, Reducer.Context>();
+  private static HashMap<TaskID, Reducer<?,?,?,?>.Context> contextMap = new HashMap<TaskID, Reducer<?,?,?,?>.Context>();
 
   protected boolean isClosing() {
     return closing;
@@ -191,8 +192,8 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     heartBeater = new HeartBeater(context);
     try {
       heartBeater.needHeartBeat();
-      /** The actual file in hdfs that holds the configuration. */
 
+      /** The actual file in hdfs that holds the configuration. */
       final String configuredSolrConfigPath = conf.get(SolrOutputFormat.SETUP_OK);
       if (configuredSolrConfigPath == null) {
         throw new IllegalStateException(String.format(
@@ -217,7 +218,7 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
       fs.delete(perm, true); // delete old, if any
       Path local = fs.startLocalOutput(perm, temp);
 
-      solrHome = findSolrConfig(conf);
+      solrHome = findSolrConfig(context);
 
       // }
       // Verify that the solr home has a conf and lib directory
@@ -260,7 +261,7 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
 
       // instantiate the converter
       String className = SolrDocumentConverter.getSolrDocumentConverter(conf);
-      Class<? extends SolrDocumentConverter> cls = (Class<? extends SolrDocumentConverter>) Class
+      Class<? extends SolrDocumentConverter<?,?>> cls = (Class<? extends SolrDocumentConverter<?,?>>) Class
           .forName(className);
       converter = (SolrDocumentConverter<K, V>) ReflectionUtils.newInstance(cls, conf);
     } catch (Exception e) {
@@ -273,28 +274,30 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
   }
 
   public static void incrementCounter(TaskID taskId, String groupName, String counterName, long incr) {
-    Reducer.Context context = contextMap.get(taskId);
+    Reducer<?,?,?,?>.Context context = contextMap.get(taskId);
     if (context != null) {
       context.getCounter(groupName, counterName).increment(incr);
     }
   }
 
-  public static void addReducerContext(Reducer.Context context) {
+  public static void addReducerContext(Reducer<?,?,?,?>.Context context) {
     TaskID taskID = context.getTaskAttemptID().getTaskID();
     if (contextMap.get(taskID) == null) {
       contextMap.put(taskID, context);
     }
   }
 
-  private Path findSolrConfig(Configuration conf) throws IOException {
+  private Path findSolrConfig(JobContext context) throws IOException {
+    Configuration conf = context.getConfiguration();
     Path solrHome = null;
-    Path[] localArchives = DistributedCache.getLocalCacheArchives(conf);
+    URI[] localArchives = context.getCacheArchives();
     if (localArchives.length == 0) {
       throw new IOException(String.format(
           "No local cache archives, where is %s:%s", SolrOutputFormat
               .getSetupOk(), SolrOutputFormat.getZipName(conf)));
     }
-    for (Path unpackedDir : localArchives) {
+    for (URI archive : localArchives) {
+      Path unpackedDir = new Path(archive);
       // Only logged if debugging
       if (LOG.isDebugEnabled()) {
         LOG.debug(String.format("Examining unpack directory %s for %s",
@@ -481,7 +484,7 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     int count = 0;
 
     final FileStatus itemStatus = localFs.getFileStatus(itemToZip);
-    if (itemStatus.isDir()) {
+    if (itemStatus.isDirectory()) {
       final FileStatus[] statai = localFs.listStatus(itemToZip);
 
       // Add a directory entry to the zip file
