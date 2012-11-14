@@ -200,7 +200,6 @@ public class DelimitedValuesParser extends AbstractParser {
       }
       csvReader.close();
     } catch (Exception e) {
-      e.printStackTrace();
       LOGGER.error("Cannot parse", e);
       throw new IOException(e);
     } finally {
