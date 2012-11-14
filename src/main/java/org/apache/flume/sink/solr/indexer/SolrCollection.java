@@ -58,7 +58,7 @@ public class SolrCollection {
   }
 
   public IndexSchema getSchema() {
-    return this.schema;
+    return schema;
   }
 
   public void setSchema(IndexSchema schema) {
