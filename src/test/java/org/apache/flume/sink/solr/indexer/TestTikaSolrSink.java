@@ -18,6 +18,7 @@
  */
 package org.apache.flume.sink.solr.indexer;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -41,6 +42,11 @@ import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericData.Record;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.Decoder;
+import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.io.Encoder;
+import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.io.FileUtils;
 import org.apache.flume.Channel;
@@ -55,11 +61,6 @@ import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.sink.solr.SolrSink;
 import org.apache.flume.sink.solr.UUIDInterceptor;
-import org.apache.flume.sink.solr.indexer.DocumentLoader;
-import org.apache.flume.sink.solr.indexer.SafeConcurrentUpdateSolrServer;
-import org.apache.flume.sink.solr.indexer.SolrCollection;
-import org.apache.flume.sink.solr.indexer.SolrServerDocumentLoader;
-import org.apache.flume.sink.solr.indexer.TikaIndexer;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.solr.SolrTestCaseJ4;
@@ -520,6 +521,21 @@ public class TestTikaSolrSink extends SolrTestCaseJ4 {
     Event event = EventBuilder.withBody(bout.toByteArray());
     load(event);
     assertEquals(records.length, queryResultSetSize("*:*"));
+    
+    GenericDatumWriter datumWriter = new GenericDatumWriter(schema);
+    bout = new ByteArrayOutputStream();
+    Encoder encoder = EncoderFactory.get().binaryEncoder(bout, null);
+    for (Record record : records) {
+      datumWriter.write(record, encoder);
+    }
+    encoder.flush();
+    
+    Decoder decoder = DecoderFactory.get().binaryDecoder(new ByteArrayInputStream(bout.toByteArray()), null);
+    DatumReader<Record> datumReader = new GenericDatumReader<Record>(schema);
+    for (int i = 0; i < records.length; i++) {
+      Record record3 = datumReader.read(null, decoder);
+      assertEquals(records[i], record3);
+    }
   }
   
   private void load(Event event) throws EventDeliveryException {
