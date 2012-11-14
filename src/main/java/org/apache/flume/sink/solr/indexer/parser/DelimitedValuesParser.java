@@ -195,13 +195,16 @@ public class DelimitedValuesParser extends AbstractParser {
           String columnName = i < colNames.length ? colNames[i] : "col" + i;
           record.put(columnName, normalize(trim(colValues[i])));
         }
-        process(record, xhtml, metadata, context);
+        try {
+          process(record, xhtml, metadata, context);
+        } catch (SAXException e) {
+          throw new IOException(e);
+        } catch (SolrServerException e) {
+          throw new IOException(e);
+        }
         recNum++;
       }
       csvReader.close();
-    } catch (Exception e) {
-      LOGGER.error("Cannot parse", e);
-      throw new IOException(e);
     } finally {
       reader.close();
     }
