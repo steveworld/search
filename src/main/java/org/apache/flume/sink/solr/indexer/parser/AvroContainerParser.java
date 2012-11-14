@@ -83,6 +83,9 @@ public class AvroContainerParser extends AvroParser {
     try {
       reader = DataFileReader.openReader(new SeekableByteArrayInput(bout.toByteArray()), datumReader);
       Schema schema = getSchema(reader.getSchema(), metadata, context);
+      if (schema == null) {
+        throw new NullPointerException("Avro schema must not be null");
+      }
       IndexedRecord record = new GenericData.Record(schema);
       while (reader.hasNext()) {
         GenericContainer datum = reader.next(record);
