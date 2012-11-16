@@ -18,11 +18,10 @@ package org.apache.solr.hadoop;
 
 import java.io.IOException;
 
-import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 
-public class SolrReducer extends Reducer<Text, MapWritable, Text, MapWritable> {
+public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, SolrInputDocumentWritable> {
 
 
   @Override
