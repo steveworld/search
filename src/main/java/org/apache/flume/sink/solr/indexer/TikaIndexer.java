@@ -65,7 +65,7 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AutoDetectParser;
-import org.apache.tika.parser.DefaultParser;
+import org.apache.tika.parser.CompositeParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.PasswordProvider;
@@ -264,10 +264,11 @@ public class TikaIndexer extends SimpleIndexer {
     Parser parser = autoDetectParser;
     String streamMediaType = event.getHeaders().get(ExtractingParams.STREAM_TYPE);
     if (streamMediaType != null) {
-      // Cache? Parsers are lightweight to construct and thread-safe, so I'm
-      // told
+      // Cache? Parsers are lightweight to construct and thread-safe, so I'm told
       MediaType mt = MediaType.parse(streamMediaType.trim().toLowerCase(Locale.ROOT));
-      parser = new DefaultParser(getTikaConfig().getMediaTypeRegistry()).getParsers().get(mt);
+      CompositeParser tikaConfigParser = (CompositeParser) getTikaConfig().getParser();
+//      DefaultParser tikaConfigParser = new DefaultParser(getTikaConfig().getMediaTypeRegistry());
+      parser = tikaConfigParser.getParsers().get(mt);
       if (parser == null) {
         throw new IndexerException("Stream media type of " + streamMediaType
             + " didn't match any known parsers. Please supply a better " + ExtractingParams.STREAM_TYPE + " parameter.");

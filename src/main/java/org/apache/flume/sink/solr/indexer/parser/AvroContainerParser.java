@@ -86,9 +86,9 @@ public class AvroContainerParser extends AvroParser {
       if (schema == null) {
         throw new NullPointerException("Avro schema must not be null");
       }
-      IndexedRecord record = new GenericData.Record(schema);
+      GenericContainer datum = new GenericData.Record(schema);
       while (reader.hasNext()) {
-        GenericContainer datum = reader.next(record);
+        datum = reader.next(datum);
         process(datum, xhtml, metadata, context);
       }
     } catch (SolrServerException e) {
