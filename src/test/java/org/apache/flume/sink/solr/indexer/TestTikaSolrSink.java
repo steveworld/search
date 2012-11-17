@@ -70,6 +70,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.handler.extraction.ExtractingParams;
 import org.apache.tika.metadata.Metadata;
 import org.junit.After;
 import org.junit.Before;
@@ -522,6 +523,8 @@ public class TestTikaSolrSink extends SolrTestCaseJ4 {
     load(event);
     assertEquals(records.length, queryResultSetSize("*:*"));
     
+    deleteAllDocuments();
+    
     GenericDatumWriter datumWriter = new GenericDatumWriter(schema);
     bout = new ByteArrayOutputStream();
     Encoder encoder = EncoderFactory.get().binaryEncoder(bout, null);
@@ -536,6 +539,12 @@ public class TestTikaSolrSink extends SolrTestCaseJ4 {
       Record record3 = datumReader.read(null, decoder);
       assertEquals(records[i], record3);
     }
+  
+    // TODO: clean this up - don't add AvroTestParser to released tika-config.xml
+    event = EventBuilder.withBody(bout.toByteArray(), Collections.singletonMap(ExtractingParams.STREAM_TYPE, AvroTestParser.MEDIA_TYPE));
+    AvroTestParser.setSchema(schema);
+    load(event);
+    assertEquals(records.length, queryResultSetSize("*:*"));    
   }
   
   private void load(Event event) throws EventDeliveryException {

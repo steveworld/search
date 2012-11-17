@@ -124,9 +124,9 @@ public abstract class AvroParser extends AbstractParser {
     }
     
     try {
-      IndexedRecord record = new GenericData.Record(schema);
+      GenericContainer datum = new GenericData.Record(schema);
       while (true) {
-        GenericContainer datum = datumReader.read(record, decoder);
+        datum = datumReader.read(datum, decoder);
         process(datum, xhtml, metadata, context);
       }
     } catch (EOFException e) { 
