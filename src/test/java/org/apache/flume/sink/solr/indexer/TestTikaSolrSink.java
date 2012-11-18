@@ -63,7 +63,7 @@ import org.apache.flume.sink.solr.SolrSink;
 import org.apache.flume.sink.solr.UUIDInterceptor;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
-import org.apache.solr.SolrTestCaseJ4;
+import org.apache.solr.SolrJettyTestBase;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -79,11 +79,12 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TestTikaSolrSink extends SolrTestCaseJ4 {
+public class TestTikaSolrSink extends SolrJettyTestBase {
 
   private EmbeddedSource source;
   private SolrSink sink;
 
+  private static final boolean TEST_WITH_EMBEDDED_SOLR_SERVER = false;
   private static final String EXTERNAL_SOLR_SERVER_URL = System.getProperty("externalSolrServer");
 //  private static final String EXTERNAL_SOLR_SERVER_URL = "http://127.0.0.1:8983/solr";
   private static final String RESOURCES_DIR = "target/test-classes";
@@ -98,6 +99,11 @@ public class TestTikaSolrSink extends SolrTestCaseJ4 {
         RESOURCES_DIR + "/solr/collection1/conf/schema.xml",
         RESOURCES_DIR + "/solr"
         );
+//    createJetty(
+//        new File(RESOURCES_DIR + "/solr").getAbsolutePath(),
+//        null, //RESOURCES_DIR + "/solr/collection1/conf/solrconfig.xml",
+//        null
+//        );
   }
 
   @Before
@@ -114,7 +120,11 @@ public class TestTikaSolrSink extends SolrTestCaseJ4 {
       solrServer = new SafeConcurrentUpdateSolrServer(EXTERNAL_SOLR_SERVER_URL, 2, 2);
       //solrServer = new HttpSolrServer(EXTERNAL_SOLR_SERVER_URL);
     } else {
-      solrServer = new TestEmbeddedSolrServer(h.getCoreContainer(), "");
+      if (TEST_WITH_EMBEDDED_SOLR_SERVER) {
+        solrServer = new TestEmbeddedSolrServer(h.getCoreContainer(), "");
+      } else {
+        solrServer = new TestSolrServer(getSolrServer());
+      }
     }
 
     Map<String, String> channelContext = new HashMap();
