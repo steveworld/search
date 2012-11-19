@@ -45,7 +45,13 @@
   <groupId>org.apache.flume.flume-ng-sinks</groupId>
   <artifactId>flume-ng-solr-sink</artifactId>
   <name>Flume NG Solr Sink</name>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>1.2.0-cdh4.2.0-SNAPSHOT</version>
+
+  <parent>
+    <groupId>com.cloudera.cdh</groupId>
+    <artifactId>cdh-root</artifactId>
+    <version>4.2.0-SNAPSHOT</version>
+  </parent>
 
   <!--
   <parent>
@@ -57,12 +63,35 @@
   
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <solr.version>4.0.0</solr.version>
-    <avro.version>1.6.3</avro.version>
-    <flume.version>1.2.0</flume.version>
+    <solr.version>${cdh.solr.version}</solr.version>
+    <avro.version>${cdh.avro.version}</avro.version>
+    <flume.version>${cdh.flume-ng.version}</flume.version>
     <tika.version>1.2</tika.version>
     <jackson.scope>test</jackson.scope>
   </properties>
+
+  <repositories>
+    <repository>
+      <id>cdh.repo</id>
+      <url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
+      <name>Cloudera Repositories</name>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    
+    <repository>
+      <id>cdh.snapshots.repo</id>
+      <url>https://repository.cloudera.com/artifactory/libs-snapshot-local</url>
+      <name>Cloudera Snapshots Repository</name>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+    </repository>
+  </repositories>
   
   <dependencies>
     <dependency> <!-- see http://flume.apache.org -->
@@ -222,6 +251,8 @@
             </goals>
             <configuration>
               <excludes>
+                <exclude>cloudera/*</exclude>
+                <exclude>README.md</exclude>
                 <exclude>.idea/</exclude>
                 <exclude>**/*.iml</exclude>
                 <exclude>**/nb-configuration.xml</exclude>
