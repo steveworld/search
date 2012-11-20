@@ -92,7 +92,17 @@
       </releases>
     </repository>
   </repositories>
-  
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-core</artifactId>
+        <version>${solr.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <dependency> <!-- see http://flume.apache.org -->
       <groupId>org.apache.flume</groupId>
