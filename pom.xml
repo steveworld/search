@@ -251,6 +251,8 @@
             </goals>
             <configuration>
               <excludes>
+                <exclude>buildinfo</exclude>
+                <exclude>parent_buildinfo</exclude>
                 <exclude>cloudera/*</exclude>
                 <exclude>README.md</exclude>
                 <exclude>.idea/</exclude>
