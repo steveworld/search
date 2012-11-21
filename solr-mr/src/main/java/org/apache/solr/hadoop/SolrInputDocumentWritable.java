@@ -41,12 +41,17 @@ public class SolrInputDocumentWritable implements Writable {
   }
 
   @Override
+  public String toString() {
+    return sid.toString();
+  }
+
+  @Override
   public void write(DataOutput out) throws IOException {
     JavaBinCodec codec = new JavaBinCodec();
     FastOutputStream daos = FastOutputStream.wrap(DataOutputOutputStream.constructOutputStream(out));
     codec.init(daos);
     try {
-      codec.writeSolrInputDocument(sid);
+      codec.writeVal(sid);
     } finally {
       daos.flushBuffer();
     }
@@ -74,7 +79,7 @@ public class SolrInputDocumentWritable implements Writable {
   public void readFields(DataInput in) throws IOException {
     JavaBinCodec codec = new JavaBinCodec();
     FastInputStream dis = FastInputStream.wrap(DataInputInputStream.constructInputStream(in));
-    sid = codec.readSolrInputDocument(dis);
+    sid = (SolrInputDocument)codec.readVal(dis);
 
 //    Text name = new Text();
 //    Text value = new Text();

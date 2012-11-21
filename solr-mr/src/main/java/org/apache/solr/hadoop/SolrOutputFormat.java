@@ -151,13 +151,23 @@ public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
     return new SolrRecordWriter<K, V>(context);
   }
 
-  public static void setupSolrHomeCache(File solrHome, Job job)
+  public static void setupSolrHomeCache(File solrHomeDir, Job job)
       throws IOException {
-    if (solrHome == null || !(solrHome.exists() && solrHome.isDirectory())) {
-      throw new IOException("Invalid solr.home: " + solrHome);
+    File solrHomeZip = createSolrHomeZip(solrHomeDir);
+    addSolrConfToDistributedCache(job, solrHomeZip);
+  }
+
+  public static File createSolrHomeZip(File solrHomeDir) throws IOException {
+    if (solrHomeDir == null || !(solrHomeDir.exists() && solrHomeDir.isDirectory())) {
+      throw new IOException("Invalid solr home: " + solrHomeDir);
     }
-    File tmpZip = File.createTempFile("solr", "zip");
-    createZip(solrHome, tmpZip);
+    File solrHomeZip = File.createTempFile("solr", ".zip");
+    createZip(solrHomeDir, solrHomeZip);
+    return solrHomeZip;
+  }
+
+  public static void addSolrConfToDistributedCache(Job job, File solrHomeZip)
+      throws IOException {
     // Make a reasonably unique name for the zip file in the distributed cache
     // to avoid collisions if multiple jobs are running.
     String hdfsZipName = UUID.randomUUID().toString() + '.'
@@ -167,7 +177,7 @@ public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
 
     Path zipPath = new Path("/tmp", getZipName(jobConf));
     FileSystem fs = FileSystem.get(jobConf);
-    fs.copyFromLocalFile(new Path(tmpZip.toString()), zipPath);
+    fs.copyFromLocalFile(new Path(solrHomeZip.toString()), zipPath);
     final URI baseZipUrl = fs.getUri().resolve(
         zipPath.toString() + '#' + getZipName(jobConf));
 

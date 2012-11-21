@@ -16,25 +16,31 @@
  */
 package org.apache.solr.hadoop.tika;
 
-import java.util.Map;
+import static org.junit.Assert.assertNotNull;
 
+import java.io.File;
+import java.util.List;
+
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mrunit.mapreduce.MapDriver;
 import org.apache.hadoop.mrunit.mapreduce.MapReduceDriver;
 import org.apache.hadoop.mrunit.mapreduce.ReduceDriver;
+import org.apache.hadoop.mrunit.types.Pair;
+import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.hadoop.SolrInputDocumentWritable;
+import org.apache.solr.hadoop.SolrOutputFormat;
 import org.apache.solr.hadoop.SolrReducer;
-import org.apache.solr.hadoop.tika.TikaMapper;
 import org.junit.Before;
 import org.junit.Test;
 
 public class TikaMapperReducerTest {
+  private static final String RESOURCES_DIR = "target/test-classes";
 
-  MapDriver<LongWritable, Text, Text, MapWritable> mapDriver;
-  ReduceDriver<Text, MapWritable, Text, MapWritable> reduceDriver;
-  MapReduceDriver<LongWritable, Text, Text, MapWritable, Text, MapWritable> mapReduceDriver;
+  MapDriver<LongWritable, Text, Text, SolrInputDocumentWritable> mapDriver;
+  ReduceDriver<Text, SolrInputDocumentWritable, Text, SolrInputDocumentWritable> reduceDriver;
+  MapReduceDriver<LongWritable, Text, Text, SolrInputDocumentWritable, Text, SolrInputDocumentWritable> mapReduceDriver;
 
   @Before
   public void setUp() {
@@ -45,26 +51,31 @@ public class TikaMapperReducerTest {
     mapReduceDriver = MapReduceDriver.newMapReduceDriver(mapper, reducer);
   }
 
-  private static class MyMapWritable extends MapWritable {
-    @Override
-    public String toString() {
-      StringBuilder builder = new StringBuilder();
-      for (Map.Entry<Writable, Writable> entry: entrySet()) {
-        builder.append(entry.toString());
-      }
-      return builder.toString();
-    }
-  }
-
   @Test
-  public void testMapper() {
-    mapDriver.withInput(new LongWritable(), new Text(
-        "A,B"));
-    MyMapWritable map = new MyMapWritable();
-    map.put(new Text("f0"), new Text("A"));
-    map.put(new Text("f1"), new Text("B"));
-    mapDriver.withOutput(new Text("null-0"), map);
-    mapDriver.runTest();
+  public void testMapper() throws Exception {
+    File solrHomeZip = SolrOutputFormat.createSolrHomeZip(new File(RESOURCES_DIR + "/solr/collection1"));
+    assertNotNull(solrHomeZip);
+
+    Configuration config = mapDriver.getConfiguration();
+    config.set(SolrOutputFormat.ZIP_NAME, solrHomeZip.getName());
+
+    mapDriver.withInput(new LongWritable(0L), new Text("file:///tmp/sample-statuses-20120906-141433.avro"));
+
+    SolrInputDocument sid = new SolrInputDocument();
+    sid.addField("id", "uniqueid1");
+    sid.addField("user_name", "user1");
+    sid.addField("text", "content of record one");
+    SolrInputDocumentWritable sidw = new SolrInputDocumentWritable(sid);
+
+    mapDriver
+      .withCacheArchive(solrHomeZip.getAbsolutePath())
+      .withOutput(new Text("0"), sidw);
+    //mapDriver.runTest();
+    List<Pair<Text, SolrInputDocumentWritable>> result = mapDriver.run();
+    for (Pair<Text, SolrInputDocumentWritable> p: result) {
+      System.out.println(p.getFirst());
+      System.out.println(p.getSecond());
+    }
   }
 
 //  @Test

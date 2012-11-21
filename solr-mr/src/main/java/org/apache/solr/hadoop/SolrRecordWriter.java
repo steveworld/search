@@ -19,7 +19,6 @@ package org.apache.solr.hadoop;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,6 +49,7 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskID;
+import org.apache.hadoop.mapreduce.filecache.DistributedCache;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -147,7 +147,7 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
   private boolean outputZipFile = false;
 
   /** The directory that the configuration zip file was unpacked into. */
-  private Path solrHome = null;
+  private Path solrHomeDir = null;
 
   private Configuration conf;
 
@@ -218,36 +218,36 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
       fs.delete(perm, true); // delete old, if any
       Path local = fs.startLocalOutput(perm, temp);
 
-      solrHome = findSolrConfig(context);
+      solrHomeDir = SolrRecordWriter.findSolrConfig(context);
 
       // }
       // Verify that the solr home has a conf and lib directory
-      if (solrHome == null) {
+      if (solrHomeDir == null) {
         throw new IOException("Unable to find solr home setting");
       }
 
       // Setup a solr instance that we can batch writes to
-      LOG.info("SolrHome: " + solrHome.toUri());
+      LOG.info("SolrHome: " + solrHomeDir.toUri());
       String dataDir = new File(local.toString(), "data").toString();
       // copy the schema to the conf dir
       File confDir = new File(local.toString(), "conf");
       confDir.mkdirs();
-      File srcSchemaFile = new File(solrHome.toString(), "conf/schema.xml");
+      File srcSchemaFile = new File(solrHomeDir.toString(), "conf/schema.xml");
       assert srcSchemaFile.exists();
       FileUtils.copyFile(srcSchemaFile, new File(confDir, "schema.xml"));
       Properties props = new Properties();
       props.setProperty("solr.data.dir", dataDir);
-      props.setProperty("solr.home", solrHome.toString());
-      SolrResourceLoader loader = new SolrResourceLoader(solrHome.toString(),
+      props.setProperty("solr.home", solrHomeDir.toString());
+      SolrResourceLoader loader = new SolrResourceLoader(solrHomeDir.toString(),
           null, props);
       LOG
           .info(String
               .format(
                   "Constructed instance information solr.home %s (%s), instance dir %s, conf dir %s, writing index to temporary directory %s, with permdir %s",
-                  solrHome, solrHome.toUri(), loader.getInstanceDir(), loader
+                  solrHomeDir, solrHomeDir.toUri(), loader.getInstanceDir(), loader
                       .getConfigDir(), dataDir, perm));
       CoreContainer container = new CoreContainer(loader);
-      CoreDescriptor descr = new CoreDescriptor(container, "core1", solrHome
+      CoreDescriptor descr = new CoreDescriptor(container, "core1", solrHomeDir
           .toString());
       descr.setDataDir(dataDir);
       descr.setCoreProperties(props);
@@ -287,17 +287,18 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     }
   }
 
-  private Path findSolrConfig(JobContext context) throws IOException {
+  public static Path findSolrConfig(JobContext context) throws IOException {
     Configuration conf = context.getConfiguration();
     Path solrHome = null;
-    URI[] localArchives = context.getCacheArchives();
+    // FIXME when mrunit supports the new cache apis
+    //URI[] localArchives = context.getCacheArchives();
+    Path[] localArchives = DistributedCache.getLocalCacheArchives(conf);
     if (localArchives.length == 0) {
       throw new IOException(String.format(
           "No local cache archives, where is %s:%s", SolrOutputFormat
               .getSetupOk(), SolrOutputFormat.getZipName(conf)));
     }
-    for (URI archive : localArchives) {
-      Path unpackedDir = new Path(archive);
+    for (Path unpackedDir : localArchives) {
       // Only logged if debugging
       if (LOG.isDebugEnabled()) {
         LOG.debug(String.format("Examining unpack directory %s for %s",

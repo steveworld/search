@@ -111,7 +111,7 @@ public class TikaIndexer extends Configured implements Tool {
 
     int shards = 1;
     int mappers = 1;
-    String solrHome = null;
+    String solrHomeDir = null;
 
     Path outputDirectory = new Path(args[0]);
     solrNlistFile = new Path(outputDirectory, SOLR_NLIST_FILE);
@@ -121,7 +121,7 @@ public class TikaIndexer extends Configured implements Tool {
       if (args[i].equals("-shards")) {
         shards = Integer.parseInt(args[++i]);
       } else if (args[i].equals("-solr")) {
-        solrHome = args[++i];
+        solrHomeDir = args[++i];
       } else if (args[i].equals("-mappers")) {
         mappers = Integer.parseInt(args[++i]);
       } else {
@@ -133,8 +133,8 @@ public class TikaIndexer extends Configured implements Tool {
     }
     finalizeInputPaths(outputDirectory);
 
-    if (solrHome == null || !new File(solrHome).exists()) {
-      throw new IOException("You must specify a valid solr.home directory!");
+    if (solrHomeDir == null || !new File(solrHomeDir).exists()) {
+      throw new IOException("You must specify a valid solr home directory!");
     }
 
     job.setInputFormatClass(NLineInputFormat.class);
@@ -144,7 +144,7 @@ public class TikaIndexer extends Configured implements Tool {
     job.setReducerClass(SolrReducer.class);
 
     job.setOutputFormatClass(SolrOutputFormat.class);
-    SolrOutputFormat.setupSolrHomeCache(new File(solrHome), job);
+    SolrOutputFormat.setupSolrHomeCache(new File(solrHomeDir), job);
 
     job.setNumReduceTasks(shards);
 
