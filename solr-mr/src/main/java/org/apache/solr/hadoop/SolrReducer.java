@@ -23,7 +23,6 @@ import org.apache.hadoop.mapreduce.Reducer;
 
 public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, SolrInputDocumentWritable> {
 
-
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
     super.setup(context);
