@@ -121,7 +121,7 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     return requiredConfigDirectories.contains(directory);
   }
 
-  private SolrDocumentConverter<K, V> converter;
+  //private SolrDocumentConverter<K, V> converter;
 
   private EmbeddedSolrServer solr;
 
@@ -193,12 +193,12 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     try {
       heartBeater.needHeartBeat();
 
-      /** The actual file in hdfs that holds the configuration. */
-      final String configuredSolrConfigPath = conf.get(SolrOutputFormat.SETUP_OK);
-      if (configuredSolrConfigPath == null) {
-        throw new IllegalStateException(String.format(
-            "The job did not pass %s", SolrOutputFormat.SETUP_OK));
-      }
+//      /** The actual file in hdfs that holds the configuration. */
+//      final String configuredSolrConfigPath = conf.get(SolrOutputFormat.SETUP_OK);
+//      if (configuredSolrConfigPath == null) {
+//        throw new IllegalStateException(String.format(
+//            "The job did not pass %s", SolrOutputFormat.SETUP_OK));
+//      }
       outputZipFile = SolrOutputFormat.isOutputZipFormat(conf);
 
       this.fs = FileSystem.get(conf);
@@ -260,10 +260,10 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
           SolrOutputFormat.getSolrWriterQueueSize(conf));      
 
       // instantiate the converter
-      String className = SolrDocumentConverter.getSolrDocumentConverter(conf);
-      Class<? extends SolrDocumentConverter<?,?>> cls = (Class<? extends SolrDocumentConverter<?,?>>) Class
-          .forName(className);
-      converter = (SolrDocumentConverter<K, V>) ReflectionUtils.newInstance(cls, conf);
+//      String className = SolrDocumentConverter.getSolrDocumentConverter(conf);
+//      Class<? extends SolrDocumentConverter<?,?>> cls = (Class<? extends SolrDocumentConverter<?,?>>) Class
+//          .forName(className);
+//      converter = (SolrDocumentConverter<K, V>) ReflectionUtils.newInstance(cls, conf);
     } catch (Exception e) {
       throw new IllegalStateException(String.format(
           "Failed to initialize record writer for %s, %s", context.getJobName(), conf
@@ -343,27 +343,29 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     heartBeater.needHeartBeat();
     try {
       try {
-        Collection<SolrInputDocument> docs = converter.convert(key, value);
-        if (docs.size() > batchSize) {
-          ArrayList<SolrInputDocument> oneBatch = new ArrayList<SolrInputDocument>(
-              batchSize);
-          Iterator<SolrInputDocument> iterator = docs.iterator();
-          // Send the documents to the actual writer in batchSize chunks
-          for (int inBatch = 0; iterator.hasNext(); inBatch++) {
-            /** Flush the batch if it is the full size. */
-            if (inBatch == batchSize) {
-              batchWriter.queueBatch(oneBatch);
-              oneBatch.clear();
-              inBatch = 0;
-            }
-            oneBatch.add(iterator.next());
-          }
-          if (!oneBatch.isEmpty()) {
-            batchWriter.queueBatch(oneBatch);
-          }
-        } else {
-          batchWriter.queueBatch(docs);
-        }
+        //Collection<SolrInputDocument> docs = converter.convert(key, value);
+//        if (docs.size() > batchSize) {
+//          ArrayList<SolrInputDocument> oneBatch = new ArrayList<SolrInputDocument>(
+//              batchSize);
+//          Iterator<SolrInputDocument> iterator = docs.iterator();
+//          // Send the documents to the actual writer in batchSize chunks
+//          for (int inBatch = 0; iterator.hasNext(); inBatch++) {
+//            /** Flush the batch if it is the full size. */
+//            if (inBatch == batchSize) {
+//              batchWriter.queueBatch(oneBatch);
+//              oneBatch.clear();
+//              inBatch = 0;
+//            }
+//            oneBatch.add(iterator.next());
+//          }
+//          if (!oneBatch.isEmpty()) {
+//            batchWriter.queueBatch(oneBatch);
+//          }
+//        } else {
+//          batchWriter.queueBatch(docs);
+//        }
+        SolrInputDocumentWritable sidw = (SolrInputDocumentWritable) value;
+        batchWriter.queueBatch(Collections.singleton(sidw.getSolrInputDocument()));
       } catch (SolrServerException e) {
         throw new IOException(e);
       }
