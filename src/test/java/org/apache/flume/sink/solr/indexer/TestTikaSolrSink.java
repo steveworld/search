@@ -86,7 +86,7 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
 
   private static final boolean TEST_WITH_EMBEDDED_SOLR_SERVER = false;
   private static final String EXTERNAL_SOLR_SERVER_URL = System.getProperty("externalSolrServer");
-//  private static final String EXTERNAL_SOLR_SERVER_URL = "http://127.0.0.1:8983/solr";
+//private static final String EXTERNAL_SOLR_SERVER_URL = "http://127.0.0.1:8983/solr";
   private static final String RESOURCES_DIR = "target/test-classes";
 //private static final String RESOURCES_DIR = "src/test/resources";
   private static final AtomicInteger SEQ_NUM = new AtomicInteger();
@@ -189,8 +189,8 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
     }
   }
 
-//  @Test
-  public void xxtestDocumentTypes() throws Exception {
+  @Test
+  public void testDocumentTypes() throws Exception {
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
         path + "/testBMPfp.txt",
@@ -208,8 +208,8 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
     testDocumentTypesInternal(files);
   }
 
-//  @Test
-  public void xxtestDocumentTypes2() throws Exception {
+  @Test
+  public void testDocumentTypes2() throws Exception {
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
         path + "/testPPT_various.ppt",
@@ -563,7 +563,7 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
 
   private void commit() throws SolrServerException, IOException {
     for (SolrCollection collection : sink.getIndexer().getSolrCollections().values()) {
-      ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().commit(true, false, true);
+      ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().commit(true, true, true);
     }
   }
   
