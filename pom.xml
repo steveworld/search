@@ -238,6 +238,8 @@
         <version>2.12.4</version>
         <configuration>
           <argLine>-Dtests.locale=en_us</argLine>
+          <!--<forkMode>always</forkMode>-->
+          <!--<redirectTestOutputToFile>true</redirectTestOutputToFile>-->
         </configuration>
       </plugin>
       
