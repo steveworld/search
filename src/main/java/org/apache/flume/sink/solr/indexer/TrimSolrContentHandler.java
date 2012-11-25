@@ -40,6 +40,7 @@ public class TrimSolrContentHandler extends SolrContentHandler {
     super(metadata, params, schema, dateFormats);
   }
 
+  @Override
   protected String transformValue(String val, SchemaField schemaField) {
     return super.transformValue(val, schemaField).trim();
   }

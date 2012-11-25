@@ -20,6 +20,7 @@ package org.apache.flume.sink.solr.indexer.parser;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -44,7 +45,10 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import au.com.bytecode.opencsv.CSVReader;
+import com.googlecode.jcsv.CSVStrategy;
+import com.googlecode.jcsv.reader.CSVReader;
+import com.googlecode.jcsv.reader.internal.CSVReaderBuilder;
+import com.googlecode.jcsv.reader.internal.DefaultCSVEntryParser;
 
 /**
  * Comma separated values parser that extracts search documents from CSV records
@@ -69,11 +73,11 @@ import au.com.bytecode.opencsv.CSVReader;
 public class DelimitedValuesParser extends AbstractParser {
 
   private char separatorChar = ',';
-  private int numLeadingLinesToSkip = 0;
+  private boolean ignoreFirstLine = false;
   private String[] columnNames = new String[0];
   private String columnNamesHeaderPrefix = null;
-  private char quoteChar = au.com.bytecode.opencsv.CSVParser.DEFAULT_QUOTE_CHARACTER;
-  private String commentChars = "!#;";
+  private char quoteChar = '"';
+  private char commentChar = '#';
   private boolean trim = true;
   private Set<MediaType> supportedMediaTypes;
 
@@ -92,12 +96,12 @@ public class DelimitedValuesParser extends AbstractParser {
     this.separatorChar = separatorChar;
   }
 
-  public int getNumLeadingLinesToSkip() {
-    return numLeadingLinesToSkip;
+  public boolean isIgnoreFirstLine() {
+    return ignoreFirstLine;
   }
 
-  public void setNumLeadingLinesToSkip(int numLeadingLinesToSkip) {
-    this.numLeadingLinesToSkip = numLeadingLinesToSkip;
+  public void setIgnoreFirstLine(boolean ignoreFirstLine) {
+    this.ignoreFirstLine = ignoreFirstLine;
   }
 
   public String[] getColumnNames() {
@@ -116,12 +120,12 @@ public class DelimitedValuesParser extends AbstractParser {
     this.columnNamesHeaderPrefix = columnNamesHeaderPrefix;
   }
 
-  public String getCommentChars() {
-    return commentChars;
+  public char getCommentChar() {
+    return commentChar;
   }
 
-  public void setCommentChars(String commentChars) {
-    this.commentChars = commentChars;
+  public void setCommentChar(char commentChar) {
+    this.commentChar = commentChar;
   }
 
   public boolean isTrim() {
@@ -163,8 +167,7 @@ public class DelimitedValuesParser extends AbstractParser {
     try {
       metadata.set(Metadata.CONTENT_TYPE, supportedMediaTypes.iterator().next().toString());
       XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
-
-      CSVReader csvReader = createCSVReader(reader, metadata, context);
+      CSVReader<String[]> csvReader = createCSVReader(reader, metadata, context);
       Map<String, String> record = new LinkedHashMap();
       String[] colNames = columnNames;
       String[] colValues;
@@ -179,16 +182,12 @@ public class DelimitedValuesParser extends AbstractParser {
             // exclude prefix substring from name
             colValues[0] = colValues[0].substring(columnNamesHeaderPrefix.length()); 
           }
-          colNames = new String[colValues.length - offset];
-          System.arraycopy(colValues, offset, colNames, 0, colNames.length);
+          colNames = Arrays.copyOfRange(colValues, offset, colValues.length);
           for (int i = 0; i < colNames.length; i++) {
             colNames[i] = trim(colNames[i]);
           }
           recNum++;
           continue;
-        }
-        if (colValues.length > 0 && colValues[0].length() > 0 && commentChars.indexOf(colValues[0].charAt(0)) >= 0) {
-          continue; // it is a comment line
         }
         record.clear();
         for (int i = 0; i < colValues.length; i++) {
@@ -222,8 +221,11 @@ public class DelimitedValuesParser extends AbstractParser {
     return trim ? str.trim() : str;
   }
 
+  // TODO: consider replacing impl with http://github.com/FasterXML/jackson-dataformat-csv
+  // or http://supercsv.sourceforge.net/release_notes.html
   private CSVReader createCSVReader(AutoDetectReader reader, Metadata metadata, ParseContext context) {
-    return new CSVReader(reader, separatorChar, quoteChar, numLeadingLinesToSkip);
+    CSVStrategy strategy = new CSVStrategy(separatorChar, quoteChar, commentChar, ignoreFirstLine, true);
+    return new CSVReaderBuilder(reader).strategy(strategy).entryParser(new DefaultCSVEntryParser()).build();
   }
 
   /** Processes the given record */

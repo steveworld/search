@@ -169,10 +169,10 @@
       <scope>${jackson.scope}</scope>
     </dependency>
 
-    <dependency> <!-- see http://opencsv.sourceforge.net -->
-      <groupId>net.sf.opencsv</groupId>
-      <artifactId>opencsv</artifactId>
-      <version>2.3</version>
+    <dependency> <!-- see http://code.google.com/p/jcsv -->
+      <groupId>com.googlecode.jcsv</groupId>
+      <artifactId>jcsv</artifactId>
+      <version>1.4.0</version>
     </dependency>
     
     <dependency> <!-- see https://github.com/cowtowncoder/java-uuid-generator -->
@@ -229,6 +229,15 @@
           <encoding>UTF-8</encoding>
           <showDeprecation>true</showDeprecation>
           <showWarnings>true</showWarnings>
+        </configuration>
+      </plugin>
+      
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.12.4</version>
+        <configuration>
+          <argLine>-Dtests.locale=en_us</argLine>
         </configuration>
       </plugin>
       
