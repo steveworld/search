@@ -33,8 +33,11 @@ public class Configuration {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Configuration.class);
 	
 	public Configuration(Config config) {
-//		config.checkValid(ConfigFactory.defaultReference()); // eagerly validate aspects of tree config		
-//		config = config.getConfig(getClass().getPackage().getName());
+	  if (config == null) {
+	    throw new NullPointerException();
+	  }
+//	               config.checkValid(ConfigFactory.defaultReference()); // eagerly validate aspects of tree config		
+//	               config = config.getConfig(getClass().getPackage().getName());
 		this.treeConfig = config;
 		validate(); // eagerly validate some more
 		LOGGER.debug("Initialized using configuration data: {}", treeConfig.root().render());
