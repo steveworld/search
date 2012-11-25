@@ -563,7 +563,7 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
 
   private void commit() throws SolrServerException, IOException {
     for (SolrCollection collection : sink.getIndexer().getSolrCollections().values()) {
-      ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().commit(true, true, true);
+      ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().commit(false, true, true);
     }
   }
   
