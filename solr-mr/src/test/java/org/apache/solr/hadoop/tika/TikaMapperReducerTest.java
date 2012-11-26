@@ -44,6 +44,7 @@ import org.apache.solr.hadoop.SolrDocumentConverter;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrOutputFormat;
 import org.apache.solr.hadoop.SolrReducer;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -66,7 +67,12 @@ public class TikaMapperReducerTest {
     solrHomeZip = SolrOutputFormat.createSolrHomeZip(new File(RESOURCES_DIR + "/solr/collection1"));
     assertNotNull(solrHomeZip);
   }
-  
+
+  @AfterClass
+  public static void teardownClass() throws Exception {
+    solrHomeZip.delete();
+  }
+
   @Before
   public void setUp() {
     TikaMapper mapper = new TikaMapper();
