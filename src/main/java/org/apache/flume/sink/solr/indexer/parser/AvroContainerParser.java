@@ -118,20 +118,6 @@ public class AvroContainerParser extends AvroParser {
     }
     
     @Override
-    public void seek(long p) throws IOException {
-      long todo = p - pos;
-      if (todo < 0) {
-        throw new UnsupportedOperationException("Seeking backwards is not supported");
-      }
-      skip(todo);
-    }
-
-    @Override
-    public long length() throws IOException {
-      throw new UnsupportedOperationException("Random access is not supported");
-    }
-
-    @Override
     public int read(byte b[], int off, int len) throws IOException {
       int n = in.read(b, off, len);
       if (n > 0) {
@@ -140,6 +126,20 @@ public class AvroContainerParser extends AvroParser {
       return n;
     }
     
+    @Override
+    public long length() throws IOException {
+      throw new UnsupportedOperationException("Random access is not supported");
+    }
+
+    @Override
+    public void seek(long p) throws IOException {
+      long todo = p - pos;
+      if (todo < 0) {
+        throw new UnsupportedOperationException("Seeking backwards is not supported");
+      }
+      skip(todo);
+    }
+
     private long skip(long len) throws IOException {
       // borrowed from org.apache.hadoop.io.IOUtils.skipFully()
       len = Math.max(0, len);
