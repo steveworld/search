@@ -43,9 +43,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.apache.flume.flume-ng-sinks</groupId>
-  <artifactId>flume-ng-solr-sink</artifactId>
-  <name>Flume NG Solr Sink</name>
+  <artifactId>flume-ng-solr-sink-parent</artifactId>
+  <name>Flume NG Solr Sink Aggregator</name>
   <version>1.2.0-cdh4.2.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
 
   <parent>
     <groupId>com.cloudera.cdh</groupId>
@@ -67,8 +68,13 @@
     <avro.version>${cdh.avro.version}</avro.version>
     <flume.version>${cdh.flume-ng.version}</flume.version>
     <tika.version>1.2</tika.version>
-    <jackson.scope>test</jackson.scope>
   </properties>
+
+  <modules>
+    <module>core-indexer</module>
+    <module>flume-indexer</module>
+    <module>examples</module>
+  </modules>
 
   <repositories>
     <repository>
@@ -103,120 +109,6 @@
     </dependencies>
   </dependencyManagement>
 
-  <dependencies>
-    <dependency> <!-- see http://flume.apache.org -->
-      <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-core</artifactId>
-      <version>${flume.version}</version>
-      <scope>provided</scope>
-    </dependency>    
-
-    <dependency> <!-- see http://tika.apache.org -->
-      <groupId>org.apache.tika</groupId>
-      <artifactId>tika-xmp</artifactId>
-      <version>${tika.version}</version>      
-      <exclusions>
-        <exclusion>
-          <groupId>commons-logging</groupId> 
-          <artifactId>commons-logging</artifactId> <!-- needed by pdfbox but solr-core replaces it with jcl-over-slf4j -->
-        </exclusion>
-        <exclusion>
-          <groupId>org.apache.geronimo.specs</groupId> 
-          <artifactId>geronimo-stax-api_1.0_spec</artifactId> <!-- needed by tika-parsers but already provided by JDK -->
-        </exclusion>
-      </exclusions>
-    </dependency>
-    
-    <dependency> <!-- see http://lucene.apache.org/solr -->
-      <groupId>org.apache.solr</groupId>
-      <artifactId>solr-test-framework</artifactId>
-      <version>${solr.version}</version>
-      <scope>test</scope>
-    </dependency>    
-    
-    <dependency> <!-- see http://lucene.apache.org/solr -->
-      <groupId>org.apache.solr</groupId>
-      <artifactId>solr-core</artifactId>
-      <version>${solr.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-jdk14</artifactId> <!-- instead use slf4j on top of log4j or logback  -->
-        </exclusion>
-      </exclusions>        
-    </dependency>
-    
-    <dependency> <!-- see http://lucene.apache.org/solr -->
-      <groupId>org.apache.solr</groupId>
-      <artifactId>solr-cell</artifactId>
-      <version>${solr.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>xerces</groupId>
-          <artifactId>xercesImpl</artifactId> <!-- used by ExtractingDocumentLoader but we never call it -->
-        </exclusion>
-        <exclusion>
-          <groupId>com.ibm.icu</groupId>
-          <artifactId>icu4j</artifactId> <!-- nothing in solr-cell is using this -->
-        </exclusion>
-      </exclusions>                  
-    </dependency>
-    
-    <dependency> <!-- see http://wiki.fasterxml.com/JacksonHome -->
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>2.0.6</version>
-      <scope>${jackson.scope}</scope>
-    </dependency>
-
-    <dependency> <!-- see http://code.google.com/p/jcsv -->
-      <groupId>com.googlecode.jcsv</groupId>
-      <artifactId>jcsv</artifactId>
-      <version>1.4.0</version>
-    </dependency>
-    
-    <dependency> <!-- see https://github.com/cowtowncoder/java-uuid-generator -->
-      <groupId>com.fasterxml.uuid</groupId>
-      <artifactId>java-uuid-generator</artifactId>
-      <version>3.1.3</version>
-      <exclusions>
-        <exclusion>
-          <groupId>log4j</groupId>
-          <artifactId>log4j</artifactId> <!-- not actually required -->
-        </exclusion>
-      </exclusions>      
-    </dependency>
-    
-    <dependency> <!-- see https://github.com/typesafehub/config -->
-      <groupId>com.typesafe</groupId>
-      <artifactId>config</artifactId>
-      <version>1.0.0</version>
-    </dependency>
-
-    <!--    
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>1.6.4</version>
-    </dependency>
-    -->
-    
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <scope>test</scope>
-      <version>4.10</version>
-    </dependency>
-    
-    <dependency> <!-- see http://www.slf4j.org -->
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-      <version>1.6.4</version>
-      <scope>test</scope>
-    </dependency>    
-
-  </dependencies>
-
   <build>
     <plugins>
       <plugin>
@@ -230,33 +122,6 @@
           <showDeprecation>true</showDeprecation>
           <showWarnings>true</showWarnings>
         </configuration>
-      </plugin>
-      
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.12.4</version>
-        <configuration>
-          <argLine>-Dtests.locale=en_us</argLine>
-          <!--<forkMode>always</forkMode>-->
-          <!--<redirectTestOutputToFile>true</redirectTestOutputToFile>-->
-        </configuration>
-      </plugin>
-      
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <outputDirectory>${project.build.directory}/lib</outputDirectory>
-          <includeScope>runtime</includeScope>
-        </configuration>
-        
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals> <goal>copy-dependencies</goal> </goals>
-          </execution>
-        </executions>
       </plugin>
 
       <plugin>
@@ -317,8 +182,6 @@
           <downloadSources>true</downloadSources>
         </configuration>
       </plugin>
-      
     </plugins>
   </build> 
-
 </project>

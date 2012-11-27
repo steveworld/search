@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor
+  license agreements. See the NOTICE file distributed with this work for additional
+  information regarding copyright ownership. The ASF licenses this file to
+  You under the Apache License, Version 2.0 (the "License"); you may not use
+  this file except in compliance with the License. You may obtain a copy of
+  the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required
+  by applicable law or agreed to in writing, software distributed under the
+  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
+  OF ANY KIND, either express or implied. See the License for the specific
+  language governing permissions and limitations under the License. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+ 
+  <parent>
+    <groupId>org.apache.flume.flume-ng-sinks</groupId>
+    <artifactId>flume-ng-solr-sink-parent</artifactId>
+    <version>1.2.0-cdh4.2.0-SNAPSHOT</version>
+  </parent>
+
+  <groupId>org.apache.flume.flume-ng-sinks</groupId>
+  <artifactId>flume-ng-solr-core-indexer</artifactId>
+  <version>1.2.0-cdh4.2.0-SNAPSHOT</version>
+  <name>Flume NG Solr Core Indexer</name>
+
+  <dependencies>
+    <dependency> <!-- see http://avro.apache.org -->
+      <groupId>org.apache.avro</groupId>
+      <artifactId>avro</artifactId>
+      <version>${avro.version}</version>
+    </dependency>    
+
+    <dependency> <!-- see http://tika.apache.org -->
+      <groupId>org.apache.tika</groupId>
+      <artifactId>tika-xmp</artifactId>
+      <version>${tika.version}</version>      
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId> 
+          <artifactId>commons-logging</artifactId> <!-- needed by pdfbox but solr-core replaces it with jcl-over-slf4j -->
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.geronimo.specs</groupId> 
+          <artifactId>geronimo-stax-api_1.0_spec</artifactId> <!-- needed by tika-parsers but already provided by JDK -->
+        </exclusion>
+      </exclusions>
+    </dependency>
+    
+    <dependency> <!-- see http://lucene.apache.org/solr -->
+      <groupId>org.apache.solr</groupId>
+      <artifactId>solr-core</artifactId>
+      <version>${solr.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-jdk14</artifactId> <!-- instead use slf4j on top of log4j or logback  -->
+        </exclusion>
+      </exclusions>        
+    </dependency>
+
+    <dependency> <!-- see http://lucene.apache.org/solr -->
+      <groupId>org.apache.solr</groupId>
+      <artifactId>solr-test-framework</artifactId>
+      <version>${solr.version}</version>
+      <scope>test</scope>
+    </dependency>    
+    
+    <dependency> <!-- see http://lucene.apache.org/solr -->
+      <groupId>org.apache.solr</groupId>
+      <artifactId>solr-cell</artifactId>
+      <version>${solr.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>xerces</groupId>
+          <artifactId>xercesImpl</artifactId> <!-- used by ExtractingDocumentLoader but we never call it -->
+        </exclusion>
+        <exclusion>
+          <groupId>com.ibm.icu</groupId>
+          <artifactId>icu4j</artifactId> <!-- nothing in solr-cell is using this -->
+        </exclusion>
+      </exclusions>                  
+    </dependency>
+    
+    <dependency> <!-- see http://code.google.com/p/jcsv -->
+      <groupId>com.googlecode.jcsv</groupId>
+      <artifactId>jcsv</artifactId>
+      <version>1.4.0</version>
+    </dependency>
+    
+    <dependency> <!-- see https://github.com/cowtowncoder/java-uuid-generator -->
+      <groupId>com.fasterxml.uuid</groupId>
+      <artifactId>java-uuid-generator</artifactId>
+      <version>3.1.3</version>
+      <exclusions>
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId> <!-- not actually required -->
+        </exclusion>
+      </exclusions>      
+    </dependency>
+    
+    <dependency> <!-- see https://github.com/typesafehub/config -->
+      <groupId>com.typesafe</groupId>
+      <artifactId>config</artifactId>
+      <version>1.0.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+      <version>4.10</version>
+    </dependency>
+    
+    <dependency> <!-- see http://www.slf4j.org -->
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.6.4</version>
+      <scope>test</scope>
+    </dependency>    
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+       <groupId>org.apache.maven.plugins</groupId>
+       <artifactId>maven-jar-plugin</artifactId>
+       <executions>
+         <execution>
+           <goals>
+             <goal>test-jar</goal>
+           </goals>
+         </execution>
+       </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.12.4</version>
+        <configuration>
+          <argLine>-Dtests.locale=en_us</argLine>
+          <!--<forkMode>always</forkMode>-->
+          <!--<redirectTestOutputToFile>true</redirectTestOutputToFile>-->
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <configuration>
+          <outputDirectory>${project.build.directory}/lib</outputDirectory>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      
+      <plugin>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
+        <version>0.7</version>
+        <executions>
+          <execution>
+            <id>test.rat</id>
+            <phase>test</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <excludes>
+                <exclude>buildinfo</exclude>
+                <exclude>parent_buildinfo</exclude>
+                <exclude>cloudera/*</exclude>
+                <exclude>README.md</exclude>
+                <exclude>.idea/</exclude>
+                <exclude>**/*.iml</exclude>
+                <exclude>**/nb-configuration.xml</exclude>
+                <exclude>.git/</exclude>
+                <exclude>.gitignore</exclude>
+                <!-- ASF jenkins box puts the Maven repo in our root directory. -->
+                <exclude>.repository/</exclude>
+                <exclude>**/*.diff</exclude>
+                <exclude>**/*.patch</exclude>
+                <exclude>**/*.avsc</exclude>
+                <exclude>**/docs/**</exclude>
+                <exclude>src/test/resources/test-documents/**</exclude>                  
+                <exclude>src/test/resources/solr/collection1/conf/lang/**</exclude>                  
+              </excludes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>  
+  </build>
+</project>
