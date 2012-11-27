@@ -102,12 +102,11 @@ public class AvroContainerParser extends AvroParser {
    * A {@link SeekableInput} backed by an {@link InputStream} that can only advance
    * forward, not backwards.
    */
-  public static final class ForwardOnlySeekableInputStream extends InputStream implements SeekableInput {
+  public static final class ForwardOnlySeekableInputStream implements SeekableInput {
     // class is public for testing only!
     
     private final InputStream in;
     private long pos = 0;
-    private long mark = -1;
     
     public ForwardOnlySeekableInputStream(InputStream in) {
       this.in = in;
@@ -133,18 +132,6 @@ public class AvroContainerParser extends AvroParser {
     }
 
     @Override
-    public int read() throws IOException {
-      int result = in.read();
-      pos++;
-      return result;
-    }
-    
-    @Override
-    public int read(byte b[]) throws IOException {
-      return read(b, 0, b.length);
-    }
-    
-    @Override
     public int read(byte b[], int off, int len) throws IOException {
       int n = in.read(b, off, len);
       if (n > 0) {
@@ -153,8 +140,7 @@ public class AvroContainerParser extends AvroParser {
       return n;
     }
     
-    @Override
-    public long skip(long len) throws IOException {
+    private long skip(long len) throws IOException {
       // borrowed from org.apache.hadoop.io.IOUtils.skipFully()
       len = Math.max(0, len);
       long todo = len;
@@ -177,31 +163,9 @@ public class AvroContainerParser extends AvroParser {
     }
     
     @Override
-    public int available() throws IOException {
-      return in.available();
-    }
-
-    @Override
     public void close() throws IOException {
       in.close();
     }
-
-    @Override
-    public boolean markSupported() {
-      return in.markSupported();
-    }
-    
-    @Override
-    public void mark(int readLimit) {
-      in.mark(readLimit);
-      mark = pos;
-    }
-    
-    @Override
-    public void reset() throws IOException {
-      in.reset();
-      pos = mark;
-   }
     
   }
 
