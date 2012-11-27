@@ -175,6 +175,16 @@ public class AvroContainerParser extends AvroParser {
     }
     
     @Override
+    public int available() throws IOException {
+      return in.available();
+    }
+
+    @Override
+    public void close() throws IOException {
+      in.close();
+    }
+
+    @Override
     public boolean markSupported() {
       return in.markSupported();
     }
