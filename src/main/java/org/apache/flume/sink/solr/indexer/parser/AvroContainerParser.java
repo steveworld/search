@@ -147,7 +147,9 @@ public class AvroContainerParser extends AvroParser {
     @Override
     public int read(byte b[], int off, int len) throws IOException {
       int n = in.read(b, off, len);
-      pos += n;
+      if (n > 0) {
+        pos += n;
+      }
       return n;
     }
     
