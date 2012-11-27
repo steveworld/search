@@ -37,7 +37,6 @@ import org.apache.avro.Schema.Type;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.file.FileReader;
-import org.apache.avro.file.SeekableByteArrayInput;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericData.Record;
 import org.apache.avro.generic.GenericDatumReader;
@@ -61,6 +60,7 @@ import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.sink.solr.SolrSink;
 import org.apache.flume.sink.solr.UUIDInterceptor;
+import org.apache.flume.sink.solr.indexer.parser.AvroContainerParser.ForwardOnlySeekableInputStream;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.solr.SolrJettyTestBase;
@@ -519,7 +519,7 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
     writer.flush();
     writer.close();
 
-    FileReader<Record> reader = DataFileReader.openReader(new SeekableByteArrayInput(bout.toByteArray()), new GenericDatumReader());
+    FileReader<Record> reader = new DataFileReader(new ForwardOnlySeekableInputStream(new ByteArrayInputStream(bout.toByteArray())), new GenericDatumReader());
     Schema schema2 = reader.getSchema();
     assertEquals(schema, schema2);
     Record record2 = new GenericData.Record(schema2);    
