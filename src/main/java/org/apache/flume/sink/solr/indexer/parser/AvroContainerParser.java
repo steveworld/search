@@ -112,10 +112,12 @@ public class AvroContainerParser extends AvroParser {
       this.in = in;
     }
 
+    @Override
     public long tell() throws IOException {
       return pos;
     }
     
+    @Override
     public void seek(long p) throws IOException {
       long todo = p - pos;
       if (todo < 0) {
@@ -124,28 +126,33 @@ public class AvroContainerParser extends AvroParser {
       skip(todo);
     }
 
+    @Override
     public long length() throws IOException {
       throw new UnsupportedOperationException("Random access is not supported");
     }
 
+    @Override
     public int read() throws IOException {
       int result = in.read();
       pos++;
       return result;
     }
     
+    @Override
     public int read(byte b[]) throws IOException {
       return read(b, 0, b.length);
     }
     
+    @Override
     public int read(byte b[], int off, int len) throws IOException {
       int n = in.read(b, off, len);
       pos += n;
       return n;
     }
     
-    // borrowed from org.apache.hadoop.io.IOUtils.skipFully()
+    @Override
     public long skip(long len) throws IOException {
+      // borrowed from org.apache.hadoop.io.IOUtils.skipFully()
       len = Math.max(0, len);
       long todo = len;
       while (todo > 0) {
@@ -166,15 +173,18 @@ public class AvroContainerParser extends AvroParser {
       return len;
     }
     
+    @Override
     public boolean markSupported() {
       return in.markSupported();
     }
     
+    @Override
     public void mark(int readLimit) {
       in.mark(readLimit);
       mark = pos;
     }
     
+    @Override
     public void reset() throws IOException {
       in.reset();
       pos = mark;
