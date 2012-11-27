@@ -18,7 +18,7 @@
  */
 package org.apache.flume.sink.solr.indexer.parser;
 
-import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -26,11 +26,10 @@ import java.util.Collections;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.file.FileReader;
-import org.apache.avro.file.SeekableByteArrayInput;
+import org.apache.avro.file.SeekableInput;
 import org.apache.avro.generic.GenericContainer;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
-import org.apache.avro.generic.IndexedRecord;
 import org.apache.avro.io.DatumReader;
 import org.apache.flume.sink.solr.indexer.IndexerException;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -63,25 +62,13 @@ public class AvroContainerParser extends AvroParser {
       throws IOException, SAXException {
 
     getParseInfo(context).setMultiDocumentParser(true); // TODO hack alert!
-
-    /*
-     * Avro requires a SeekableInput so looks like we need to first fetch it all
-     * into a buffer. TODO optimize via a new custom SeekableInput impl
-     */
-    byte[] buf = new byte[4 * 1024];
-    ByteArrayOutputStream bout = new ByteArrayOutputStream();
-    int len;
-    while ((len = in.read(buf)) >= 0) {
-      bout.write(buf, 0, len);
-    }
-
     metadata.set(Metadata.CONTENT_TYPE, getSupportedTypes(context).iterator().next().toString());
     XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
 
     DatumReader<GenericContainer> datumReader = new GenericDatumReader();
     FileReader<GenericContainer> reader = null;
     try {
-      reader = DataFileReader.openReader(new SeekableByteArrayInput(bout.toByteArray()), datumReader);
+      reader = new DataFileReader(new ForwardOnlySeekableInputStream(in), datumReader);
       Schema schema = getSchema(reader.getSchema(), metadata, context);
       if (schema == null) {
         throw new NullPointerException("Avro schema must not be null");
@@ -103,6 +90,96 @@ public class AvroContainerParser extends AvroParser {
   @Override
   protected Schema getSchema(Schema schema, Metadata metadata, ParseContext context) {
     return schema;
+  }
+
+  
+  ///////////////////////////////////////////////////////////////////////////////
+  // Nested classes:
+  ///////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * A {@link SeekableInput} backed by an {@link InputStream} that can only advance
+   * forward, not backwards.
+   */
+  public static final class ForwardOnlySeekableInputStream extends InputStream implements SeekableInput {
+    // class is public for testing only!
+    
+    private final InputStream in;
+    private long pos = 0;
+    private long mark = -1;
+    
+    public ForwardOnlySeekableInputStream(InputStream in) {
+      this.in = in;
+    }
+
+    public long tell() throws IOException {
+      return pos;
+    }
+    
+    public void seek(long p) throws IOException {
+      long todo = p - pos;
+      if (todo < 0) {
+        throw new UnsupportedOperationException("Seeking backwards is not supported");
+      }
+      skip(todo);
+    }
+
+    public long length() throws IOException {
+      throw new UnsupportedOperationException("Random access is not supported");
+    }
+
+    public int read() throws IOException {
+      int result = in.read();
+      pos++;
+      return result;
+    }
+    
+    public int read(byte b[]) throws IOException {
+      return read(b, 0, b.length);
+    }
+    
+    public int read(byte b[], int off, int len) throws IOException {
+      int n = in.read(b, off, len);
+      pos += n;
+      return n;
+    }
+    
+    // borrowed from org.apache.hadoop.io.IOUtils.skipFully()
+    public long skip(long len) throws IOException {
+      len = Math.max(0, len);
+      long todo = len;
+      while (todo > 0) {
+        long ret = in.skip(todo);
+        if (ret == 0) {
+          // skip may return 0 even if we're not at EOF.  Luckily, we can 
+          // use the read() method to figure out if we're at the end.
+          int b = in.read();
+          if (b == -1) {
+            throw new EOFException( "Premature EOF from inputStream after " +
+                "skipping " + (len - todo) + " byte(s).");
+          }
+          ret = 1;
+        }
+        todo -= ret;
+        pos += ret;
+      }
+      return len;
+    }
+    
+    public boolean markSupported() {
+      return in.markSupported();
+    }
+    
+    public void mark(int readLimit) {
+      in.mark(readLimit);
+      mark = pos;
+    }
+    
+    public void reset() throws IOException {
+      in.reset();
+      pos = mark;
+   }
+    
   }
 
 }
