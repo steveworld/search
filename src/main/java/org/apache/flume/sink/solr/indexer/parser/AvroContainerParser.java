@@ -58,6 +58,7 @@ public class AvroContainerParser extends AvroParser {
     setSupportedTypes(Collections.singleton(MediaType.parse("avro/binary")));
   }
   
+  @Override
   protected void parse2(InputStream in, ContentHandler handler, Metadata metadata, ParseContext context)
       throws IOException, SAXException {
 
