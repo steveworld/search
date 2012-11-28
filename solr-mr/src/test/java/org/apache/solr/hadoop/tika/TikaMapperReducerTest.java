@@ -31,7 +31,6 @@ import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.TaskID;
@@ -62,6 +61,8 @@ public class TikaMapperReducerTest {
 
   static File solrHomeZip;
 
+  MySolrReducer myReducer;
+
   @BeforeClass
   public static void setupClass() throws Exception {
     solrHomeZip = SolrOutputFormat.createSolrHomeZip(new File(RESOURCES_DIR + "/solr/collection1"));
@@ -76,15 +77,37 @@ public class TikaMapperReducerTest {
   @Before
   public void setUp() {
     TikaMapper mapper = new TikaMapper();
-    SolrReducer reducer = new SolrReducer();
+    myReducer = new MySolrReducer();
     mapDriver = MapDriver.newMapDriver(mapper);;
-    reduceDriver = ReduceDriver.newReduceDriver(reducer);
-    mapReduceDriver = MapReduceDriver.newMapReduceDriver(mapper, reducer);
+    reduceDriver = ReduceDriver.newReduceDriver(myReducer);
+    mapReduceDriver = MapReduceDriver.newMapReduceDriver(mapper, myReducer);
 
     Configuration config = mapDriver.getConfiguration();
     config.set(SolrOutputFormat.ZIP_NAME, solrHomeZip.getName());
     config = reduceDriver.getConfiguration();
     config.set(SolrOutputFormat.ZIP_NAME, solrHomeZip.getName());
+    config = mapReduceDriver.getConfiguration();
+    config.set(SolrOutputFormat.ZIP_NAME, solrHomeZip.getName());
+  }
+
+  public static class MySolrReducer extends SolrReducer {
+    Context context;
+
+    @Override
+    protected void setup(Context context) throws IOException, InterruptedException {
+      this.context = context;
+
+      // handle a bug in MRUnit - should be fixed in MRUnit 1.0.0
+      when(context.getTaskAttemptID()).thenAnswer(new Answer<TaskAttemptID>() {
+        @Override
+        public TaskAttemptID answer(final InvocationOnMock invocation) {
+          return new TaskAttemptID(new TaskID(), 0);
+        }
+      });
+
+      super.setup(context);
+    }
+
   }
 
   @Test
@@ -125,14 +148,6 @@ public class TikaMapperReducerTest {
 
   @Test
   public void testReducer() throws Exception {
-    Reducer<Text, SolrInputDocumentWritable, Text, SolrInputDocumentWritable>.Context context = reduceDriver.getContext();
-    when(context.getTaskAttemptID()).thenAnswer(new Answer<TaskAttemptID>() {
-      @Override
-      public TaskAttemptID answer(final InvocationOnMock invocation) {
-        return new TaskAttemptID(new TaskID(), 0);
-      }
-    });
-
     SolrDocumentConverter.setSolrDocumentConverter(TikaDocumentConverter.class, reduceDriver.getContext().getConfiguration());
 
     List<SolrInputDocumentWritable> values = new ArrayList<SolrInputDocumentWritable>();
@@ -149,6 +164,18 @@ public class TikaMapperReducerTest {
     reduceDriver.withOutputFormat(SolrOutputFormat.class, NullInputFormat.class);
 
     reduceDriver.run();
+  }
+
+  @Test
+  public void testMapReduce() throws IOException {
+    mapReduceDriver.withInput(new LongWritable(0L), new Text(new File("target/test-classes/sample-statuses-20120906-141433.avro").toURI().toString()));
+
+    mapReduceDriver.withCacheArchive(solrHomeZip.getAbsolutePath());
+
+    SolrDocumentConverter.setSolrDocumentConverter(TikaDocumentConverter.class, mapReduceDriver.getConfiguration());
+    mapReduceDriver.withOutputFormat(SolrOutputFormat.class, NullInputFormat.class);
+
+    mapReduceDriver.run();
   }
 
 }
