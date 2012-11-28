@@ -1,4 +1,25 @@
+# use glob syntax.
+syntax: glob
+*.class
+*~
+*.bak
+*.off
+*.old
+.DS_Store
+
+# building
+target
+build
+test-output
+.surefire-*
+
+# Eclipse
 .classpath
 .project
 .settings
-target
+*.jpage
+
+# IDEA
+*.iml
+*.ipr
+*.iws
