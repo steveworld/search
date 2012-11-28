@@ -167,9 +167,9 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
   }
 
   /** If true, writes will throw an exception */
-  volatile boolean closing = false;
+  private volatile boolean closing = false;
 
-  private String getOutFileName(TaskAttemptContext context, String prefix) {
+  public static String getOutFileName(TaskAttemptContext context, String prefix) {
     TaskID taskId = context.getTaskAttemptID().getTaskID();
     int partition = taskId.getId();
     NumberFormat nf = NumberFormat.getInstance();
