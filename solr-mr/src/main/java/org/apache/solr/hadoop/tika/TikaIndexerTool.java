@@ -72,7 +72,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     ToolRunner.printGenericCommandUsage(System.out);
   }
 
-  public static void main(String[] args) throws Exception {
+  public static void main(String[] args) throws Exception  {
     Configuration conf = new Configuration();
     int res = ToolRunner.run(conf, new TikaIndexerTool(), args);
     System.exit(res);
@@ -80,7 +80,7 @@ public class TikaIndexerTool extends Configured implements Tool {
 
   @Override
   public int run(String[] args) throws Exception {
-    if (args.length < 2) {
+    if (args.length == 0) {
       usage();
       return -1;
     }
@@ -92,11 +92,10 @@ public class TikaIndexerTool extends Configured implements Tool {
     int mappers = 1;
     File solrHomeDir = new File(System.getProperty("user.home") + File.separator + "solr");
     Path outputDir = new Path("hdfs:///user/" + System.getProperty("user.name") + "/tikaindexertool-output");
-    Path solrNlistFile = new Path(outputDir, SOLR_NLIST_FILE);
     List<String> inputLists = new ArrayList();
     List<Path> inputFiles = new ArrayList();
 
-    for (int i = 1; i < args.length; i++) {
+    for (int i = 0; i < args.length; i++) {
       if (args[i].equals("-outputdir")) {
         outputDir = new Path(URI.create(args[0]));
         checkHdfsPath(outputDir);
@@ -119,6 +118,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       throw new IOException("Solr home directory does not exist: " + solrHomeDir);
     }
 
+    Path solrNlistFile = new Path(outputDir, SOLR_NLIST_FILE);
     long numFiles = addInputFiles(outputDir, solrNlistFile, inputLists, inputFiles);
     if (numFiles == 0) {
       throw new IOException("No input files found");
@@ -152,9 +152,9 @@ public class TikaIndexerTool extends Configured implements Tool {
   }
 
   private long addInputFiles(Path outputDir, Path solrNlistFile, List<String> inputLists, List<Path> inputFiles) throws IOException {
+    LOG.info("Creating mapper input file {}", solrNlistFile);
     long numFiles = 0;
     FileSystem fs = outputDir.getFileSystem(job.getConfiguration());
-    LOG.info("Creating mapper input file {}", solrNlistFile.toString());
     FSDataOutputStream out = fs.create(solrNlistFile);
     try {
       Writer writer = new OutputStreamWriter(out, "UTF-8");
