@@ -91,7 +91,7 @@ import org.xml.sax.SAXException;
  * </ul>
  */
 public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
-  static final Logger LOG = LoggerFactory.getLogger(SolrRecordWriter.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SolrRecordWriter.class);
 
   public final static List<String> allowedConfigDirectories = new ArrayList<String>(
       Arrays.asList(new String[] { "conf", "lib" }));
