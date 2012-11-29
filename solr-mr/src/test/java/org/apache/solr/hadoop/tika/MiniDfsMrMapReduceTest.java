@@ -34,6 +34,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.util.JarFinder;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrOutputFormat;
 import org.apache.solr.hadoop.SolrReducer;
@@ -47,6 +48,8 @@ import org.junit.Test;
 public class MiniDfsMrMapReduceTest extends MiniDfsMRBase {
   private static final String RESOURCES_DIR = "target/test-classes";
   private static File solrHomeZip;
+
+  public static final String SEARCH_ARCHIVES_JAR = JarFinder.getJar(TikaIndexer.class);
 
   @BeforeClass
   public static void setupClass() throws Exception {
@@ -73,6 +76,8 @@ public class MiniDfsMrMapReduceTest extends MiniDfsMRBase {
   public void testMapperReducer() throws Exception {
     Job job = new Job(createJobConf());
 
+    job.setJar(SEARCH_ARCHIVES_JAR);
+
     FileSystem fs = getFileSystem();
 
     Path inDir = new Path("testing/testMapperReducer/input");
@@ -94,6 +99,7 @@ public class MiniDfsMrMapReduceTest extends MiniDfsMRBase {
 
     job.setMapperClass(TikaMapper.class);
     job.setReducerClass(SolrReducer.class);
+    job.setNumReduceTasks(1);
 
     job.setOutputFormatClass(SolrOutputFormat.class);
     SolrOutputFormat.addSolrConfToDistributedCache(job, solrHomeZip);
