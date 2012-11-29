@@ -63,7 +63,7 @@ public class TikaIndexerTool extends Configured implements Tool {
         "\n" + 
         "\nSpecific options supported are" +
         "\n\n-outputdir <hdfsOutputDir>\tHDFS output directory containing Solr indexes (defaults to hdfs:///user/" + System.getProperty("user.name") + "/tikaindexer-output)" +
-        "\n\n-inputlist <File>\tLocal or HDFS file containing a list of HDFS URLs, one URL per line. If '-' is specified, URLs are read from the standard input." +
+        "\n\n-inputlist <File>\tLocal file URL or HDFS file URL containing a list of HDFS URLs, one URL per line. If '-' is specified, URLs are read from the standard input." +
         "\n\n-solr <solrHome>\tLocal dir containing Solr conf/ and lib/ (defaults to " + System.getProperty("user.home") + File.separator + "solr)" +
         "\n\n-mappers <NNN>\tMaximum number of mappers to use (defaults to 1)" +
         "\n\n-shards NNN\tNumber of output shards (defaults to 1)" +
