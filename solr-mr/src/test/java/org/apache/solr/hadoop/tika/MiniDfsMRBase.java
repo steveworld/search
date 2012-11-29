@@ -22,14 +22,14 @@ import java.net.InetAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import junit.framework.TestCase;
-
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.MiniMRCluster;
+import org.apache.hadoop.mapred.MiniMRClientCluster;
+import org.apache.hadoop.mapred.MiniMRClientClusterFactory;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.junit.Rule;
@@ -124,7 +124,7 @@ public class MiniDfsMRBase {
   }
 
   protected static MiniDFSCluster dfsCluster = null;
-  protected static MiniMRCluster mrCluster = null;
+  protected static MiniMRClientCluster mrCluster = null;
 
   protected void setup() throws Exception {
     testCaseDir = createTestCaseDir(true);
@@ -230,13 +230,8 @@ public class MiniDfsMRBase {
             FsPermission.valueOf("-rwxrwxrwx"));
         fileSystem.setPermission(new Path("/hadoop/mapred/system"),
             FsPermission.valueOf("-rwx------"));
-        String nnURI = fileSystem.getUri().toString();
-        int numDirs = 1;
-        String[] racks = null;
-        String[] hosts = null;
-        mrCluster = new MiniMRCluster(0, 0, taskTrackers, nnURI, numDirs,
-            racks, hosts, null, conf);
-        JobConf jobConf = mrCluster.createJobConf();
+        mrCluster = MiniMRClientClusterFactory.create(getClass(), taskTrackers, conf);
+        Configuration jobConf = mrCluster.getConfig();
         System.setProperty(SEARCH_TEST_JOB_TRACKER,
             jobConf.get("mapred.job.tracker"));
         System.setProperty(SEARCH_TEST_NAME_NODE,
@@ -256,7 +251,7 @@ public class MiniDfsMRBase {
   protected static void shutdownMiniCluster() {
     try {
       if (mrCluster != null) {
-        mrCluster.shutdown();
+        mrCluster.stop();
       }
     } catch (Exception ex) {
       System.out.println(ex);
@@ -304,12 +299,12 @@ public class MiniDfsMRBase {
    * 
    * @return a jobconf preconfigured to talk with the test cluster/minicluster.
    */
-  protected JobConf createJobConf() {
-    JobConf jobConf;
+  protected Configuration createJobConf() throws IOException {
+    Configuration jobConf;
     if (mrCluster != null) {
-      jobConf = mrCluster.createJobConf();
+      jobConf = mrCluster.getConfig();
     } else {
-      jobConf = new JobConf();
+      jobConf = new Configuration();
       jobConf.set("mapred.job.tracker", getJobTrackerUri());
       jobConf.set("fs.default.name", getNameNodeUri());
     }
@@ -341,15 +336,15 @@ public class MiniDfsMRBase {
    *          is shutdown
    */
   protected void executeWhileJobTrackerIsShutdown(
-      ShutdownJobTrackerExecutable executable) {
-    mrCluster.stopJobTracker();
+      ShutdownJobTrackerExecutable executable) throws IOException {
+    mrCluster.stop();
     Exception ex = null;
     try {
       executable.execute();
     } catch (Exception e) {
       ex = e;
     } finally {
-      mrCluster.startJobTracker();
+      mrCluster.start();
     }
     if (ex != null) {
       throw new RuntimeException(ex);
