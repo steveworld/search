@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -97,7 +96,7 @@ public class TikaIndexerTool extends Configured implements Tool {
 
     for (int i = 0; i < args.length; i++) {
       if (args[i].equals("-outputdir")) {
-        outputDir = new Path(URI.create(args[0]));
+        outputDir = new Path(args[0]);
         checkHdfsPath(outputDir);
       } else if (args[i].equals("-inputlist")) {
         inputLists.add(args[++i]);
@@ -108,7 +107,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       } else if (args[i].equals("-mappers")) {
         mappers = Integer.parseInt(args[++i]);
       } else {
-        Path path = new Path(URI.create(args[i]));
+        Path path = new Path(args[i]);
         checkHdfsPath(path);
         inputFiles.add(path);
       }
@@ -168,7 +167,7 @@ public class TikaIndexerTool extends Configured implements Tool {
         if (inputList.equals("-")) {
           in = System.in;
         } else {
-          Path path = new Path(URI.create(inputList));
+          Path path = new Path(inputList);
           in = fs.open(path);
         }
         try {
