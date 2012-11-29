@@ -119,7 +119,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     }
 
     Path solrNlistFile = new Path(outputDir, SOLR_NLIST_FILE);
-    long numFiles = addInputFiles(outputDir, solrNlistFile, inputLists, inputFiles);
+    long numFiles = addInputFiles(inputFiles, inputLists, solrNlistFile);
     if (numFiles == 0) {
       throw new IOException("No input files found");
     }
@@ -151,10 +151,10 @@ public class TikaIndexerTool extends Configured implements Tool {
     return job.waitForCompletion(true) ? 0 : -1;
   }
 
-  private long addInputFiles(Path outputDir, Path solrNlistFile, List<String> inputLists, List<Path> inputFiles) throws IOException {
+  private long addInputFiles(List<Path> inputFiles, List<String> inputLists, Path solrNlistFile) throws IOException {
     LOG.info("Creating mapper input file {}", solrNlistFile);
     long numFiles = 0;
-    FileSystem fs = outputDir.getFileSystem(job.getConfiguration());
+    FileSystem fs = solrNlistFile.getFileSystem(job.getConfiguration());
     FSDataOutputStream out = fs.create(solrNlistFile);
     try {
       Writer writer = new OutputStreamWriter(out, "UTF-8");
