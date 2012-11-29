@@ -42,6 +42,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 
@@ -72,6 +73,7 @@ public class MiniDfsMrMapReduceTest extends MiniDfsMRBase {
     super.shutdownMiniCluster();
   }
 
+  @Ignore
   @Test
   public void testMapperReducer() throws Exception {
     Job job = new Job(createJobConf());
