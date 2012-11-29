@@ -96,7 +96,7 @@ public class TikaIndexerTool extends Configured implements Tool {
 
     for (int i = 0; i < args.length; i++) {
       if (args[i].equals("-outputdir")) {
-        outputDir = new Path(args[0]);
+        outputDir = new Path(args[++i]);
         checkHdfsPath(outputDir);
       } else if (args[i].equals("-inputlist")) {
         inputLists.add(args[++i]);
