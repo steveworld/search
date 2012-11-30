@@ -227,7 +227,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     job2.setNumReduceTasks(1);
     job2.setOutputKeyClass(LongWritable.class);
     job2.setOutputValueClass(Text.class);
-    return job;
+    return job2;
   }
 
   private long addInputFiles(List<Path> inputFiles, List<String> inputLists, Path fullInputList) throws IOException {
