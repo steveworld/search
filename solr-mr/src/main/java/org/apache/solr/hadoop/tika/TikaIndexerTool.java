@@ -74,6 +74,7 @@ public class TikaIndexerTool extends Configured implements Tool {
         "\n\n--solr <solrHome>\tLocal dir containing Solr conf/ and lib/ (defaults to " + System.getProperty("user.home") + File.separator + "solr)" +
         "\n\n--mappers <NNN>\tMaximum number of mappers to use (defaults to 1)" +
         "\n\n--shards NNN\tNumber of output shards (defaults to 1)" +
+        "\n\n--fairschedulerpoolname fairSchedulerPoolName (defaults to null)" +
         "\n\n--verbose true|false\t (defaults to false)" +
         "\n";
     System.out.println(msg);
@@ -103,6 +104,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     Path outputDir = new Path("hdfs:///user/" + System.getProperty("user.name") + "/tikaindexertool-output");
     List<String> inputLists = new ArrayList();
     List<Path> inputFiles = new ArrayList();
+    String fairSchedulerPool = null; 
     boolean isRandomize = true;
     boolean isVerbose = false;
     boolean isIdentityTest = false;
@@ -119,6 +121,8 @@ public class TikaIndexerTool extends Configured implements Tool {
         shards = Integer.parseInt(args[++i]);
       } else if (args[i].equals("--mappers")) {
         mappers = Integer.parseInt(args[++i]);
+      } else if (args[i].startsWith("--fairschedulerpoolname")) {
+        fairSchedulerPool = args[++i];
       } else if (args[i].equals("--verbose")) {
         isVerbose = true;
       } else if (args[i].equals("--norandomize")) { // deliberately undocumented option
@@ -155,7 +159,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     numLinesPerSplit = Math.max(1, numLinesPerSplit);
 
     if (isRandomize) { 
-      Job randomizerJob = randomizeInputFiles(fullInputList, outputStep2Dir, numLinesPerSplit);
+      Job randomizerJob = randomizeInputFiles(fullInputList, outputStep2Dir, numLinesPerSplit, fairSchedulerPool);
       if (!randomizerJob.waitForCompletion(isVerbose)) {
         return -1; // job failed
       }
@@ -167,6 +171,9 @@ public class TikaIndexerTool extends Configured implements Tool {
     NLineInputFormat.addInputPath(job, outputStep2Dir);
     NLineInputFormat.setNumLinesPerSplit(job, numLinesPerSplit);    
     FileOutputFormat.setOutputPath(job, outputResultsDir);
+    if (fairSchedulerPool != null) {
+      job.getConfiguration().set("mapred.fairscheduler.pool", fairSchedulerPool);
+    }
 
     if (isIdentityTest) {
       job.setMapperClass(IdentityMapper.class);
@@ -212,7 +219,7 @@ public class TikaIndexerTool extends Configured implements Tool {
    * D
    * B
    */
-  private Job randomizeInputFiles(Path fullInputList, Path outputStep2Dir, int numLinesPerSplit) throws IOException {
+  private Job randomizeInputFiles(Path fullInputList, Path outputStep2Dir, int numLinesPerSplit, String fairSchedulerPool) throws IOException {
     LOG.info("Randomizing full input list file for solr mappers {}", fullInputList);
     Job job2 = Job.getInstance(new Configuration(getConf()));
     job2.setJarByClass(getClass());
@@ -227,6 +234,9 @@ public class TikaIndexerTool extends Configured implements Tool {
     job2.setNumReduceTasks(1);
     job2.setOutputKeyClass(LongWritable.class);
     job2.setOutputValueClass(Text.class);
+    if (fairSchedulerPool != null) {
+      job2.getConfiguration().set("mapred.fairscheduler.pool", fairSchedulerPool);
+    }
     return job2;
   }
 
