@@ -1,5 +1,6 @@
 package org.apache.solr.hadoop.tika;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -26,6 +27,7 @@ import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.hadoop.util.JarFinder;
+import org.apache.solr.hadoop.BatchWriter;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrOutputFormat;
 import org.apache.solr.hadoop.SolrReducer;
@@ -75,13 +77,6 @@ public class TikaMRMiniMRTest {
     conf.set("dfs.block.access.token.enable", "false");
     conf.set("dfs.permissions", "true");
     conf.set("hadoop.security.authentication", "simple");
-//    conf.set("hadoop.proxyuser." + proxyUser + ".hosts", sb.toString());
-//    conf.set("hadoop.proxyuser." + proxyUser + ".groups", proxyGroup);
-//
-//    String[] userGroups = new String[]{proxyGroup};
-//    UserGroupInformation.createUserForTesting(proxyUser, userGroups);
-//    UserGroupInformation.createUserForTesting("u1", userGroups);
-//    UserGroupInformation.createUserForTesting("u2", new String[]{"gg"});
 
     dfsCluster = new MiniDFSCluster(conf, dataNodes, true, null);
     FileSystem fileSystem = dfsCluster.getFileSystem();
@@ -129,13 +124,8 @@ public class TikaMRMiniMRTest {
     wr.write(DATADIR + "/sample-statuses-20120906-141433.avro");
     wr.close();
 
-    System.out.println("copying files");
     assertTrue(fs.mkdirs(dataDir));
     fs.copyFromLocalFile(new Path("target/test-classes/sample-statuses-20120906-141433.avro"), dataDir);
-
-    Path[] outputFiles2 = FileUtil.stat2Paths(fs.listStatus(dataDir));
-    System.out.println("copied files");
-    System.out.println(Arrays.toString(outputFiles2));
 
     Job job = new Job(getJobConf());
 
@@ -164,13 +154,14 @@ public class TikaMRMiniMRTest {
     assertTrue(job.waitForCompletion(true));
     Assert.assertTrue(job.isComplete());
     Assert.assertTrue(job.isSuccessful());
-  
+
+    assertEquals("Expected 2 counter increment", 2, job.getCounters()
+        .findCounter("SolrRecordWriter", BatchWriter.COUNTER_DOCUMENTS_WRITTEN).getValue());
 
     // Check the output is as expected
-    Path[] outputFiles = FileUtil.stat2Paths(
-            fs.listStatus(outDir, new Utils.OutputFileUtils.OutputFilesFilter()));
+    Path[] outputFiles = FileUtil.stat2Paths(fs.listStatus(outDir));
 
-    System.out.println(Arrays.toString(outputFiles));
+    System.out.println("outputfiles:" + Arrays.toString(outputFiles));
 
   }
 

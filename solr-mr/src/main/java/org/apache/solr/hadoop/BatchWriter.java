@@ -41,6 +41,12 @@ import org.slf4j.LoggerFactory;
 public class BatchWriter {
   private static final Logger LOG = LoggerFactory.getLogger(BatchWriter.class);
 
+  public static final String COUNTER_BATCHES_WRITE_TIME = "BatchesWriteTime";
+
+  public static final String COUNTER_DOCUMENTS_WRITTEN = "DocumentsWritten";
+
+  public static final String COUNTER_BATCHES_WRITTEN = "BatchesWritten";
+
   final EmbeddedSolrServer solr;
 
   final List<SolrInputDocument> batchToWrite;
@@ -135,9 +141,9 @@ public class BatchWriter {
   protected UpdateResponse runUpdate(List<SolrInputDocument> batchToWrite) {
     try {
       UpdateResponse result = solr.add(batchToWrite);
-      SolrRecordWriter.incrementCounter(taskId, "SolrRecordWriter", "BatchesWritten", 1);      
-      SolrRecordWriter.incrementCounter(taskId, "SolrRecordWriter", "DocumentsWritten", batchToWrite.size());
-      SolrRecordWriter.incrementCounter(taskId, "SolrRecordWriter", "BatchesWriteTime", result.getElapsedTime());
+      SolrRecordWriter.incrementCounter(taskId, "SolrRecordWriter", COUNTER_BATCHES_WRITTEN, 1);      
+      SolrRecordWriter.incrementCounter(taskId, "SolrRecordWriter", COUNTER_DOCUMENTS_WRITTEN, batchToWrite.size());
+      SolrRecordWriter.incrementCounter(taskId, "SolrRecordWriter", COUNTER_BATCHES_WRITE_TIME, result.getElapsedTime());
       return result;
     } catch (Throwable e) {
       SolrRecordWriter.incrementCounter(taskId, "SolrRecordWriter", e.getClass().getName(), 1);

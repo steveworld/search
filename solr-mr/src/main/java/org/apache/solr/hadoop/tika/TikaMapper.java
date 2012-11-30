@@ -17,9 +17,11 @@
 package org.apache.solr.hadoop.tika;
 
 import java.io.IOException;
-import java.net.URI;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -40,10 +42,17 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.SolrPingResponse;
 import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.common.params.MapSolrParams;
+import org.apache.solr.common.params.SolrParams;
+import org.apache.solr.common.util.DateUtil;
+import org.apache.solr.common.util.NamedList;
+import org.apache.solr.core.PluginInfo;
 import org.apache.solr.core.SolrConfig;
 import org.apache.solr.core.SolrResourceLoader;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrMapper;
+import org.apache.solr.handler.extraction.ExtractingRequestHandler;
+import org.apache.solr.request.SolrRequestHandler;
 import org.apache.solr.schema.IndexSchema;
 import org.apache.tika.metadata.Metadata;
 import org.slf4j.Logger;
@@ -134,13 +143,65 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   }
 
   private class MyIndexer extends TikaIndexer {
+    // FIXME don't copy this code from flume solr sink
     @Override
     protected Map<String, SolrCollection> createSolrCollections() {
+      SolrCollection collection = new SolrCollection("default", new MyDocumentLoader());
       try {
         SolrResourceLoader loader = new SolrResourceLoader(solrHomeDir.toString());
         // TODO allow config to be configured by job?
         SolrConfig solrConfig = new SolrConfig(loader, "solrconfig.xml", null);
         schema = new IndexSchema(solrConfig, null, null);
+
+        SolrParams params = new MapSolrParams(new HashMap<String,String>());
+        Collection<String> dateFormats = DateUtil.DEFAULT_DATE_FORMATS;
+        for (PluginInfo pluginInfo : solrConfig.getPluginInfos(SolrRequestHandler.class.getName())) {
+          if ("/update/extract".equals(pluginInfo.name)) {
+            NamedList initArgs = pluginInfo.initArgs;
+
+            // Copied from StandardRequestHandler
+            if (initArgs != null) {
+              Object o = initArgs.get("defaults");
+              if (o != null && o instanceof NamedList) {
+                SolrParams defaults = SolrParams.toSolrParams((NamedList) o);
+                params = defaults;
+              }
+              o = initArgs.get("appends");
+              if (o != null && o instanceof NamedList) {
+                SolrParams appends = SolrParams.toSolrParams((NamedList) o);
+              }
+              o = initArgs.get("invariants");
+              if (o != null && o instanceof NamedList) {
+                SolrParams invariants = SolrParams.toSolrParams((NamedList) o);
+              }
+// FIXME add this back
+//              o = initArgs.get("server");
+//              if (o != null && o instanceof NamedList) {
+//                SolrParams solrServerParams = SolrParams.toSolrParams((NamedList) o);
+//                zkConnectString = solrServerParams.get(SOLR_ZK_CONNECT_STRING, zkConnectString);
+//                solrServerUrl = solrServerParams.get(SOLR_SERVER_URL, solrServerUrl);
+//                solrServerNumThreads = solrServerParams.getInt(SOLR_SERVER_NUM_THREADS, solrServerNumThreads);
+//                solrServerQueueLength = solrServerParams.getInt(SOLR_SERVER_QUEUE_LENGTH, solrServerNumThreads);
+//              }
+
+              NamedList configDateFormats = (NamedList) initArgs.get(ExtractingRequestHandler.DATE_FORMATS);
+              if (configDateFormats != null && configDateFormats.size() > 0) {
+                dateFormats = new HashSet<String>();
+                Iterator<Map.Entry> it = configDateFormats.iterator();
+                while (it.hasNext()) {
+                  String format = (String) it.next().getValue();
+                  LOG.info("Adding Date Format: {}", format);
+                  dateFormats.add(format);
+                }
+              }
+            }
+            break; // found it
+          }
+        }
+        collection.setSchema(schema);
+        collection.setSolrParams(params);
+        collection.setDateFormats(dateFormats);
+
       } catch (SAXException e) {
         throw new ConfigurationException(e);
       } catch (IOException e) {
@@ -148,8 +209,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       } catch (ParserConfigurationException e) {
         throw new ConfigurationException(e);
       }
-      SolrCollection collection = new SolrCollection("default", new MyDocumentLoader());
-      collection.setSchema(schema);
+
       return Collections.singletonMap(collection.getName(), collection);
     }
 
