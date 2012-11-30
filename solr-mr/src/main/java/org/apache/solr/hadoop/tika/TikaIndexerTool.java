@@ -74,7 +74,7 @@ public class TikaIndexerTool extends Configured implements Tool {
         "\n\n--solr <solrHome>\tLocal dir containing Solr conf/ and lib/ (defaults to " + System.getProperty("user.home") + File.separator + "solr)" +
         "\n\n--mappers <NNN>\tMaximum number of mappers to use (defaults to 1)" +
         "\n\n--shards NNN\tNumber of output shards (defaults to 1)" +
-        "\n\n--fairschedulerpoolname fairSchedulerPoolName (defaults to null)" +
+        "\n\n--fairschedulerpool fairSchedulerPoolName (defaults to null)" +
         "\n\n--verbose true|false\t (defaults to false)" +
         "\n";
     System.out.println(msg);
@@ -121,7 +121,7 @@ public class TikaIndexerTool extends Configured implements Tool {
         shards = Integer.parseInt(args[++i]);
       } else if (args[i].equals("--mappers")) {
         mappers = Integer.parseInt(args[++i]);
-      } else if (args[i].startsWith("--fairschedulerpoolname")) {
+      } else if (args[i].startsWith("--fairschedulerpool")) {
         fairSchedulerPool = args[++i];
       } else if (args[i].equals("--verbose")) {
         isVerbose = true;
