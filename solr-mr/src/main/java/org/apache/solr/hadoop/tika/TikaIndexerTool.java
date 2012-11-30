@@ -94,7 +94,8 @@ public class TikaIndexerTool extends Configured implements Tool {
     }
     
     Job job = Job.getInstance(getConf());
-    job.setJarByClass(TikaIndexerTool.class);
+    job.setJarByClass(getClass());
+    job.setJobName(getClass().getName());
 
     int shards = 1;
     int mappers = 1;
@@ -214,7 +215,8 @@ public class TikaIndexerTool extends Configured implements Tool {
   private Job randomizeInputFiles(Path fullInputList, Path outputStep2Dir, int numLinesPerSplit) throws IOException {
     LOG.info("Randomizing full input list file for solr mappers {}", fullInputList);
     Job job2 = Job.getInstance(new Configuration(getConf()));
-    job2.setJarByClass(TikaIndexerTool.class);
+    job2.setJarByClass(getClass());
+    job2.setJobName(getClass().getName() + "-randomizer");
     job2.setInputFormatClass(NLineInputFormat.class);
     NLineInputFormat.addInputPath(job2, fullInputList);
     NLineInputFormat.setNumLinesPerSplit(job2, numLinesPerSplit);          
