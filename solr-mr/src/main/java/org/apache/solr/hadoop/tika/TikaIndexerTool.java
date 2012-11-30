@@ -34,13 +34,20 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.solr.hadoop.IdentityMapper;
+import org.apache.solr.hadoop.IdentityReducer;
+import org.apache.solr.hadoop.LineRandomizerMapper;
+import org.apache.solr.hadoop.LineRandomizerReducer;
 import org.apache.solr.hadoop.SolrDocumentConverter;
 import org.apache.solr.hadoop.SolrOutputFormat;
 import org.apache.solr.hadoop.SolrReducer;
@@ -49,23 +56,27 @@ import org.slf4j.LoggerFactory;
 
 public class TikaIndexerTool extends Configured implements Tool {
   
-  private static final Logger LOG = LoggerFactory.getLogger(TikaIndexerTool.class);
+  private Job job;
+  
+  public static final String RESULTS_DIR = "results";
 
   /** A list of input file URLs. Used as input to the Mapper */
   private static final String SOLR_NLIST_FILE = "solr_nlist_file.txt";
 
-  private Job job;
+  private static final Logger LOG = LoggerFactory.getLogger(TikaIndexerTool.class);
+
 
   private void usage() {
     String msg = 
         "Usage: hadoop jar solr-mr.jar " + getClass().getName() + " [options]... [inputFileOrDir]... " +
         "\n" + 
         "\nSpecific options supported are" +
-        "\n\n-outputdir <hdfsOutputDir>\tHDFS output directory containing Solr indexes (defaults to hdfs:///user/" + System.getProperty("user.name") + "/tikaindexer-output)" +
-        "\n\n-inputlist <File>\tLocal file URL or HDFS file URL containing a list of HDFS URLs, one URL per line. If '-' is specified, URLs are read from the standard input." +
-        "\n\n-solr <solrHome>\tLocal dir containing Solr conf/ and lib/ (defaults to " + System.getProperty("user.home") + File.separator + "solr)" +
-        "\n\n-mappers <NNN>\tMaximum number of mappers to use (defaults to 1)" +
-        "\n\n-shards NNN\tNumber of output shards (defaults to 1)" +
+        "\n\n--outputdir <hdfsOutputDir>\tHDFS output directory containing Solr indexes (defaults to hdfs:///user/" + System.getProperty("user.name") + "/tikaindexer-output)" +
+        "\n\n--inputlist <File>\tLocal file URL or HDFS file URL containing a list of HDFS URLs, one URL per line. If '-' is specified, URLs are read from the standard input." +
+        "\n\n--solr <solrHome>\tLocal dir containing Solr conf/ and lib/ (defaults to " + System.getProperty("user.home") + File.separator + "solr)" +
+        "\n\n--mappers <NNN>\tMaximum number of mappers to use (defaults to 1)" +
+        "\n\n--shards NNN\tNumber of output shards (defaults to 1)" +
+        "\n\n--verbose true|false\t (defaults to false)" +
         "\n";
     System.out.println(msg);
     ToolRunner.printGenericCommandUsage(System.out);
@@ -93,19 +104,28 @@ public class TikaIndexerTool extends Configured implements Tool {
     Path outputDir = new Path("hdfs:///user/" + System.getProperty("user.name") + "/tikaindexertool-output");
     List<String> inputLists = new ArrayList();
     List<Path> inputFiles = new ArrayList();
+    boolean isRandomize = true;
+    boolean verbose = false;
+    boolean identityTest = false;
 
     for (int i = 0; i < args.length; i++) {
-      if (args[i].equals("-outputdir")) {
+      if (args[i].equals("--outputdir")) {
         outputDir = new Path(args[++i]);
         checkHdfsPath(outputDir);
-      } else if (args[i].equals("-inputlist")) {
+      } else if (args[i].equals("--inputlist")) {
         inputLists.add(args[++i]);
-      } else if (args[i].equals("-solr")) {
+      } else if (args[i].equals("--solr")) {
         solrHomeDir = new File(args[++i]);
-      } else if (args[i].equals("-shards")) {
+      } else if (args[i].equals("--shards")) {
         shards = Integer.parseInt(args[++i]);
-      } else if (args[i].equals("-mappers")) {
+      } else if (args[i].equals("--mappers")) {
         mappers = Integer.parseInt(args[++i]);
+      } else if (args[i].equals("--verbose")) {
+        verbose = true;
+      } else if (args[i].equals("--norandomize")) {
+        isRandomize = false;
+      } else if (args[i].equals("--identitytest")) {
+        identityTest = true;
       } else {
         Path path = new Path(args[i]);
         checkHdfsPath(path);
@@ -117,41 +137,81 @@ public class TikaIndexerTool extends Configured implements Tool {
       throw new IOException("Solr home directory does not exist: " + solrHomeDir);
     }
 
-    Path solrNlistFile = new Path(outputDir, SOLR_NLIST_FILE);
+    FileSystem fs = FileSystem.get(job.getConfiguration());
+    fs.delete(outputDir, true);    
+    Path outputResultsDir = new Path(outputDir + "/" + RESULTS_DIR);    
+    Path outputStep1Dir = new Path(outputDir + "/tmp1");    
+    Path outputStep2Dir = new Path(outputDir + "/tmp2");
+    
+    Path solrNlistFile = new Path(outputStep1Dir, SOLR_NLIST_FILE);
+    LOG.info("Creating mapper input list file {}", solrNlistFile);
     long numFiles = addInputFiles(inputFiles, inputLists, solrNlistFile);
     if (numFiles == 0) {
       throw new IOException("No input files found");
     }
-
-    // TODO: randomize solrNlistFile with separate little Mapper & Reducer for preprocessing
-    
-    job.setInputFormatClass(NLineInputFormat.class);
-    NLineInputFormat.addInputPath(job, solrNlistFile);
     int numLinesPerSplit = (int) (numFiles / mappers);
     if (numLinesPerSplit < 0) { // numeric overflow from downcasting long to int?
       numLinesPerSplit = Integer.MAX_VALUE;
     }
     numLinesPerSplit = Math.max(1, numLinesPerSplit);
+
+    if (isRandomize) { 
+      /*
+       * To uniformly spread load across all mappers we randomize solrNlistFile
+       * with a separate small Mapper & Reducer preprocessing step. This way
+       * each input line ends up on a random position in the output file list.
+       * Each mapper indexes a disjoint consecutive set of files such that each
+       * set has roughtly the same size, at least from a probabilistic
+       * perspective.
+       */
+      LOG.info("Randomizing mapper input list file {}", solrNlistFile);
+      Job job2 = Job.getInstance(new Configuration(getConf()));
+      job2.setJarByClass(TikaIndexerTool.class);
+      job2.setInputFormatClass(NLineInputFormat.class);
+      NLineInputFormat.addInputPath(job2, solrNlistFile);
+      NLineInputFormat.setNumLinesPerSplit(job2, numLinesPerSplit);          
+      job2.setMapperClass(LineRandomizerMapper.class);
+      job2.setReducerClass(LineRandomizerReducer.class);
+      job2.setOutputFormatClass(TextOutputFormat.class);
+      FileOutputFormat.setOutputPath(job2, outputStep2Dir);
+      job2.setNumReduceTasks(1);
+      job2.setOutputKeyClass(LongWritable.class);
+      job2.setOutputValueClass(Text.class);
+      if (!job2.waitForCompletion(verbose)) {
+        return -1; // job failed
+      }    
+    } else {
+      outputStep2Dir = outputStep1Dir;
+    }
+    
+    job.setInputFormatClass(NLineInputFormat.class);
+    NLineInputFormat.addInputPath(job, outputStep2Dir);
     NLineInputFormat.setNumLinesPerSplit(job, numLinesPerSplit);    
+    FileOutputFormat.setOutputPath(job, outputResultsDir);
 
-    job.setMapperClass(TikaMapper.class);
-    job.setReducerClass(SolrReducer.class);
+    if (identityTest) {
+      job.setMapperClass(IdentityMapper.class);
+      job.setReducerClass(IdentityReducer.class);
+      job.setOutputFormatClass(TextOutputFormat.class);
+      job.setNumReduceTasks(1);  
+      job.setOutputKeyClass(Text.class);
+      job.setOutputValueClass(NullWritable.class);
+    } else {
+      LOG.info("Indexing files...");
+      job.setMapperClass(TikaMapper.class);
+      job.setReducerClass(SolrReducer.class);
+      job.setOutputFormatClass(SolrOutputFormat.class);
+      SolrOutputFormat.setupSolrHomeCache(solrHomeDir, job);  
+      job.setNumReduceTasks(shards);  
+      job.setOutputKeyClass(Text.class);
+      job.setOutputValueClass(MapWritable.class);
+      SolrDocumentConverter.setSolrDocumentConverter(TikaDocumentConverter.class, job.getConfiguration());
+    }
 
-    job.setOutputFormatClass(SolrOutputFormat.class);
-    SolrOutputFormat.setupSolrHomeCache(solrHomeDir, job);
-
-    job.setNumReduceTasks(shards);
-
-    job.setOutputKeyClass(Text.class);
-    job.setOutputValueClass(MapWritable.class);
-    SolrDocumentConverter.setSolrDocumentConverter(TikaDocumentConverter.class, job.getConfiguration());
-    FileOutputFormat.setOutputPath(job, outputDir);
-
-    return job.waitForCompletion(true) ? 0 : -1;
+    return job.waitForCompletion(verbose) ? 0 : -1;
   }
 
   private long addInputFiles(List<Path> inputFiles, List<String> inputLists, Path solrNlistFile) throws IOException {
-    LOG.info("Creating mapper input file {}", solrNlistFile);
     long numFiles = 0;
     FileSystem fs = solrNlistFile.getFileSystem(job.getConfiguration());
     FSDataOutputStream out = fs.create(solrNlistFile);
