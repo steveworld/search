@@ -105,8 +105,8 @@ public class TikaIndexerTool extends Configured implements Tool {
     List<String> inputLists = new ArrayList();
     List<Path> inputFiles = new ArrayList();
     boolean isRandomize = true;
-    boolean verbose = false;
-    boolean identityTest = false;
+    boolean isVerbose = false;
+    boolean isIdentityTest = false;
 
     for (int i = 0; i < args.length; i++) {
       if (args[i].equals("--outputdir")) {
@@ -121,11 +121,11 @@ public class TikaIndexerTool extends Configured implements Tool {
       } else if (args[i].equals("--mappers")) {
         mappers = Integer.parseInt(args[++i]);
       } else if (args[i].equals("--verbose")) {
-        verbose = true;
+        isVerbose = true;
       } else if (args[i].equals("--norandomize")) {
         isRandomize = false;
       } else if (args[i].equals("--identitytest")) {
-        identityTest = true;
+        isIdentityTest = true;
       } else {
         Path path = new Path(args[i]);
         checkHdfsPath(path);
@@ -177,7 +177,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       job2.setNumReduceTasks(1);
       job2.setOutputKeyClass(LongWritable.class);
       job2.setOutputValueClass(Text.class);
-      if (!job2.waitForCompletion(verbose)) {
+      if (!job2.waitForCompletion(isVerbose)) {
         return -1; // job failed
       }    
     } else {
@@ -189,7 +189,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     NLineInputFormat.setNumLinesPerSplit(job, numLinesPerSplit);    
     FileOutputFormat.setOutputPath(job, outputResultsDir);
 
-    if (identityTest) {
+    if (isIdentityTest) {
       job.setMapperClass(IdentityMapper.class);
       job.setReducerClass(IdentityReducer.class);
       job.setOutputFormatClass(TextOutputFormat.class);
@@ -208,7 +208,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       SolrDocumentConverter.setSolrDocumentConverter(TikaDocumentConverter.class, job.getConfiguration());
     }
 
-    return job.waitForCompletion(verbose) ? 0 : -1;
+    return job.waitForCompletion(isVerbose) ? 0 : -1;
   }
 
   private long addInputFiles(List<Path> inputFiles, List<String> inputLists, Path solrNlistFile) throws IOException {
