@@ -16,7 +16,6 @@
  */
 package org.apache.solr.hadoop;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.NumberFormat;
@@ -28,24 +27,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -61,11 +46,6 @@ import org.apache.solr.core.SolrCore;
 import org.apache.solr.core.SolrResourceLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-/*
-import org.apache.commons.logging.impl.Jdk14Logger;
-import org.apache.commons.logging.impl.Log4JLogger;
-*/
-import org.xml.sax.SAXException;
 
 /**
  * Instantiate a record writer that will build a Solr index.
