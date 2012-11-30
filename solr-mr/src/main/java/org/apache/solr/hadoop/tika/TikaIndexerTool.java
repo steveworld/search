@@ -56,8 +56,6 @@ import org.slf4j.LoggerFactory;
 
 public class TikaIndexerTool extends Configured implements Tool {
   
-  private Job job;
-  
   public static final String RESULTS_DIR = "results";
 
   /** A list of input file URLs. Used as input to the Mapper */
@@ -95,7 +93,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       return -1;
     }
     
-    job = Job.getInstance(getConf());
+    Job job = Job.getInstance(getConf());
     job.setJarByClass(TikaIndexerTool.class);
 
     int shards = 1;
@@ -145,7 +143,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     Path fullInputList = new Path(outputStep1Dir, FULL_INPUT_LIST);
     
     LOG.info("Creating full input list file for solr mappers {}", fullInputList);
-    long numFiles = addInputFiles(inputFiles, inputLists, fullInputList);
+    long numFiles = addInputFiles(inputFiles, inputLists, fullInputList, job.getConfiguration());
     if (numFiles == 0) {
       throw new IOException("No input files found");
     }
@@ -230,15 +228,15 @@ public class TikaIndexerTool extends Configured implements Tool {
     return job2;
   }
 
-  private long addInputFiles(List<Path> inputFiles, List<String> inputLists, Path fullInputList) throws IOException {
+  private long addInputFiles(List<Path> inputFiles, List<String> inputLists, Path fullInputList, Configuration conf) throws IOException {
     long numFiles = 0;
-    FileSystem fs = fullInputList.getFileSystem(job.getConfiguration());
+    FileSystem fs = fullInputList.getFileSystem(conf);
     FSDataOutputStream out = fs.create(fullInputList);
     try {
       Writer writer = new OutputStreamWriter(out, "UTF-8");
       
       for (Path inputFile : inputFiles) {
-        numFiles += addInputFilesRecursively(inputFile, writer);
+        numFiles += addInputFilesRecursively(inputFile, writer, conf);
       }
 
       for (String inputList : inputLists) {
@@ -273,16 +271,16 @@ public class TikaIndexerTool extends Configured implements Tool {
    * Add the specified file to the input set, if path is a directory then
    * add the files contained therein.
    */
-  private long addInputFilesRecursively(Path path, Writer writer) throws IOException {
+  private long addInputFilesRecursively(Path path, Writer writer, Configuration conf) throws IOException {
     long numFiles = 0;
-    FileSystem fs = path.getFileSystem(job.getConfiguration());
+    FileSystem fs = path.getFileSystem(conf);
     if (!fs.exists(path)) {
       return numFiles;
     }
     for (FileStatus stat : fs.listStatus(path)) {
       LOG.debug("Processing path {}", stat.getPath());
       if (stat.isDirectory()) {
-        numFiles += addInputFilesRecursively(stat.getPath(), writer);
+        numFiles += addInputFilesRecursively(stat.getPath(), writer, conf);
       } else {
         writer.write(stat.getPath().toString() + "\n");
         numFiles++;
