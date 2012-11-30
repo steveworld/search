@@ -27,6 +27,8 @@ import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrServer;
 import org.apache.solr.client.solrj.response.SolrPingResponse;
 import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A vehicle to load a list of Solr documents into a local or remote
@@ -38,15 +40,18 @@ public class SolrServerDocumentLoader implements DocumentLoader {
   private long numLoadedDocs = 0; // number of documents loaded in the current
                                   // transaction
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(SolrServerDocumentLoader.class);
+
   public SolrServerDocumentLoader(SolrServer server) {
     if (server == null) {
       throw new IllegalArgumentException();
     }
     this.server = server;
   }
-
+  
   @Override
   public void beginTransaction() {
+    LOGGER.trace("beginTransaction");
     numLoadedDocs = 0;
     if (server instanceof SafeConcurrentUpdateSolrServer) {
       ((SafeConcurrentUpdateSolrServer) server).clearException();
@@ -55,6 +60,7 @@ public class SolrServerDocumentLoader implements DocumentLoader {
 
   @Override
   public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
+    LOGGER.trace("load docs: {}", docs);
     if (docs.size() > 0) {
       numLoadedDocs += docs.size();
       UpdateResponse rsp = server.add(docs);
@@ -63,6 +69,7 @@ public class SolrServerDocumentLoader implements DocumentLoader {
 
   @Override
   public void commitTransaction() {
+    LOGGER.trace("commitTransaction");
     if (numLoadedDocs > 0) {
       if (server instanceof ConcurrentUpdateSolrServer) {
         ((ConcurrentUpdateSolrServer) server).blockUntilFinished();
@@ -72,16 +79,19 @@ public class SolrServerDocumentLoader implements DocumentLoader {
 
   @Override
   public UpdateResponse rollback() throws SolrServerException, IOException {
+    LOGGER.trace("rollback");
     return server.rollback();
   }
 
   @Override
   public void shutdown() {
+    LOGGER.trace("shutdown");
     server.shutdown();
   }
 
   @Override
   public SolrPingResponse ping() throws SolrServerException, IOException {
+    LOGGER.trace("ping");
     return server.ping();
   }
 
