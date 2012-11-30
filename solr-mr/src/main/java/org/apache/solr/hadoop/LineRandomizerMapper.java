@@ -9,6 +9,15 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * MR Mapper that randomizing a list of URLs.
+ * 
+ * Mapper input is (offset, URL) pairs. Each such pair indicates a file to
+ * index.
+ * 
+ * Mapper output is (randomPosition, URL) pairs. The reducer receives these
+ * pairs sorted by randomPosition.
+ */
 public class LineRandomizerMapper extends Mapper<LongWritable, Text, LongWritable, Text> {
 
   private Random random;
