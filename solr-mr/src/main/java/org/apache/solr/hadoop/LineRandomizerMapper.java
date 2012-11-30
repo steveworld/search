@@ -20,8 +20,8 @@ public class LineRandomizerMapper extends Mapper<LongWritable, Text, LongWritabl
     super.setup(context);
     long taskId = 0;
     if (context.getTaskAttemptID() != null) { // MRUnit returns null
-      LOGGER.info("context.getTaskAttemptID().getId(): {}", context.getTaskAttemptID().getId());
-      LOGGER.info("context.getTaskAttemptID().getTaskID().getId(): {}", context.getTaskAttemptID().getTaskID().getId());
+      LOGGER.debug("context.getTaskAttemptID().getId(): {}", context.getTaskAttemptID().getId());
+      LOGGER.debug("context.getTaskAttemptID().getTaskID().getId(): {}", context.getTaskAttemptID().getTaskID().getId());
       taskId = context.getTaskAttemptID().getTaskID().getId(); // taskId = 0, 1, ..., N
     }
     random = new Random(123456789012345678L + taskId); // deterministic PNRG sequence for easy reproducability
