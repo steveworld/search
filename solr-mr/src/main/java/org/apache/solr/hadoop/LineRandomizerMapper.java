@@ -49,10 +49,8 @@ public class LineRandomizerMapper extends Mapper<LongWritable, Text, LongWritabl
       LOGGER.debug("context.getTaskAttemptID().getTaskID().getId(): {}", context.getTaskAttemptID().getTaskID().getId());
       taskId = context.getTaskAttemptID().getTaskID().getId(); // taskId = 0, 1, ..., N
     }
-    random = new Random(123456789012345678L);
-    for (int i = 0; i < taskId; i++) {        // create a good random seed, yet ensure 
-      random = new Random(random.nextLong()); // deterministic PRNG sequence for easy reproducability
-    }
+    // create a good random seed, yet ensure deterministic PRNG sequence for easy reproducability
+    random = new Random(1234567890L / Math.max(1, taskId + 1));
   }
 
   @Override
