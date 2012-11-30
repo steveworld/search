@@ -67,8 +67,6 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   private IndexSchema schema;
 
   private class MyIndexer extends TikaIndexer {
-    Map<String, SolrCollection> collections = new LinkedHashMap<String, SolrCollection>();
-
     @Override
     protected Map<String, SolrCollection> createSolrCollections() {
       SolrCollection collection = new SolrCollection("default", new MyDocumentLoader());
@@ -80,7 +78,6 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
         collection.setSchema(schema);
         SolrParams params = new MapSolrParams(new HashMap<String,String>());
         collection.setSolrParams(params);
-        collections.put(collection.getName(), collection);
       } catch (SAXException e) {
         throw new ConfigurationException(e);
       } catch (IOException e) {
@@ -88,6 +85,8 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       } catch (ParserConfigurationException e) {
         throw new ConfigurationException(e);
       }
+      Map<String, SolrCollection> collections = new LinkedHashMap<String, SolrCollection>();
+      collections.put(collection.getName(), collection);
       return collections;
     }
 
@@ -156,6 +155,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
     super.setup(context);
+    this.context = context;
     indexer = new MyIndexer();
     HashMap<String, Object> params = new HashMap<String,Object>();
     params.put(TikaIndexer.TIKA_CONFIG_LOCATION, "tika-config.xml");
@@ -171,12 +171,11 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
    */
   @Override
   public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-    this.context = context;
-
     Path p = new Path(value.toString());
     FSDataInputStream in = fs.open(p);
     try {
       Map<String,String> headers = new HashMap<String, String>();
+//      headers.put(schema.getUniqueKeyField().getName(), key.toString()); // FIXME
       indexer.process(new StreamEvent(in, headers));
     } catch (SolrServerException e) {
       LOG.error("Unable to process event ", e);
