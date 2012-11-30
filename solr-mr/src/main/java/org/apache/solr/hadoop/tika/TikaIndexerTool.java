@@ -61,7 +61,7 @@ public class TikaIndexerTool extends Configured implements Tool {
   public static final String RESULTS_DIR = "results";
 
   /** A list of input file URLs. Used as input to the Mapper */
-  private static final String SOLR_NLIST_FILE = "solr_nlist_file.txt";
+  private static final String FULL_INPUT_LIST = "full-input-list.txt";
 
   private static final Logger LOG = LoggerFactory.getLogger(TikaIndexerTool.class);
 
@@ -142,10 +142,10 @@ public class TikaIndexerTool extends Configured implements Tool {
     Path outputResultsDir = new Path(outputDir, RESULTS_DIR);    
     Path outputStep1Dir = new Path(outputDir, "tmp1");    
     Path outputStep2Dir = new Path(outputDir, "tmp2");    
-    Path solrNlistFile = new Path(outputStep1Dir, SOLR_NLIST_FILE);
+    Path fullInputList = new Path(outputStep1Dir, FULL_INPUT_LIST);
     
-    LOG.info("Creating mapper input list file {}", solrNlistFile);
-    long numFiles = addInputFiles(inputFiles, inputLists, solrNlistFile);
+    LOG.info("Creating full input list file for solr mappers {}", fullInputList);
+    long numFiles = addInputFiles(inputFiles, inputLists, fullInputList);
     if (numFiles == 0) {
       throw new IOException("No input files found");
     }
@@ -156,44 +156,10 @@ public class TikaIndexerTool extends Configured implements Tool {
     numLinesPerSplit = Math.max(1, numLinesPerSplit);
 
     if (isRandomize) { 
-      /*
-       * To uniformly spread load across all mappers we randomize solrNlistFile
-       * with a separate small Mapper & Reducer preprocessing step. This way
-       * each input line ends up on a random position in the output file list.
-       * Each mapper indexes a disjoint consecutive set of files such that each
-       * set has roughly the same size, at least from a probabilistic
-       * perspective.
-       * 
-       * For example an input file with the following input list of URLs:
-       * 
-       * A
-       * B
-       * C
-       * D
-       * 
-       * might be randomized into the following output list of URLS:
-       * 
-       * C
-       * A
-       * D
-       * B
-       */
-      LOG.info("Randomizing mapper input list file {}", solrNlistFile);
-      Job job2 = Job.getInstance(new Configuration(getConf()));
-      job2.setJarByClass(TikaIndexerTool.class);
-      job2.setInputFormatClass(NLineInputFormat.class);
-      NLineInputFormat.addInputPath(job2, solrNlistFile);
-      NLineInputFormat.setNumLinesPerSplit(job2, numLinesPerSplit);          
-      job2.setMapperClass(LineRandomizerMapper.class);
-      job2.setReducerClass(LineRandomizerReducer.class);
-      job2.setOutputFormatClass(TextOutputFormat.class);
-      FileOutputFormat.setOutputPath(job2, outputStep2Dir);
-      job2.setNumReduceTasks(1);
-      job2.setOutputKeyClass(LongWritable.class);
-      job2.setOutputValueClass(Text.class);
-      if (!job2.waitForCompletion(isVerbose)) {
+      Job randomizerJob = randomizeInputFiles(fullInputList, outputStep2Dir, numLinesPerSplit);
+      if (!randomizerJob.waitForCompletion(isVerbose)) {
         return -1; // job failed
-      }    
+      }
     } else {
       outputStep2Dir = outputStep1Dir;
     }
@@ -225,10 +191,49 @@ public class TikaIndexerTool extends Configured implements Tool {
     return job.waitForCompletion(isVerbose) ? 0 : -1;
   }
 
-  private long addInputFiles(List<Path> inputFiles, List<String> inputLists, Path solrNlistFile) throws IOException {
+  /**
+   * To uniformly spread load across all mappers we randomize fullInputList
+   * with a separate small Mapper & Reducer preprocessing step. This way
+   * each input line ends up on a random position in the output file list.
+   * Each mapper indexes a disjoint consecutive set of files such that each
+   * set has roughly the same size, at least from a probabilistic
+   * perspective.
+   * 
+   * For example an input file with the following input list of URLs:
+   * 
+   * A
+   * B
+   * C
+   * D
+   * 
+   * might be randomized into the following output list of URLS:
+   * 
+   * C
+   * A
+   * D
+   * B
+   */
+  private Job randomizeInputFiles(Path fullInputList, Path outputStep2Dir, int numLinesPerSplit) throws IOException {
+    LOG.info("Randomizing full input list file for solr mappers {}", fullInputList);
+    Job job2 = Job.getInstance(new Configuration(getConf()));
+    job2.setJarByClass(TikaIndexerTool.class);
+    job2.setInputFormatClass(NLineInputFormat.class);
+    NLineInputFormat.addInputPath(job2, fullInputList);
+    NLineInputFormat.setNumLinesPerSplit(job2, numLinesPerSplit);          
+    job2.setMapperClass(LineRandomizerMapper.class);
+    job2.setReducerClass(LineRandomizerReducer.class);
+    job2.setOutputFormatClass(TextOutputFormat.class);
+    FileOutputFormat.setOutputPath(job2, outputStep2Dir);
+    job2.setNumReduceTasks(1);
+    job2.setOutputKeyClass(LongWritable.class);
+    job2.setOutputValueClass(Text.class);
+    return job;
+  }
+
+  private long addInputFiles(List<Path> inputFiles, List<String> inputLists, Path fullInputList) throws IOException {
     long numFiles = 0;
-    FileSystem fs = solrNlistFile.getFileSystem(job.getConfiguration());
-    FSDataOutputStream out = fs.create(solrNlistFile);
+    FileSystem fs = fullInputList.getFileSystem(job.getConfiguration());
+    FSDataOutputStream out = fs.create(fullInputList);
     try {
       Writer writer = new OutputStreamWriter(out, "UTF-8");
       
