@@ -208,7 +208,7 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
 
       Properties props = new Properties();
       Path perm = new Path(FileOutputFormat.getOutputPath(context), getOutFileName(context, "shard"));
-      String dataDirStr = new File(new File(perm.toUri()), "data").getCanonicalPath();
+      String dataDirStr = new Path(perm, "data").toString();
       props.setProperty("solr.data.dir", dataDirStr);
       props.setProperty("solr.home", solrHomeDir.toString());
 
