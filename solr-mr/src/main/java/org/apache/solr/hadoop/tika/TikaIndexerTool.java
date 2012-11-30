@@ -139,11 +139,11 @@ public class TikaIndexerTool extends Configured implements Tool {
 
     FileSystem fs = FileSystem.get(job.getConfiguration());
     fs.delete(outputDir, true);    
-    Path outputResultsDir = new Path(outputDir + "/" + RESULTS_DIR);    
-    Path outputStep1Dir = new Path(outputDir + "/tmp1");    
-    Path outputStep2Dir = new Path(outputDir + "/tmp2");
-    
+    Path outputResultsDir = new Path(outputDir, RESULTS_DIR);    
+    Path outputStep1Dir = new Path(outputDir, "tmp1");    
+    Path outputStep2Dir = new Path(outputDir, "tmp2");    
     Path solrNlistFile = new Path(outputStep1Dir, SOLR_NLIST_FILE);
+    
     LOG.info("Creating mapper input list file {}", solrNlistFile);
     long numFiles = addInputFiles(inputFiles, inputLists, solrNlistFile);
     if (numFiles == 0) {
@@ -161,7 +161,7 @@ public class TikaIndexerTool extends Configured implements Tool {
        * with a separate small Mapper & Reducer preprocessing step. This way
        * each input line ends up on a random position in the output file list.
        * Each mapper indexes a disjoint consecutive set of files such that each
-       * set has roughtly the same size, at least from a probabilistic
+       * set has roughly the same size, at least from a probabilistic
        * perspective.
        */
       LOG.info("Randomizing mapper input list file {}", solrNlistFile);
