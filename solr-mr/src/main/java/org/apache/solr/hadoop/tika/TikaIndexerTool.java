@@ -122,9 +122,9 @@ public class TikaIndexerTool extends Configured implements Tool {
         mappers = Integer.parseInt(args[++i]);
       } else if (args[i].equals("--verbose")) {
         isVerbose = true;
-      } else if (args[i].equals("--norandomize")) {
+      } else if (args[i].equals("--norandomize")) { // deliberately undocumented option
         isRandomize = false;
-      } else if (args[i].equals("--identitytest")) {
+      } else if (args[i].equals("--identitytest")) { // deliberately undocumented option
         isIdentityTest = true;
       } else {
         Path path = new Path(args[i]);
@@ -206,7 +206,7 @@ public class TikaIndexerTool extends Configured implements Tool {
    * C
    * D
    * 
-   * might be randomized into the following output list of URLS:
+   * might be randomized into the following output list of URLs:
    * 
    * C
    * A
