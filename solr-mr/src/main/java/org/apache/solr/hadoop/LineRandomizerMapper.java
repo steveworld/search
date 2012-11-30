@@ -29,7 +29,7 @@ public class LineRandomizerMapper extends Mapper<LongWritable, Text, LongWritabl
 
   @Override
   protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-    LOGGER.info("map key: {}, value: {}", key, value);
+    LOGGER.debug("map key: {}, value: {}", key, value);
     context.write(new LongWritable(random.nextLong()), value);
   }
 }
