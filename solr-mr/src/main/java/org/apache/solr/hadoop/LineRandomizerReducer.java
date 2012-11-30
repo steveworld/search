@@ -16,7 +16,7 @@ public class LineRandomizerReducer extends Reducer<LongWritable, Text, Text, Nul
   @Override
   protected void reduce(LongWritable key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
     for (Text value : values) {
-      LOGGER.info("reduce key: {}, value: {}", key, value);
+      LOGGER.debug("reduce key: {}, value: {}", key, value);
       context.write(value, NullWritable.get());
     }
   }
