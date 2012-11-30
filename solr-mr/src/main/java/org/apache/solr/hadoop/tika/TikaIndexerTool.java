@@ -163,6 +163,20 @@ public class TikaIndexerTool extends Configured implements Tool {
        * Each mapper indexes a disjoint consecutive set of files such that each
        * set has roughly the same size, at least from a probabilistic
        * perspective.
+       * 
+       * For example an input file with the following input list of URLs:
+       * 
+       * A
+       * B
+       * C
+       * D
+       * 
+       * might be randomized into the following output list of URLS:
+       * 
+       * C
+       * A
+       * D
+       * B
        */
       LOG.info("Randomizing mapper input list file {}", solrNlistFile);
       Job job2 = Job.getInstance(new Configuration(getConf()));
