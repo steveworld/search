@@ -126,6 +126,7 @@
         <version>2.12.4</version>
         <configuration>
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
+          <forkMode>always</forkMode>
         </configuration>
       </plugin>
       <plugin>
