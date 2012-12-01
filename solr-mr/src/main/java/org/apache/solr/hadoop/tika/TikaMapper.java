@@ -21,8 +21,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -48,7 +46,6 @@ import org.apache.solr.core.SolrResourceLoader;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrMapper;
 import org.apache.solr.schema.IndexSchema;
-import org.apache.solr.schema.SchemaField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -57,14 +54,55 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
 public class TikaMapper extends SolrMapper<LongWritable, Text> {
-  private static final Logger LOG = LoggerFactory.getLogger(TikaMapper.class);
-  
-  private final Text id = new Text();
 
   private MyIndexer indexer;
   private FileSystem fs;
   private Context context;
   private IndexSchema schema;
+
+  private static final Logger LOG = LoggerFactory.getLogger(TikaMapper.class);
+  
+  @Override
+  protected void setup(Context context) throws IOException, InterruptedException {
+    super.setup(context);
+    this.context = context;
+    indexer = new MyIndexer();
+    Map<String, Object> params = new HashMap<String,Object>();
+    params.put(TikaIndexer.TIKA_CONFIG_LOCATION, "tika-config.xml");
+    Config config = ConfigFactory.parseMap(params);
+    indexer.configure(new Configuration(config));
+    indexer.start();
+    indexer.beginTransaction();
+    fs = FileSystem.get(context.getConfiguration());
+  }
+
+  /**
+   * Extract content from the path specified in the value. Key is useless.
+   */
+  @Override
+  public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+    Path path = new Path(value.toString());
+    if (!fs.exists(path)) {
+      return; // ignore files that somehow have been deleted since the job was submitted
+    }
+    FSDataInputStream in = fs.open(path);
+    try {
+      Map<String,String> headers = new HashMap<String, String>();
+      headers.put(schema.getUniqueKeyField().getName(), value.toString());
+      indexer.process(new StreamEvent(in, headers));
+    } catch (SolrServerException e) {
+      LOG.error("Unable to process event ", e);
+    } finally {
+      in.close();
+    }
+  }
+
+  @Override
+  protected void cleanup(Context context) throws IOException, InterruptedException {
+    super.cleanup(context);
+    indexer.commitTransaction();
+    indexer.stop();
+  }
 
   private class MyIndexer extends TikaIndexer {
     @Override
@@ -88,25 +126,6 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       return Collections.singletonMap(collection.getName(), collection);
     }
 
-    // FIXME don't copy this code from flume solr sink
-    @Override
-    public void load(List<SolrInputDocument> docs, String collectionName) throws IOException, SolrServerException {
-      SolrCollection coll = getSolrCollections().get(collectionName);
-      assert coll != null;
-      AtomicLong numRecords = getParseInfo().getRecordNumber();
-      for (SolrInputDocument doc : docs) {
-        long num = numRecords.getAndIncrement();
-        // LOGGER.debug("record #{} loading before doc: {}", num, doc);
-        SchemaField uniqueKey = coll.getSchema().getUniqueKeyField();
-        if (uniqueKey != null && !doc.containsKey(uniqueKey.getName())) {
-          // FIXME handle missing unique field properly
-          doc.setField(uniqueKey.getName(), UUID.randomUUID().toString());
-        }
-        LOG.debug("record #{} loading doc: {}", num, doc);
-      }
-      getSolrCollections().get(collectionName).getDocumentLoader().load(docs);
-    }
-
   }
 
   private class MyDocumentLoader implements DocumentLoader {
@@ -118,10 +137,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     @Override
     public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
       for (SolrInputDocument sid: docs) {
-        SchemaField uniqueKeyField = schema.getUniqueKeyField();
-        
-        id.set(sid.getFieldValue(uniqueKeyField.getName()).toString());
-
+        Text id = new Text(sid.getFieldValue(schema.getUniqueKeyField().getName()).toString());
         try {
           context.write(id, new SolrInputDocumentWritable(sid));
         } catch (InterruptedException e) {
@@ -148,48 +164,6 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       return new SolrPingResponse();
     }
     
-  }
-
-  @Override
-  protected void setup(Context context) throws IOException, InterruptedException {
-    super.setup(context);
-    this.context = context;
-    indexer = new MyIndexer();
-    HashMap<String, Object> params = new HashMap<String,Object>();
-    params.put(TikaIndexer.TIKA_CONFIG_LOCATION, "tika-config.xml");
-    Config config = ConfigFactory.parseMap(params);
-    indexer.configure(new Configuration(config));
-    indexer.start();
-    indexer.beginTransaction();
-    fs = FileSystem.get(context.getConfiguration());
-  }
-
-  /**
-   * Extract content from the path specified in the value. Key is useless.
-   */
-  @Override
-  public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-    Path path = new Path(value.toString());
-    if (!fs.exists(path)) {
-      return;
-    }
-    FSDataInputStream in = fs.open(path);
-    try {
-      Map<String,String> headers = new HashMap<String, String>();
-//      headers.put(schema.getUniqueKeyField().getName(), key.toString()); // FIXME
-      indexer.process(new StreamEvent(in, headers));
-    } catch (SolrServerException e) {
-      LOG.error("Unable to process event ", e);
-    } finally {
-      in.close();
-    }
-  }
-
-  @Override
-  protected void cleanup(Context context) throws IOException, InterruptedException {
-    super.cleanup(context);
-    indexer.commitTransaction();
-    indexer.stop();
   }
 
 }
