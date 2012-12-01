@@ -54,6 +54,9 @@ import org.apache.solr.hadoop.SolrReducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** 
+ * Command line tool that runs an MR job that creates a Solr index from a set of input files.
+ */
 public class TikaIndexerTool extends Configured implements Tool {
   
   public static final String RESULTS_DIR = "results";

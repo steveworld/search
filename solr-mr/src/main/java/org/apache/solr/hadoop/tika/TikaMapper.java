@@ -17,8 +17,8 @@
 package org.apache.solr.hadoop.tika;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -85,9 +85,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       } catch (ParserConfigurationException e) {
         throw new ConfigurationException(e);
       }
-      Map<String, SolrCollection> collections = new LinkedHashMap<String, SolrCollection>();
-      collections.put(collection.getName(), collection);
-      return collections;
+      return Collections.singletonMap(collection.getName(), collection);
     }
 
     // FIXME don't copy this code from flume solr sink
@@ -138,7 +136,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
 
     @Override
     public UpdateResponse rollback() throws SolrServerException, IOException {
-      return null;
+      return new UpdateResponse();
     }
 
     @Override
@@ -147,7 +145,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
 
     @Override
     public SolrPingResponse ping() throws SolrServerException, IOException {
-      return null;
+      return new SolrPingResponse();
     }
     
   }
@@ -171,8 +169,11 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
    */
   @Override
   public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-    Path p = new Path(value.toString());
-    FSDataInputStream in = fs.open(p);
+    Path path = new Path(value.toString());
+    if (!fs.exists(path)) {
+      return;
+    }
+    FSDataInputStream in = fs.open(path);
     try {
       Map<String,String> headers = new HashMap<String, String>();
 //      headers.put(schema.getUniqueKeyField().getName(), key.toString()); // FIXME
