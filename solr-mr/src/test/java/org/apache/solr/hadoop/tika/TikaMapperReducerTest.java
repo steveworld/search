@@ -184,6 +184,14 @@ public class TikaMapperReducerTest extends Assert {
     Path path = new Path("hdfs://c2202.halxg.cloudera.com:8020/user/foo/bar.txt");
     assertEquals("/user/foo/bar.txt", path.toUri().getPath());
     assertEquals("bar.txt", path.getName());
+    assertEquals("hdfs", path.toUri().getScheme());
+    assertEquals("c2202.halxg.cloudera.com:8020", path.toUri().getAuthority());
+    
+    path = new Path("/user/foo/bar.txt");
+    assertEquals("/user/foo/bar.txt", path.toUri().getPath());
+    assertEquals("bar.txt", path.getName());
+    assertEquals(null, path.toUri().getScheme());
+    assertEquals(null, path.toUri().getAuthority());
   }
   
 }

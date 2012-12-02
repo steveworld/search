@@ -17,6 +17,7 @@
 package org.apache.solr.hadoop.tika;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -61,6 +62,8 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   private Context context;
   private IndexSchema schema;
 
+  public static final String SCHEMA_FIELD_NAME_OF_FILE_PATH = "filePath";
+  
   private static final Logger LOG = LoggerFactory.getLogger(TikaMapper.class);
   
   @Override
@@ -89,7 +92,9 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     FSDataInputStream in = fs.open(path);
     try {
       Map<String,String> headers = new HashMap<String, String>();
-      headers.put(schema.getUniqueKeyField().getName(), path.toUri().getPath()); // use HDFS file path as docId if no docId is specified
+      String uri = getFileURI(path);   
+      headers.put(schema.getUniqueKeyField().getName(), uri); // use HDFS file path as docId if no docId is specified
+      headers.put(SCHEMA_FIELD_NAME_OF_FILE_PATH, uri); // enable explicit storing of path in Solr
       headers.put(Metadata.RESOURCE_NAME_KEY, path.getName()); // Tika can use the file name in guessing the right MIME type
       indexer.process(new StreamEvent(in, headers));
     } catch (SolrServerException e) {
@@ -97,6 +102,29 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     } finally {
       in.close();
     }
+  }
+
+  // TODO: figure out best approach, also consider escaping issues
+  private String getFileURI(Path path) {
+    return path.toString();
+    
+//    URI uri = path.toUri();
+//    String scheme =  uri.getScheme();
+//    if (scheme == null) {
+//      scheme = fs.getScheme();
+//    }
+//
+//    String authority = uri.getAuthority();
+//    if (authority == null) {
+//      authority = "";
+//    }
+//    if (true) {
+//      return scheme + "://" + authority + path.toUri().getPath();
+//    } else {    
+//      // omit URI authority because name node host may change over time. 
+//      // On the other hand this implies that only one HDFS system can be indexed.
+//      return scheme + "://" + path.toUri().getPath();
+//    }
   }
 
   @Override
