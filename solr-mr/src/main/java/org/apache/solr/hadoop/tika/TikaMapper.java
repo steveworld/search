@@ -62,7 +62,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   private Context context;
   private IndexSchema schema;
 
-  public static final String SCHEMA_FIELD_NAME_OF_FILE_PATH = "filePath";
+  public static final String SCHEMA_FIELD_NAME_OF_FILE_URI = "fileURI";
   
   private static final Logger LOG = LoggerFactory.getLogger(TikaMapper.class);
   
@@ -94,7 +94,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       Map<String,String> headers = new HashMap<String, String>();
       String uri = getFileURI(path);   
       headers.put(schema.getUniqueKeyField().getName(), uri); // use HDFS file path as docId if no docId is specified
-      headers.put(SCHEMA_FIELD_NAME_OF_FILE_PATH, uri); // enable explicit storing of path in Solr
+      headers.put(SCHEMA_FIELD_NAME_OF_FILE_URI, uri); // enable explicit storing of path in Solr
       headers.put(Metadata.RESOURCE_NAME_KEY, path.getName()); // Tika can use the file name in guessing the right MIME type
       indexer.process(new StreamEvent(in, headers));
     } catch (SolrServerException e) {
