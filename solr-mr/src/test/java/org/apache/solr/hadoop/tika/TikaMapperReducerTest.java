@@ -16,7 +16,6 @@
  */
 package org.apache.solr.hadoop.tika;
 
-import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
@@ -25,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
@@ -44,6 +44,7 @@ import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrOutputFormat;
 import org.apache.solr.hadoop.SolrReducer;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -52,7 +53,7 @@ import org.mockito.stubbing.Answer;
 
 import com.google.common.collect.Lists;
 
-public class TikaMapperReducerTest {
+public class TikaMapperReducerTest extends Assert {
   private static final String RESOURCES_DIR = "target/test-classes";
 
   MapDriver<LongWritable, Text, Text, SolrInputDocumentWritable> mapDriver;
@@ -177,5 +178,12 @@ public class TikaMapperReducerTest {
 
     mapReduceDriver.run();
   }
-
+  
+  @Test
+  public void testPath() {
+    Path path = new Path("hdfs://c2202.halxg.cloudera.com:8020/user/foo/bar.txt");
+    assertEquals("/user/foo/bar.txt", path.toUri().getPath());
+    assertEquals("bar.txt", path.getName());
+  }
+  
 }

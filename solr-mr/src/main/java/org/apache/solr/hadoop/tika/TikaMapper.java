@@ -46,6 +46,7 @@ import org.apache.solr.core.SolrResourceLoader;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrMapper;
 import org.apache.solr.schema.IndexSchema;
+import org.apache.tika.metadata.Metadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -88,7 +89,8 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     FSDataInputStream in = fs.open(path);
     try {
       Map<String,String> headers = new HashMap<String, String>();
-      headers.put(schema.getUniqueKeyField().getName(), value.toString());
+      headers.put(schema.getUniqueKeyField().getName(), path.toUri().getPath()); // use HDFS file path as docId if no docId is specified
+      headers.put(Metadata.RESOURCE_NAME_KEY, path.getName()); // Tika can use the file name in guessing the right MIME type
       indexer.process(new StreamEvent(in, headers));
     } catch (SolrServerException e) {
       LOG.error("Unable to process event ", e);
