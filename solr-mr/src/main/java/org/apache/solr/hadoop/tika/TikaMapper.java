@@ -85,14 +85,15 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
    */
   @Override
   public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-    Path path = new Path(value.toString());
+    String uri = value.toString();
+    Path path = new Path(uri);
     if (!fs.exists(path)) {
       return; // ignore files that somehow have been deleted since the job was submitted
     }
     FSDataInputStream in = fs.open(path);
     try {
       Map<String,String> headers = new HashMap<String, String>();
-      String uri = getFileURI(path);   
+//      uri = getFileURI(path);   
       headers.put(schema.getUniqueKeyField().getName(), uri); // use HDFS file path as docId if no docId is specified
       headers.put(SCHEMA_FIELD_NAME_OF_FILE_URI, uri); // enable explicit storing of path in Solr
       headers.put(Metadata.RESOURCE_NAME_KEY, path.getName()); // Tika can use the file name in guessing the right MIME type
