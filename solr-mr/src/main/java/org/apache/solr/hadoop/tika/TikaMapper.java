@@ -138,15 +138,11 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   private class MyIndexer extends TikaIndexer {
     @Override
     protected Map<String, SolrCollection> createSolrCollections() {
-      SolrCollection collection = new SolrCollection("default", new MyDocumentLoader());
       try {
         SolrResourceLoader loader = new SolrResourceLoader(solrHomeDir.toString());
         // TODO allow config to be configured by job?
         SolrConfig solrConfig = new SolrConfig(loader, "solrconfig.xml", null);
         schema = new IndexSchema(solrConfig, null, null);
-        collection.setSchema(schema);
-        SolrParams params = new MapSolrParams(new HashMap<String,String>());
-        collection.setSolrParams(params);
       } catch (SAXException e) {
         throw new ConfigurationException(e);
       } catch (IOException e) {
@@ -154,6 +150,8 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       } catch (ParserConfigurationException e) {
         throw new ConfigurationException(e);
       }
+      SolrCollection collection = new SolrCollection("default", new MyDocumentLoader());
+      collection.setSchema(schema);
       return Collections.singletonMap(collection.getName(), collection);
     }
 
