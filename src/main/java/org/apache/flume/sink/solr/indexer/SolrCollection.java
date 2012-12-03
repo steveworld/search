@@ -18,6 +18,7 @@
  */
 package org.apache.flume.sink.solr.indexer;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -36,7 +37,7 @@ public class SolrCollection {
   private final DocumentLoader loader;
   private IndexSchema schema;
   private SolrParams solrParams = new MapSolrParams(new HashMap());
-  private Collection<String> dateFormats = DateUtil.DEFAULT_DATE_FORMATS;
+  private Collection<String> dateFormats = new ArrayList(DateUtil.DEFAULT_DATE_FORMATS);
 
   public SolrCollection(String name, DocumentLoader loader) {
     if (name == null) {
