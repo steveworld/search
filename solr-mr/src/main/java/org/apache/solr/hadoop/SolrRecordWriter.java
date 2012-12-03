@@ -29,6 +29,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordWriter;
@@ -188,7 +189,14 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
 
       Properties props = new Properties();
       Path perm = new Path(FileOutputFormat.getOutputPath(context), getOutFileName(context, "shard"));
-      String dataDirStr = new Path(perm, "data").toString();
+      // FIXME note this is odd (no scheme) given Solr doesn't currently support uris (just abs/relative path)
+      Path solrDataDir = new Path(perm, "data");
+      FileSystem fs = FileSystem.get(conf);
+      if (!fs.exists(solrDataDir) && !fs.mkdirs(solrDataDir)) {
+        throw new IOException("Unsable to create " + solrDataDir);
+      }
+      // FIXME hdfsdirectory expects absolute path, solr doesn't generally though
+      String dataDirStr = solrDataDir.toUri().toString().substring(6);
       props.setProperty("solr.data.dir", dataDirStr);
       props.setProperty("solr.home", solrHomeDir.toString());
 
