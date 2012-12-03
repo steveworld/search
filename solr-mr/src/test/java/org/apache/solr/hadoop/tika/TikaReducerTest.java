@@ -62,7 +62,7 @@ public class TikaReducerTest {
 
   @BeforeClass
   public static void setupClass() throws Exception {
-    solrHomeZip = SolrOutputFormat.createSolrHomeZip(new File(RESOURCES_DIR + "/solr/collection1"));
+    solrHomeZip = SolrOutputFormat.createSolrHomeZip(new File(RESOURCES_DIR + "/solr/mrunit"));
     assertNotNull(solrHomeZip);
   }
 

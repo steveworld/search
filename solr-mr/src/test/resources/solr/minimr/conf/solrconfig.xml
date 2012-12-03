@@ -96,7 +96,6 @@
        replication is in use, this should match the replication
        configuration.
     -->
-  <!--<dataDir>/data/3/collection1/data</dataDir>-->
   <dataDir>${solr.data.dir:}</dataDir>
  
 
@@ -115,7 +114,9 @@
        persistent, and doesn't work with replication.
     -->
   <directoryFactory name="DirectoryFactory" 
-                    class="${solr.directoryFactory:solr.NRTCachingDirectoryFactory}"/> 
+                    class="org.apache.solr.core.HdfsDirectoryFactory"/> 
+
+  <codecFactory name="CodecFactory" class="org.apache.solr.core.AppendingCodecFactory" />
 
   <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
        Index Config - These settings control low-level behavior of indexing
@@ -201,7 +202,7 @@
          More details on the nuances of each LockFactory...
          http://wiki.apache.org/lucene-java/AvailableLockFactories
     -->
-    <!-- <lockType>native</lockType> -->
+      <lockType>none</lockType>
 
     <!-- Unlock On Startup
 
@@ -363,9 +364,11 @@
     <!-- Enables a transaction log, currently used for real-time get.
          "dir" - the target directory for transaction logs, defaults to the
             solr data directory.  --> 
+<!--
     <updateLog>
-      <str name="dir">${solr.data.dir:}</str>
+      <str name="dir">${solr.ulog.dir:}</str>
     </updateLog>
+-->
    
 
   </updateHandler>

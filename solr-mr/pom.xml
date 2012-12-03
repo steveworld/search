@@ -18,7 +18,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <hadoop.version>2.0.0-cdh4.2.0-SNAPSHOT</hadoop.version>
-    <solr.version>4.0.0</solr.version>
+    <solr.version>4.0.0-cdh4.2.0-SNAPSHOT</solr.version>
     <slf4j.version>1.6.4</slf4j.version>
   </properties>
 
@@ -43,6 +43,19 @@
     </dependency>
 
     <dependency>
+      <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
+      <artifactId>concurrentlinkedhashmap-lru</artifactId>
+      <version>1.2</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-codecs</artifactId>
+      <version>${solr.version}</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
       <artifactId>flume-ng-solr-sink</artifactId>
       <version>1.2.0-cdh4.2.0-SNAPSHOT</version>
@@ -64,18 +77,6 @@
       <version>${slf4j.version}</version>
     </dependency>
 
-    <!--
-         Add project dependencies here. The archetype plugin will
-         include all dependencies from the "compile" scope (which is
-         the default) in the job jar's "lib" directory.
-    -->
-    <dependency> <!-- see http://lucene.apache.org/solr -->
-      <groupId>org.apache.solr</groupId>
-      <artifactId>solr-test-framework</artifactId>
-      <version>${solr.version}</version>
-      <scope>test</scope>
-    </dependency>    
-    
    <dependency>
       <groupId>org.apache.mrunit</groupId>
       <artifactId>mrunit</artifactId>
