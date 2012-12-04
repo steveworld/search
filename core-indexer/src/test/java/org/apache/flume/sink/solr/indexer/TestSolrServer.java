@@ -29,7 +29,7 @@ import org.apache.solr.common.util.NamedList;
  * A SolrServer that supresses shutdown requests as necessary for
  * testing
  */
-class TestSolrServer extends SolrServer {
+public class TestSolrServer extends SolrServer {
 
   private SolrServer server;
 

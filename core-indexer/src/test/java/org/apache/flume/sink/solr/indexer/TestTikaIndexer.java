@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.flume.sink.solr;
+package org.apache.flume.sink.solr.indexer;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -48,24 +48,6 @@ import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.io.FileUtils;
-import org.apache.flume.Channel;
-import org.apache.flume.ChannelSelector;
-import org.apache.flume.Context;
-import org.apache.flume.Event;
-import org.apache.flume.EventDeliveryException;
-import org.apache.flume.channel.ChannelProcessor;
-import org.apache.flume.channel.MemoryChannel;
-import org.apache.flume.channel.ReplicatingChannelSelector;
-import org.apache.flume.conf.Configurables;
-import org.apache.flume.event.EventBuilder;
-import org.apache.flume.sink.solr.indexer.AvroTestParser;
-import org.apache.flume.sink.solr.indexer.DocumentLoader;
-import org.apache.flume.sink.solr.indexer.SafeConcurrentUpdateSolrServer;
-import org.apache.flume.sink.solr.indexer.SolrCollection;
-import org.apache.flume.sink.solr.indexer.SolrServerDocumentLoader;
-import org.apache.flume.sink.solr.indexer.TestEmbeddedSolrServer;
-import org.apache.flume.sink.solr.indexer.TestSolrServer;
-import org.apache.flume.sink.solr.indexer.TikaIndexer;
 import org.apache.flume.sink.solr.indexer.parser.AvroContainerParser.ForwardOnlySeekableInputStream;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
@@ -85,10 +67,11 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TestTikaSolrSink extends SolrJettyTestBase {
+import com.typesafe.config.ConfigFactory;
 
-  private EmbeddedSource source;
-  private SolrSink sink;
+public class TestTikaIndexer extends SolrJettyTestBase {
+
+  private SolrIndexer indexer;
 
   private static final boolean TEST_WITH_EMBEDDED_SOLR_SERVER = false;
   private static final String EXTERNAL_SOLR_SERVER_URL = System.getProperty("externalSolrServer");
@@ -96,7 +79,7 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
   private static final String RESOURCES_DIR = "target/test-classes";
 //private static final String RESOURCES_DIR = "src/test/resources";
   private static final AtomicInteger SEQ_NUM = new AtomicInteger();
-  private static final Logger LOGGER = LoggerFactory.getLogger(TestTikaSolrSink.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(TestTikaIndexer.class);
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -133,45 +116,21 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
       }
     }
 
-    Map<String, String> channelContext = new HashMap();
-    channelContext.put("capacity", "1000000");
-    channelContext.put("keep-alive", "0"); // for faster tests
-    Channel channel = new MemoryChannel();
-    channel.setName(channel.getClass().getName() + SEQ_NUM.getAndIncrement());
-    Configurables.configure(channel, new Context(channelContext));
- 
-    class MySolrSink extends SolrSink {
-      public MySolrSink(TikaIndexer indexer) {
-        super(indexer);
+    indexer = new TikaIndexer() {
+      @Override
+      protected List<DocumentLoader> createTestSolrServers() {
+        return Collections.singletonList((DocumentLoader) new SolrServerDocumentLoader(solrServer));
       }
-    }
-    sink = new MySolrSink(new TikaIndexer() {
-        @Override
-        protected List<DocumentLoader> createTestSolrServers() {
-          return Collections.singletonList((DocumentLoader) new SolrServerDocumentLoader(solrServer));
-        }
-      }
-    );
-    sink.setName(sink.getClass().getName() + SEQ_NUM.getAndIncrement());
-    sink.configure(new Context(context));
-    sink.setChannel(channel);
-    sink.start();
-    
-    source = new EmbeddedSource(sink);    
-    ChannelSelector rcs = new ReplicatingChannelSelector();
-    rcs.setChannels(Collections.singletonList(channel));
-    ChannelProcessor chp = new ChannelProcessor(rcs);
-    Context chpContext = new Context();
-    chpContext.put("interceptors", "uuidinterceptor");
-    chpContext.put("interceptors.uuidinterceptor.type", UUIDInterceptor.Builder.class.getName());
-    chp.configure(chpContext);
-    source.setChannelProcessor(chp);
+    };
+    indexer.setName(indexer.getClass().getName() + SEQ_NUM.getAndIncrement());
+    indexer.configure(new Configuration(ConfigFactory.parseMap(context)));
+    indexer.start();
     
     deleteAllDocuments();
   }
   
   private void deleteAllDocuments() throws SolrServerException, IOException {
-    for (SolrCollection collection : sink.getIndexer().getSolrCollections().values()) {
+    for (SolrCollection collection : indexer.getSolrCollections().values()) {
       SolrServer s = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer();
       s.deleteByQuery("*:*"); // delete everything!
       s.commit();
@@ -182,13 +141,9 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
   @Override
   public void tearDown() throws Exception {
     try {
-      if (source != null) {
-        source.stop();
-        source = null;
-      }
-      if (sink != null) {
-        sink.stop();
-        sink = null;
+      if (indexer != null) {
+        indexer.stop();
+        indexer = null;
       }
     } finally {
       super.tearDown();
@@ -290,7 +245,7 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
       for (String file : files) {
         File f = new File(file);
         byte[] body = FileUtils.readFileToByteArray(f);
-        Event event = EventBuilder.withBody(body);
+        StreamEvent event = new StreamEvent(new ByteArrayInputStream(body), new HashMap());
         event.getHeaders().put(Metadata.RESOURCE_NAME_KEY, f.getName());
         load(event);
         Integer count = numRecords.get(file);
@@ -305,7 +260,7 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
     }
     LOGGER.trace("all done with put at {}", System.currentTimeMillis() - startTime);
     assertEquals(numDocs, queryResultSetSize("*:*"));
-    LOGGER.trace("sink: ", sink);
+    LOGGER.trace("indexer: ", indexer);
   }
 
 //  @Test
@@ -331,11 +286,11 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
         path + "/sample-statuses-20120906-141433-medium.avro",
     };
     
-    List<Event> events = new ArrayList();
+    List<StreamEvent> events = new ArrayList();
     for (String file : files) {
       File f = new File(file);
       byte[] body = FileUtils.readFileToByteArray(f);
-      Event event = EventBuilder.withBody(body);
+      StreamEvent event = new StreamEvent(new ByteArrayInputStream(body), new HashMap());
 //      event.getHeaders().put(Metadata.RESOURCE_NAME_KEY, f.getName());
       events.add(event);
     }
@@ -345,8 +300,8 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
       if (i % 10000 == 0) {
         LOGGER.info("iter: {}", i);
       }
-      for (Event event : events) {
-        event = EventBuilder.withBody(event.getBody(), new HashMap(event.getHeaders()));
+      for (StreamEvent event : events) {
+//        event = new StreamEvent().withBody(event.getBody(), new HashMap(event.getHeaders()));
         event.getHeaders().put("id", UUID.randomUUID().toString());
         load(event);
       }
@@ -357,11 +312,11 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
     LOGGER.info("Took secs: " + secs + ", iters/sec: " + (iters/secs));
     LOGGER.info("Took secs: " + secs + ", docs/sec: " + (numDocs/secs));
     LOGGER.info("Iterations: " + iters + ", numDocs: " + numDocs);
-    LOGGER.info("sink: ", sink);
+    LOGGER.info("indexer: ", indexer);
   }
 
   @Test
-  public void testAvroStringDocuments() throws IOException, EventDeliveryException, SolrServerException {
+  public void testAvroStringDocuments() throws IOException, SolrServerException {
     Schema docSchema = Schema.createRecord("Doc", "adoc", null, false);
     List<Field> docFields = new ArrayList<Field>();   
     Schema itemListSchema = Schema.create(Type.STRING);
@@ -381,7 +336,7 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
   }
 
   @Test
-  public void testAvroArrayUnionDocument() throws IOException, EventDeliveryException, SolrServerException {
+  public void testAvroArrayUnionDocument() throws IOException, SolrServerException {
     Schema documentSchema = Schema.createRecord("Doc", "adoc", null, false);
     List<Field> docFields = new ArrayList<Field>();   
     Schema intArraySchema = Schema.createArray(Schema.create(Type.INT));
@@ -413,7 +368,7 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
   }
   
   @Test
-  public void testAvroComplexDocuments() throws IOException, EventDeliveryException, SolrServerException {
+  public void testAvroComplexDocuments() throws IOException, SolrServerException {
     Schema documentSchema = Schema.createRecord("Document", "adoc", null, false);
     List<Field> docFields = new ArrayList<Field>();
     docFields.add(new Field("docId", Schema.create(Type.INT), null, null));
@@ -508,8 +463,7 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
     ingestAndVerifyAvro(documentSchema, document0, document1);
   }
 
-  private void ingestAndVerifyAvro(Schema schema, Record... records) throws IOException,
-      EventDeliveryException, SolrServerException {
+  private void ingestAndVerifyAvro(Schema schema, Record... records) throws IOException, SolrServerException {
     
     deleteAllDocuments();
     
@@ -535,7 +489,7 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
       assertEquals(record, record2);
     }
 
-    Event event = EventBuilder.withBody(bout.toByteArray());
+    StreamEvent event = new StreamEvent(new ByteArrayInputStream(bout.toByteArray()), new HashMap());
     load(event);
     assertEquals(records.length, queryResultSetSize("*:*"));
     
@@ -557,18 +511,20 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
     }
   
     // TODO: clean this up - don't add AvroTestParser to released tika-config.xml
-    event = EventBuilder.withBody(bout.toByteArray(), Collections.singletonMap(ExtractingParams.STREAM_TYPE, AvroTestParser.MEDIA_TYPE));
+    event = new StreamEvent(new ByteArrayInputStream(bout.toByteArray()), Collections.singletonMap(ExtractingParams.STREAM_TYPE, AvroTestParser.MEDIA_TYPE));
     AvroTestParser.setSchema(schema);
     load(event);
     assertEquals(records.length, queryResultSetSize("*:*"));    
   }
   
-  private void load(Event event) throws EventDeliveryException {
-    source.load(event);
+  private void load(StreamEvent event) throws IOException, SolrServerException {
+    event = new StreamEvent(event.getBody(), new HashMap(event.getHeaders()));
+    event.getHeaders().put("id", "" + SEQ_NUM.getAndIncrement());
+    indexer.process(event);
   }
 
   private void commit() throws SolrServerException, IOException {
-    for (SolrCollection collection : sink.getIndexer().getSolrCollections().values()) {
+    for (SolrCollection collection : indexer.getSolrCollections().values()) {
       ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().commit(false, true, true);
     }
   }
@@ -576,7 +532,7 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
   private int queryResultSetSize(String query) throws SolrServerException, IOException {
     commit();
     int size = 0;
-    for (SolrCollection collection : sink.getIndexer().getSolrCollections().values()) {
+    for (SolrCollection collection : indexer.getSolrCollections().values()) {
       QueryResponse rsp = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().query(new SolrQuery(query).setRows(Integer.MAX_VALUE));
       LOGGER.debug("rsp: {}", rsp);
       size += rsp.getResults().size();

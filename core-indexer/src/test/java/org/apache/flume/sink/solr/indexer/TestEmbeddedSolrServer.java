@@ -29,7 +29,7 @@ import org.apache.solr.core.CoreContainer;
  * An EmbeddedSolrServer that supresses shutdown and rollback requests as
  * necessary for testing
  */
-class TestEmbeddedSolrServer extends EmbeddedSolrServer {
+public class TestEmbeddedSolrServer extends EmbeddedSolrServer {
 
   public TestEmbeddedSolrServer(CoreContainer coreContainer, String coreName) {
     super(coreContainer, coreName);

@@ -37,15 +37,15 @@ import org.slf4j.LoggerFactory;
  * EXPERIMENTAL API; Indexer that extracts search documents from events, transforms them and
  * loads them into Apache Solr.
  */
-public class SimpleIndexer {
+public class SolrIndexer {
 
   private String name;
   private Configuration config;
   private Map<String, SolrCollection> solrCollections; // proxies to remote solr
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(SimpleIndexer.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(SolrIndexer.class);
 
-  public SimpleIndexer() {
+  public SolrIndexer() {
   }
   
   public void configure(Configuration config) {
@@ -69,7 +69,7 @@ public class SimpleIndexer {
    * Returns the Solr collection proxies to which this indexer can route Solr
    * documents
    */
-  protected final Map<String, SolrCollection> getSolrCollections() {
+  public final Map<String, SolrCollection> getSolrCollections() {
     return solrCollections;
   }
 
