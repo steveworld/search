@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapreduce.InputFormat;
@@ -36,18 +35,13 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.TaskType;
-import org.apache.hadoop.mrunit.mapreduce.MapDriver;
-import org.apache.hadoop.mrunit.mapreduce.MapReduceDriver;
 import org.apache.hadoop.mrunit.mapreduce.ReduceDriver;
-import org.apache.hadoop.mrunit.types.Pair;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.hadoop.BatchWriter;
-import org.apache.solr.hadoop.SolrDocumentConverter;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrOutputFormat;
 import org.apache.solr.hadoop.SolrReducer;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -114,8 +108,6 @@ public class TikaReducerTest {
 
     Configuration config = reduceDriver.getConfiguration();
     config.set(SolrOutputFormat.ZIP_NAME, solrHomeZip.getName());
-
-    SolrDocumentConverter.setSolrDocumentConverter(TikaDocumentConverter.class, reduceDriver.getContext().getConfiguration());
 
     List<SolrInputDocumentWritable> values = new ArrayList<SolrInputDocumentWritable>();
     SolrInputDocument sid = new SolrInputDocument();

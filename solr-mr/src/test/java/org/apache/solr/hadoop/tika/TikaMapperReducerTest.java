@@ -25,7 +25,6 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mrunit.mapreduce.MapReduceDriver;
 import org.apache.solr.hadoop.BatchWriter;
-import org.apache.solr.hadoop.SolrDocumentConverter;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrOutputFormat;
 import org.apache.solr.hadoop.tika.TikaReducerTest.MySolrReducer;
@@ -65,7 +64,6 @@ public class TikaMapperReducerTest extends Assert {
 
     mapReduceDriver.withCacheArchive(solrHomeZip.getAbsolutePath());
 
-    SolrDocumentConverter.setSolrDocumentConverter(TikaDocumentConverter.class, mapReduceDriver.getConfiguration());
     mapReduceDriver.withOutputFormat(SolrOutputFormat.class, NullInputFormat.class);
 
     mapReduceDriver.run();
