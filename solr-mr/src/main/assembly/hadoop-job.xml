@@ -10,7 +10,7 @@
     <format>jar</format>
   </formats>
   <includeBaseDirectory>false</includeBaseDirectory>
-  <dependencySets>
+   <dependencySets>
     <dependencySet>
       <unpack>false</unpack>
       <scope>runtime</scope>

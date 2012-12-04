@@ -35,7 +35,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -48,7 +47,7 @@ import org.apache.solr.hadoop.IdentityMapper;
 import org.apache.solr.hadoop.IdentityReducer;
 import org.apache.solr.hadoop.LineRandomizerMapper;
 import org.apache.solr.hadoop.LineRandomizerReducer;
-import org.apache.solr.hadoop.SolrDocumentConverter;
+import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrOutputFormat;
 import org.apache.solr.hadoop.SolrReducer;
 import org.slf4j.Logger;
@@ -105,8 +104,8 @@ public class TikaIndexerTool extends Configured implements Tool {
     int mappers = 1;
     File solrHomeDir = new File(System.getProperty("user.home") + File.separator + "solr");
     Path outputDir = new Path("hdfs:///user/" + System.getProperty("user.name") + "/tikaindexertool-output");
-    List<String> inputLists = new ArrayList();
-    List<Path> inputFiles = new ArrayList();
+    List<String> inputLists = new ArrayList<String>();
+    List<Path> inputFiles = new ArrayList<Path>();
     String fairSchedulerPool = null; 
     boolean isRandomize = true;
     boolean isVerbose = false;
@@ -193,8 +192,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       SolrOutputFormat.setupSolrHomeCache(solrHomeDir, job);  
       job.setNumReduceTasks(shards);  
       job.setOutputKeyClass(Text.class);
-      job.setOutputValueClass(MapWritable.class);
-      SolrDocumentConverter.setSolrDocumentConverter(TikaDocumentConverter.class, job.getConfiguration());
+      job.setOutputValueClass(SolrInputDocumentWritable.class);
     }
 
     return job.waitForCompletion(isVerbose) ? 0 : -1;
