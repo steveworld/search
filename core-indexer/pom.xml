@@ -48,6 +48,13 @@
     
     <dependency> <!-- see http://lucene.apache.org/solr -->
       <groupId>org.apache.solr</groupId>
+      <artifactId>solr-test-framework</artifactId>
+      <version>${solr.version}</version>
+      <scope>test</scope>
+    </dependency>    
+    
+    <dependency> <!-- see http://lucene.apache.org/solr -->
+      <groupId>org.apache.solr</groupId>
       <artifactId>solr-core</artifactId>
       <version>${solr.version}</version>
       <exclusions>
@@ -58,13 +65,6 @@
       </exclusions>        
     </dependency>
 
-    <dependency> <!-- see http://lucene.apache.org/solr -->
-      <groupId>org.apache.solr</groupId>
-      <artifactId>solr-test-framework</artifactId>
-      <version>${solr.version}</version>
-      <scope>test</scope>
-    </dependency>    
-    
     <dependency> <!-- see http://lucene.apache.org/solr -->
       <groupId>org.apache.solr</groupId>
       <artifactId>solr-cell</artifactId>
@@ -102,26 +102,37 @@
     <dependency> <!-- see https://github.com/typesafehub/config -->
       <groupId>com.typesafe</groupId>
       <artifactId>config</artifactId>
-      <version>1.0.0</version>
+      <version>${typesafe.config.version}</version>
     </dependency>
 
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
-      <version>4.10</version>
+      <version>${junit.version}</version>
     </dependency>
     
     <dependency> <!-- see http://www.slf4j.org -->
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
-      <version>1.6.4</version>
+      <version>${slf4j.version}</version>
       <scope>test</scope>
     </dependency>    
   </dependencies>
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${surefire.version}</version>
+        <configuration>
+          <argLine>-Dtests.locale=en_us</argLine>
+          <!--<forkMode>always</forkMode>-->
+          <!--<redirectTestOutputToFile>true</redirectTestOutputToFile>-->
+        </configuration>
+      </plugin>
+
       <plugin>
        <groupId>org.apache.maven.plugins</groupId>
        <artifactId>maven-jar-plugin</artifactId>
@@ -133,18 +144,7 @@
          </execution>
        </executions>
       </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.12.4</version>
-        <configuration>
-          <argLine>-Dtests.locale=en_us</argLine>
-          <!--<forkMode>always</forkMode>-->
-          <!--<redirectTestOutputToFile>true</redirectTestOutputToFile>-->
-        </configuration>
-      </plugin>
-
+      
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
@@ -160,43 +160,7 @@
           </execution>
         </executions>
       </plugin>
-
       
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-        <version>0.7</version>
-        <executions>
-          <execution>
-            <id>test.rat</id>
-            <phase>test</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <configuration>
-              <excludes>
-                <exclude>buildinfo</exclude>
-                <exclude>parent_buildinfo</exclude>
-                <exclude>cloudera/*</exclude>
-                <exclude>README.md</exclude>
-                <exclude>.idea/</exclude>
-                <exclude>**/*.iml</exclude>
-                <exclude>**/nb-configuration.xml</exclude>
-                <exclude>.git/</exclude>
-                <exclude>.gitignore</exclude>
-                <!-- ASF jenkins box puts the Maven repo in our root directory. -->
-                <exclude>.repository/</exclude>
-                <exclude>**/*.diff</exclude>
-                <exclude>**/*.patch</exclude>
-                <exclude>**/*.avsc</exclude>
-                <exclude>**/docs/**</exclude>
-                <exclude>src/test/resources/test-documents/**</exclude>                  
-                <exclude>src/test/resources/solr/collection1/conf/lang/**</exclude>                  
-              </excludes>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>  
   </build>
 </project>

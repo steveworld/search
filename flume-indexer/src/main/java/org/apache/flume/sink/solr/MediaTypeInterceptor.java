@@ -19,7 +19,6 @@
 package org.apache.flume.sink.solr;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,14 +26,10 @@ import java.util.Map;
 
 import org.apache.flume.Context;
 import org.apache.flume.Event;
-import org.apache.flume.FlumeException;
-import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.interceptor.Interceptor;
-import org.apache.tika.config.TikaConfig;
-import org.apache.tika.detect.Detector;
-import org.apache.tika.exception.TikaException;
+import org.apache.flume.sink.solr.indexer.MediaTypeDetector;
+import org.apache.flume.sink.solr.indexer.StreamEvent;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.mime.MediaType;
 
 /**
  * Flume Interceptor that auto-detects and sets a media type aka MIME type on
@@ -58,14 +53,14 @@ public class MediaTypeInterceptor implements Interceptor {
   private String headerName;
   private boolean preserveExisting;
   private boolean includeHeaders;
-  private Detector detector;
+  private MediaTypeDetector detector;
 
   public static final String HEADER_NAME = "headerName";
   public static final String PRESERVE_EXISTING_NAME = "preserveExisting";
   public static final String INCLUDE_HEADER_NAME = "includeHeaders";
   public static final String TIKA_CONFIG_LOCATION = "tika.config"; // ExtractingRequestHandler.CONFIG_LOCATION
 
-  public static final String DEFAULT_EVENT_HEADER_NAME = "stream.type"; // ExtractingParams.STREAM_TYPE;
+  public static final String DEFAULT_EVENT_HEADER_NAME = MediaTypeDetector.DEFAULT_EVENT_HEADER_NAME;
 
   protected MediaTypeInterceptor(Context context) {
     headerName = context.getString(HEADER_NAME, DEFAULT_EVENT_HEADER_NAME);
@@ -73,36 +68,14 @@ public class MediaTypeInterceptor implements Interceptor {
     includeHeaders = context.getBoolean(INCLUDE_HEADER_NAME, true);
 
     String tikaConfigFilePath = context.getString(TIKA_CONFIG_LOCATION);
-    String oldProperty = null;
-    if (tikaConfigFilePath != null) {
-      // see TikaConfig() no-arg constructor impl
-      oldProperty = System.setProperty("tika.config", tikaConfigFilePath); 
-    }
-
-    TikaConfig tikaConfig;
-    try {
-      tikaConfig = new TikaConfig();
-    } catch (TikaException e) {
-      throw new ConfigurationException(e);
-    } catch (IOException e) {
-      throw new ConfigurationException(e);
-    } finally { // restore old global state
-      if (tikaConfigFilePath != null) {
-        if (oldProperty == null) {
-          System.clearProperty("tika.config");
-        } else {
-          System.setProperty("tika.config", oldProperty);
-        }
-      }
-    }
-    detector = tikaConfig.getDetector();
+    detector = new MediaTypeDetector(tikaConfigFilePath);
   }
 
   @Override
   public void initialize() {
   }
 
-  protected Detector getDetector() {
+  protected MediaTypeDetector getDetector() {
     return detector;
   }
 
@@ -120,13 +93,7 @@ public class MediaTypeInterceptor implements Interceptor {
    */
   protected String getMediaType(Event event) {
     InputStream in = event.getBody() == null ? null : new ByteArrayInputStream(event.getBody());
-    Metadata metadata = getMetadata(event);
-    try {
-      MediaType mediaType = getDetector().detect(in, metadata);
-      return mediaType.toString();
-    } catch (IOException e) {
-      throw new FlumeException(e);
-    }
+    return getDetector().getMediaType(new StreamEvent(in, event.getHeaders()), getMetadata(event));
   }
 
   protected Metadata getMetadata(Event event) {

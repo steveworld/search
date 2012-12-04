@@ -32,7 +32,7 @@ import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.AbstractSink;
 import org.apache.flume.sink.solr.indexer.Configuration;
-import org.apache.flume.sink.solr.indexer.SimpleIndexer;
+import org.apache.flume.sink.solr.indexer.SolrIndexer;
 import org.apache.flume.sink.solr.indexer.StreamEvent;
 import org.apache.flume.sink.solr.indexer.TikaIndexer;
 import org.slf4j.Logger;
@@ -51,7 +51,7 @@ public class SolrSink extends AbstractSink implements Configurable {
 
   private int maxBatchSize = 1000;
   private long maxBatchDurationMillis = 10 * 1000;
-  private SimpleIndexer indexer;
+  private SolrIndexer indexer;
   private Context context;
   private SinkCounter sinkCounter; // TODO: replace with metrics.codahale.com
 
@@ -66,11 +66,11 @@ public class SolrSink extends AbstractSink implements Configurable {
   }
 
   /** For testing only */
-  protected SolrSink(SimpleIndexer indexer) {
+  protected SolrSink(SolrIndexer indexer) {
     this.indexer = indexer;
   }
 
-  public final SimpleIndexer getIndexer() {
+  public final SolrIndexer getIndexer() {
     return indexer;
   }
   
@@ -83,7 +83,7 @@ public class SolrSink extends AbstractSink implements Configurable {
     if (indexer == null) {
       String clazz = context.getString(INDEXER_CLASS, TikaIndexer.class.getName());
       try {
-        indexer = (SimpleIndexer) Class.forName(clazz).newInstance();
+        indexer = (SolrIndexer) Class.forName(clazz).newInstance();
       } catch (Exception e) {
         throw new ConfigurationException(e);
       }

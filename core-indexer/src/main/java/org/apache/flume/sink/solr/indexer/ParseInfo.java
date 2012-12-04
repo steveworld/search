@@ -35,7 +35,7 @@ import org.apache.tika.parser.ParseContext;
 public final class ParseInfo {
 
   private final StreamEvent event;
-  private final SimpleIndexer indexer;
+  private final SolrIndexer indexer;
   private String id;
   private SolrCollection solrCollection;
   private SolrContentHandler solrContentHandler;
@@ -44,7 +44,7 @@ public final class ParseInfo {
   private boolean isMultiDocumentParser = false;
   private final Map<String, Object> params = new HashMap();
 
-  public ParseInfo(StreamEvent event, SimpleIndexer indexer) {
+  public ParseInfo(StreamEvent event, SolrIndexer indexer) {
     if (event == null) {
       throw new IllegalArgumentException("Event must not be null");
     }
@@ -59,7 +59,7 @@ public final class ParseInfo {
     return event;
   }
 
-  public SimpleIndexer getIndexer() {
+  public SolrIndexer getIndexer() {
     return indexer;
   }
 

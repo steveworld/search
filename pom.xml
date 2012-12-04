@@ -65,9 +65,16 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <solr.version>${cdh.solr.version}</solr.version>
-    <avro.version>${cdh.avro.version}</avro.version>
     <flume.version>${cdh.flume-ng.version}</flume.version>
+    <avro.version>${cdh.avro.version}</avro.version>
     <tika.version>1.2</tika.version>
+    <jackson.version>2.0.6</jackson.version>
+    <httpclient.version>4.1.3</httpclient.version>
+    <slf4j.version>1.6.4</slf4j.version>
+    <typesafe.config.version>1.0.0</typesafe.config.version>
+    <junit.version>4.10</junit.version>
+    <surefire.version>2.12.4</surefire.version>
+    <apache.rat.version>0.7</apache.rat.version>
   </properties>
 
   <modules>

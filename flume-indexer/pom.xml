@@ -31,13 +31,13 @@
       <scope>provided</scope>
     </dependency>    
 
-    <dependency>
-      <groupId>org.apache.flume.flume-ng-sinks</groupId>
-      <artifactId>flume-ng-solr-sink-examples</artifactId>
-      <version>${cdh.flume-ng-solr.version}</version>
+    <dependency> <!-- see http://lucene.apache.org/solr -->
+      <groupId>org.apache.solr</groupId>
+      <artifactId>solr-test-framework</artifactId>
+      <version>${solr.version}</version>
       <scope>test</scope>
-    </dependency>
-
+    </dependency>    
+    
     <dependency>
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
       <artifactId>flume-ng-solr-core-indexer</artifactId>
@@ -52,27 +52,43 @@
       <scope>test</scope>
     </dependency>
 
-    <dependency> <!-- see http://lucene.apache.org/solr -->
-      <groupId>org.apache.solr</groupId>
-      <artifactId>solr-test-framework</artifactId>
-      <version>${solr.version}</version>
-      <scope>test</scope>
-    </dependency>    
-    
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
-      <version>4.10</version>
+      <version>${junit.version}</version>
     </dependency>
   </dependencies>
 
   <build>
     <plugins>
+    
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.7</version>
+        <executions>
+          <execution>
+            <id>copy-test-env</id>
+            <phase>process-test-resources</phase>
+            <configuration>
+              <target>
+                <copy todir="${project.build.directory}/test-classes">
+                  <fileset dir="${basedir}/../core-indexer/src/test/resources"/>
+                </copy>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.12.4</version>
+        <version>${surefire.version}</version>
         <configuration>
           <argLine>-Dtests.locale=en_us</argLine>
           <!--<forkMode>always</forkMode>-->
@@ -95,43 +111,7 @@
           </execution>
         </executions>
       </plugin>
-
       
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-        <version>0.7</version>
-        <executions>
-          <execution>
-            <id>test.rat</id>
-            <phase>test</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <configuration>
-              <excludes>
-                <exclude>buildinfo</exclude>
-                <exclude>parent_buildinfo</exclude>
-                <exclude>cloudera/*</exclude>
-                <exclude>README.md</exclude>
-                <exclude>.idea/</exclude>
-                <exclude>**/*.iml</exclude>
-                <exclude>**/nb-configuration.xml</exclude>
-                <exclude>.git/</exclude>
-                <exclude>.gitignore</exclude>
-                <!-- ASF jenkins box puts the Maven repo in our root directory. -->
-                <exclude>.repository/</exclude>
-                <exclude>**/*.diff</exclude>
-                <exclude>**/*.patch</exclude>
-                <exclude>**/*.avsc</exclude>
-                <exclude>**/docs/**</exclude>
-                <exclude>src/test/resources/test-documents/**</exclude>                  
-                <exclude>src/test/resources/solr/collection1/conf/lang/**</exclude>                  
-              </excludes>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>  
   </build>
 </project>

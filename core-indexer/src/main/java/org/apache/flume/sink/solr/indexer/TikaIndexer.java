@@ -89,7 +89,7 @@ import com.typesafe.config.ConfigValue;
  * Solr Cell), transforms them and loads them into Apache Solr.
  */
 //@InterfaceStability.Evolving
-public class TikaIndexer extends SimpleIndexer {
+public class TikaIndexer extends SolrIndexer {
 
   private TikaConfig tikaConfig;
   private AutoDetectParser autoDetectParser;
