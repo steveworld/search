@@ -40,7 +40,7 @@ import org.junit.Test;
  *
  * @since solr 1.3
  */
-public class SolrExampleTests extends SolrJettyTestBase
+public class TestSolrExample extends SolrJettyTestBase
 {
   private static final String RESOURCES_DIR = "target/test-classes";
 
