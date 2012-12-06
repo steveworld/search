@@ -17,7 +17,8 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <hadoop.version>2.0.0-cdh4.2.0-SNAPSHOT</hadoop.version>
+<!--    <hadoop.version>2.0.0-cdh4.2.0-SNAPSHOT</hadoop.version> -->
+    <hadoop.version>2.0.0-mr1-cdh4.2.0-SNAPSHOT</hadoop.version>
     <solr.version>4.0.0-cdh4.2.0-SNAPSHOT</solr.version>
     <slf4j.version>1.6.4</slf4j.version>
   </properties>
