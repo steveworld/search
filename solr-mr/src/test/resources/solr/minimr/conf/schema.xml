@@ -106,7 +106,7 @@
    <field name="user_name" type="text_en" indexed="true" stored="true" />
    <field name="user_screen_name" type="text_en" indexed="true" stored="true" />
    <field name="created_at" type="tdate" indexed="true" stored="true" />
-   <field name="text" type="text_en" indexed="true" stored="true" multiValued="true" />
+   <field name="text" type="text_en" indexed="true" stored="true" />
    <field name="retweet_count" type="tint" indexed="true" stored="true" />
    <field name="retweeted" type="boolean" indexed="true" stored="false" />
    <field name="in_reply_to_user_id" type="long" indexed="true" stored="true" />
