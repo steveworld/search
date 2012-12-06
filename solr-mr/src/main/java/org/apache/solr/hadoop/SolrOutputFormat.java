@@ -30,6 +30,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
@@ -181,7 +182,7 @@ public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
     final URI baseZipUrl = fs.getUri().resolve(
         zipPath.toString() + '#' + getZipName(jobConf));
 
-    job.addCacheArchive(baseZipUrl);
+    DistributedCache.addCacheArchive(baseZipUrl, jobConf);
     LOG.info("Set Solr cache: " + Arrays.asList(job.getCacheArchives()));
     // Actually send the path for the configuration zip file
     jobConf.set(SETUP_OK, zipPath.toString());

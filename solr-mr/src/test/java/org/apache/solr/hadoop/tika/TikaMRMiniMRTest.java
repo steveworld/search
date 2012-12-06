@@ -108,12 +108,12 @@ public class TikaMRMiniMRTest {
 
   @Test
   public void mrRun() throws Exception {
-    FileSystem fs = FileSystem.get(getJobConf());
+    FileSystem fs = dfsCluster.getFileSystem();
 
-    Path inDir = new Path("testing/testMapperReducer/input");
-    String DATADIR = "testing/testMapperReducer/data";
-    Path dataDir = new Path(DATADIR);
-    Path outDir = new Path("testing/testMapperReducer/output");
+    Path inDir = fs.makeQualified(new Path("/user/testing/testMapperReducer/input"));
+    String DATADIR = "/user/testing/testMapperReducer/data";
+    Path dataDir = fs.makeQualified(new Path(DATADIR));
+    Path outDir = fs.makeQualified(new Path("/user/testing/testMapperReducer/output"));
 
     assertTrue(fs.mkdirs(inDir));
     Path INPATH = new Path(inDir, "input.txt");
@@ -125,13 +125,14 @@ public class TikaMRMiniMRTest {
     assertTrue(fs.mkdirs(dataDir));
     fs.copyFromLocalFile(new Path("target/test-classes/sample-statuses-20120906-141433.avro"), dataDir);
 
-    Job job = new Job(getJobConf());
+    JobConf jobConf = getJobConf();
 
-    job.setMaxMapAttempts(1);
-    job.setMaxReduceAttempts(1);
-    //jobConf.setInt("mapred.map.tasks", 1);
+    jobConf.setMaxMapAttempts(1);
+    jobConf.setMaxReduceAttempts(1);
 
-    job.setJar(SEARCH_ARCHIVES_JAR);
+    jobConf.setJar(SEARCH_ARCHIVES_JAR);
+
+    Job job = new Job(jobConf);
 
     job.setInputFormatClass(NLineInputFormat.class);
 

@@ -77,7 +77,7 @@ public class TikaReducerTest {
         @Override
         public TaskAttemptID answer(final InvocationOnMock invocation) {
           // FIXME MRUNIT seems to pass taskid to the reduce task as mapred.TaskID rather than mapreduce.TaskID
-          return new TaskAttemptID(new TaskID("000000000000", 0, TaskType.MAP, 0), 0);
+          return new TaskAttemptID(new TaskID("000000000000", 0, true, 0), 0);
         }
       });
 
