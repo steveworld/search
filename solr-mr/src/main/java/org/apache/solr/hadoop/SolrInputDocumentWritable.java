@@ -19,14 +19,16 @@ package org.apache.solr.hadoop;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Collection;
 
+import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.solr.common.SolrInputDocument;
-import org.apache.solr.common.util.FastInputStream;
-import org.apache.solr.common.util.FastOutputStream;
-import org.apache.solr.common.util.JavaBinCodec;
+import org.apache.solr.common.SolrInputField;
 
 public class SolrInputDocumentWritable implements Writable {
+  private static long count = 0;
   private SolrInputDocument sid;
 
   public SolrInputDocumentWritable() {
@@ -45,56 +47,62 @@ public class SolrInputDocumentWritable implements Writable {
     return sid.toString();
   }
 
+  Text name = new Text();
+  Text value = new Text();
+  FloatWritable boost = new FloatWritable();
+
   @Override
   public void write(DataOutput out) throws IOException {
-    JavaBinCodec codec = new JavaBinCodec();
-    FastOutputStream daos = FastOutputStream.wrap(DataOutputOutputStream.constructOutputStream(out));
-    codec.init(daos);
-    try {
-      codec.writeVal(sid);
-    } finally {
-      daos.flushBuffer();
-    }
-
-//    Text name = new Text();
-//    Text value = new Text();
-//    FloatWritable boost = new FloatWritable();
-//    Writable[] field = new Writable[3];
-//    field[0] = name;
-//    field[1] = value;
-//    field[2] = boost;
-//    TupleWritable fieldTuple = new TupleWritable(field);
-//
-//    Collection<SolrInputField> values = sid.values();
-//    out.writeInt(values.size());
-//    for (SolrInputField fval: values) {
-//      name.set(fval.getName());
-//      value.set(fval.getValue().toString());
-//      boost.set(fval.getBoost());
-//      fieldTuple.write(out);
+//    JavaBinCodec codec = new JavaBinCodec();
+//    FastOutputStream daos = FastOutputStream.wrap(DataOutputOutputStream.constructOutputStream(out));
+//    codec.init(daos);
+//    try {
+//      if (count++ < 10) { System.err.println(toString()); }
+//      daos.writeLong(MARKER);
+//      codec.writeVal(sid);
+//    } finally {
+//      daos.flushBuffer();
 //    }
+
+    Collection<SolrInputField> values = sid.values();
+    out.writeInt(values.size());
+    for (SolrInputField fval: values) {
+      name.set(fval.getName());
+      name.write(out);
+      value.set(fval.getValue().toString());
+      value.write(out);
+      boost.set(fval.getBoost());
+      boost.write(out);
+    }
   }
 
   @Override
   public void readFields(DataInput in) throws IOException {
-    JavaBinCodec codec = new JavaBinCodec();
-    FastInputStream dis = FastInputStream.wrap(DataInputInputStream.constructInputStream(in));
-    sid = (SolrInputDocument)codec.readVal(dis);
-
-//    Text name = new Text();
-//    Text value = new Text();
-//    FloatWritable boost = new FloatWritable();
-//    Writable[] field = new Writable[3];
-//    field[0] = name;
-//    field[1] = value;
-//    field[2] = boost;
-//    TupleWritable fieldTuple = new TupleWritable(field);
+//    JavaBinCodec codec = new JavaBinCodec();
+//    FastInputStream dis = FastInputStream.wrap(DataInputInputStream.constructInputStream(in));
+//    try {
+//      System.err.println("PDH readval starting");
+//      long marker = dis.readLong();
+//      if (marker != MARKER) {
+//        throw new RuntimeException("Invalid version (expected " + MARKER +
+//            ", but " + marker + ") or the data in not in 'javabin' format");
+//      }
 //
-//    int count = in.readInt();
-//    while(count-- > 0) {
-//      fieldTuple.readFields(in);
-//      sid.addField(name.toString(), value.toString(), boost.get());
+//    sid = (SolrInputDocument)codec.readVal(dis);
+//    System.err.println(toString());
+//    } catch (Exception e) {
+//      e.printStackTrace();
 //    }
+
+    sid = new SolrInputDocument();
+
+    int count = in.readInt();
+    while(count-- > 0) {
+      name.readFields(in);
+      value.readFields(in);
+      boost.readFields(in);
+      sid.addField(name.toString(), value.toString(), boost.get());
+    }
   }
 
 }
