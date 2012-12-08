@@ -178,7 +178,7 @@ public class TestMediaTypeDetector extends Assert {
   
   private String detect(StreamEvent event, boolean includeHeaders) {
     MediaTypeDetector detector = new MediaTypeDetector(null);
-    return detector.getMediaType(event, detector.getMetadata(event,  includeHeaders));
+    return detector.getMediaType(event, detector.getMetadata(event.getHeaders(),  includeHeaders));
   }
 
 }

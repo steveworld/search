@@ -100,10 +100,10 @@ public class MediaTypeDetector {
     }
   }
 
-  public Metadata getMetadata(StreamEvent event, boolean includeHeaders) {
+  public Metadata getMetadata(Map<String, String> eventHeaders, boolean includeHeaders) {
     Metadata metadata = new Metadata();
     if (includeHeaders) {
-      for (Map.Entry<String, String> entry : event.getHeaders().entrySet()) {
+      for (Map.Entry<String, String> entry : eventHeaders.entrySet()) {
         metadata.set(entry.getKey(), entry.getValue());
       }
     }
