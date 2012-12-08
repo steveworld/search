@@ -97,13 +97,7 @@ public class MediaTypeInterceptor implements Interceptor {
   }
 
   protected Metadata getMetadata(Event event) {
-    Metadata metadata = new Metadata();
-    if (includeHeaders) {
-      for (Map.Entry<String, String> entry : event.getHeaders().entrySet()) {
-        metadata.set(entry.getKey(), entry.getValue());
-      }
-    }
-    return metadata;
+    return getDetector().getMetadata(event.getHeaders(), includeHeaders);
   }
 
   protected boolean isMatch(Event event) {
