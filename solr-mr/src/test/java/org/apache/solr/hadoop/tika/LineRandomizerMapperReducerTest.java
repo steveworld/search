@@ -22,9 +22,7 @@ import java.util.Arrays;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mrunit.mapreduce.MapDriver;
 import org.apache.hadoop.mrunit.mapreduce.MapReduceDriver;
-import org.apache.hadoop.mrunit.mapreduce.ReduceDriver;
 import org.apache.hadoop.mrunit.types.Pair;
 import org.apache.solr.hadoop.LineRandomizerMapper;
 import org.apache.solr.hadoop.LineRandomizerReducer;
@@ -34,16 +32,12 @@ import org.junit.Test;
 
 public class LineRandomizerMapperReducerTest extends Assert {
 
-  private MapDriver<LongWritable, Text, LongWritable, Text> mapDriver;
-  private ReduceDriver<LongWritable, Text, Text, NullWritable> reduceDriver;
   private MapReduceDriver<LongWritable, Text, LongWritable, Text, Text, NullWritable> mapReduceDriver;
 
   @Before
   public void setUp() {
     LineRandomizerMapper mapper = new LineRandomizerMapper();
     LineRandomizerReducer reducer = new LineRandomizerReducer();
-    mapDriver = MapDriver.newMapDriver(mapper);
-    reduceDriver = ReduceDriver.newReduceDriver(reducer);
     mapReduceDriver = MapReduceDriver.newMapReduceDriver(mapper, reducer);
   }
 
