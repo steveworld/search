@@ -123,7 +123,7 @@ public class TikaIndexerTool extends Configured implements Tool {
         shards = Integer.parseInt(args[++i]);
       } else if (args[i].equals("--mappers")) {
         mappers = Integer.parseInt(args[++i]);
-      } else if (args[i].startsWith("--fairschedulerpool")) {
+      } else if (args[i].equals("--fairschedulerpool")) {
         fairSchedulerPool = args[++i];
       } else if (args[i].equals("--verbose")) {
         isVerbose = true;
