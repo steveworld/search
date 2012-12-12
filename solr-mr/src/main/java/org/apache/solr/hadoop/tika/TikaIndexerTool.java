@@ -187,7 +187,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       System.exit(argParserErrorExitCode);
     }
     
-    LOG.warn("Command line args: {}", ns);
+    LOG.debug("Command line args: {}", ns);
     List<Path> inputLists = ns.getList("inputlist");
     if (inputLists == null) {
       inputLists = Collections.EMPTY_LIST;
