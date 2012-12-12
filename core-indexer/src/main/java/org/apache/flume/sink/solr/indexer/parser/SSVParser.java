@@ -23,14 +23,14 @@ import java.util.Collections;
 import org.apache.tika.mime.MediaType;
 
 /**
- * Tab separated values parser that extracts search documents from CSV records
+ * Space separated values parser that extracts search documents from CSV records
  * (using Apache Tika and Solr Cell) and loads them into Solr.
  */
-public class TSVParser extends DelimitedValuesParser {
+public class SSVParser extends DelimitedValuesParser {
 
-  public TSVParser() {
-    setSeparatorChar('\t');
-    setSupportedTypes(Collections.singleton(MediaType.parse("text/tab-separated-values")));
+  public SSVParser() {
+    setSeparatorChar(' ');
+    setSupportedTypes(Collections.singleton(MediaType.parse("text/space-separated-values")));
   }
 
 }
