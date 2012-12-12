@@ -139,7 +139,6 @@ public class TikaIndexerTool extends Configured implements Tool {
       .metavar("DIR")
       .type(new ArgumentTypes.FileArgumentType().verifyIsDirectory().verifyCanRead())
       .required(true)
-      .setDefault(new File("/home/foo/solr"))
       .help("Local dir containing Solr conf/ and lib/");
 
     parser.addArgument("--mappers")
