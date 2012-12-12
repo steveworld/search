@@ -30,6 +30,7 @@ import java.io.Writer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
@@ -72,6 +73,8 @@ import org.slf4j.LoggerFactory;
  */
 public class TikaIndexerTool extends Configured implements Tool {
   
+  private FileSystem fs = null;
+  
   public static final String RESULTS_DIR = "results";
 
   /** A list of input file URLs. Used as input to the Mapper */
@@ -80,14 +83,8 @@ public class TikaIndexerTool extends Configured implements Tool {
   private static final Logger LOG = LoggerFactory.getLogger(TikaIndexerTool.class);
 
   
-  public static void main(String[] args) throws Exception  {
-    Configuration conf = new Configuration();
-    int res = ToolRunner.run(conf, new TikaIndexerTool(), args);
-    System.exit(res);
-  }
-
-  private Namespace parseArgs(String[] args, FileSystem fs) {
-    final int argParserErrorExitCode = 1;
+  private final class MyArgumentParser {
+    
     ArgumentParser parser = ArgumentParsers
         .newArgumentParser("hadoop [GenericOptions]... jar solr-mr-*-job.jar " //+ getClass().getName()
             , false)
@@ -96,7 +93,8 @@ public class TikaIndexerTool extends Configured implements Tool {
             "Map Reduce job that creates a Solr index from a set of input files "
                 + "and puts the data into HDFS, in a scalable and fault-tolerant manner.");
 
-    parser.addArgument("--help", "-h")
+    AtomicBoolean isHelp = new AtomicBoolean();    
+    Argument helpArg = parser.addArgument("--help", "-h")
       .help("show this help message and exit")
       .action(new HelpArgumentAction() {
         @Override
@@ -112,11 +110,11 @@ public class TikaIndexerTool extends Configured implements Tool {
             " --outputdir hdfs:///user/foo/tikaindexer-output" + 
             " hdfs:///user/foo/tikaindexer-input"  
             );
-          System.exit(0);
+          isHelp.set(true);
         }        
       });
     
-    parser.addArgument("--inputlist")
+    Argument inputListArg = parser.addArgument("--inputlist")
       .action(Arguments.append())
       .metavar("URI")
 //      .type(new ArgumentTypes.PathArgumentType(fs).verifyExists().verifyCanRead())
@@ -125,90 +123,105 @@ public class TikaIndexerTool extends Configured implements Tool {
             "If '-' is specified, URIs are read from the standard input. " + 
             "Multiple --inputlist arguments can be specified");
     
-    parser.addArgument("--outputdir")
+    Argument outputDirArg = parser.addArgument("--outputdir")
       .metavar("HDFS_URI")
       .type(new ArgumentTypes.PathArgumentType(fs).verifyScheme(fs.getScheme()).verifyCanWriteParent())
       .required(true)
       .help("HDFS directory to write Solr indexes to");
     
-    parser.addArgument("--solrhomedir")
+    Argument solrHomeDirArg = parser.addArgument("--solrhomedir")
       .metavar("DIR")
       .type(new ArgumentTypes.FileArgumentType().verifyIsDirectory().verifyCanRead())
       .required(true)
       .help("Local dir containing Solr conf/ and lib/");
 
-    parser.addArgument("--mappers")
+    Argument mappersArg = parser.addArgument("--mappers")
       .metavar("INTEGER")
       .type(Integer.class)
       .choices(new RangeArgumentChoice(-1, Integer.MAX_VALUE))
       .setDefault(1)
       .help("Maximum number of MR mappers to use");
 
-    parser.addArgument("--shards")
+    Argument shardsArg = parser.addArgument("--shards")
       .metavar("INTEGER")
       .type(Integer.class)
       .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
       .setDefault(1)
       .help("Number of output shards to use");
 
-    parser.addArgument("--fairschedulerpool")
+    Argument fairSchedulerPoolArg = parser.addArgument("--fairschedulerpool")
       .metavar("STRING")
       .help("Name of MR fair scheduler pool to submit job to");
 
-    parser.addArgument("--verbose", "-v")
+    Argument verboseArg = parser.addArgument("--verbose", "-v")
       .action(Arguments.storeTrue())
       .help("Turn on verbose output");
 
-    parser.addArgument("--norandomize")
+    Argument noRandomizeArg = parser.addArgument("--norandomize")
       .action(Arguments.storeTrue())
       .help("undocumented and subject to removal without notice");
 
-    parser.addArgument("--identitytest")
+    Argument identityTestArg = parser.addArgument("--identitytest")
       .action(Arguments.storeTrue())
       .help("undocumented and subject to removal without notice");
 
     // trailing positional arguments
-    parser.addArgument("inputfiles")
+    Argument inputFilesArg = parser.addArgument("inputfiles")
       .metavar("HDFS_URI")
       .type(new ArgumentTypes.PathArgumentType(fs).verifyScheme(fs.getScheme()).verifyExists().verifyCanRead())
       .nargs("*")
       .setDefault()
       .help("HDFS URI of file or dir to index");
-
-    Namespace ns = null;
-    try {
-      ns = parser.parseArgs(args);
-    } catch (ArgumentParserException e) {
-      parser.handleError(e);
-      System.exit(argParserErrorExitCode);
+        
+    public Namespace parseArgs(String[] args) {
+      Namespace ns = null;
+      try {
+        ns = parser.parseArgs(args);
+      } catch (ArgumentParserException e) {
+        parser.handleError(e);
+        return null;
+      }
+      
+      if (isHelp.get()) {
+        return null;
+      }
+      
+      LOG.debug("Parsed command line args: {}", ns);
+      return ns;     
     }
-    
-    LOG.debug("Parsed command line args: {}", ns);
-    return ns;
+  }
+  
+  public static void main(String[] args) throws Exception  {
+    Configuration conf = new Configuration();
+    int res = ToolRunner.run(conf, new TikaIndexerTool(), args);
+    System.exit(res);
   }
 
   @Override
   public int run(String[] args) throws Exception {
-    FileSystem fs = FileSystem.get(getConf());
-
-    Namespace ns = parseArgs(args, fs);
+    fs = FileSystem.get(getConf());
+    MyArgumentParser parser = new MyArgumentParser();
+    Namespace ns = parser.parseArgs(args);
+    if (ns == null) {
+      return 1; // ArgumentParserException or --help
+    }
     
-    List<Path> inputLists = ns.getList("inputlist");
+    List<Path> inputLists = ns.getList(parser.inputListArg.getDest());
     if (inputLists == null) {
       inputLists = Collections.EMPTY_LIST;
     }
-    List<Path> inputFiles = ns.getList("inputfiles");
+    List<Path> inputFiles = ns.getList(parser.inputFilesArg.getDest());
     if (inputLists.isEmpty() && inputFiles.isEmpty()) {
       return 0; // nothing to do
     }
-    Path outputDir = (Path) ns.get("outputdir");
-    int mappers = ns.getInt("mappers");
-    int shards = ns.getInt("shards");
-    File solrHomeDir = (File) ns.get("solrhomedir");
-    String fairSchedulerPool = (String) ns.get("fairschedulerpool");
-    boolean isRandomize = !ns.getBoolean("norandomize");
-    boolean isVerbose = ns.getBoolean("verbose");
-    boolean isIdentityTest = ns.getBoolean("identitytest");
+    Path outputDir = (Path) ns.get(parser.outputDirArg.getDest());
+    int mappers = ns.getInt(parser.mappersArg.getDest());
+    int shards = ns.getInt(parser.shardsArg.getDest());
+    File solrHomeDir = (File) ns.get(parser.solrHomeDirArg.getDest());
+    String fairSchedulerPool = (String) ns.get(parser.fairSchedulerPoolArg.getDest());
+    boolean isRandomize = !ns.getBoolean(parser.noRandomizeArg.getDest());
+    boolean isVerbose = ns.getBoolean(parser.verboseArg.getDest());
+    boolean isIdentityTest = ns.getBoolean(parser.identityTestArg.getDest());
 
     Job job = Job.getInstance(getConf());
     job.setJarByClass(getClass());
