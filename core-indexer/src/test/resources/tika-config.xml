@@ -52,10 +52,11 @@ If multiple parsers support the same MIME type, the parser is chosen that is clo
     <parser class="org.apache.tika.parser.xml.FictionBookParser"/>
     <parser class="org.apache.tika.parser.chm.ChmParser"/>
     
-    <parser class="org.apache.flume.sink.solr.indexer.parser.AvroContainerParser"/> 
-    <parser class="org.apache.flume.sink.solr.indexer.parser.CSVParser"/> 
-    <parser class="org.apache.flume.sink.solr.indexer.parser.TSVParser"/> 
     <parser class="org.apache.flume.sink.solr.indexer.AvroTestParser"/> 
+    <parser class="org.apache.flume.sink.solr.indexer.parser.SSVParser"/> 
+    <parser class="org.apache.flume.sink.solr.indexer.parser.TSVParser"/> 
+    <parser class="org.apache.flume.sink.solr.indexer.parser.CSVParser"/> 
+    <parser class="org.apache.flume.sink.solr.indexer.parser.AvroContainerParser"/> 
     
     <!--
     <parser class="org.apache.tika.parser.audio.AudioParser"> 

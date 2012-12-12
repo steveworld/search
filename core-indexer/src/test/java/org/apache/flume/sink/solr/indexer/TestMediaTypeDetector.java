@@ -93,6 +93,8 @@ public class TestMediaTypeDetector extends Assert {
         path + "/testPDF.pdf", "application/pdf", "application/pdf",
         path + "/testJPEG_EXIF.jpg", "image/jpeg", "image/jpeg",
         path + "/testXML.xml", "application/xml", "application/xml",
+        path + "/cars.tsv", "text/plain", "text/tab-separated-values",
+        path + "/cars.ssv", "text/plain", "text/space-separated-values",
         path + "/cars.csv", "text/plain", "text/csv",
         path + "/cars.csv.gz", "application/x-gzip", "application/x-gzip",
         path + "/cars.tar.gz", "application/x-gtar", "application/x-gtar",

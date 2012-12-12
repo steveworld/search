@@ -12,8 +12,8 @@
 
 <mime-info>
 
-  <mime-type type="text/csv">
-    <glob pattern="*.csv"/>
+  <mime-type type="text/space-separated-values">
+    <glob pattern="*.ssv"/>
   </mime-type>
 
   <mime-type type="avro/binary">

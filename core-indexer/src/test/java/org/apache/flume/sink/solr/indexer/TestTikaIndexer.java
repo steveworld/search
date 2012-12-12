@@ -162,6 +162,8 @@ public class TestTikaIndexer extends SolrJettyTestBase {
         path + "/testJPEG_EXIF.jpg",
         path + "/testXML.xml",          
         path + "/cars.csv",
+        path + "/cars.tsv",
+        path + "/cars.ssv",
         path + "/cars.csv.gz",
         path + "/cars.tar.gz",
         path + "/sample-statuses-20120906-141433.avro",
@@ -241,6 +243,8 @@ public class TestTikaIndexer extends SolrJettyTestBase {
       numRecords.put(path + "/cars.csv", 5);
       numRecords.put(path + "/cars.csv.gz", 5);
       numRecords.put(path + "/cars.tar.gz", 4);
+      numRecords.put(path + "/cars.tsv", 5);
+      numRecords.put(path + "/cars.ssv", 5);
       
       for (String file : files) {
         File f = new File(file);
