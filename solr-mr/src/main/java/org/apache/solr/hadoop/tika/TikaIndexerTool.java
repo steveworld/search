@@ -63,7 +63,6 @@ import org.apache.solr.hadoop.LineRandomizerReducer;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrOutputFormat;
 import org.apache.solr.hadoop.SolrReducer;
-import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -212,7 +211,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     if (mappers == -1) { 
       mappers = new JobClient(job.getConfiguration()).getClusterStatus().getMaxMapTasks(); // MR1
       //mappers = job.getCluster().getClusterStatus().getMapSlotCapacity(); // Yarn
-      Log.info("Choosing dynamic number of mappers: {}", mappers);
+      LOG.info("Choosing dynamic number of mappers: {}", mappers);
     }
     if (mappers <= 0) {
       throw new IllegalStateException("Illegal number of mappers: " + mappers);
