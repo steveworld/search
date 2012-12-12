@@ -337,12 +337,10 @@ public class TikaIndexerTool extends Configured implements Tool {
         InputStream in;
         if (inputList.toString().equals("-")) {
           in = System.in;
+        } else if (inputList.isAbsoluteAndSchemeAuthorityNull()) {
+          in = new BufferedInputStream(new FileInputStream(inputList.toString()));
         } else {
-          if (inputList.isAbsoluteAndSchemeAuthorityNull()) {
-            in = new BufferedInputStream(new FileInputStream(inputList.toString()));
-          } else {
-            in = fs.open(inputList);
-          }
+          in = fs.open(inputList);
         }
         try {
           BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
