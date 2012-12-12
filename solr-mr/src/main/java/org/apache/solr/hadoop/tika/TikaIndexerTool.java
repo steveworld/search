@@ -183,7 +183,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       System.exit(argParserErrorExitCode);
     }
     
-    LOG.debug("Command line args: {}", ns);
+    LOG.debug("Parsed command line args: {}", ns);
     return ns;
   }
 
