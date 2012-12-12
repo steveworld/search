@@ -85,6 +85,8 @@ public class TikaMapperReducerTest extends Assert {
     assertEquals("bar.txt", path.getName());
     assertEquals(null, path.toUri().getScheme());
     assertEquals(null, path.toUri().getAuthority());
+    
+    assertEquals("-", new Path("-").toString());
   }
   
 }

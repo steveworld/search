@@ -17,15 +17,28 @@
 package org.apache.solr.hadoop.tika;
 
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.Writer;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+
+import net.sourceforge.argparse4j.ArgumentParsers;
+import net.sourceforge.argparse4j.impl.Arguments;
+import net.sourceforge.argparse4j.impl.action.HelpArgumentAction;
+import net.sourceforge.argparse4j.impl.choice.RangeArgumentChoice;
+import net.sourceforge.argparse4j.inf.Argument;
+import net.sourceforge.argparse4j.inf.ArgumentParser;
+import net.sourceforge.argparse4j.inf.ArgumentParserException;
+import net.sourceforge.argparse4j.inf.Namespace;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -33,10 +46,10 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -50,8 +63,10 @@ import org.apache.solr.hadoop.LineRandomizerReducer;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrOutputFormat;
 import org.apache.solr.hadoop.SolrReducer;
+import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 /** 
  * Command line tool that runs an MR job that creates a Solr index from a set of input files.
@@ -65,24 +80,7 @@ public class TikaIndexerTool extends Configured implements Tool {
 
   private static final Logger LOG = LoggerFactory.getLogger(TikaIndexerTool.class);
 
-
-  private void usage() {
-    String msg = 
-        "Usage: hadoop jar solr-mr.jar " + getClass().getName() + " [options]... [inputFileOrDir]... " +
-        "\n" + 
-        "\nSpecific options supported are" +
-        "\n\n--outputdir <hdfsOutputDir>\tHDFS output directory containing Solr indexes (defaults to hdfs:///user/" + System.getProperty("user.name") + "/tikaindexer-output)" +
-        "\n\n--inputlist <File>\tLocal file URL or HDFS file URL containing a list of HDFS URLs, one URL per line. If '-' is specified, URLs are read from the standard input." +
-        "\n\n--solr <solrHome>\tLocal dir containing Solr conf/ and lib/ (defaults to " + System.getProperty("user.home") + File.separator + "solr)" +
-        "\n\n--mappers <NNN>\tMaximum number of mappers to use (defaults to 1)" +
-        "\n\n--shards NNN\tNumber of output shards (defaults to 1)" +
-        "\n\n--fairschedulerpool fairSchedulerPoolName (defaults to null)" +
-        "\n\n--verbose true|false\t (defaults to false)" +
-        "\n";
-    System.out.println(msg);
-    ToolRunner.printGenericCommandUsage(System.out);
-  }
-
+  
   public static void main(String[] args) throws Exception  {
     Configuration conf = new Configuration();
     int res = ToolRunner.run(conf, new TikaIndexerTool(), args);
@@ -91,58 +89,136 @@ public class TikaIndexerTool extends Configured implements Tool {
 
   @Override
   public int run(String[] args) throws Exception {
-    if (args.length == 0) {
-      usage();
-      return -1;
+    FileSystem fs = FileSystem.get(getConf());
+
+    final int argParserErrorExitCode = 1;
+    ArgumentParser parser = ArgumentParsers
+        .newArgumentParser("hadoop [GenericOptions]... jar solr-mr-*-job.jar " //+ getClass().getName()
+            , false)
+        .defaultHelp(true)
+        .description(
+            "Map Reduce job that creates a Solr index from a set of input files "
+                + "and puts the data into HDFS, in a scalable and fault-tolerant manner.");
+
+    parser.addArgument("--help", "-h")
+      .help("show this help message and exit")
+      .action(new HelpArgumentAction() {
+        @Override
+        public void run(ArgumentParser parser, Argument arg, Map<String, Object> attrs, String flag, Object value) throws ArgumentParserException {
+          parser.printHelp(new PrintWriter(System.out));  
+          System.out.println();
+          ToolRunner.printGenericCommandUsage(System.out);
+          System.out.println(
+            "Examples: \n\n" + 
+            "sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1" +
+            " jar solr-mr-*-job.jar " + //TikaIndexerTool.class.getName() +
+            " --solrhomedir /home/foo/solr" +
+            " --outputdir hdfs:///user/foo/tikaindexer-output" + 
+            " hdfs:///user/foo/tikaindexer-input"  
+            );
+          System.exit(0);
+        }        
+      });
+    
+    parser.addArgument("--inputlist")
+      .action(Arguments.append())
+      .metavar("URI")
+//      .type(new ArgumentTypes.PathArgumentType(fs).verifyExists().verifyCanRead())
+      .type(Path.class)
+      .help("Local URI or HDFS URI of a file containing a list of HDFS URIs to index, one URI per line. " + 
+            "If '-' is specified, URIs are read from the standard input. " + 
+            "Multiple --inputlist arguments can be specified");
+    
+    parser.addArgument("--outputdir")
+      .metavar("HDFS_URI")
+      .type(new ArgumentTypes.PathArgumentType(fs).verifyScheme(fs.getScheme()).verifyCanWriteParent())
+      .required(true)
+      .help("HDFS directory to write Solr indexes to");
+    
+    parser.addArgument("--solrhomedir")
+      .metavar("DIR")
+      .type(new ArgumentTypes.FileArgumentType().verifyIsDirectory().verifyCanRead())
+      .required(true)
+      .setDefault(new File("/home/foo/solr"))
+      .help("Local dir containing Solr conf/ and lib/");
+
+    parser.addArgument("--mappers")
+      .metavar("INTEGER")
+      .type(Integer.class)
+      .choices(new RangeArgumentChoice(-1, Integer.MAX_VALUE))
+      .setDefault(1)
+      .help("Maximum number of MR mappers to use");
+
+    parser.addArgument("--shards")
+      .metavar("INTEGER")
+      .type(Integer.class)
+      .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
+      .setDefault(1)
+      .help("Number of output shards to use");
+
+    parser.addArgument("--fairschedulerpool")
+      .metavar("STRING")
+      .help("Name of MR fair scheduler pool to submit job to");
+
+    parser.addArgument("--verbose", "-v")
+      .action(Arguments.storeTrue())
+      .help("Turn on verbose output");
+
+    parser.addArgument("--norandomize")
+      .action(Arguments.storeTrue())
+      .help("undocumented and subject to removal without notice");
+
+    parser.addArgument("--identitytest")
+      .action(Arguments.storeTrue())
+      .help("undocumented and subject to removal without notice");
+
+    // trailing positional arguments
+    parser.addArgument("inputfiles")
+      .metavar("HDFS_URI")
+      .type(new ArgumentTypes.PathArgumentType(fs).verifyScheme(fs.getScheme()).verifyExists().verifyCanRead())
+      .nargs("*")
+      .setDefault()
+      .help("HDFS URI of file or dir to index");
+
+    Namespace ns = null;
+    try {
+      ns = parser.parseArgs(args);
+    } catch (ArgumentParserException e) {
+      parser.handleError(e);
+      System.exit(argParserErrorExitCode);
     }
     
+    LOG.warn("Command line args: {}", ns);
+    List<Path> inputLists = ns.getList("inputlist");
+    if (inputLists == null) {
+      inputLists = Collections.EMPTY_LIST;
+    }
+    List<Path> inputFiles = ns.getList("inputfiles");
+    if (inputLists.isEmpty() && inputFiles.isEmpty()) {
+      return 0; // nothing to do
+    }
+    Path outputDir = (Path) ns.get("outputdir");
+    int mappers = ns.getInt("mappers");
+    int shards = ns.getInt("shards");
+    File solrHomeDir = (File) ns.get("solrhomedir");
+    String fairSchedulerPool = (String) ns.get("fairschedulerpool");
+    boolean isRandomize = !ns.getBoolean("norandomize");
+    boolean isVerbose = ns.getBoolean("verbose");
+    boolean isIdentityTest = ns.getBoolean("identitytest");
+
     Job job = Job.getInstance(getConf());
     job.setJarByClass(getClass());
     job.setJobName(getClass().getName());
-
-    int shards = 1;
-    int mappers = 1;
-    File solrHomeDir = new File(System.getProperty("user.home") + File.separator + "solr");
-    Path outputDir = new Path("hdfs:///user/" + System.getProperty("user.name") + "/tikaindexertool-output");
-    List<String> inputLists = new ArrayList<String>();
-    List<Path> inputFiles = new ArrayList<Path>();
-    String fairSchedulerPool = null; 
-    boolean isRandomize = true;
-    boolean isVerbose = false;
-    boolean isIdentityTest = false;
-
-    for (int i = 0; i < args.length; i++) {
-      if (args[i].equals("--outputdir")) {
-        outputDir = new Path(args[++i]);
-        checkHdfsPath(outputDir);
-      } else if (args[i].equals("--inputlist")) {
-        inputLists.add(args[++i]);
-      } else if (args[i].equals("--solr")) {
-        solrHomeDir = new File(args[++i]);
-      } else if (args[i].equals("--shards")) {
-        shards = Integer.parseInt(args[++i]);
-      } else if (args[i].equals("--mappers")) {
-        mappers = Integer.parseInt(args[++i]);
-      } else if (args[i].equals("--fairschedulerpool")) {
-        fairSchedulerPool = args[++i];
-      } else if (args[i].equals("--verbose")) {
-        isVerbose = true;
-      } else if (args[i].equals("--norandomize")) { // deliberately undocumented option
-        isRandomize = false;
-      } else if (args[i].equals("--identitytest")) { // deliberately undocumented option
-        isIdentityTest = true;
-      } else {
-        Path path = new Path(args[i]);
-        checkHdfsPath(path);
-        inputFiles.add(path);
-      }
+    
+    if (mappers == -1) { 
+      mappers = new JobClient(job.getConfiguration()).getClusterStatus().getMaxMapTasks(); // MR1
+      //mappers = job.getCluster().getClusterStatus().getMapSlotCapacity(); // Yarn
+      Log.info("Choosing dynamic number of mappers: {}", mappers);
+    }
+    if (mappers <= 0) {
+      throw new IllegalStateException("Illegal number of mappers: " + mappers);
     }
     
-    if (!solrHomeDir.exists()) {
-      throw new IOException("Solr home directory does not exist: " + solrHomeDir);
-    }
-
-    FileSystem fs = FileSystem.get(job.getConfiguration());
     fs.delete(outputDir, true);    
     Path outputResultsDir = new Path(outputDir, RESULTS_DIR);    
     Path outputStep1Dir = new Path(outputDir, "tmp1");    
@@ -159,6 +235,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       numLinesPerSplit = Integer.MAX_VALUE;
     }
     numLinesPerSplit = Math.max(1, numLinesPerSplit);
+//    numLinesPerSplit = Math.min(100000, numLinesPerSplit);
 
     if (isRandomize) { 
       Job randomizerJob = randomizeInputFiles(fullInputList, outputStep2Dir, numLinesPerSplit, fairSchedulerPool);
@@ -241,7 +318,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     return job2;
   }
 
-  private long addInputFiles(List<Path> inputFiles, List<String> inputLists, Path fullInputList, Configuration conf) throws IOException {
+  private long addInputFiles(List<Path> inputFiles, List<Path> inputLists, Path fullInputList, Configuration conf) throws IOException {
     long numFiles = 0;
     FileSystem fs = fullInputList.getFileSystem(conf);
     FSDataOutputStream out = fs.create(fullInputList);
@@ -252,13 +329,16 @@ public class TikaIndexerTool extends Configured implements Tool {
         numFiles += addInputFilesRecursively(inputFile, writer, conf);
       }
 
-      for (String inputList : inputLists) {
+      for (Path inputList : inputLists) {
         InputStream in;
-        if (inputList.equals("-")) {
+        if (inputList.toString().equals("-")) {
           in = System.in;
         } else {
-          Path path = new Path(inputList);
-          in = fs.open(path);
+          if (inputList.isAbsoluteAndSchemeAuthorityNull()) {
+            in = new BufferedInputStream(new FileInputStream(inputList.toString()));
+          } else {
+            in = fs.open(inputList);
+          }
         }
         try {
           BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
@@ -301,11 +381,5 @@ public class TikaIndexerTool extends Configured implements Tool {
     }
     return numFiles;
   }
-  
-  private void checkHdfsPath(Path path) {
-    if (!HdfsConstants.HDFS_URI_SCHEME.equals(path.toUri().getScheme())) {
-      throw new IllegalArgumentException("Not an HDFS path: " + path);
-    }
-  }
-  
+    
 }
