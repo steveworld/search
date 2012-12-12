@@ -86,10 +86,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     System.exit(res);
   }
 
-  @Override
-  public int run(String[] args) throws Exception {
-    FileSystem fs = FileSystem.get(getConf());
-
+  private Namespace parseArgs(String[] args, FileSystem fs) {
     final int argParserErrorExitCode = 1;
     ArgumentParser parser = ArgumentParsers
         .newArgumentParser("hadoop [GenericOptions]... jar solr-mr-*-job.jar " //+ getClass().getName()
@@ -187,6 +184,15 @@ public class TikaIndexerTool extends Configured implements Tool {
     }
     
     LOG.debug("Command line args: {}", ns);
+    return ns;
+  }
+
+  @Override
+  public int run(String[] args) throws Exception {
+    FileSystem fs = FileSystem.get(getConf());
+
+    Namespace ns = parseArgs(args, fs);
+    
     List<Path> inputLists = ns.getList("inputlist");
     if (inputLists == null) {
       inputLists = Collections.EMPTY_LIST;
