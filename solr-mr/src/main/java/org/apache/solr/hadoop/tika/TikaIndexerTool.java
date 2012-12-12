@@ -93,7 +93,7 @@ public class TikaIndexerTool extends Configured implements Tool {
             "Map Reduce job that creates a Solr index from a set of input files "
                 + "and puts the data into HDFS, in a scalable and fault-tolerant manner.");
 
-    AtomicBoolean isHelp = new AtomicBoolean();    
+    AtomicBoolean isHelp = new AtomicBoolean(false);    
     Argument helpArg = parser.addArgument("--help", "-h")
       .help("show this help message and exit")
       .action(new HelpArgumentAction() {
@@ -140,7 +140,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       .type(Integer.class)
       .choices(new RangeArgumentChoice(-1, Integer.MAX_VALUE))
       .setDefault(1)
-      .help("Maximum number of MR mappers to use");
+      .help("Maximum number of MR mapper tasks to use");
 
     Argument shardsArg = parser.addArgument("--shards")
       .metavar("INTEGER")
