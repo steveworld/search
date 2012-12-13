@@ -109,8 +109,8 @@ public class TikaIndexerTool extends Configured implements Tool {
             , false)
         .defaultHelp(true)
         .description(
-            "Map Reduce job that creates a Solr index from a set of input files "
-                + "and puts the data into HDFS, in a scalable and fault-tolerant manner.");
+            "Map Reduce job that creates a Solr index from a list of input files " +
+            "and writes the index into HDFS, in a scalable and fault-tolerant manner.");
   
       Argument helpArg = parser.addArgument("--help", "-h")
         .help("show this help message and exit")
