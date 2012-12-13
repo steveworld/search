@@ -98,14 +98,13 @@ public class TikaIndexerTool extends Configured implements Tool {
       assert opts != null;
       
       ArgumentParser parser = ArgumentParsers
-        .newArgumentParser("hadoop [GenericOptions]... jar solr-mr-*-job.jar "
-            , false)
+        .newArgumentParser("hadoop [GenericOptions]... jar solr-mr-*-job.jar ", false)
         .defaultHelp(true)
         .description(
             "Map Reduce job that creates a set of Solr index shards from a list of input files " +
             "and writes the indexes into HDFS, in a scalable and fault-tolerant manner.");
   
-      Argument helpArg = parser.addArgument("--help", "-h")
+      parser.addArgument("--help", "-h")
         .help("show this help message and exit")
         .action(new HelpArgumentAction() {
           @Override
@@ -257,12 +256,12 @@ public class TikaIndexerTool extends Configured implements Tool {
   }
 
   // visible for testing
-  int run(Options opts) throws Exception {
+  int run(Options options) throws Exception {
     Job job = Job.getInstance(getConf());
     job.setJarByClass(getClass());
     job.setJobName(getClass().getName());
 
-    int mappers = opts.mappers;
+    int mappers = options.mappers;
     if (mappers == -1) { 
       mappers = new JobClient(job.getConfiguration()).getClusterStatus().getMaxMapTasks(); // MR1
       //mappers = job.getCluster().getClusterStatus().getMapSlotCapacity(); // Yarn; FIXME support both MR1 and Yarn simultaneously
@@ -274,14 +273,14 @@ public class TikaIndexerTool extends Configured implements Tool {
     }
     
     FileSystem fs = FileSystem.get(getConf());    
-    fs.delete(opts.outputDir, true);    
-    Path outputResultsDir = new Path(opts.outputDir, RESULTS_DIR);    
-    Path outputStep1Dir = new Path(opts.outputDir, "tmp1");    
-    Path outputStep2Dir = new Path(opts.outputDir, "tmp2");    
+    fs.delete(options.outputDir, true);    
+    Path outputResultsDir = new Path(options.outputDir, RESULTS_DIR);    
+    Path outputStep1Dir = new Path(options.outputDir, "tmp1");    
+    Path outputStep2Dir = new Path(options.outputDir, "tmp2");    
     Path fullInputList = new Path(outputStep1Dir, FULL_INPUT_LIST);
     
     LOG.info("Creating full input list file for solr mappers {}", fullInputList);
-    long numFiles = addInputFiles(opts.inputFiles, opts.inputLists, fullInputList, job.getConfiguration());
+    long numFiles = addInputFiles(options.inputFiles, options.inputLists, fullInputList, job.getConfiguration());
     if (numFiles == 0) {
       LOG.info("No input files found - nothing to process");
       return 0;
@@ -292,9 +291,9 @@ public class TikaIndexerTool extends Configured implements Tool {
     }
     numLinesPerSplit = Math.max(1, numLinesPerSplit);
 
-    if (opts.isRandomize) { 
-      Job randomizerJob = randomizeInputFiles(fullInputList, outputStep2Dir, numLinesPerSplit, opts.fairSchedulerPool);
-      if (!randomizerJob.waitForCompletion(opts.isVerbose)) {
+    if (options.isRandomize) { 
+      Job randomizerJob = randomizeInputFiles(fullInputList, outputStep2Dir, numLinesPerSplit, options.fairSchedulerPool);
+      if (!randomizerJob.waitForCompletion(options.isVerbose)) {
         return -1; // job failed
       }
     } else {
@@ -305,11 +304,11 @@ public class TikaIndexerTool extends Configured implements Tool {
     NLineInputFormat.addInputPath(job, outputStep2Dir);
     NLineInputFormat.setNumLinesPerSplit(job, numLinesPerSplit);    
     FileOutputFormat.setOutputPath(job, outputResultsDir);
-    if (opts.fairSchedulerPool != null) {
-      job.getConfiguration().set("mapred.fairscheduler.pool", opts.fairSchedulerPool);
+    if (options.fairSchedulerPool != null) {
+      job.getConfiguration().set("mapred.fairscheduler.pool", options.fairSchedulerPool);
     }
 
-    if (opts.isIdentityTest) {
+    if (options.isIdentityTest) {
       job.setMapperClass(IdentityMapper.class);
       job.setReducerClass(IdentityReducer.class);
       job.setOutputFormatClass(TextOutputFormat.class);
@@ -321,13 +320,13 @@ public class TikaIndexerTool extends Configured implements Tool {
       job.setMapperClass(TikaMapper.class);
       job.setReducerClass(SolrReducer.class);
       job.setOutputFormatClass(SolrOutputFormat.class);
-      SolrOutputFormat.setupSolrHomeCache(opts.solrHomeDir, job);  
-      job.setNumReduceTasks(opts.shards);  
+      SolrOutputFormat.setupSolrHomeCache(options.solrHomeDir, job);  
+      job.setNumReduceTasks(options.shards);  
       job.setOutputKeyClass(Text.class);
       job.setOutputValueClass(SolrInputDocumentWritable.class);
     }
 
-    return job.waitForCompletion(opts.isVerbose) ? 0 : -1;
+    return job.waitForCompletion(options.isVerbose) ? 0 : -1;
   }
 
   /**
