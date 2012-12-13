@@ -252,8 +252,7 @@ public class TikaIndexerTool extends Configured implements Tool {
   public int run(String[] args) throws Exception {
     FileSystem fs = FileSystem.get(getConf());
     Options opts = new Options();
-    MyArgumentParser parser = new MyArgumentParser();
-    Integer exitCode = parser.parseArgs(args, fs, opts);
+    Integer exitCode = new MyArgumentParser().parseArgs(args, fs, opts);
     if (exitCode != null) {
       return exitCode;
     }
