@@ -416,6 +416,9 @@ public class TikaIndexerTool extends Configured implements Tool {
     }
     for (FileStatus stat : fs.listStatus(path)) {
       LOG.debug("Processing path {}", stat.getPath());
+      if (stat.getPath().getName().startsWith(".")) {
+        continue;
+      }
       if (stat.isDirectory()) {
         numFiles += addInputFilesRecursively(stat.getPath(), writer, conf);
       } else {
