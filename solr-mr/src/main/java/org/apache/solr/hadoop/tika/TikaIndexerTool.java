@@ -354,6 +354,8 @@ public class TikaIndexerTool extends Configured implements Tool {
    * A
    * D
    * B
+   * 
+   * The implementation sorts the list of lines by randomly generated numbers.
    */
   private Job randomizeInputFiles(Path fullInputList, Path outputStep2Dir, int numLinesPerSplit, String fairSchedulerPool) throws IOException {
     LOG.info("Randomizing full input list file for solr mappers {}", fullInputList);
