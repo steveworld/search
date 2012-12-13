@@ -30,7 +30,7 @@ import org.apache.hadoop.util.ToolRunner;
  * <pre>
  * sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1 jar solr-mr-1.0-SNAPSHOT.jar org.apache.hadoop.fs.shell.FindShell -help
  * 
- * sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1 jar solr-mr-1.0-SNAPSHOT.jar org.apache.hadoop.fs.shell.FindShell -find hdfs:///user/whoschek/solrloadtest/iarchive/1percent/WIDE-20110309005125-crawl338 hdfs:///user/whoschek/solrloadtest/iarchive/1percent/WIDE-20110309002853-crawl337
+ * sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1 jar solr-mr-1.0-SNAPSHOT.jar org.apache.hadoop.fs.shell.FindShell -find hdfs:///user/whoschek/solrloadtest/iarchive/1percent/WIDE-20110309005125-crawl338 hdfs:///user/whoschek/solrloadtest/iarchive/1percent/WIDE-20110309002853-crawl337 -name '*.gz' -type f
  * </pre>
  */
 public class FindShell extends FsShell {
