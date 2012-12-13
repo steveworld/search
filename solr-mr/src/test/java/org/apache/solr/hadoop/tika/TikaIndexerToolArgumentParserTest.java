@@ -150,7 +150,7 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
     String[] args = new String[] { "--help" };
     assertEquals(new Integer(0), parser.parseArgs(args, fs));
     String helpText = new String(bout.toByteArray(), "UTF-8");
-    assertTrue(helpText.contains("Map Reduce job that creates a Solr index from a set of input files"));
+    assertTrue(helpText.contains("Map Reduce job that creates a set of Solr index shards"));
     assertEquals(0, berr.toByteArray().length);
   }
   
