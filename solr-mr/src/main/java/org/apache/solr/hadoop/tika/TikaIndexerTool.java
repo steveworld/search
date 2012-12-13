@@ -85,17 +85,6 @@ public class TikaIndexerTool extends Configured implements Tool {
    */
   static final class MyArgumentParser {
     
-    List<Path> inputLists;
-    List<Path> inputFiles;
-    Path outputDir;
-    int mappers;
-    int shards;
-    File solrHomeDir;
-    String fairSchedulerPool;
-    boolean isRandomize;
-    boolean isVerbose;
-    boolean isIdentityTest;
-
     /**
      * Parses the given command line arguments.
      * 
@@ -103,7 +92,11 @@ public class TikaIndexerTool extends Configured implements Tool {
      *         non-null indicates the caller shall exit the program with the
      *         given exit status code.
      */
-    public Integer parseArgs(String[] args, FileSystem fs) {
+    public Integer parseArgs(String[] args, FileSystem fs, Options opts) {
+      assert args != null;
+      assert fs != null;
+      assert opts != null;
+      
       ArgumentParser parser = ArgumentParsers
         .newArgumentParser("hadoop [GenericOptions]... jar solr-mr-*-job.jar "
             , false)
@@ -202,23 +195,23 @@ public class TikaIndexerTool extends Configured implements Tool {
       }
       LOG.debug("Parsed command line args: {}", ns);
       
-      inputLists = ns.getList(inputListArg.getDest());
-      if (inputLists == null) {
-        inputLists = Collections.EMPTY_LIST;
+      opts.inputLists = ns.getList(inputListArg.getDest());
+      if (opts.inputLists == null) {
+        opts.inputLists = Collections.EMPTY_LIST;
       }
-      inputFiles = ns.getList(inputFilesArg.getDest());
-      if (inputLists.isEmpty() && inputFiles.isEmpty()) {
+      opts.inputFiles = ns.getList(inputFilesArg.getDest());
+      if (opts.inputLists.isEmpty() && opts.inputFiles.isEmpty()) {
         LOG.info("No input files specified - nothing to process");
         return 0; // nothing to process
       }
-      outputDir = (Path) ns.get(outputDirArg.getDest());
-      mappers = ns.getInt(mappersArg.getDest());
-      shards = ns.getInt(shardsArg.getDest());
-      solrHomeDir = (File) ns.get(solrHomeDirArg.getDest());
-      fairSchedulerPool = (String) ns.get(fairSchedulerPoolArg.getDest());
-      isRandomize = !ns.getBoolean(noRandomizeArg.getDest());
-      isVerbose = ns.getBoolean(verboseArg.getDest());
-      isIdentityTest = ns.getBoolean(identityTestArg.getDest());
+      opts.outputDir = (Path) ns.get(outputDirArg.getDest());
+      opts.mappers = ns.getInt(mappersArg.getDest());
+      opts.shards = ns.getInt(shardsArg.getDest());
+      opts.solrHomeDir = (File) ns.get(solrHomeDirArg.getDest());
+      opts.fairSchedulerPool = (String) ns.get(fairSchedulerPoolArg.getDest());
+      opts.isRandomize = !ns.getBoolean(noRandomizeArg.getDest());
+      opts.isVerbose = ns.getBoolean(verboseArg.getDest());
+      opts.isIdentityTest = ns.getBoolean(identityTestArg.getDest());
       
       return null;     
     }
@@ -226,6 +219,21 @@ public class TikaIndexerTool extends Configured implements Tool {
     /** Marker trick to prevent processing of any remaining arguments once --help option has been parsed */
     private static final class FoundHelpArgument extends RuntimeException {      
     }
+  }
+  // END OF INNER CLASS  
+
+  
+  static final class Options {    
+    List<Path> inputLists;
+    List<Path> inputFiles;
+    Path outputDir;
+    int mappers;
+    int shards;
+    File solrHomeDir;
+    String fairSchedulerPool;
+    boolean isRandomize;
+    boolean isVerbose;
+    boolean isIdentityTest;
   }
   // END OF INNER CLASS  
 
@@ -239,21 +247,22 @@ public class TikaIndexerTool extends Configured implements Tool {
   @Override
   public int run(String[] args) throws Exception {
     FileSystem fs = FileSystem.get(getConf());
+    Options opts = new Options();
     MyArgumentParser parser = new MyArgumentParser();
-    Integer exitCode = parser.parseArgs(args, fs);
+    Integer exitCode = parser.parseArgs(args, fs, opts);
     if (exitCode != null) {
       return exitCode;
     }
-    return run(parser);
+    return run(opts);
   }
 
   // visible for testing
-  int run(MyArgumentParser parser) throws Exception {
+  int run(Options options) throws Exception {
     Job job = Job.getInstance(getConf());
     job.setJarByClass(getClass());
     job.setJobName(getClass().getName());
 
-    int mappers = parser.mappers;
+    int mappers = options.mappers;
     if (mappers == -1) { 
       mappers = new JobClient(job.getConfiguration()).getClusterStatus().getMaxMapTasks(); // MR1
       //mappers = job.getCluster().getClusterStatus().getMapSlotCapacity(); // Yarn; FIXME support both MR1 and Yarn simultaneously
@@ -265,14 +274,14 @@ public class TikaIndexerTool extends Configured implements Tool {
     }
     
     FileSystem fs = FileSystem.get(getConf());    
-    fs.delete(parser.outputDir, true);    
-    Path outputResultsDir = new Path(parser.outputDir, RESULTS_DIR);    
-    Path outputStep1Dir = new Path(parser.outputDir, "tmp1");    
-    Path outputStep2Dir = new Path(parser.outputDir, "tmp2");    
+    fs.delete(options.outputDir, true);    
+    Path outputResultsDir = new Path(options.outputDir, RESULTS_DIR);    
+    Path outputStep1Dir = new Path(options.outputDir, "tmp1");    
+    Path outputStep2Dir = new Path(options.outputDir, "tmp2");    
     Path fullInputList = new Path(outputStep1Dir, FULL_INPUT_LIST);
     
     LOG.info("Creating full input list file for solr mappers {}", fullInputList);
-    long numFiles = addInputFiles(parser.inputFiles, parser.inputLists, fullInputList, job.getConfiguration());
+    long numFiles = addInputFiles(options.inputFiles, options.inputLists, fullInputList, job.getConfiguration());
     if (numFiles == 0) {
       LOG.info("No input files found - nothing to process");
       return 0;
@@ -283,9 +292,9 @@ public class TikaIndexerTool extends Configured implements Tool {
     }
     numLinesPerSplit = Math.max(1, numLinesPerSplit);
 
-    if (parser.isRandomize) { 
-      Job randomizerJob = randomizeInputFiles(fullInputList, outputStep2Dir, numLinesPerSplit, parser.fairSchedulerPool);
-      if (!randomizerJob.waitForCompletion(parser.isVerbose)) {
+    if (options.isRandomize) { 
+      Job randomizerJob = randomizeInputFiles(fullInputList, outputStep2Dir, numLinesPerSplit, options.fairSchedulerPool);
+      if (!randomizerJob.waitForCompletion(options.isVerbose)) {
         return -1; // job failed
       }
     } else {
@@ -296,11 +305,11 @@ public class TikaIndexerTool extends Configured implements Tool {
     NLineInputFormat.addInputPath(job, outputStep2Dir);
     NLineInputFormat.setNumLinesPerSplit(job, numLinesPerSplit);    
     FileOutputFormat.setOutputPath(job, outputResultsDir);
-    if (parser.fairSchedulerPool != null) {
-      job.getConfiguration().set("mapred.fairscheduler.pool", parser.fairSchedulerPool);
+    if (options.fairSchedulerPool != null) {
+      job.getConfiguration().set("mapred.fairscheduler.pool", options.fairSchedulerPool);
     }
 
-    if (parser.isIdentityTest) {
+    if (options.isIdentityTest) {
       job.setMapperClass(IdentityMapper.class);
       job.setReducerClass(IdentityReducer.class);
       job.setOutputFormatClass(TextOutputFormat.class);
@@ -312,13 +321,13 @@ public class TikaIndexerTool extends Configured implements Tool {
       job.setMapperClass(TikaMapper.class);
       job.setReducerClass(SolrReducer.class);
       job.setOutputFormatClass(SolrOutputFormat.class);
-      SolrOutputFormat.setupSolrHomeCache(parser.solrHomeDir, job);  
-      job.setNumReduceTasks(parser.shards);  
+      SolrOutputFormat.setupSolrHomeCache(options.solrHomeDir, job);  
+      job.setNumReduceTasks(options.shards);  
       job.setOutputKeyClass(Text.class);
       job.setOutputValueClass(SolrInputDocumentWritable.class);
     }
 
-    return job.waitForCompletion(parser.isVerbose) ? 0 : -1;
+    return job.waitForCompletion(options.isVerbose) ? 0 : -1;
   }
 
   /**

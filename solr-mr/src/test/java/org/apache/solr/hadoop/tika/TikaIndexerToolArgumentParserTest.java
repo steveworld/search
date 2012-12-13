@@ -36,6 +36,7 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
 
   private FileSystem fs; 
   private TikaIndexerTool.MyArgumentParser parser;
+  private TikaIndexerTool.Options opts;
   private PrintStream oldSystemOut;
   private PrintStream oldSystemErr;
   private ByteArrayOutputStream bout;
@@ -45,6 +46,7 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
   public void setUp() throws IOException {
     fs = FileSystem.get(new Configuration());
     parser = new TikaIndexerTool.MyArgumentParser();
+    opts = new TikaIndexerTool.Options();
     oldSystemOut = System.out;
     bout = new ByteArrayOutputStream();
     System.setOut(new PrintStream(bout, true, "UTF-8"));
@@ -70,17 +72,17 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
         "file:///home",
         "file:///dev",
         };
-    assertNull(parser.parseArgs(args, fs));
-    assertEquals(Collections.singletonList(new Path("file:///tmp")), parser.inputLists);
-    assertEquals(new Path("file:/tmp/foo"), parser.outputDir);
-    assertEquals(new File("/"), parser.solrHomeDir);
-    assertEquals(10, parser.mappers);
-    assertEquals(1, parser.shards);
-    assertEquals(null, parser.fairSchedulerPool);
-    assertTrue(parser.isVerbose);
-    assertTrue(parser.isRandomize);
-    assertFalse(parser.isIdentityTest);
-    assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), parser.inputFiles);
+    assertNull(parser.parseArgs(args, fs, opts));
+    assertEquals(Collections.singletonList(new Path("file:///tmp")), opts.inputLists);
+    assertEquals(new Path("file:/tmp/foo"), opts.outputDir);
+    assertEquals(new File("/"), opts.solrHomeDir);
+    assertEquals(10, opts.mappers);
+    assertEquals(1, opts.shards);
+    assertEquals(null, opts.fairSchedulerPool);
+    assertTrue(opts.isVerbose);
+    assertTrue(opts.isRandomize);
+    assertFalse(opts.isIdentityTest);
+    assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), opts.inputFiles);
     assertEmptySystemErrAndEmptySystemOut();
   }
 
@@ -94,11 +96,11 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
         "file:///home",
         "file:///dev",
         };
-    assertNull(parser.parseArgs(args, fs));
-    assertEquals(Arrays.asList(new Path("file:///tmp"), new Path("file:///")), parser.inputLists);
-    assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), parser.inputFiles);
-    assertEquals(new Path("file:/tmp/foo"), parser.outputDir);
-    assertEquals(new File("/"), parser.solrHomeDir);
+    assertNull(parser.parseArgs(args, fs, opts));
+    assertEquals(Arrays.asList(new Path("file:///tmp"), new Path("file:///")), opts.inputLists);
+    assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), opts.inputFiles);
+    assertEquals(new Path("file:/tmp/foo"), opts.outputDir);
+    assertEquals(new File("/"), opts.solrHomeDir);
     assertEmptySystemErrAndEmptySystemOut();
   }
 
@@ -113,17 +115,17 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
         "file:///home",
         "file:///dev",
         };
-    assertNull(parser.parseArgs(args, fs));
-    assertEquals(Collections.singletonList(new Path("file:///tmp")), parser.inputLists);
-    assertEquals(new Path("file:/tmp/foo"), parser.outputDir);
-    assertEquals(new File("/"), parser.solrHomeDir);
-    assertEquals(10, parser.mappers);
-    assertEquals(1, parser.shards);
-    assertEquals(null, parser.fairSchedulerPool);
-    assertTrue(parser.isVerbose);
-    assertTrue(parser.isRandomize);
-    assertFalse(parser.isIdentityTest);
-    assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), parser.inputFiles);
+    assertNull(parser.parseArgs(args, fs, opts));
+    assertEquals(Collections.singletonList(new Path("file:///tmp")), opts.inputLists);
+    assertEquals(new Path("file:/tmp/foo"), opts.outputDir);
+    assertEquals(new File("/"), opts.solrHomeDir);
+    assertEquals(10, opts.mappers);
+    assertEquals(1, opts.shards);
+    assertEquals(null, opts.fairSchedulerPool);
+    assertTrue(opts.isVerbose);
+    assertTrue(opts.isRandomize);
+    assertFalse(opts.isIdentityTest);
+    assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), opts.inputFiles);
     assertEmptySystemErrAndEmptySystemOut();
   }
 
@@ -137,18 +139,18 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
         "file:///home",
         "file:///dev",
         };
-    assertNull(parser.parseArgs(args, fs));
-    assertEquals(Arrays.asList(new Path("file:///tmp"), new Path("file:///")), parser.inputLists);
-    assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), parser.inputFiles);
-    assertEquals(new Path("file:/tmp/foo"), parser.outputDir);
-    assertEquals(new File("/"), parser.solrHomeDir);
+    assertNull(parser.parseArgs(args, fs, opts));
+    assertEquals(Arrays.asList(new Path("file:///tmp"), new Path("file:///")), opts.inputLists);
+    assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), opts.inputFiles);
+    assertEquals(new Path("file:/tmp/foo"), opts.outputDir);
+    assertEquals(new File("/"), opts.solrHomeDir);
     assertEmptySystemErrAndEmptySystemOut();
   }
 
   @Test
   public void testArgsParserHelp() throws UnsupportedEncodingException  {
     String[] args = new String[] { "--help" };
-    assertEquals(new Integer(0), parser.parseArgs(args, fs));
+    assertEquals(new Integer(0), parser.parseArgs(args, fs, opts));
     String helpText = new String(bout.toByteArray(), "UTF-8");
     assertTrue(helpText.contains("Map Reduce job that creates a set of Solr index shards"));
     assertEquals(0, berr.toByteArray().length);
@@ -161,7 +163,7 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
         "--outputdir", "file:/tmp/foo",
         "--solrhomedir", "/", 
         };
-    assertNull(parser.parseArgs(args, fs));
+    assertNull(parser.parseArgs(args, fs, opts));
     assertEmptySystemErrAndEmptySystemOut();
   }
 
@@ -212,7 +214,7 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
   }
   
   private void assertArgumentParserException(String[] args) {
-    assertEquals(new Integer(1), parser.parseArgs(args, fs));
+    assertEquals(new Integer(1), parser.parseArgs(args, fs, opts));
     assertEquals(0, bout.toByteArray().length);
     String usageText;
     try {
