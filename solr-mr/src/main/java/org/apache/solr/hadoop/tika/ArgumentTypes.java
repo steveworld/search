@@ -366,12 +366,14 @@ public class ArgumentTypes {
     }    
     
     protected void verifyCanRead(ArgumentParser parser, Path file) throws ArgumentParserException, IOException {
+      verifyExists(parser, file);
       if (!fs.getFileStatus(file).getPermission().getUserAction().implies(FsAction.READ)) {
         throw new ArgumentParserException("Insufficient permissions to read file: " + file, parser);
       }
     }    
     
     protected void verifyCanWrite(ArgumentParser parser, Path file) throws ArgumentParserException, IOException {
+      verifyExists(parser, file);
       if (!fs.getFileStatus(file).getPermission().getUserAction().implies(FsAction.WRITE)) {
         throw new ArgumentParserException("Insufficient permissions to write file: " + file, parser);
       }
@@ -379,7 +381,7 @@ public class ArgumentTypes {
     
     protected void verifyCanWriteParent(ArgumentParser parser, Path file) throws ArgumentParserException, IOException {
       Path parent = file.getParent();
-      if (parent == null || !fs.getFileStatus(parent).getPermission().getUserAction().implies(FsAction.WRITE)) {
+      if (parent == null || !fs.exists(parent) || !fs.getFileStatus(parent).getPermission().getUserAction().implies(FsAction.WRITE)) {
         throw new ArgumentParserException("Cannot write parent of file: " + file, parser);
       }
     }    
