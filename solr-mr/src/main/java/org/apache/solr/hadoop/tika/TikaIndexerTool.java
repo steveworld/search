@@ -105,7 +105,7 @@ public class TikaIndexerTool extends Configured implements Tool {
      */
     public Integer parseArgs(String[] args, FileSystem fs) {
       ArgumentParser parser = ArgumentParsers
-        .newArgumentParser("hadoop [GenericOptions]... jar solr-mr-*-job.jar " //+ getClass().getName()
+        .newArgumentParser("hadoop [GenericOptions]... jar solr-mr-*-job.jar "
             , false)
         .defaultHelp(true)
         .description(
@@ -123,7 +123,7 @@ public class TikaIndexerTool extends Configured implements Tool {
             System.out.println(
               "Examples: \n\n" + 
               "sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1" +
-              " jar solr-mr-*-job.jar " + //TikaIndexerTool.class.getName() +
+              " jar solr-mr-*-job.jar " +
               " --solrhomedir /home/foo/solr" +
               " --outputdir hdfs:///user/foo/tikaindexer-output" + 
               " hdfs:///user/foo/tikaindexer-input"  
@@ -256,7 +256,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     int mappers = parser.mappers;
     if (mappers == -1) { 
       mappers = new JobClient(job.getConfiguration()).getClusterStatus().getMaxMapTasks(); // MR1
-      //mappers = job.getCluster().getClusterStatus().getMapSlotCapacity(); // Yarn
+      //mappers = job.getCluster().getClusterStatus().getMapSlotCapacity(); // Yarn; FIXME support both MR1 and Yarn simultaneously
       mappers = 2 * mappers; // accomodate stragglers
       LOG.info("Choosing dynamic number of mappers: {}", mappers);
     }
@@ -282,7 +282,6 @@ public class TikaIndexerTool extends Configured implements Tool {
       numLinesPerSplit = Integer.MAX_VALUE;
     }
     numLinesPerSplit = Math.max(1, numLinesPerSplit);
-//    numLinesPerSplit = Math.min(100000, numLinesPerSplit);
 
     if (parser.isRandomize) { 
       Job randomizerJob = randomizeInputFiles(fullInputList, outputStep2Dir, numLinesPerSplit, parser.fairSchedulerPool);
