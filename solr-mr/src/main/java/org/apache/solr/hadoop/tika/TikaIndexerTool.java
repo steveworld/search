@@ -201,10 +201,6 @@ public class TikaIndexerTool extends Configured implements Tool {
         opts.inputLists = Collections.EMPTY_LIST;
       }
       opts.inputFiles = ns.getList(inputFilesArg.getDest());
-      if (opts.inputLists.isEmpty() && opts.inputFiles.isEmpty()) {
-        LOG.info("No input files specified - nothing to process");
-        return 0; // nothing to process
-      }
       opts.outputDir = (Path) ns.get(outputDirArg.getDest());
       opts.mappers = ns.getInt(mappersArg.getDest());
       opts.shards = ns.getInt(shardsArg.getDest());
@@ -214,6 +210,10 @@ public class TikaIndexerTool extends Configured implements Tool {
       opts.isVerbose = ns.getBoolean(verboseArg.getDest());
       opts.isIdentityTest = ns.getBoolean(identityTestArg.getDest());
       
+      if (opts.inputLists.isEmpty() && opts.inputFiles.isEmpty()) {
+        LOG.info("No input files specified - nothing to process");
+        return 0; // nothing to process
+      }
       return null;     
     }
     
