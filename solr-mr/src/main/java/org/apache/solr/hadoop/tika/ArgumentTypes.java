@@ -387,6 +387,7 @@ public class ArgumentTypes {
     }    
     
     protected void verifyCanExecute(ArgumentParser parser, Path file) throws ArgumentParserException, IOException {
+      verifyExists(parser, file);
       if (!fs.getFileStatus(file).getPermission().getUserAction().implies(FsAction.EXECUTE)) {
         throw new ArgumentParserException("Insufficient permissions to execute file: " + file, parser);
       }
