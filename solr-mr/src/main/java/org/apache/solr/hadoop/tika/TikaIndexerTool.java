@@ -109,8 +109,8 @@ public class TikaIndexerTool extends Configured implements Tool {
             , false)
         .defaultHelp(true)
         .description(
-            "Map Reduce job that creates a Solr index from a list of input files " +
-            "and writes the index into HDFS, in a scalable and fault-tolerant manner.");
+            "Map Reduce job that creates a set of Solr index shards from a list of input files " +
+            "and writes the indexes into HDFS, in a scalable and fault-tolerant manner.");
   
       Argument helpArg = parser.addArgument("--help", "-h")
         .help("show this help message and exit")
@@ -244,7 +244,11 @@ public class TikaIndexerTool extends Configured implements Tool {
     if (exitCode != null) {
       return exitCode;
     }
-    
+    return run(parser);
+  }
+
+  // visible for testing
+  int run(MyArgumentParser parser) throws Exception {
     Job job = Job.getInstance(getConf());
     job.setJarByClass(getClass());
     job.setJobName(getClass().getName());
@@ -260,6 +264,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       throw new IllegalStateException("Illegal number of mappers: " + mappers);
     }
     
+    FileSystem fs = FileSystem.get(getConf());    
     fs.delete(parser.outputDir, true);    
     Path outputResultsDir = new Path(parser.outputDir, RESULTS_DIR);    
     Path outputStep1Dir = new Path(parser.outputDir, "tmp1");    
