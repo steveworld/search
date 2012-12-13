@@ -208,7 +208,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       }
       inputFiles = ns.getList(inputFilesArg.getDest());
       if (inputLists.isEmpty() && inputFiles.isEmpty()) {
-        LOG.info("No files to process");
+        LOG.info("No input files specified - nothing to process");
         return 0; // nothing to process
       }
       outputDir = (Path) ns.get(outputDirArg.getDest());
@@ -269,7 +269,8 @@ public class TikaIndexerTool extends Configured implements Tool {
     LOG.info("Creating full input list file for solr mappers {}", fullInputList);
     long numFiles = addInputFiles(parser.inputFiles, parser.inputLists, fullInputList, job.getConfiguration());
     if (numFiles == 0) {
-      throw new IOException("No input files found");
+      LOG.info("No input files found - nothing to process");
+      return 0;
     }
     int numLinesPerSplit = (int) (numFiles / mappers);
     if (numLinesPerSplit < 0) { // numeric overflow from downcasting long to int?
