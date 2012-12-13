@@ -95,7 +95,8 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     String uri = value.toString();
     Path path = new Path(uri);
     if (!fs.exists(path)) {
-      return; // ignore files that somehow have been deleted since the job was submitted
+      LOG.info("Ignoring file that somehow has been deleted since the job was submitted: {}", path);
+      return;
     }
     FSDataInputStream in = fs.open(path);
     try {
