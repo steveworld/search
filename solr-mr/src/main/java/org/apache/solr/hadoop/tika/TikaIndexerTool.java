@@ -430,7 +430,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     for (FileStatus stat : fs.listStatus(path)) {
       LOG.debug("Processing path {}", stat.getPath());
       if (stat.getPath().getName().startsWith(".")) {
-        continue;
+        continue; // ignore "hidden" files and dirs
       }
       if (stat.isDirectory()) {
         numFiles += addInputFilesRecursively(stat.getPath(), writer, conf);
