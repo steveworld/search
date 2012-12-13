@@ -208,7 +208,7 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
     } catch (UnsupportedEncodingException e) {
       throw new RuntimeException("unreachable");
     }
-    assertTrue(usageText.contains("usage: "));
+    assertTrue(usageText.startsWith("usage: hadoop "));
   }
   
 }
