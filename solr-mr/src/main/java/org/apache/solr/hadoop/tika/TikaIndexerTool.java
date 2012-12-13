@@ -237,11 +237,14 @@ public class TikaIndexerTool extends Configured implements Tool {
   // END OF INNER CLASS  
 
   
+  /** API for command line clients */
   public static void main(String[] args) throws Exception  {
     Configuration conf = new Configuration();
     int res = ToolRunner.run(conf, new TikaIndexerTool(), args);
     System.exit(res);
   }
+
+  public TikaIndexerTool() {}
 
   @Override
   public int run(String[] args) throws Exception {
@@ -254,8 +257,8 @@ public class TikaIndexerTool extends Configured implements Tool {
     }
     return run(opts);
   }
-
-  // visible for testing
+  
+  /** API for Java clients; visible for testing; may become a public API eventually */
   int run(Options options) throws Exception {
     Job job = Job.getInstance(getConf());
     job.setJarByClass(getClass());
