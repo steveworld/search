@@ -16,27 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.hadoop.fs.shell;
+package org.apache.solr.hadoop.tika;
 
 import org.apache.hadoop.fs.FsShell;
 import org.apache.hadoop.fs.shell.CommandFactory;
+import org.apache.hadoop.fs.shell.Find;
 import org.apache.hadoop.util.ToolRunner;
 
 /**
- * HDFS version of Linux 'find' command. Borrowed from
+ * HDFS version of Linux 'find' command line tool. Borrowed from
  * https://issues.apache.org/jira/browse/HADOOP-8989
  *
  * Example usage:
  * <pre>
- * sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1 jar solr-mr-1.0-SNAPSHOT.jar org.apache.hadoop.fs.shell.FindShell -help
+ * sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1 jar solr-mr-1.0-SNAPSHOT.jar org.apache.solr.hadoop.tika.HdfsFindShell -help
  * 
- * sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1 jar solr-mr-1.0-SNAPSHOT.jar org.apache.hadoop.fs.shell.FindShell -find hdfs:///user/whoschek/solrloadtest/iarchive/1percent/WIDE-20110309005125-crawl338 hdfs:///user/whoschek/solrloadtest/iarchive/1percent/WIDE-20110309002853-crawl337 -name '*.gz' -type f
+ * sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1 jar solr-mr-1.0-SNAPSHOT.jar org.apache.solr.hadoop.tika.HdfsFindShell -find hdfs:///user/whoschek/solrloadtest/iarchive/1percent/WIDE-20110309005125-crawl338 hdfs:///user/whoschek/solrloadtest/iarchive/1percent/WIDE-20110309002853-crawl337 -name '*.gz' -type f
  * </pre>
  */
-public class FindShell extends FsShell {
+public class HdfsFindShell extends FsShell {
   
   public static void main(String argv[]) throws Exception {
-    FsShell shell = new FindShell();
+    FsShell shell = new HdfsFindShell();
     int res;
     try {
       res = ToolRunner.run(shell, argv);
