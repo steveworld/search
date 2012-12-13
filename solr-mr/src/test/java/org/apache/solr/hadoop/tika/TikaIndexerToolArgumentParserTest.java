@@ -27,19 +27,36 @@ import java.util.Collections;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TikaIndexerToolTest extends Assert {
+public class TikaIndexerToolArgumentParserTest extends Assert {
 
   private FileSystem fs; 
   private TikaIndexerTool.MyArgumentParser parser;
+  private PrintStream oldSystemOut;
+  private PrintStream oldSystemErr;
+  private ByteArrayOutputStream bout;
+  private ByteArrayOutputStream berr;
   
   @Before
   public void setUp() throws IOException {
     fs = FileSystem.get(new Configuration());
     parser = new TikaIndexerTool.MyArgumentParser();
+    oldSystemOut = System.out;
+    bout = new ByteArrayOutputStream();
+    System.setOut(new PrintStream(bout, true, "UTF-8"));
+    oldSystemErr = System.err;
+    berr = new ByteArrayOutputStream();
+    System.setErr(new PrintStream(berr, true, "UTF-8"));
+  }
+
+  @After
+  public void tearDown() {
+    System.setOut(oldSystemOut);
+    System.setErr(oldSystemErr);
   }
 
   @Test
@@ -126,17 +143,72 @@ public class TikaIndexerToolTest extends Assert {
 
   @Test
   public void testArgsParserHelp() throws UnsupportedEncodingException  {
-    PrintStream oldSystemOut = System.out;
+    String[] args = new String[] { "--help" };
+    assertEquals(new Integer(0), parser.parseArgs(args, fs));
+    String helpText = new String(bout.toByteArray(), "UTF-8");
+    assertTrue(helpText.contains("Map Reduce job that creates a Solr index from a set of input files"));
+  }
+  
+  @Test
+  public void testArgsParserOk() {
+    String[] args = new String[] { 
+        "--inputlist", "file:///tmp",
+        "--outputdir", "file:/tmp/foo",
+        "--solrhomedir", "/", 
+        };
+    assertNull(parser.parseArgs(args, fs));
+  }
+  
+  @Test
+  public void testArgsParserUnknownArgName() {
+    String[] args = new String[] { 
+        "--xxxxxxxxinputlist", "file:///tmp",
+        "--outputdir", "file:/tmp/foo",
+        "--solrhomedir", "/", 
+        };
+    assertArgumentParserException(args);
+  }
+
+  @Test
+  public void testArgsParserFileNotFound1() {
+    String[] args = new String[] { 
+        "--inputlist", "file:///tmp",
+        "--outputdir", "file:/fileNotFound/foo",
+        "--solrhomedir", "/", 
+        };
+    assertArgumentParserException(args);
+  }
+  
+  @Test
+  public void testArgsParserFileNotFound2() {
+    String[] args = new String[] { 
+        "--inputlist", "file:///tmp",
+        "--outputdir", "file:/tmp/foo",
+        "--solrhomedir", "/fileNotFound", 
+        };
+    assertArgumentParserException(args);
+  }
+  
+  @Test
+  public void testArgsParserIntOutOfRange() {
+    String[] args = new String[] { 
+        "--inputlist", "file:///tmp",
+        "--outputdir", "file:/tmp/foo",
+        "--solrhomedir", "/", 
+        "--mappers", "-20"
+        };
+    assertArgumentParserException(args);
+  }
+  
+  private void assertArgumentParserException(String[] args) {
+    assertEquals(new Integer(1), parser.parseArgs(args, fs));
+    String usageText;
     try {
-      ByteArrayOutputStream bout = new ByteArrayOutputStream();
-      System.setOut(new PrintStream(bout, true, "UTF-8"));
-      String[] args = new String[] { "--help" };
-      assertEquals(new Integer(0), parser.parseArgs(args, fs));
-      String helpText = new String(bout.toByteArray(), "UTF-8");
-      assertTrue(helpText.contains("Map Reduce job that creates a Solr index from a set of input files"));
-    } finally {
-      System.setOut(oldSystemOut);
+      usageText = new String(berr.toByteArray(), "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException("unreachable");
     }
+    assertTrue(usageText.contains("usage: "));
   }
   
 }
