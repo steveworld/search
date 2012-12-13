@@ -122,7 +122,7 @@ public class TikaIndexerTool extends Configured implements Tool {
               " --outputdir hdfs:///user/foo/tikaindexer-output" + 
               " hdfs:///user/foo/tikaindexer-input"  
               );
-            throw new FoundHelpArgument();
+            throw new FoundHelpArgument(); // Trick to prevent processing of any remaining arguments
           }        
         });
       
