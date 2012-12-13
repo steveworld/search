@@ -67,8 +67,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-/** 
- * Command line tool that runs an MR job that creates a Solr index from a set of input files.
+/**
+ * Public API for a Map Reduce job that creates a set of Solr index shards from
+ * a list of input files and writes the indexes into HDFS, in a scalable and
+ * fault-tolerant manner.
  */
 public class TikaIndexerTool extends Configured implements Tool {
   
