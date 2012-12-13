@@ -81,6 +81,7 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
     assertTrue(parser.isRandomize);
     assertFalse(parser.isIdentityTest);
     assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), parser.inputFiles);
+    assertEmptySystemErrAndEmptySystemOut();
   }
 
   @Test
@@ -98,6 +99,7 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
     assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), parser.inputFiles);
     assertEquals(new Path("file:/tmp/foo"), parser.outputDir);
     assertEquals(new File("/"), parser.solrHomeDir);
+    assertEmptySystemErrAndEmptySystemOut();
   }
 
   @Test
@@ -122,6 +124,7 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
     assertTrue(parser.isRandomize);
     assertFalse(parser.isIdentityTest);
     assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), parser.inputFiles);
+    assertEmptySystemErrAndEmptySystemOut();
   }
 
   @Test
@@ -139,6 +142,7 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
     assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), parser.inputFiles);
     assertEquals(new Path("file:/tmp/foo"), parser.outputDir);
     assertEquals(new File("/"), parser.solrHomeDir);
+    assertEmptySystemErrAndEmptySystemOut();
   }
 
   @Test
@@ -147,6 +151,7 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
     assertEquals(new Integer(0), parser.parseArgs(args, fs));
     String helpText = new String(bout.toByteArray(), "UTF-8");
     assertTrue(helpText.contains("Map Reduce job that creates a Solr index from a set of input files"));
+    assertEquals(0, berr.toByteArray().length);
   }
   
   @Test
@@ -157,8 +162,9 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
         "--solrhomedir", "/", 
         };
     assertNull(parser.parseArgs(args, fs));
+    assertEmptySystemErrAndEmptySystemOut();
   }
-  
+
   @Test
   public void testArgsParserUnknownArgName() {
     String[] args = new String[] { 
@@ -200,8 +206,14 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
     assertArgumentParserException(args);
   }
   
+  private void assertEmptySystemErrAndEmptySystemOut() {
+    assertEquals(0, bout.toByteArray().length);
+    assertEquals(0, berr.toByteArray().length);
+  }
+  
   private void assertArgumentParserException(String[] args) {
     assertEquals(new Integer(1), parser.parseArgs(args, fs));
+    assertEquals(0, bout.toByteArray().length);
     String usageText;
     try {
       usageText = new String(berr.toByteArray(), "UTF-8");
