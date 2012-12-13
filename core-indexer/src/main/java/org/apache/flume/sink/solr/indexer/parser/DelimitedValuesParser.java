@@ -20,9 +20,9 @@ package org.apache.flume.sink.solr.indexer.parser;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -168,7 +168,7 @@ public class DelimitedValuesParser extends AbstractParser {
       metadata.set(Metadata.CONTENT_TYPE, supportedMediaTypes.iterator().next().toString());
       XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
       CSVReader<String[]> csvReader = createCSVReader(reader, metadata, context);
-      Map<String, String> record = new LinkedHashMap();
+      List<Map.Entry<String, String>> record = new ArrayList();
       String[] colNames = columnNames;
       String[] colValues;
       long recNum = 0;
@@ -191,8 +191,8 @@ public class DelimitedValuesParser extends AbstractParser {
         }
         record.clear();
         for (int i = 0; i < colValues.length; i++) {
-          String columnName = i < colNames.length ? colNames[i] : "col" + i;
-          record.put(columnName, normalize(trim(colValues[i])));
+          String columnName = i < colNames.length ? colNames[i] : "col" + i; // TODO: optimize malloc
+          record.add(new Entry(columnName, normalize(trim(colValues[i]))));
         }
         try {
           process(record, xhtml, metadata, context);
@@ -229,7 +229,7 @@ public class DelimitedValuesParser extends AbstractParser {
   }
 
   /** Processes the given record */
-  protected void process(Map<String, String> record, XHTMLContentHandler handler, Metadata metadata,
+  protected void process(Iterable<Map.Entry<String, String>> record, XHTMLContentHandler handler, Metadata metadata,
       ParseContext context) throws IOException, SAXException, SolrServerException {
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("record #{}: {}", getParseInfo(context).getRecordNumber(), record);
@@ -240,13 +240,13 @@ public class DelimitedValuesParser extends AbstractParser {
   }
 
   /** Extracts zero or more Solr documents from the given record */
-  protected List<SolrInputDocument> extract(Map<String, String> record, XHTMLContentHandler handler, Metadata metadata,
+  protected List<SolrInputDocument> extract(Iterable<Map.Entry<String, String>> record, XHTMLContentHandler handler, Metadata metadata,
       ParseContext context) throws SAXException {
     SolrContentHandler solrHandler = getParseInfo(context).getSolrContentHandler();
     handler.startDocument();
     solrHandler.startDocument(); // this is necessary because handler.startDocument() does not delegate all the way down to solrHandler
     handler.startElement("p");
-    for (Map.Entry<String, String> field : record.entrySet()) {
+    for (Map.Entry<String, String> field : record) {
       handler.element(field.getKey(), field.getValue());
     }
     handler.endElement("p");
@@ -268,6 +268,37 @@ public class DelimitedValuesParser extends AbstractParser {
   protected void load(List<SolrInputDocument> docs, Metadata metadata, ParseContext context) throws IOException,
       SolrServerException {
     getParseInfo(context).getIndexer().load(docs);
+  }
+
+  
+  ///////////////////////////////////////////////////////////////////////////////
+  // Nested classes:
+  ///////////////////////////////////////////////////////////////////////////////
+  private static final class Entry<K,V> implements Map.Entry<K,V> {
+    
+    private final K key;
+    private final V value;
+
+    /**
+     * Creates new entry.
+     */
+    public Entry(K key, V value) {
+        this.value = value;
+        this.key = key;
+    }
+
+    public final K getKey() {
+        return key;
+    }
+
+    public final V getValue() {
+        return value;
+    }
+
+    @Override
+    public V setValue(V value) {
+      throw new UnsupportedOperationException();
+    }
   }
 
 }
