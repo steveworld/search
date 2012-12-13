@@ -30,7 +30,6 @@ import java.io.Writer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
@@ -82,8 +81,7 @@ public class TikaIndexerTool extends Configured implements Tool {
 
   
   /**
-   * See http://argparse4j.sourceforge.net and for details see
-   * http://argparse4j.sourceforge.net/usage.html and
+   * See http://argparse4j.sourceforge.net and for details see http://argparse4j.sourceforge.net/usage.html
    */
   static final class MyArgumentParser {
     
@@ -101,9 +99,9 @@ public class TikaIndexerTool extends Configured implements Tool {
     /**
      * Parses the given command line arguments.
      * 
-     * @return exitCode null indicates the called shall proceed with processing,
-     *         non-null indicates the caller should exit the program with the
-     *         given status Code.
+     * @return exitCode null indicates the caller shall proceed with processing,
+     *         non-null indicates the caller shall exit the program with the
+     *         given exit status code.
      */
     public Integer parseArgs(String[] args, FileSystem fs) {
       ArgumentParser parser = ArgumentParsers
@@ -114,8 +112,6 @@ public class TikaIndexerTool extends Configured implements Tool {
             "Map Reduce job that creates a Solr index from a set of input files "
                 + "and puts the data into HDFS, in a scalable and fault-tolerant manner.");
   
-      final AtomicBoolean isHelp = new AtomicBoolean(false);  
-      
       Argument helpArg = parser.addArgument("--help", "-h")
         .help("show this help message and exit")
         .action(new HelpArgumentAction() {
@@ -132,7 +128,7 @@ public class TikaIndexerTool extends Configured implements Tool {
               " --outputdir hdfs:///user/foo/tikaindexer-output" + 
               " hdfs:///user/foo/tikaindexer-input"  
               );
-            isHelp.set(true);
+            throw new FoundHelpArgument();
           }        
         });
       
@@ -198,14 +194,12 @@ public class TikaIndexerTool extends Configured implements Tool {
       Namespace ns;
       try {
         ns = parser.parseArgs(args);
+      } catch (FoundHelpArgument e) {
+        return 0;
       } catch (ArgumentParserException e) {
         parser.handleError(e);
         return 1;
       }
-      
-      if (isHelp.get()) {
-        return 0;
-      }      
       LOG.debug("Parsed command line args: {}", ns);
       
       inputLists = ns.getList(inputListArg.getDest());
@@ -214,6 +208,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       }
       inputFiles = ns.getList(inputFilesArg.getDest());
       if (inputLists.isEmpty() && inputFiles.isEmpty()) {
+        LOG.info("No files to process");
         return 0; // nothing to process
       }
       outputDir = (Path) ns.get(outputDirArg.getDest());
@@ -226,7 +221,11 @@ public class TikaIndexerTool extends Configured implements Tool {
       isIdentityTest = ns.getBoolean(identityTestArg.getDest());
       
       return null;     
-    }    
+    }
+    
+    /** Marker trick to prevent processing of any remaining arguments once --help option has been parsed */
+    private static final class FoundHelpArgument extends RuntimeException {      
+    }
   }
   // END OF INNER CLASS  
 
@@ -243,7 +242,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     MyArgumentParser parser = new MyArgumentParser();
     Integer exitCode = parser.parseArgs(args, fs);
     if (exitCode != null) {
-      return exitCode; // ArgumentParserException or --help
+      return exitCode;
     }
     
     Job job = Job.getInstance(getConf());
