@@ -41,7 +41,7 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>jcl-over-slf4j</artifactId>
-      <version>1.7.2</version> <!-- flume provides 1.7.2 and solr depends on 1.6.4 -->
+      <version>${slf4j.version}</version> <!-- flume provides 1.7.2 and solr depends on 1.6.4 -->
       <scope>provided</scope>
     </dependency>
 
