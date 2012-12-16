@@ -386,7 +386,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       Writer writer = new OutputStreamWriter(out, "UTF-8");
       
       for (Path inputFile : inputFiles) {
-        numFiles += addInputFilesRecursively(inputFile, writer, conf);
+        numFiles += addInputFilesRecursively(inputFile, writer, inputFile.getFileSystem(conf));
       }
 
       for (Path inputList : inputLists) {
@@ -422,9 +422,8 @@ public class TikaIndexerTool extends Configured implements Tool {
    * Add the specified file to the input set, if path is a directory then
    * add the files contained therein.
    */
-  private long addInputFilesRecursively(Path path, Writer writer, Configuration conf) throws IOException {
+  private long addInputFilesRecursively(Path path, Writer writer, FileSystem fs) throws IOException {
     long numFiles = 0;
-    FileSystem fs = path.getFileSystem(conf);
     if (!fs.exists(path)) {
       return numFiles;
     }
@@ -434,7 +433,7 @@ public class TikaIndexerTool extends Configured implements Tool {
         continue; // ignore "hidden" files and dirs
       }
       if (stat.isDirectory()) {
-        numFiles += addInputFilesRecursively(stat.getPath(), writer, conf);
+        numFiles += addInputFilesRecursively(stat.getPath(), writer, fs);
       } else {
         writer.write(stat.getPath().toString() + "\n");
         numFiles++;
