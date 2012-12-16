@@ -386,7 +386,10 @@ public class TikaIndexerTool extends Configured implements Tool {
       Writer writer = new OutputStreamWriter(out, "UTF-8");
       
       for (Path inputFile : inputFiles) {
-        numFiles += addInputFilesRecursively(inputFile, writer, inputFile.getFileSystem(conf));
+        FileSystem inputFileFs = inputFile.getFileSystem(conf);
+        if (inputFileFs.exists(inputFile)) {
+          numFiles += addInputFilesRecursively(inputFile, writer, inputFileFs);
+        }
       }
 
       for (Path inputList : inputLists) {
@@ -424,9 +427,6 @@ public class TikaIndexerTool extends Configured implements Tool {
    */
   private long addInputFilesRecursively(Path path, Writer writer, FileSystem fs) throws IOException {
     long numFiles = 0;
-    if (!fs.exists(path)) {
-      return numFiles;
-    }
     for (FileStatus stat : fs.listStatus(path)) {
       LOG.debug("Processing path {}", stat.getPath());
       if (stat.getPath().getName().startsWith(".")) {
