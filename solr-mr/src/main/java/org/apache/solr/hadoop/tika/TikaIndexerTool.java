@@ -46,6 +46,7 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
@@ -388,7 +389,13 @@ public class TikaIndexerTool extends Configured implements Tool {
       for (Path inputFile : inputFiles) {
         FileSystem inputFileFs = inputFile.getFileSystem(conf);
         if (inputFileFs.exists(inputFile)) {
-          numFiles += addInputFilesRecursively(inputFile, writer, inputFileFs);
+          PathFilter pathFilter = new PathFilter() {      
+            @Override
+            public boolean accept(Path path) {
+              return !path.getName().startsWith("."); // ignore "hidden" files and dirs
+            }
+          };
+          numFiles += addInputFilesRecursively(inputFile, writer, inputFileFs, pathFilter);
         }
       }
 
@@ -425,15 +432,12 @@ public class TikaIndexerTool extends Configured implements Tool {
    * Add the specified file to the input set, if path is a directory then
    * add the files contained therein.
    */
-  private long addInputFilesRecursively(Path path, Writer writer, FileSystem fs) throws IOException {
+  private long addInputFilesRecursively(Path path, Writer writer, FileSystem fs, PathFilter pathFilter) throws IOException {
     long numFiles = 0;
-    for (FileStatus stat : fs.listStatus(path)) {
+    for (FileStatus stat : fs.listStatus(path, pathFilter)) {
       LOG.debug("Processing path {}", stat.getPath());
-      if (stat.getPath().getName().startsWith(".")) {
-        continue; // ignore "hidden" files and dirs
-      }
       if (stat.isDirectory()) {
-        numFiles += addInputFilesRecursively(stat.getPath(), writer, fs);
+        numFiles += addInputFilesRecursively(stat.getPath(), writer, fs, pathFilter);
       } else {
         writer.write(stat.getPath().toString() + "\n");
         numFiles++;
