@@ -18,6 +18,8 @@
  */
 package org.apache.flume.sink.solr;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,10 +37,21 @@ import org.apache.flume.conf.Configurables;
 import org.apache.flume.sink.DefaultSinkProcessor;
 import org.apache.flume.sink.LoggerSink;
 import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class TestTwitterSource extends Assert {
 
+  @BeforeClass
+  public static void setUp() {
+    try {
+      Assume.assumeNotNull(InetAddress.getByName("stream.twitter.com"));
+    } catch (UnknownHostException e) {
+      Assume.assumeTrue(false); // ignore Test if twitter is unreachable
+    }
+  }
+  
   @Test
   public void testBasic() throws Exception {
     String username = System.getProperty("twitter.username");
