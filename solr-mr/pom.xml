@@ -62,10 +62,10 @@
           <groupId>org.slf4j</groupId>
           <artifactId>slf4j-jdk14</artifactId> <!-- instead use slf4j on top of log4j or logback  -->
         </exclusion>
-      	<exclusion>
-      		<artifactId>guava</artifactId>
-      		<groupId>com.google.guava</groupId>
-      	</exclusion>
+        <exclusion>
+          <artifactId>guava</artifactId>
+          <groupId>com.google.guava</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
 
@@ -114,10 +114,10 @@
       <classifier>hadoop2</classifier>
       <scope>test</scope>
       <exclusions>
-      	<exclusion>
-      		<artifactId>log4j</artifactId>
-      		<groupId>log4j</groupId>
-      	</exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     
