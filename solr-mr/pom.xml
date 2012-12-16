@@ -47,7 +47,8 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <hadoop.version>${cdh.hadoop.version}</hadoop.version>
+    <!--<hadoop.version>${cdh.hadoop.version}</hadoop.version>-->
+    <hadoop.version>${cdh.mr1.version}</hadoop.version>
     <solr.version>${cdh.solr.version}</solr.version>
     <argparse4j.version>0.2.2</argparse4j.version>
     <slf4j.version>1.6.4</slf4j.version>
