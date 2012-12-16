@@ -31,6 +31,20 @@
       <scope>provided</scope>
     </dependency>    
 
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jcl-over-slf4j</artifactId>
+      <version>1.7.2</version> <!-- flume provides 1.7.2 and solr depends on 1.6.4 -->
+      <scope>provided</scope>
+    </dependency>
+
     <dependency> <!-- see http://lucene.apache.org/solr -->
       <groupId>org.apache.solr</groupId>
       <artifactId>solr-test-framework</artifactId>
