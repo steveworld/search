@@ -41,7 +41,6 @@
   </repositories>
 
   <properties>
-    <!--<hadoop.version>${cdh.hadoop.version}</hadoop.version>-->
     <hadoop.version>${cdh.mr1.version}</hadoop.version>
   </properties>
 
@@ -202,4 +201,13 @@
 
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>yarn</id>
+      <properties>
+        <hadoop.version>${cdh.hadoop.version}</hadoop.version>
+      </properties>
+    </profile>
+  </profiles>
 </project>
