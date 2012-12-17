@@ -16,6 +16,8 @@
  */
 package org.apache.solr.hadoop.tika;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -29,27 +31,9 @@ import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrOutputFormat;
 import org.apache.solr.hadoop.tika.TikaReducerTest.MySolrReducer;
 import org.apache.solr.hadoop.tika.TikaReducerTest.NullInputFormat;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class TikaMapperReducerTest extends Assert {
-  private static final String RESOURCES_DIR = "target/test-classes";
-
-  static File solrHomeZip;
-
-  @BeforeClass
-  public static void setupClass() throws Exception {
-    solrHomeZip = SolrOutputFormat.createSolrHomeZip(new File(RESOURCES_DIR + "/solr/mrunit"));
-    assertNotNull(solrHomeZip);
-  }
-
-  @AfterClass
-  public static void teardownClass() throws Exception {
-    solrHomeZip.delete();
-  }
-
+public class TikaMapperReducerTest extends MRUnitBase {
   @Test
   public void testMapReduce() throws IOException {
     TikaMapper mapper = new TikaMapper();

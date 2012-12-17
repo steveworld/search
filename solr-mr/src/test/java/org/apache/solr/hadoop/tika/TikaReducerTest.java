@@ -17,10 +17,8 @@
 package org.apache.solr.hadoop.tika;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.when;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,37 +32,19 @@ import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
-import org.apache.hadoop.mapreduce.TaskType;
 import org.apache.hadoop.mrunit.mapreduce.ReduceDriver;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.hadoop.BatchWriter;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrOutputFormat;
 import org.apache.solr.hadoop.SolrReducer;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import com.google.common.collect.Lists;
 
-public class TikaReducerTest {
-  private static final String RESOURCES_DIR = "target/test-classes";
-
-  static File solrHomeZip;
-
-  @BeforeClass
-  public static void setupClass() throws Exception {
-    solrHomeZip = SolrOutputFormat.createSolrHomeZip(new File(RESOURCES_DIR + "/solr/mrunit"));
-    assertNotNull(solrHomeZip);
-  }
-
-  @AfterClass
-  public static void teardownClass() throws Exception {
-    solrHomeZip.delete();
-  }
-
+public class TikaReducerTest extends MRUnitBase {
   public static class MySolrReducer extends SolrReducer {
     Context context;
 
