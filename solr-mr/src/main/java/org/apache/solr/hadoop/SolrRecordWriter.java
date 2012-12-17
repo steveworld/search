@@ -28,11 +28,12 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -47,6 +48,7 @@ import org.apache.solr.core.SolrCore;
 import org.apache.solr.core.SolrResourceLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 
 /**
  * Instantiate a record writer that will build a Solr index.
@@ -103,35 +105,18 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     return requiredConfigDirectories.contains(directory);
   }
 
-  //private SolrDocumentConverter<K, V> converter;
-
-//  private EmbeddedSolrServer solr;
-
-  private SolrCore core;
-
   private int batchSize;
 
-//  private FileSystem fs;
-
   /** The path that the final index will be written to */
-//  private Path perm;
 
   /** The location in a local temporary directory that the index is built in. */
-//  private Path temp;
 
-//  private static AtomicLong sequence = new AtomicLong(0);
-
-  /**
-   * If true, create a zip file of the completed index in the final storage
-   * location A .zip will be appended to the final output name if it is not
-   * already present.
-   */
+//  /**
+//   * If true, create a zip file of the completed index in the final storage
+//   * location A .zip will be appended to the final output name if it is not
+//   * already present.
+//   */
 //  private boolean outputZipFile = false;
-
-  /** The directory that the configuration zip file was unpacked into. */
-  private Path solrHomeDir = null;
-
-  private Configuration conf;
 
   HeartBeater heartBeater = null;
 
@@ -164,7 +149,7 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
   }
 
   public SolrRecordWriter(TaskAttemptContext context) {
-    conf = context.getConfiguration();
+    Configuration conf = context.getConfiguration();
     batchSize = SolrOutputFormat.getBatchSize(conf);
 
     // setLogLevel("org.apache.solr.core", "WARN");
@@ -172,47 +157,14 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
 
     heartBeater = new HeartBeater(context);
     try {
-//      fs = FileSystem.get(conf);
-//      outputZipFile = SolrOutputFormat.isOutputZipFormat(conf);
-
       heartBeater.needHeartBeat();
 
-//      File localTmpDir = createLocalTmpDir(context, conf);
-
-      solrHomeDir = SolrRecordWriter.findSolrConfig(context);
-      if (solrHomeDir == null) {
-        throw new IOException("Unable to find solr home setting");
-      }
-      LOG.info("SolrHome: " + solrHomeDir.toUri());
-
-//      FileUtils.copyDirectory(new File(solrHomeDir.toString()), localTmpDir);
-
-      Properties props = new Properties();
-      Path perm = new Path(FileOutputFormat.getOutputPath(context), getOutFileName(context, "shard"));
-      // FIXME note this is odd (no scheme) given Solr doesn't currently support uris (just abs/relative path)
-      Path solrDataDir = new Path(perm, "data");
+      Path solrHomeDir = SolrRecordWriter.findSolrConfig(conf);
       FileSystem fs = FileSystem.get(conf);
-      if (!fs.exists(solrDataDir) && !fs.mkdirs(solrDataDir)) {
-        throw new IOException("Unsable to create " + solrDataDir);
-      }
-      // FIXME hdfsdirectory expects absolute path, solr doesn't generally though
-      String dataDirStr = solrDataDir.toUri().toString().substring(6);
-      props.setProperty("solr.data.dir", dataDirStr);
-      props.setProperty("solr.home", solrHomeDir.toString());
+      Path outputShardDir = new Path(FileOutputFormat.getOutputPath(context),
+          getOutFileName(context, "shard"));
 
-      SolrResourceLoader loader = new SolrResourceLoader(solrHomeDir.toString(), null, props);
-
-      LOG.info(String.format(
-          "Constructed instance information solr.home %s (%s), instance dir %s, conf dir %s, writing index to %s, with permdir %s",
-          solrHomeDir, solrHomeDir.toUri(), loader.getInstanceDir(), loader.getConfigDir(), dataDirStr, perm));
-
-      CoreContainer container = new CoreContainer(loader);
-      CoreDescriptor descr = new CoreDescriptor(container, "core1", solrHomeDir.toString());
-      descr.setDataDir(dataDirStr);
-      descr.setCoreProperties(props);
-      core = container.create(descr);
-      container.register(core, false);
-      EmbeddedSolrServer solr = new EmbeddedSolrServer(container, "core1");
+      EmbeddedSolrServer solr = createEmbeddedSolrServer(solrHomeDir, fs, outputShardDir);
       batchWriter = new BatchWriter(solr, batchSize,
           context.getTaskAttemptID().getTaskID(),
           SolrOutputFormat.getSolrWriterThreadCount(conf),
@@ -227,23 +179,46 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     }
   }
 
-//  private static File createLocalTmpDir(TaskAttemptContext context, Configuration conf) throws IOException {
-//    // Make a task unique name that contains the actual index output name to
-//    // make debugging simpler
-//    // Note: if using JVM reuse, the sequence number will not be reset for a
-//    // new task using the jvm
-//
-//    String tmpDirStr = context.getConfiguration().get(MRJobConfig.TASK_TEMP_DIR); // Yarn
-//    if (tmpDirStr == null) {
-//      tmpDirStr = context.getConfiguration().get("mapred.child.tmp"); // MR1
-//    }
-//    File tmpDir = new File(tmpDirStr, "solr_" +
-//        conf.get("mapred.task.id") + '.' + sequence.incrementAndGet());
-//    if (!tmpDir.exists() && !tmpDir.mkdirs()) {
-//      throw new IOException("Unable to create " + tmpDir);
-//    }
-//    return tmpDir;
-//  }
+  public static EmbeddedSolrServer createEmbeddedSolrServer(Path solrHomeDir, FileSystem fs, Path outputShardDir)
+      throws IOException, ParserConfigurationException, SAXException {
+
+    if (solrHomeDir == null) {
+      throw new IOException("Unable to find solr home setting");
+    }
+    LOG.info("SolrHome: " + solrHomeDir.toUri());
+
+    Properties props = new Properties();
+    // FIXME note this is odd (no scheme) given Solr doesn't currently
+    // support uris (just abs/relative path)
+    Path solrDataDir = new Path(outputShardDir, "data");
+    if (!fs.exists(solrDataDir) && !fs.mkdirs(solrDataDir)) {
+      throw new IOException("Unsable to create " + solrDataDir);
+    }
+    // FIXME hdfsdirectory expects absolute path, solr doesn't generally
+    // though
+    String dataDirStr = solrDataDir.toUri().toString().substring(6);
+    props.setProperty("solr.data.dir", dataDirStr);
+    props.setProperty("solr.home", solrHomeDir.toString());
+
+    SolrResourceLoader loader = new SolrResourceLoader(solrHomeDir.toString(),
+        null, props);
+
+    LOG.info(String
+        .format(
+            "Constructed instance information solr.home %s (%s), instance dir %s, conf dir %s, writing index to %s, with permdir %s",
+            solrHomeDir, solrHomeDir.toUri(), loader.getInstanceDir(),
+            loader.getConfigDir(), dataDirStr, outputShardDir));
+
+    CoreContainer container = new CoreContainer(loader);
+    CoreDescriptor descr = new CoreDescriptor(container, "core1",
+        solrHomeDir.toString());
+    descr.setDataDir(dataDirStr);
+    descr.setCoreProperties(props);
+    SolrCore core = container.create(descr);
+    container.register(core, false);
+    EmbeddedSolrServer solr = new EmbeddedSolrServer(container, "core1");
+    return solr;
+  }
 
   public static void incrementCounter(TaskID taskId, String groupName, String counterName, long incr) {
     Reducer<?,?,?,?>.Context context = contextMap.get(taskId);
@@ -257,8 +232,7 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     contextMap.put(taskID, context);
   }
 
-  public static Path findSolrConfig(JobContext context) throws IOException {
-    Configuration conf = context.getConfiguration();
+  public static Path findSolrConfig(Configuration conf) throws IOException {
     Path solrHome = null;
     // FIXME when mrunit supports the new cache apis
     //URI[] localArchives = context.getCacheArchives();
@@ -313,27 +287,6 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     heartBeater.needHeartBeat();
     try {
       try {
-        //Collection<SolrInputDocument> docs = converter.convert(key, value);
-//        if (docs.size() > batchSize) {
-//          ArrayList<SolrInputDocument> oneBatch = new ArrayList<SolrInputDocument>(
-//              batchSize);
-//          Iterator<SolrInputDocument> iterator = docs.iterator();
-//          // Send the documents to the actual writer in batchSize chunks
-//          for (int inBatch = 0; iterator.hasNext(); inBatch++) {
-//            /** Flush the batch if it is the full size. */
-//            if (inBatch == batchSize) {
-//              batchWriter.queueBatch(oneBatch);
-//              oneBatch.clear();
-//              inBatch = 0;
-//            }
-//            oneBatch.add(iterator.next());
-//          }
-//          if (!oneBatch.isEmpty()) {
-//            batchWriter.queueBatch(oneBatch);
-//          }
-//        } else {
-//          batchWriter.queueBatch(docs);
-//        }
         SolrInputDocumentWritable sidw = (SolrInputDocumentWritable) value;
         batchWriter.queueBatch(Collections.singleton(sidw.getSolrInputDocument()));
       } catch (SolrServerException e) {
@@ -352,7 +305,7 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     }
     try {
       heartBeater.needHeartBeat();
-      batchWriter.close(context, core);
+      batchWriter.close(context);
 //      if (outputZipFile) {
 //        context.setStatus("Writing Zip");
 //        packZipFile(); // Written to the perm location

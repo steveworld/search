@@ -178,7 +178,7 @@ public class BatchWriter {
     batchPool.execute(new Batch(batch));
   }
 
-  public synchronized void close(TaskAttemptContext context, SolrCore core)
+  public synchronized void close(TaskAttemptContext context)
       throws InterruptedException, SolrServerException, IOException {
 
     context.setStatus("Waiting for batches to complete");
