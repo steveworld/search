@@ -55,6 +55,7 @@ import org.junit.Test;
 
 public class TikaMRMiniMRTest {
   private static final String RESOURCES_DIR = "target/test-classes";
+  private static final File MINIMR_CONF_DIR = new File(RESOURCES_DIR + "/solr/minimr");
   private static File solrHomeZip;
 
   public static final String SEARCH_ARCHIVES_JAR = JarFinder.getJar(TikaIndexerTool.class);
@@ -64,7 +65,7 @@ public class TikaMRMiniMRTest {
 
   @BeforeClass
   public static void setupClass() throws Exception {
-    solrHomeZip = SolrOutputFormat.createSolrHomeZip(new File(RESOURCES_DIR + "/solr/minimr"));
+    solrHomeZip = SolrOutputFormat.createSolrHomeZip(MINIMR_CONF_DIR);
     assertNotNull(solrHomeZip);
   }
 
@@ -171,7 +172,8 @@ public class TikaMRMiniMRTest {
     Assert.assertTrue(job.isComplete());
     Assert.assertTrue(job.isSuccessful());
 
-    assertEquals("Expected 2 counter increment", 2, job.getCounters()
+    final int COUNT = 2;
+    assertEquals("Expected " + COUNT + " counter increment", COUNT, job.getCounters()
         .findCounter("SolrRecordWriter", BatchWriter.COUNTER_DOCUMENTS_WRITTEN).getValue());
 
     // Check the output is as expected
@@ -179,6 +181,7 @@ public class TikaMRMiniMRTest {
 
     System.out.println("outputfiles:" + Arrays.toString(outputFiles));
 
+    Utils.validateSolrServerDocumentCount(MINIMR_CONF_DIR, fs, outDir, COUNT);
   }
 
 }
