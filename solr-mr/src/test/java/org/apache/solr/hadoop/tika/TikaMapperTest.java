@@ -16,8 +16,6 @@
  */
 package org.apache.solr.hadoop.tika;
 
-import static org.junit.Assert.assertNotNull;
-
 import java.io.File;
 import java.util.List;
 
@@ -29,26 +27,9 @@ import org.apache.hadoop.mrunit.types.Pair;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrOutputFormat;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class TikaMapperTest {
-  private static final String RESOURCES_DIR = "target/test-classes";
-
-  static File solrHomeZip;
-
-  @BeforeClass
-  public static void setupClass() throws Exception {
-    solrHomeZip = SolrOutputFormat.createSolrHomeZip(new File(RESOURCES_DIR + "/solr/mrunit"));
-    assertNotNull(solrHomeZip);
-  }
-
-  @AfterClass
-  public static void teardownClass() throws Exception {
-    solrHomeZip.delete();
-  }
-
+public class TikaMapperTest extends MRUnitBase {
   @Test
   public void testMapper() throws Exception {
     TikaMapper mapper = new TikaMapper();
