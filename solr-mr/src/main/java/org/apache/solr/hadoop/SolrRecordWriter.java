@@ -254,9 +254,7 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
 
   public static void addReducerContext(Reducer<?,?,?,?>.Context context) {
     TaskID taskID = context.getTaskAttemptID().getTaskID();
-    if (contextMap.get(taskID) == null) {
-      contextMap.put(taskID, context);
-    }
+    contextMap.put(taskID, context);
   }
 
   public static Path findSolrConfig(JobContext context) throws IOException {
