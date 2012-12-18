@@ -202,6 +202,27 @@
         </executions>
       </plugin>
 
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>1.2</version>
+        <executions>
+          <execution>
+            <id>enforce-versions</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireMavenVersion><version>3.0</version></requireMavenVersion>
+                <requireJavaVersion><version>1.6</version></requireJavaVersion>
+                <!-- For the Hadoop tests to run properly JAVA_HOME must be set -->
+                <requireEnvironmentVariable><variableName>JAVA_HOME</variableName></requireEnvironmentVariable>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
