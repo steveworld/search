@@ -44,7 +44,7 @@ public class Utils {
       SolrQuery query = new SolrQuery();
       query.setQuery("*:*");
       QueryResponse resp = solr.query(query);
-      assertEquals(count, resp.getResponse().size());
+      assertEquals(count, resp.getResults().getNumFound());
     } finally {
       solr.shutdown();
     }
