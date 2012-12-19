@@ -980,8 +980,9 @@
     <lst name="defaults">
       <str name="lowernames">true</str>
       <str name="uprefix">ignored_</str>
-
+<!--
       <str name="fmap.content">text</str>
+-->
 
       <!-- twitter feed schema -->
       <str name="capture">id</str>

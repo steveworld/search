@@ -19,16 +19,13 @@ package org.apache.solr.hadoop;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Collection;
 
-import org.apache.hadoop.io.FloatWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.solr.common.SolrInputDocument;
-import org.apache.solr.common.SolrInputField;
+import org.apache.solr.common.util.FastOutputStream;
+import org.apache.solr.common.util.JavaBinCodec;
 
 public class SolrInputDocumentWritable implements Writable {
-  private static long count = 0;
   private SolrInputDocument sid;
 
   public SolrInputDocumentWritable() {
@@ -47,62 +44,23 @@ public class SolrInputDocumentWritable implements Writable {
     return sid.toString();
   }
 
-  Text name = new Text();
-  Text value = new Text();
-  FloatWritable boost = new FloatWritable();
-
   @Override
   public void write(DataOutput out) throws IOException {
-//    JavaBinCodec codec = new JavaBinCodec();
-//    FastOutputStream daos = FastOutputStream.wrap(DataOutputOutputStream.constructOutputStream(out));
-//    codec.init(daos);
-//    try {
-//      if (count++ < 10) { System.err.println(toString()); }
-//      daos.writeLong(MARKER);
-//      codec.writeVal(sid);
-//    } finally {
-//      daos.flushBuffer();
-//    }
-
-    Collection<SolrInputField> values = sid.values();
-    out.writeInt(values.size());
-    for (SolrInputField fval: values) {
-      name.set(fval.getName());
-      name.write(out);
-      value.set(fval.getValue().toString());
-      value.write(out);
-      boost.set(fval.getBoost());
-      boost.write(out);
+    JavaBinCodec codec = new JavaBinCodec();
+    FastOutputStream daos = FastOutputStream.wrap(DataOutputOutputStream.constructOutputStream(out));
+    codec.init(daos);
+    try {
+      codec.writeVal(sid);
+    } finally {
+      daos.flushBuffer();
     }
   }
 
   @Override
   public void readFields(DataInput in) throws IOException {
-//    JavaBinCodec codec = new JavaBinCodec();
-//    FastInputStream dis = FastInputStream.wrap(DataInputInputStream.constructInputStream(in));
-//    try {
-//      System.err.println("PDH readval starting");
-//      long marker = dis.readLong();
-//      if (marker != MARKER) {
-//        throw new RuntimeException("Invalid version (expected " + MARKER +
-//            ", but " + marker + ") or the data in not in 'javabin' format");
-//      }
-//
-//    sid = (SolrInputDocument)codec.readVal(dis);
-//    System.err.println(toString());
-//    } catch (Exception e) {
-//      e.printStackTrace();
-//    }
-
-    sid = new SolrInputDocument();
-
-    int count = in.readInt();
-    while(count-- > 0) {
-      name.readFields(in);
-      value.readFields(in);
-      boost.readFields(in);
-      sid.addField(name.toString(), value.toString(), boost.get());
-    }
+    JavaBinCodec codec = new JavaBinCodec();
+    UnbufferedDataInputInputStream dis = new UnbufferedDataInputInputStream(in);
+    sid = (SolrInputDocument)codec.readVal(dis);
   }
 
 }
