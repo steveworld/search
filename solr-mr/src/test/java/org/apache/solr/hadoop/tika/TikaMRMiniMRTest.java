@@ -136,7 +136,7 @@ public class TikaMRMiniMRTest {
     assertTrue(fs.mkdirs(inDir));
     Path INPATH = new Path(inDir, "input.txt");
     OutputStream os = fs.create(INPATH);
-    Writer wr = new OutputStreamWriter(os);
+    Writer wr = new OutputStreamWriter(os, "UTF-8");
     wr.write(DATADIR + "/sample-statuses-20120906-141433.avro");
     wr.close();
 
