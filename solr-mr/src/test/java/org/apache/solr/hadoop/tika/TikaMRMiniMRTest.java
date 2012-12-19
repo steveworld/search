@@ -27,6 +27,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.InetAddress;
 import java.util.Arrays;
+import java.util.Collection;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
@@ -45,14 +46,18 @@ import org.apache.hadoop.util.JarFinder;
 import org.apache.solr.hadoop.BatchWriter;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrOutputFormat;
+import org.apache.solr.hadoop.SolrRecordWriter;
 import org.apache.solr.hadoop.SolrReducer;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
+@RunWith(value = Parameterized.class)
 public class TikaMRMiniMRTest {
   private static final String RESOURCES_DIR = "target/test-classes";
   private static final File MINIMR_CONF_DIR = new File(RESOURCES_DIR + "/solr/minimr");
@@ -60,22 +65,30 @@ public class TikaMRMiniMRTest {
 
   public static final String SEARCH_ARCHIVES_JAR = JarFinder.getJar(TikaIndexerTool.class);
 
-  private MiniDFSCluster dfsCluster = null;
-  private MiniMRCluster mrCluster = null;
+  private static MiniDFSCluster dfsCluster = null;
+  private static MiniMRCluster mrCluster = null;
+
+  private final String inputAvroFile;
+  private final int count;
+
+  @Parameters
+  public static Collection<Object[]> data() {
+    Object[][] data = new Object[][] {
+        { "sample-statuses-20120521-100919.avro", 20 },
+        { "sample-statuses-20120906-141433.avro", 2 } };
+    return Arrays.asList(data);
+  }
+
+  public TikaMRMiniMRTest(String inputAvroFile, int count) {
+    this.inputAvroFile = inputAvroFile;
+    this.count = count;
+  }
 
   @BeforeClass
   public static void setupClass() throws Exception {
     solrHomeZip = SolrOutputFormat.createSolrHomeZip(MINIMR_CONF_DIR);
     assertNotNull(solrHomeZip);
-  }
 
-  @AfterClass
-  public static void teardownClass() throws Exception {
-    solrHomeZip.delete();
-  }
-
-  @Before
-  public void setUp() throws Exception {
     if (System.getProperty("hadoop.log.dir") == null) {
       System.setProperty("hadoop.log.dir", "target");
     }
@@ -106,16 +119,15 @@ public class TikaMRMiniMRTest {
     int numDirs = 1;
     String[] racks = null;
     String[] hosts = null;
+
     mrCluster = new MiniMRCluster(0, 0, taskTrackers, nnURI, numDirs, racks, hosts, null, conf);
     ProxyUsers.refreshSuperUserGroupsConfiguration(conf);
   }
 
-  protected JobConf getJobConf() {
-    return mrCluster.createJobConf();
-  }
+  @AfterClass
+  public static void teardownClass() throws Exception {
+    solrHomeZip.delete();
 
-  @After
-  public void tearDown() throws Exception {
     if (mrCluster != null) {
       mrCluster.shutdown();
     }
@@ -124,26 +136,35 @@ public class TikaMRMiniMRTest {
     }
   }
 
+  protected JobConf getJobConf() {
+    return mrCluster.createJobConf();
+  }
+
   @Test
   public void mrRun() throws Exception {
     FileSystem fs = dfsCluster.getFileSystem();
 
     Path inDir = fs.makeQualified(new Path("/user/testing/testMapperReducer/input"));
+    fs.delete(inDir, true);
     String DATADIR = "/user/testing/testMapperReducer/data";
     Path dataDir = fs.makeQualified(new Path(DATADIR));
+    fs.delete(dataDir, true);
     Path outDir = fs.makeQualified(new Path("/user/testing/testMapperReducer/output"));
+    fs.delete(outDir, true);
 
     assertTrue(fs.mkdirs(inDir));
     Path INPATH = new Path(inDir, "input.txt");
     OutputStream os = fs.create(INPATH);
     Writer wr = new OutputStreamWriter(os, "UTF-8");
-    wr.write(DATADIR + "/sample-statuses-20120906-141433.avro");
+    wr.write(DATADIR + "/" + inputAvroFile);
     wr.close();
 
     assertTrue(fs.mkdirs(dataDir));
-    fs.copyFromLocalFile(new Path("target/test-classes/sample-statuses-20120906-141433.avro"), dataDir);
+    fs.copyFromLocalFile(new Path("target/test-classes", inputAvroFile), dataDir);
 
     JobConf jobConf = getJobConf();
+    // enable mapred.job.tracker = local to run in debugger and set breakpoints
+    //jobConf.set("mapred.job.tracker", "local");
 
     jobConf.setMaxMapAttempts(1);
     jobConf.setMaxReduceAttempts(1);
@@ -172,16 +193,15 @@ public class TikaMRMiniMRTest {
     Assert.assertTrue(job.isComplete());
     Assert.assertTrue(job.isSuccessful());
 
-    final int COUNT = 2;
-    assertEquals("Expected " + COUNT + " counter increment", COUNT, job.getCounters()
-        .findCounter("SolrRecordWriter", BatchWriter.COUNTER_DOCUMENTS_WRITTEN).getValue());
+    assertEquals("Invalid counter " + SolrRecordWriter.class.getName() + "." + BatchWriter.COUNTER_DOCUMENTS_WRITTEN,
+        count, job.getCounters().findCounter("SolrRecordWriter", BatchWriter.COUNTER_DOCUMENTS_WRITTEN).getValue());
 
     // Check the output is as expected
     Path[] outputFiles = FileUtil.stat2Paths(fs.listStatus(outDir));
 
     System.out.println("outputfiles:" + Arrays.toString(outputFiles));
 
-    Utils.validateSolrServerDocumentCount(MINIMR_CONF_DIR, fs, outDir, COUNT);
+    Utils.validateSolrServerDocumentCount(MINIMR_CONF_DIR, fs, outDir, count);
   }
 
 }
