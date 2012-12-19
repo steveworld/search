@@ -44,6 +44,15 @@
     <hadoop.version>${cdh.mr1.version}</hadoop.version>
   </properties>
 
+  <profiles>
+    <profile>
+      <id>yarn</id>
+      <properties>
+        <hadoop.version>${cdh.hadoop.version}</hadoop.version>
+      </properties>
+    </profile>
+  </profiles>
+  
   <dependencies>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
@@ -226,12 +235,4 @@
     </plugins>
   </build>
 
-  <profiles>
-    <profile>
-      <id>yarn</id>
-      <properties>
-        <hadoop.version>${cdh.hadoop.version}</hadoop.version>
-      </properties>
-    </profile>
-  </profiles>
 </project>
