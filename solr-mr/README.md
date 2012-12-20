@@ -63,9 +63,8 @@ sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1 jar solr-mr-*-
 # HdfsFindShell
 
 This is essentially the HDFS version of the Linux file system 'find' command. 
-The command generates a list of output file names that can be piped into the TikaIndexerTool described above, using the --inputlist option.
 For example, it can be used to find all .pdf files matching a given glob pattern that have been created/modified since midnight.
-
+The command generates a list of output file names that can be piped into the TikaIndexerTool described above, using the --inputlist option.
 
 ```
 # hadoop jar solr-mr-1.0-SNAPSHOT.jar org.apache.solr.hadoop.tika.HdfsFindShell -help
