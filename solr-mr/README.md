@@ -5,7 +5,7 @@ that are stored on HDFS into free text search indexes stored on HDFS.
 
 For documentation see the [Cloudera Wiki](https://wiki.cloudera.com/display/engineering/Solr+MR).
 
-The main public tools are TikaIndexerTool and HdfsFindShell.
+The main public tools are TikaIndexerTool and HdfsFindShell, as shown below.
 
 # TikaIndexerTool
 
@@ -61,6 +61,11 @@ sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1 jar solr-mr-*-
 ```
 
 # HdfsFindShell
+
+This is essentially the HDFS version of the Linux file system 'find' command. 
+The command generates a list of output file names that can be piped into the TikaIndexerTool described above, using the --inputlist option.
+For example, it can be used to find all .pdf files matching a given glob pattern that have been created/modified since midnight.
+
 
 ```
 # hadoop jar solr-mr-1.0-SNAPSHOT.jar org.apache.solr.hadoop.tika.HdfsFindShell -help
