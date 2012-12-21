@@ -42,6 +42,11 @@
 
   <properties>
     <hadoop.version>${cdh.mr1.version}</hadoop.version>
+
+    <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
+
+    <test.build.dir>${project.build.directory}/test-dir</test.build.dir>
+    <test.build.data>${test.build.dir}</test.build.data>
   </properties>
 
   <profiles>
@@ -162,7 +167,11 @@
           <environmentVariables>
             <MALLOC_ARENA_MAX>4</MALLOC_ARENA_MAX>
           </environmentVariables>
-          <redirectTestOutputToFile>true</redirectTestOutputToFile>
+          <systemPropertyVariables>
+            <test.build.dir>${test.build.dir}</test.build.dir>
+            <test.build.data>${test.build.data}</test.build.data>
+            <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
+          </systemPropertyVariables>
         </configuration>
       </plugin>
       
