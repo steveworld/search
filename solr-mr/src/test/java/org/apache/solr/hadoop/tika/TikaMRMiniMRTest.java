@@ -52,7 +52,7 @@ public class TikaMRMiniMRTest extends Assert {
   private static final File MINIMR_CONF_DIR = new File(RESOURCES_DIR + "/solr/minimr");
   private static File solrHomeZip;
 
-  public static final String SEARCH_ARCHIVES_JAR = JarFinder.getJar(TikaIndexerTool.class);
+  private static final String SEARCH_ARCHIVES_JAR = JarFinder.getJar(TikaIndexerTool.class);
 
   private static MiniDFSCluster dfsCluster = null;
   private static MiniMRCluster mrCluster = null;
