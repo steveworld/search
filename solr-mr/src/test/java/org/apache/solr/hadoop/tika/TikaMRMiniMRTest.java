@@ -17,10 +17,6 @@
  */
 package org.apache.solr.hadoop.tika;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -43,6 +39,7 @@ import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.hadoop.util.JarFinder;
+import org.apache.hadoop.util.ToolRunner;
 import org.apache.solr.hadoop.BatchWriter;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrOutputFormat;
@@ -58,7 +55,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(value = Parameterized.class)
-public class TikaMRMiniMRTest {
+public class TikaMRMiniMRTest extends Assert {
   private static final String RESOURCES_DIR = "target/test-classes";
   private static final File MINIMR_CONF_DIR = new File(RESOURCES_DIR + "/solr/minimr");
   private static File solrHomeZip;
@@ -86,21 +83,20 @@ public class TikaMRMiniMRTest {
 
   @BeforeClass
   public static void setupClass() throws Exception {
-    solrHomeZip = SolrOutputFormat.createSolrHomeZip(MINIMR_CONF_DIR);
-    assertNotNull(solrHomeZip);
-
+//    solrHomeZip = SolrOutputFormat.createSolrHomeZip(MINIMR_CONF_DIR);
+//    assertNotNull(solrHomeZip);
     if (System.getProperty("hadoop.log.dir") == null) {
       System.setProperty("hadoop.log.dir", "target");
     }
     int taskTrackers = 2;
     int dataNodes = 2;
-    String proxyUser = System.getProperty("user.name");
-    String proxyGroup = "g";
-    StringBuilder sb = new StringBuilder();
-    sb.append("127.0.0.1,localhost");
-    for (InetAddress i : InetAddress.getAllByName(InetAddress.getLocalHost().getHostName())) {
-      sb.append(",").append(i.getCanonicalHostName());
-    }
+//    String proxyUser = System.getProperty("user.name");
+//    String proxyGroup = "g";
+//    StringBuilder sb = new StringBuilder();
+//    sb.append("127.0.0.1,localhost");
+//    for (InetAddress i : InetAddress.getAllByName(InetAddress.getLocalHost().getHostName())) {
+//      sb.append(",").append(i.getCanonicalHostName());
+//    }
 
     JobConf conf = new JobConf();
     conf.set("dfs.block.access.token.enable", "false");
@@ -126,8 +122,9 @@ public class TikaMRMiniMRTest {
 
   @AfterClass
   public static void teardownClass() throws Exception {
-    solrHomeZip.delete();
-
+    if (solrHomeZip != null) {
+      solrHomeZip.delete();
+    }
     if (mrCluster != null) {
       mrCluster.shutdown();
     }
@@ -136,7 +133,7 @@ public class TikaMRMiniMRTest {
     }
   }
 
-  protected JobConf getJobConf() {
+  private JobConf getJobConf() {
     return mrCluster.createJobConf();
   }
 
@@ -168,7 +165,7 @@ public class TikaMRMiniMRTest {
 
     jobConf.setMaxMapAttempts(1);
     jobConf.setMaxReduceAttempts(1);
-
+    /*
     jobConf.setJar(SEARCH_ARCHIVES_JAR);
 
     Job job = new Job(jobConf);
@@ -190,13 +187,25 @@ public class TikaMRMiniMRTest {
     FileOutputFormat.setOutputPath(job, outDir);
 
     assertTrue(job.waitForCompletion(true));
-    Assert.assertTrue(job.isComplete());
-    Assert.assertTrue(job.isSuccessful());
+    */
+    String[] args = new String[] {
+        "--solrhomedir", MINIMR_CONF_DIR.getAbsolutePath(),
+        "--outputdir", outDir.toString(),
+        "--verbose",
+        dataDir.toString()
+    };
+    TikaIndexerTool tool = new TikaIndexerTool();
+    int res = ToolRunner.run(jobConf, tool, args);
+    assertEquals(0, res);
+    Job job = tool.job;
+    assertTrue(job.isComplete());
+    assertTrue(job.isSuccessful());
 
     assertEquals("Invalid counter " + SolrRecordWriter.class.getName() + "." + BatchWriter.COUNTER_DOCUMENTS_WRITTEN,
         count, job.getCounters().findCounter("SolrRecordWriter", BatchWriter.COUNTER_DOCUMENTS_WRITTEN).getValue());
 
     // Check the output is as expected
+    outDir = new Path(outDir, TikaIndexerTool.RESULTS_DIR);
     Path[] outputFiles = FileUtil.stat2Paths(fs.listStatus(outDir));
 
     System.out.println("outputfiles:" + Arrays.toString(outputFiles));
