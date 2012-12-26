@@ -182,7 +182,7 @@ public class TikaMRMiniMRTest extends Assert {
     String[] args = new String[] {
         "--solrhomedir", MINIMR_CONF_DIR.getAbsolutePath(),
         "--outputdir", outDir.toString(),
-        "--mappers", "1",
+        "--mappers", "2",
         "--verbose",
     };
     if (++numRuns % 2 == 0) {
