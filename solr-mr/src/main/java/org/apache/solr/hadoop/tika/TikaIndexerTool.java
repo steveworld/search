@@ -154,8 +154,8 @@ public class TikaIndexerTool extends Configured implements Tool {
         .metavar("INTEGER")
         .type(Integer.class)
         .choices(new RangeArgumentChoice(-1, Integer.MAX_VALUE))
-        .setDefault(1)
-        .help("Maximum number of MR mapper tasks to use");
+        .setDefault(-1)
+        .help("Maximum number of MR mapper tasks to use. -1 indicates use all map slots available on the cluster");
   
       Argument shardsArg = parser.addArgument("--shards")
         .metavar("INTEGER")
