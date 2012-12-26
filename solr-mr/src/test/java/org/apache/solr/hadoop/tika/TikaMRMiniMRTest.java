@@ -21,7 +21,7 @@ import java.io.File;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.net.InetAddress;
+import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -30,24 +30,16 @@ import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MiniMRCluster;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.hadoop.util.JarFinder;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.solr.hadoop.BatchWriter;
-import org.apache.solr.hadoop.SolrInputDocumentWritable;
-import org.apache.solr.hadoop.SolrOutputFormat;
 import org.apache.solr.hadoop.SolrRecordWriter;
-import org.apache.solr.hadoop.SolrReducer;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -64,6 +56,7 @@ public class TikaMRMiniMRTest extends Assert {
 
   private static MiniDFSCluster dfsCluster = null;
   private static MiniMRCluster mrCluster = null;
+  private static int numRuns = 0;
 
   private final String inputAvroFile;
   private final int count;
@@ -140,7 +133,6 @@ public class TikaMRMiniMRTest extends Assert {
   @Test
   public void mrRun() throws Exception {
     FileSystem fs = dfsCluster.getFileSystem();
-
     Path inDir = fs.makeQualified(new Path("/user/testing/testMapperReducer/input"));
     fs.delete(inDir, true);
     String DATADIR = "/user/testing/testMapperReducer/data";
@@ -157,7 +149,7 @@ public class TikaMRMiniMRTest extends Assert {
     wr.close();
 
     assertTrue(fs.mkdirs(dataDir));
-    fs.copyFromLocalFile(new Path("target/test-classes", inputAvroFile), dataDir);
+    fs.copyFromLocalFile(new Path(RESOURCES_DIR, inputAvroFile), dataDir);
 
     JobConf jobConf = getJobConf();
     // enable mapred.job.tracker = local to run in debugger and set breakpoints
@@ -192,8 +184,12 @@ public class TikaMRMiniMRTest extends Assert {
         "--solrhomedir", MINIMR_CONF_DIR.getAbsolutePath(),
         "--outputdir", outDir.toString(),
         "--verbose",
-        dataDir.toString()
     };
+    if (++numRuns % 2 == 0) {
+      args = concat(args, new String[] { "--inputlist", INPATH.toString() });
+    } else {
+      args = concat(args, new String[] { dataDir.toString() });      
+    }
     TikaIndexerTool tool = new TikaIndexerTool();
     int res = ToolRunner.run(jobConf, tool, args);
     assertEquals(0, res);
@@ -211,6 +207,23 @@ public class TikaMRMiniMRTest extends Assert {
     System.out.println("outputfiles:" + Arrays.toString(outputFiles));
 
     Utils.validateSolrServerDocumentCount(MINIMR_CONF_DIR, fs, outDir, count);
+  }
+
+  private static <T> T[] concat(T[]... arrays) {    
+    if (arrays.length == 0) throw new IllegalArgumentException();
+    Class clazz = null;
+    int length = 0;
+    for (T[] array : arrays) {
+      clazz = array.getClass();
+      length += array.length;
+    }
+    T[] result = (T[]) Array.newInstance(clazz.getComponentType(), length);
+    int pos = 0;
+    for (T[] array : arrays) {
+      System.arraycopy(array, 0, result, pos, array.length);
+      pos += array.length;
+    }
+    return result;
   }
 
 }
