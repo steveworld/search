@@ -75,6 +75,8 @@ import org.slf4j.LoggerFactory;
  */
 public class TikaIndexerTool extends Configured implements Tool {
   
+  Job job; // visible for testing only
+  
   public static final String RESULTS_DIR = "results";
 
   /** A list of input file URLs. Used as input to the Mapper */
@@ -242,8 +244,7 @@ public class TikaIndexerTool extends Configured implements Tool {
   
   /** API for command line clients */
   public static void main(String[] args) throws Exception  {
-    Configuration conf = new Configuration();
-    int res = ToolRunner.run(conf, new TikaIndexerTool(), args);
+    int res = ToolRunner.run(new Configuration(), new TikaIndexerTool(), args);
     System.exit(res);
   }
 
@@ -262,7 +263,7 @@ public class TikaIndexerTool extends Configured implements Tool {
   
   /** API for Java clients; visible for testing; may become a public API eventually */
   int run(Options options) throws Exception {
-    Job job = Job.getInstance(getConf());
+    job = Job.getInstance(getConf());
     job.setJarByClass(getClass());
     job.setJobName(getClass().getName());
 
@@ -297,7 +298,11 @@ public class TikaIndexerTool extends Configured implements Tool {
     numLinesPerSplit = Math.max(1, numLinesPerSplit);
 
     if (options.isRandomize) { 
-      Job randomizerJob = randomizeInputFiles(fullInputList, outputStep2Dir, numLinesPerSplit, options.fairSchedulerPool);
+      // there's no benefit in using many parallel mapper tasks just to randomize the order of a few lines;
+      // use sequential algorithm below a certain threshold
+      int numLinesPerRandomizerSplit = Math.max(1000 * 1000, numLinesPerSplit);
+      
+      Job randomizerJob = randomizeInputFiles(fullInputList, outputStep2Dir, numLinesPerRandomizerSplit, options.fairSchedulerPool);
       if (!randomizerJob.waitForCompletion(options.isVerbose)) {
         return -1; // job failed
       }
