@@ -163,7 +163,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${surefire.version}</version>
         <configuration>
-          <argLine>-XX:MaxDirectMemorySize=512m</argLine> <!-- fix for CDH-9445 -->
+          <argLine>-Xmx512m -XX:MaxDirectMemorySize=512m</argLine> <!-- fix for CDH-9445 -->
           <environmentVariables>
             <MALLOC_ARENA_MAX>4</MALLOC_ARENA_MAX>
           </environmentVariables>
