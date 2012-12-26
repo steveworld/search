@@ -157,9 +157,8 @@ public class TikaMRMiniMRTest extends Assert {
 
     jobConf.setMaxMapAttempts(1);
     jobConf.setMaxReduceAttempts(1);
-    /*
     jobConf.setJar(SEARCH_ARCHIVES_JAR);
-
+    /*
     Job job = new Job(jobConf);
 
     job.setInputFormatClass(NLineInputFormat.class);
