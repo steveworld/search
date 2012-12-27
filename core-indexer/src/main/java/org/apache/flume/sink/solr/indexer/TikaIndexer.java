@@ -113,12 +113,12 @@ public class TikaIndexer extends SolrIndexer {
   }
 
   @Override
-  public void configure(Configuration config) {
+  public void configure(Config config) {
     super.configure(config);
 
     String tikaConfigFilePath = null;
-    if (config.getTreeConfig().hasPath(TIKA_CONFIG_LOCATION)) {
-      tikaConfigFilePath = config.getTreeConfig().getString(TIKA_CONFIG_LOCATION);
+    if (config.hasPath(TIKA_CONFIG_LOCATION)) {
+      tikaConfigFilePath = config.getString(TIKA_CONFIG_LOCATION);
     }
     String oldProperty = null;
     if (tikaConfigFilePath != null) {

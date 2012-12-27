@@ -81,7 +81,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     Map<String, Object> params = new HashMap<String,Object>();
     params.put(TikaIndexer.TIKA_CONFIG_LOCATION, "tika-config.xml");
     Config config = ConfigFactory.parseMap(params);
-    indexer.configure(new Configuration(config));
+    indexer.configure(config);
     indexer.start();
     indexer.beginTransaction();
     fs = FileSystem.get(context.getConfiguration());
