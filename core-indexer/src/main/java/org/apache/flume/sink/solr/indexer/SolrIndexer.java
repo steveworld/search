@@ -33,6 +33,8 @@ import org.apache.solr.common.SolrInputDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.typesafe.config.Config;
+
 /**
  * EXPERIMENTAL API; Indexer that extracts search documents from events, transforms them and
  * loads them into Apache Solr.
@@ -48,8 +50,8 @@ public class SolrIndexer {
   public SolrIndexer() {
   }
   
-  public void configure(Configuration config) {
-    this.config = config;
+  public void configure(Config config) {
+    this.config = new Configuration(config);
   }
   
   /** Returns the configuration settings */

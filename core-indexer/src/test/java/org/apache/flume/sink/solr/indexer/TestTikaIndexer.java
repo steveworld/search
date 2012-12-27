@@ -123,7 +123,7 @@ public class TestTikaIndexer extends SolrJettyTestBase {
       }
     };
     indexer.setName(indexer.getClass().getName() + SEQ_NUM.getAndIncrement());
-    indexer.configure(new Configuration(ConfigFactory.parseMap(context)));
+    indexer.configure(ConfigFactory.parseMap(context));
     indexer.start();
     
     deleteAllDocuments();

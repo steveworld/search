@@ -91,7 +91,7 @@ public class SolrSink extends AbstractSink implements Configurable {
     indexer.setName(getName());
 //    Config config = ConfigFactory.load();    
     Config config = ConfigFactory.parseMap(context.getParameters());
-    indexer.configure(new Configuration(config));
+    indexer.configure(config);
     
     if (sinkCounter == null) {
       sinkCounter = new SinkCounter(getName());
