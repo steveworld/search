@@ -19,6 +19,7 @@ package org.apache.solr.hadoop.tika;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -389,7 +390,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     FileSystem fs = fullInputList.getFileSystem(conf);
     FSDataOutputStream out = fs.create(fullInputList);
     try {
-      Writer writer = new OutputStreamWriter(out, "UTF-8");
+      Writer writer = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"));
       
       for (Path inputFile : inputFiles) {
         FileSystem inputFileFs = inputFile.getFileSystem(conf);
