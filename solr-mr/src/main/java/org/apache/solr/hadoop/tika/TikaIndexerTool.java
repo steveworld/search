@@ -271,7 +271,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     if (mappers == -1) { 
       mappers = new JobClient(job.getConfiguration()).getClusterStatus().getMaxMapTasks(); // MR1
       //mappers = job.getCluster().getClusterStatus().getMapSlotCapacity(); // Yarn; FIXME support both MR1 and Yarn simultaneously
-      mappers = 2 * mappers; // accomodate stragglers
+      mappers = 2 * mappers; // better accomodate stragglers
       LOG.info("Choosing dynamic number of mappers: {}", mappers);
     }
     if (mappers <= 0) {
