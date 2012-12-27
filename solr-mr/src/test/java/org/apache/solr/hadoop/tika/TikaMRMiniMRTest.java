@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -120,9 +119,11 @@ public class TikaMRMiniMRTest extends Assert {
     }
     if (mrCluster != null) {
       mrCluster.shutdown();
+      mrCluster = null;
     }
     if (dfsCluster != null) {
       dfsCluster.shutdown();
+      dfsCluster = null;
     }
   }
 
@@ -180,15 +181,11 @@ public class TikaMRMiniMRTest extends Assert {
     assertTrue(job.waitForCompletion(true));
     */
     String[] args = new String[] {
-        "--solrhomedir", MINIMR_CONF_DIR.getAbsolutePath(),
-        "--outputdir", outDir.toString(),
+        "--solrhomedir=" + MINIMR_CONF_DIR.getAbsolutePath(),
+        "--outputdir=" + outDir.toString(),
         "--verbose",
+        ++numRuns % 2 == 0 ? "--inputlist=" + INPATH.toString() : dataDir.toString()
     };
-    if (++numRuns % 2 == 0) {
-      args = concat(args, new String[] { "--inputlist", INPATH.toString() });
-    } else {
-      args = concat(args, new String[] { dataDir.toString() });      
-    }
     TikaIndexerTool tool = new TikaIndexerTool();
     int res = ToolRunner.run(jobConf, tool, args);
     assertEquals(0, res);
@@ -207,22 +204,4 @@ public class TikaMRMiniMRTest extends Assert {
 
     Utils.validateSolrServerDocumentCount(MINIMR_CONF_DIR, fs, outDir, count);
   }
-
-  private static <T> T[] concat(T[]... arrays) {    
-    if (arrays.length == 0) throw new IllegalArgumentException();
-    Class clazz = null;
-    int length = 0;
-    for (T[] array : arrays) {
-      clazz = array.getClass();
-      length += array.length;
-    }
-    T[] result = (T[]) Array.newInstance(clazz.getComponentType(), length);
-    int pos = 0;
-    for (T[] array : arrays) {
-      System.arraycopy(array, 0, result, pos, array.length);
-      pos += array.length;
-    }
-    return result;
-  }
-
 }
