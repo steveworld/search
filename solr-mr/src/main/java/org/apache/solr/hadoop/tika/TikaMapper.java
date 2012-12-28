@@ -27,7 +27,6 @@ import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.flume.sink.solr.indexer.Configuration;
 import org.apache.flume.sink.solr.indexer.ConfigurationException;
 import org.apache.flume.sink.solr.indexer.DocumentLoader;
 import org.apache.flume.sink.solr.indexer.SolrCollection;
