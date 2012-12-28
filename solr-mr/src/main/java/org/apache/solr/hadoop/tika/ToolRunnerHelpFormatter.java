@@ -21,10 +21,10 @@ package org.apache.solr.hadoop.tika;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringReader;
+import java.io.StringWriter;
 
 import net.sourceforge.argparse4j.helper.ASCIITextWidthCounter;
 import net.sourceforge.argparse4j.helper.TextHelper;
@@ -67,11 +67,10 @@ class ToolRunnerHelpFormatter {
         } else {
           String title = line.substring(0, i).trim();
           String help = line.substring(i, line.length()).trim();
-          bout.reset();
-          PrintWriter writer = new PrintWriter(new OutputStreamWriter(bout, "UTF-8"), true);
+          StringWriter strWriter = new StringWriter(); 
+          PrintWriter writer = new PrintWriter(strWriter, true);
           TextHelper.printHelp(writer, title, help, new ASCIITextWidthCounter(), ArgumentParserImpl.FORMAT_WIDTH);
-          String formattedLine = new String(bout.toByteArray(), "UTF-8");
-          result.append(formattedLine);          
+          result.append(strWriter.toString());          
         }        
       }
     }
