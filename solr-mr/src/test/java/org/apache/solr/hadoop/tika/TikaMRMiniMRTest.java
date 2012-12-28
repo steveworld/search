@@ -48,6 +48,7 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(value = Parameterized.class)
 public class TikaMRMiniMRTest extends Assert {
   private static final String RESOURCES_DIR = "target/test-classes";
+  private static final String DOCUMENTS_DIR = RESOURCES_DIR + "/test-documents";
   private static final File MINIMR_CONF_DIR = new File(RESOURCES_DIR + "/solr/minimr");
   private static File solrHomeZip;
 
@@ -150,7 +151,7 @@ public class TikaMRMiniMRTest extends Assert {
     wr.close();
 
     assertTrue(fs.mkdirs(dataDir));
-    fs.copyFromLocalFile(new Path(RESOURCES_DIR, inputAvroFile), dataDir);
+    fs.copyFromLocalFile(new Path(DOCUMENTS_DIR, inputAvroFile), dataDir);
 
     JobConf jobConf = getJobConf();
     // enable mapred.job.tracker = local to run in debugger and set breakpoints

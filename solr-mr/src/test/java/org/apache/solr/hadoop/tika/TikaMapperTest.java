@@ -30,6 +30,10 @@ import org.apache.solr.hadoop.SolrOutputFormat;
 import org.junit.Test;
 
 public class TikaMapperTest extends MRUnitBase {
+  
+  private static final String RESOURCES_DIR = "target/test-classes";
+  private static final String DOCUMENTS_DIR = RESOURCES_DIR + "/test-documents";
+
   @Test
   public void testMapper() throws Exception {
     TikaMapper mapper = new TikaMapper();
@@ -38,7 +42,7 @@ public class TikaMapperTest extends MRUnitBase {
     Configuration config = mapDriver.getConfiguration();
     config.set(SolrOutputFormat.ZIP_NAME, solrHomeZip.getName());
 
-    mapDriver.withInput(new LongWritable(0L), new Text(new File("target/test-classes/sample-statuses-20120906-141433.avro").toURI().toString()));
+    mapDriver.withInput(new LongWritable(0L), new Text(new File(DOCUMENTS_DIR + "/sample-statuses-20120906-141433.avro").toURI().toString()));
 
     SolrInputDocument sid = new SolrInputDocument();
     sid.addField("id", "uniqueid1");
