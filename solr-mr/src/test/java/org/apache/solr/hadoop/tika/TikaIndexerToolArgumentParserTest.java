@@ -153,6 +153,7 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
     assertEquals(new Integer(0), parser.parseArgs(args, fs, opts));
     String helpText = new String(bout.toByteArray(), "UTF-8");
     assertTrue(helpText.contains("Map Reduce job that creates a set of Solr index shards"));
+    assertTrue(helpText.contains("bin/hadoop command"));
     assertEquals(0, berr.toByteArray().length);
   }
   
