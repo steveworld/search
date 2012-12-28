@@ -117,7 +117,8 @@ public class TikaIndexerTool extends Configured implements Tool {
           public void run(ArgumentParser parser, Argument arg, Map<String, Object> attrs, String flag, Object value) throws ArgumentParserException {
             parser.printHelp(new PrintWriter(System.out));  
             System.out.println();
-            ToolRunner.printGenericCommandUsage(System.out);
+            System.out.print(ToolRunnerHelpFormatter.getGenericCommandUsage());
+            //ToolRunner.printGenericCommandUsage(System.out);
             System.out.println(
               "Examples: \n\n" + 
               "sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1" +
@@ -127,7 +128,7 @@ public class TikaIndexerTool extends Configured implements Tool {
               " hdfs:///user/foo/tikaindexer-input"  
               );
             throw new FoundHelpArgument(); // Trick to prevent processing of any remaining arguments
-          }        
+          }
         });
       
       Argument inputListArg = parser.addArgument("--inputlist")
