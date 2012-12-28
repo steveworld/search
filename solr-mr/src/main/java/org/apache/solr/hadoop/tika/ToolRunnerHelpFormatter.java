@@ -25,6 +25,7 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 
 import net.sourceforge.argparse4j.helper.ASCIITextWidthCounter;
 import net.sourceforge.argparse4j.helper.TextHelper;
@@ -39,21 +40,29 @@ import org.apache.hadoop.util.ToolRunner;
 class ToolRunnerHelpFormatter {
   
   public static String getGenericCommandUsage() {
-    try {
-      return getGenericCommandUsage2();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-  
-  private static String getGenericCommandUsage2() throws IOException {
     ByteArrayOutputStream bout = new ByteArrayOutputStream();
-    ToolRunner.printGenericCommandUsage(new PrintStream(bout, true, "UTF-8"));
-    String msg = new String(bout.toByteArray(), "UTF-8");
+    String msg;
+    try {
+      ToolRunner.printGenericCommandUsage(new PrintStream(bout, true, "UTF-8"));
+      msg = new String(bout.toByteArray(), "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e); // unreachable
+    }
+    
     BufferedReader reader = new BufferedReader(new StringReader(msg));    
     StringBuilder result = new StringBuilder();
-    String line;
-    while ((line = reader.readLine()) != null) {
+    while (true) {
+      String line;
+      try {
+        line = reader.readLine();
+      } catch (IOException e) {
+        throw new RuntimeException(e); // unreachable
+      }
+      
+      if (line == null) {
+        return result.toString(); // EOS
+      }
+      
       if (!line.startsWith("-")) {
         result.append(line + "\n");
       } else {
@@ -74,7 +83,6 @@ class ToolRunnerHelpFormatter {
         }        
       }
     }
-    return result.toString();
   }
 }
 
