@@ -58,6 +58,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.solr.hadoop.BatchWriter;
 import org.apache.solr.hadoop.IdentityMapper;
 import org.apache.solr.hadoop.IdentityReducer;
 import org.apache.solr.hadoop.LineRandomizerMapper;
@@ -166,6 +167,18 @@ public class TikaIndexerTool extends Configured implements Tool {
         .setDefault(1)
         .help("Number of output shards to use");
   
+      Argument maxSegmentsArg = parser.addArgument("--maxSegments")
+        .metavar("INTEGER")
+        .type(Integer.class)
+        .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
+        .setDefault(1)
+        .help("Maximum number of segments to be contained in the index of each shard. Forces each node to apply " + 
+            "a merge policy to merge segments until there are <= maxNumSegments lucene segments left per node " + 
+            "output index. Set this parameter to 1 to fully optimize the index. An index with fewer segments can " +
+            "later be merged faster, and it can later be queried faster once deployed to a live Solr serving shard. " + 
+            "However, this is a very I/O intensive operation if maxSegments is small. " + 
+            "In a nutshell, decreasing this parameter trades indexing latency for subsequently improved query latency.");      
+      
       Argument fairSchedulerPoolArg = parser.addArgument("--fairschedulerpool")
         .metavar("STRING")
         .help("Name of MR fair scheduler pool to submit job to");
@@ -209,6 +222,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       opts.outputDir = (Path) ns.get(outputDirArg.getDest());
       opts.mappers = ns.getInt(mappersArg.getDest());
       opts.shards = ns.getInt(shardsArg.getDest());
+      opts.maxSegments = ns.getInt(maxSegmentsArg.getDest());
       opts.solrHomeDir = (File) ns.get(solrHomeDirArg.getDest());
       opts.fairSchedulerPool = (String) ns.get(fairSchedulerPoolArg.getDest());
       opts.isRandomize = !ns.getBoolean(noRandomizeArg.getDest());
@@ -235,6 +249,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     Path outputDir;
     int mappers;
     int shards;
+    int maxSegments;
     File solrHomeDir;
     String fairSchedulerPool;
     boolean isRandomize;
@@ -331,11 +346,13 @@ public class TikaIndexerTool extends Configured implements Tool {
       LOG.info("Indexing files...");
       job.setMapperClass(TikaMapper.class);
       job.setReducerClass(SolrReducer.class);
+      //job.setPartitionerClass(MyPartitioner.class);
       job.setOutputFormatClass(SolrOutputFormat.class);
       SolrOutputFormat.setupSolrHomeCache(options.solrHomeDir, job);  
       job.setNumReduceTasks(options.shards);  
       job.setOutputKeyClass(Text.class);
       job.setOutputValueClass(SolrInputDocumentWritable.class);
+      job.getConfiguration().setInt(BatchWriter.MAX_SEGMENTS, options.maxSegments);
     }
 
     return job.waitForCompletion(options.isVerbose) ? 0 : -1;
