@@ -167,7 +167,7 @@ public class TikaIndexerTool extends Configured implements Tool {
         .setDefault(1)
         .help("Number of output shards to use");
   
-      Argument maxSegmentsArg = parser.addArgument("--maxSegments")
+      Argument maxSegmentsArg = parser.addArgument("--maxsegments")
         .metavar("INTEGER")
         .type(Integer.class)
         .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
