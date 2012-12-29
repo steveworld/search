@@ -39,7 +39,7 @@ public class Utils {
       throws IOException, ParserConfigurationException, SAXException, SolrServerException {
     
     EmbeddedSolrServer solr = SolrRecordWriter.createEmbeddedSolrServer(
-        new Path(solrHomeDir.getAbsolutePath()), fs, new Path(outDir, "shard-00000"));
+        new Path(solrHomeDir.getAbsolutePath()), fs, new Path(outDir, "shard-0000000-000"));
     try {
       SolrQuery query = new SolrQuery();
       query.setQuery("*:*");

@@ -123,7 +123,7 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
   private BatchWriter batchWriter = null;
 
   private static HashMap<TaskID, Reducer<?,?,?,?>.Context> contextMap = new HashMap<TaskID, Reducer<?,?,?,?>.Context>();
-
+  
   protected boolean isClosing() {
     return closing;
   }
@@ -139,12 +139,17 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     TaskID taskId = context.getTaskAttemptID().getTaskID();
     int partition = taskId.getId();
     NumberFormat nf = NumberFormat.getInstance();
-    nf.setMinimumIntegerDigits(5);
+    nf.setMinimumIntegerDigits(7);
     nf.setGroupingUsed(false);
+    NumberFormat nf2 = NumberFormat.getInstance();
+    nf2.setMinimumIntegerDigits(3);
+    nf2.setGroupingUsed(false);
     StringBuilder result = new StringBuilder();
     result.append(prefix);
     result.append("-");
     result.append(nf.format(partition));
+    result.append("-");
+    result.append(nf2.format(context.getTaskAttemptID().getId()));
     return result.toString();
   }
 
@@ -252,16 +257,24 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
             "-lR", unpackedDir.toString() });
         lsCmd.redirectErrorStream();
         Process ls = lsCmd.start();
+        byte[] buf = new byte[16 * 1024];
+        InputStream all = ls.getInputStream();
         try {
-          byte[] buf = new byte[16 * 1024];
-          InputStream all = ls.getInputStream();
           int count;
-          while ((count = all.read(buf)) > 0) {
+          while ((count = all.read(buf)) >= 0) {
             System.err.write(buf, 0, count);
           }
         } catch (IOException ignore) {
+        } finally {
+          all.close();
         }
-        System.err.format("Exit value is %d%n", ls.exitValue());
+        String exitValue;
+        try {
+          exitValue = String.valueOf(ls.waitFor());
+        } catch (InterruptedException e) {
+          exitValue = "interrupted";
+        }
+        System.err.format("Exit value is %s%n", exitValue);
       }
       if (unpackedDir.getName().equals(SolrOutputFormat.getZipName(conf))) {
 
