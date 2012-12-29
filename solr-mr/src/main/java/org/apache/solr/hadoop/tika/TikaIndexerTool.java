@@ -176,7 +176,7 @@ public class TikaIndexerTool extends Configured implements Tool {
             "a merge policy to merge segments until there are <= maxSegments lucene segments left per node " + 
             "output index. Set this parameter to 1 to fully optimize the index. An index with fewer segments can " +
             "later be merged faster, and it can later be queried faster once deployed to a live Solr serving shard. " + 
-            "However, this is a very I/O intensive operation if maxSegments is small. " + 
+            "However, merging segments is very I/O intensive if maxSegments is small. " + 
             "In a nutshell, decreasing this parameter trades indexing latency for subsequently improved query latency.");      
       
       Argument fairSchedulerPoolArg = parser.addArgument("--fairschedulerpool")
