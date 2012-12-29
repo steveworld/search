@@ -175,10 +175,11 @@ public class TikaIndexerTool extends Configured implements Tool {
         .help("Maximum number of segments to be contained on output in the index of each shard. " +
             "After a shard has built its output index it applies a merge policy to merge segments " +
             "until there are <= maxSegments lucene segments left in this index. " + 
-            "An index with fewer segments can later be merged faster, " +
+            "Merging segments involves reading and rewriting all data in all these segment files, " + 
+            "potentially multiple times, which is very I/O intensive and time consuming. " + 
+            "However, an index with fewer segments can later be merged faster, " +
             "and it can later be queried faster once deployed to a live Solr serving shard. " + 
-            "Set maxSegments to 1 to fully optimize the index for low query latency. " + 
-            "However, note that merging segments is very I/O intensive if maxSegments is small. " + 
+            "Set maxSegments to 1 to optimize the index for low query latency. " + 
             "In a nutshell, a small maxSegments value trades indexing latency for subsequently improved query latency. " + 
             "This can be a reasonable trade-off for batch indexing systems.");
       
