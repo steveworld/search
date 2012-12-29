@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class runs a background thread that once ever 5 seconds checks to see if
+ * This class runs a background thread that once every 60 seconds checks to see if
  * a progress report is needed. If a report is needed it is issued.
  * 
  * A simple counter {@link #threadsNeedingHeartBeat} handles the number of
@@ -59,7 +59,7 @@ class HeartBeater extends Thread {
    * The amount of time to wait between checks for the need to issue a heart
    * beat. In milliseconds.
    */
-  long waitTimeMs = TimeUnit.MILLISECONDS.convert(5, TimeUnit.SECONDS);
+  long waitTimeMs = TimeUnit.MILLISECONDS.convert(60, TimeUnit.SECONDS);
 
   public Progressable getProgress() {
     return progress;
@@ -68,7 +68,7 @@ class HeartBeater extends Thread {
   /**
    * Create the heart beat object thread set it to daemon priority and start the
    * thread. When the count in {@link #threadsNeedingHeartBeat} is positive, the
-   * heart beat will be issued on the progress object ever 5 seconds.
+   * heart beat will be issued on the progress object every 60 seconds.
    */
   public HeartBeater(Progressable progress) {
     setDaemon(true);
