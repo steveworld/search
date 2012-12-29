@@ -46,6 +46,8 @@ public class BatchWriter {
 
   public static final String COUNTER_BATCHES_WRITTEN = "BatchesWritten";
 
+  public static final String MAX_SEGMENTS = "MaxSegments";
+
   final EmbeddedSolrServer solr;
 
   final List<SolrInputDocument> batchToWrite;
@@ -192,7 +194,9 @@ public class BatchWriter {
     //reporter.setStatus("Committing Solr");
     //solr.commit(true, false);
     context.setStatus("Optimizing Solr");
-    solr.optimize(true, false, 1);
+    int maxSegments = context.getConfiguration().getInt(MAX_SEGMENTS, 1);
+    LOG.info("Optimizing Solr: forcing merge down to {} segments", maxSegments);
+    solr.optimize(true, false, maxSegments);
     context.setStatus("Shutting down Solr");
     // TODO is core close needed? - according to TestEmbeddedSolrServer it's not...
     //core.close();
