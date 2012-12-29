@@ -172,13 +172,15 @@ public class TikaIndexerTool extends Configured implements Tool {
         .type(Integer.class)
         .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
         .setDefault(1)
-        .help("Maximum number of segments to be contained in the index of each shard. Forces each node to apply " + 
-            "a merge policy to merge segments until there are <= maxSegments lucene segments left per node " + 
-            "output index. Set this parameter to 1 to optimize the index for low query latency. " + 
+        .help("Maximum number of segments to be contained on output in the index of each shard. " +
+            "After a shard has built its output index it applies a merge policy to merge segments " +
+            "until there are <= maxSegments lucene segments left in this index. " + 
             "An index with fewer segments can later be merged faster, " +
             "and it can later be queried faster once deployed to a live Solr serving shard. " + 
-            "However, merging segments is very I/O intensive if maxSegments is small. " + 
-            "In a nutshell, decreasing this parameter trades indexing latency for subsequently improved query latency.");      
+            "Set maxSegments to 1 to fully optimize the index for low query latency. " + 
+            "However, note that merging segments is very I/O intensive if maxSegments is small. " + 
+            "In a nutshell, a small maxSegments value trades indexing latency for subsequently improved query latency. " + 
+            "This can be a reasonable trade-off for batch indexing systems.");
       
       Argument fairSchedulerPoolArg = parser.addArgument("--fairschedulerpool")
         .metavar("STRING")
