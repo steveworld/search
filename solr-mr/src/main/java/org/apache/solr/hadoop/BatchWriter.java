@@ -196,7 +196,9 @@ public class BatchWriter {
     context.setStatus("Optimizing Solr");
     int maxSegments = context.getConfiguration().getInt(MAX_SEGMENTS, 1);
     LOG.info("Optimizing Solr: forcing merge down to {} segments", maxSegments);
+    long start = System.currentTimeMillis();
     solr.optimize(true, false, maxSegments);
+    LOG.info("Optimizing Solr: done forcing merge down to {} segments in {} millis", maxSegments, System.currentTimeMillis() - start);
     context.setStatus("Shutting down Solr");
     // TODO is core close needed? - according to TestEmbeddedSolrServer it's not...
     //core.close();
