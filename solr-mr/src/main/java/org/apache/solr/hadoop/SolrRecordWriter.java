@@ -139,7 +139,7 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     TaskID taskId = context.getTaskAttemptID().getTaskID();
     int partition = taskId.getId();
     NumberFormat nf = NumberFormat.getInstance();
-    nf.setMinimumIntegerDigits(7);
+    nf.setMinimumIntegerDigits(9);
     nf.setGroupingUsed(false);
     NumberFormat nf2 = NumberFormat.getInstance();
     nf2.setMinimumIntegerDigits(3);
