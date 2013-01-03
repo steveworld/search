@@ -103,6 +103,10 @@ public class TikaIndexerTool extends Configured implements Tool {
       assert args != null;
       assert fs != null;
       assert opts != null;
+
+      if (args.length == 0) {
+        args = new String[] { "--help" };
+      }
       
       ArgumentParser parser = ArgumentParsers
         .newArgumentParser("hadoop [GenericOptions]... jar solr-mr-*-job.jar ", false)
@@ -112,7 +116,7 @@ public class TikaIndexerTool extends Configured implements Tool {
             "and writes the indexes into HDFS, in a scalable and fault-tolerant manner.");
   
       parser.addArgument("--help", "-h")
-        .help("show this help message and exit")
+        .help("Show this help message and exit")
         .action(new HelpArgumentAction() {
           @Override
           public void run(ArgumentParser parser, Argument arg, Map<String, Object> attrs, String flag, Object value) throws ArgumentParserException {
@@ -143,7 +147,17 @@ public class TikaIndexerTool extends Configured implements Tool {
       
       Argument outputDirArg = parser.addArgument("--outputdir")
         .metavar("HDFS_URI")
-        .type(new ArgumentTypes.PathArgumentType(fs).verifyScheme(fs.getScheme()).verifyCanWriteParent())
+        .type(new ArgumentTypes.PathArgumentType(fs) {
+          @Override
+          public Path convert(ArgumentParser parser, Argument arg, String value) throws ArgumentParserException {
+            Path path = super.convert(parser, arg, value);
+            if ("hdfs".equals(path.toUri().getScheme()) && path.toUri().getAuthority() == null) {
+              // TODO: consider defaulting to hadoop's fs.default.name here or in SolrRecordWriter.createEmbeddedSolrServer()
+              throw new ArgumentParserException("Missing authority in path URI: " + path, parser); 
+            }
+            return path;
+          }
+        }.verifyScheme(fs.getScheme()).verifyIsAbsolute().verifyCanWriteParent())
         .required(true)
         .help("HDFS directory to write Solr indexes to");
       
@@ -324,7 +338,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       int numLinesPerRandomizerSplit = Math.max(1000 * 1000, numLinesPerSplit);
       
       Job randomizerJob = randomizeInputFiles(fullInputList, outputStep2Dir, numLinesPerRandomizerSplit, options.fairSchedulerPool);
-      if (!randomizerJob.waitForCompletion(options.isVerbose)) {
+      if (!waitForCompletion(randomizerJob, options.isVerbose)) {
         return -1; // job failed
       }
     } else {
@@ -359,7 +373,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       job.getConfiguration().setInt(BatchWriter.MAX_SEGMENTS, options.maxSegments);
     }
 
-    return job.waitForCompletion(options.isVerbose) ? 0 : -1;
+    return waitForCompletion(job, options.isVerbose) ? 0 : -1;
   }
 
   /**
@@ -390,7 +404,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     LOG.info("Randomizing full input list file for solr mappers {}", fullInputList);
     Job job2 = Job.getInstance(new Configuration(getConf()));
     job2.setJarByClass(getClass());
-    job2.setJobName(getClass().getName() + "-randomizer");
+    job2.setJobName(getClass().getName() + "/Randomizer");
     job2.setInputFormatClass(NLineInputFormat.class);
     NLineInputFormat.addInputPath(job2, fullInputList);
     NLineInputFormat.setNumLinesPerSplit(job2, numLinesPerSplit);          
@@ -472,6 +486,14 @@ public class TikaIndexerTool extends Configured implements Tool {
       }
     }
     return numFiles;
+  }
+  
+  private boolean waitForCompletion(Job job, boolean isVerbose) throws IOException, InterruptedException, ClassNotFoundException {
+    boolean success = job.waitForCompletion(isVerbose);
+    if (!success) {
+      LOG.error("Job failed! jobName: {}, jobId: {}", job.getJobName(), job.getJobID());
+    }
+    return success;
   }
     
 }
