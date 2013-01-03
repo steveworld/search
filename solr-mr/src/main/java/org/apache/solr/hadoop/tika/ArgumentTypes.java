@@ -307,6 +307,9 @@ public class ArgumentTypes {
         if (verifyScheme != null && !isSystemIn(file)) {
           verifyScheme(parser, file);
         }        
+        if (verifyIsAbsolute && !isSystemIn(file)) {
+          verifyIsAbsolute(parser, file);
+        }
         if (verifyExists && !isSystemIn(file)) {
           verifyExists(parser, file);
         }
@@ -331,10 +334,6 @@ public class ArgumentTypes {
         if (verifyCanExecute && !isSystemIn(file)) {
           verifyCanExecute(parser, file);
         }
-        if (verifyIsAbsolute && !isSystemIn(file)) {
-          verifyIsAbsolute(parser, file);
-        }
-        verifyCustom(parser, file);
       } catch (IOException e) {
         throw new ArgumentParserException(e, parser);
       }
@@ -405,9 +404,6 @@ public class ArgumentTypes {
       }
     }
 
-    protected void verifyCustom(ArgumentParser parser, Path file) throws ArgumentParserException, IOException {      
-    }
-        
     protected boolean isSystemIn(Path file) {
       return acceptSystemIn && file.toString().equals("-");
     }

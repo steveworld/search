@@ -190,18 +190,18 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     if (solrHomeDir == null) {
       throw new IOException("Unable to find solr home setting");
     }
-    LOG.info("SolrHome: " + solrHomeDir.toUri());
+    LOG.info("Creating embedded Solr server with solrHomeDir: " + solrHomeDir + ", fs: " + fs + ", outputShardDir: " + outputShardDir);
 
     Properties props = new Properties();
     // FIXME note this is odd (no scheme) given Solr doesn't currently
     // support uris (just abs/relative path)
     Path solrDataDir = new Path(outputShardDir, "data");
     if (!fs.exists(solrDataDir) && !fs.mkdirs(solrDataDir)) {
-      throw new IOException("Unsable to create " + solrDataDir);
+      throw new IOException("Unable to create " + solrDataDir);
     }
     // FIXME hdfsdirectory expects absolute path, solr doesn't generally
     // though
-    String dataDirStr = solrDataDir.toUri().toString().substring(6);
+    String dataDirStr = solrDataDir.toUri().toString().substring("hdfs://".length() - 1); // FIXME hack alert!
     props.setProperty("solr.data.dir", dataDirStr);
     props.setProperty("solr.home", solrHomeDir.toString());
 
@@ -210,7 +210,7 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
 
     LOG.info(String
         .format(
-            "Constructed instance information solr.home %s (%s), instance dir %s, conf dir %s, writing index to %s, with permdir %s",
+            "Constructed instance information solr.home %s (%s), instance dir %s, conf dir %s, writing index to solr.data.dir %s, with permdir %s",
             solrHomeDir, solrHomeDir.toUri(), loader.getInstanceDir(),
             loader.getConfigDir(), dataDirStr, outputShardDir));
 
@@ -274,10 +274,10 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
         } catch (InterruptedException e) {
           exitValue = "interrupted";
         }
-        System.err.format("Exit value is %s%n", exitValue);
+        System.err.format("Exit value of 'ls -lR' is %s%n", exitValue);
       }
       if (unpackedDir.getName().equals(SolrOutputFormat.getZipName(conf))) {
-
+        LOG.info("Using this unpacked directory as solr home: {}", unpackedDir);
         solrHome = unpackedDir;
         break;
       }
