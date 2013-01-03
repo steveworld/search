@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.Random;
 import java.util.Set;
 
 import org.apache.flume.sink.solr.indexer.ParseInfo;
@@ -91,9 +92,16 @@ public class TwitterTestParser extends AbstractParser {
   private void parse2(InputStream in, ContentHandler handler, Metadata metadata, ParseContext context)
       throws IOException, SolrServerException {
 
-    getParseInfo(context).setMultiDocumentParser(true); // TODO hack alert!
+    ParseInfo parseInfo = getParseInfo(context); 
+    parseInfo.setMultiDocumentParser(true); // TODO hack alert!
 
-    String idPrefix = "";
+    String idPrefix = System.getProperty("idPrefix");
+    if ("random".equals(idPrefix)) {
+      idPrefix = String.valueOf(new Random().nextInt());
+    } else if (idPrefix == null) {
+      idPrefix = "";
+    }
+    
     ObjectMapper mapper = new ObjectMapper();
     BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
     while (true) {
@@ -136,7 +144,7 @@ public class TwitterTestParser extends AbstractParser {
       tryAddString(doc, "user_screen_name", user.get("screen_name"));
       tryAddString(doc, "user_name", user.get("name"));
       
-      getParseInfo(context).getIndexer().load(Collections.singletonList(doc));
+      parseInfo.getIndexer().load(Collections.singletonList(doc));
     }
   }
 
