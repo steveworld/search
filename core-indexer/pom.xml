@@ -81,6 +81,12 @@
       </exclusions>                  
     </dependency>
     
+    <dependency> <!-- see http://wiki.fasterxml.com/JacksonHome -->
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+
     <dependency> <!-- see http://code.google.com/p/jcsv -->
       <groupId>com.googlecode.jcsv</groupId>
       <artifactId>jcsv</artifactId>

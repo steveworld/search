@@ -167,6 +167,8 @@ public class TestTikaIndexer extends SolrJettyTestBase {
         path + "/cars.csv.gz",
         path + "/cars.tar.gz",
         path + "/sample-statuses-20120906-141433.avro",
+        path + "/sample-statuses-20120906-141433.gz",
+        path + "/sample-statuses-20120906-141433.bz2",
     };
     testDocumentTypesInternal(files);
   }
@@ -240,6 +242,8 @@ public class TestTikaIndexer extends SolrJettyTestBase {
       String path = RESOURCES_DIR + "/test-documents";
       Map<String,Integer> numRecords = new HashMap();
       numRecords.put(path + "/sample-statuses-20120906-141433.avro", 2);
+      numRecords.put(path + "/sample-statuses-20120906-141433.gz", 2);
+      numRecords.put(path + "/sample-statuses-20120906-141433.bz2", 2);
       numRecords.put(path + "/cars.csv", 5);
       numRecords.put(path + "/cars.csv.gz", 5);
       numRecords.put(path + "/cars.tar.gz", 4);

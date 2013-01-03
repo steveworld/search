@@ -24,12 +24,6 @@
   <name>Flume NG Solr Sink Examples</name>
 
   <dependencies>
-    <dependency> <!-- see http://wiki.fasterxml.com/JacksonHome -->
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>${jackson.version}</version>
-    </dependency>
-
     <dependency> <!-- see http://hc.apache.org -->
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
@@ -44,6 +38,12 @@
     </dependency>    
 
     <dependency>
+      <groupId>org.apache.flume.flume-ng-sinks</groupId>
+      <artifactId>flume-ng-solr-core-indexer</artifactId>
+      <version>1.2.0-cdh4.2.0-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
@@ -53,6 +53,47 @@
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>${maven.antrun.plugin.version}</version>
+        <executions>
+          <execution>
+            <id>copy-env</id>
+            <phase>generate-sources</phase>
+            <configuration>
+              <target>
+                <mkdir dir="${project.build.directory}/generated-sources/src/main/java/org/apache/flume/sink/solr/indexer"/>
+                <copy file="${basedir}/../core-indexer/src/test/java/org/apache/flume/sink/solr/indexer/TwitterTestParser.java" todir="${project.build.directory}/generated-sources/src/main/java/org/apache/flume/sink/solr/indexer">
+                </copy>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>    
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>${build.helper.maven.plugin.version}</version>
+        <executions>
+          <execution>
+            <id>add-sources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${project.build.directory}/generated-sources/src/main/java</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 </project>

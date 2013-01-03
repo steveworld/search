@@ -23,4 +23,10 @@
     <glob pattern="*.avro"/>
   </mime-type>
 
+  <mime-type type="mytwittertest/json+delimited+length">
+    <magic priority="50">
+      <match value="[0-9]+\r\n\\{&quot;" type="regex" offset="0:16"/>       
+    </magic>
+  </mime-type>
+
 </mime-info>
