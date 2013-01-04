@@ -97,7 +97,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       LOG.info("Ignoring file that somehow has been deleted since the job was submitted: {}", path);
       return;
     }
-    LOG.info("Processing file: {}", path);
+    LOG.info("Processing {}", path);
     FSDataInputStream in = fs.open(path);
     try {
       Map<String,String> headers = new HashMap<String, String>();
