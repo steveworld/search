@@ -144,6 +144,7 @@ public class TwitterTestParser extends AbstractParser {
       tryAddString(doc, "user_screen_name", user.get("screen_name"));
       tryAddString(doc, "user_name", user.get("name"));
       
+      LOGGER.debug("tweetdoc: {}", doc);
       parseInfo.getIndexer().load(Collections.singletonList(doc));
     }
   }
