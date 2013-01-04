@@ -19,7 +19,6 @@
 package org.apache.flume.sink.solr.indexer;
 
 import java.io.BufferedReader;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -28,7 +27,6 @@ import java.util.Collections;
 import java.util.Random;
 import java.util.Set;
 
-import org.apache.flume.sink.solr.indexer.ParseInfo;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.tika.exception.TikaException;
@@ -41,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -105,18 +104,19 @@ public class TwitterTestParser extends AbstractParser {
     ObjectMapper mapper = new ObjectMapper();
     BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
     while (true) {
-      String json;
-      try {
-        json = nextLine(reader);
-      } catch (EOFException e) {
-        LOGGER.debug("premature EOF", e);
-        break;
-      }
+      String json = nextLine(reader);
       if (json == null) {
         break;
       }
-      // src can be a File, URL, InputStream, etc
-      JsonNode rootNode = mapper.readValue(json, JsonNode.class); 
+
+      JsonNode rootNode;
+      try {
+        // src can be a File, URL, InputStream, etc
+        rootNode = mapper.readValue(json, JsonNode.class); 
+      } catch (JsonParseException e) {
+        LOGGER.debug("json parse exception", e);
+        break;
+      }
   
       SolrInputDocument doc = new SolrInputDocument();
       JsonNode user = rootNode.get("user");
