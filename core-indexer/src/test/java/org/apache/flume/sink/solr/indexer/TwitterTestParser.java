@@ -103,6 +103,7 @@ public class TwitterTestParser extends AbstractParser {
     
     ObjectMapper mapper = new ObjectMapper();
     BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+    long numRecords = 0;
     while (true) {
       String json = nextLine(reader);
       if (json == null) {
@@ -114,7 +115,7 @@ public class TwitterTestParser extends AbstractParser {
         // src can be a File, URL, InputStream, etc
         rootNode = mapper.readValue(json, JsonNode.class); 
       } catch (JsonParseException e) {
-        LOGGER.debug("json parse exception", e);
+        LOGGER.debug("json parse exception after " + numRecords + " records", e);
         break;
       }
   
@@ -146,6 +147,7 @@ public class TwitterTestParser extends AbstractParser {
       
       LOGGER.debug("tweetdoc: {}", doc);
       parseInfo.getIndexer().load(Collections.singletonList(doc));
+      numRecords++;
     }
   }
 
