@@ -129,7 +129,7 @@ public class TikaIndexerTool extends Configured implements Tool {
               "sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1" +
               " jar solr-mr-*-job.jar " +
               " --solrhomedir /home/foo/solr" +
-              " --outputdir hdfs:///user/foo/tikaindexer-output" + 
+              " --outputdir hdfs://c2202.mycompany.com/user/foo/tikaindexer-output" + 
               " hdfs:///user/foo/tikaindexer-input"  
               );
             throw new FoundHelpArgument(); // Trick to prevent processing of any remaining arguments
