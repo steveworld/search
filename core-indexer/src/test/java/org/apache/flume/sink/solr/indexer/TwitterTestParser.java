@@ -101,53 +101,58 @@ public class TwitterTestParser extends AbstractParser {
       idPrefix = "";
     }
     
+    long numRecords = 0;
     ObjectMapper mapper = new ObjectMapper();
     BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-    long numRecords = 0;
-    while (true) {
-      String json = nextLine(reader);
-      if (json == null) {
-        break;
-      }
-
-      JsonNode rootNode;
-      try {
-        // src can be a File, URL, InputStream, etc
-        rootNode = mapper.readValue(json, JsonNode.class); 
-      } catch (JsonParseException e) {
-        LOGGER.debug("json parse exception after " + numRecords + " records", e);
-        break;
-      }
+    try {
+      while (true) {
+        String json = nextLine(reader);
+        if (json == null) {
+          break;
+        }
   
-      SolrInputDocument doc = new SolrInputDocument();
-      JsonNode user = rootNode.get("user");
-      JsonNode idNode = rootNode.get("id_str");
-      if (idNode == null || idNode.textValue() == null) {
-        continue; // skip
+        JsonNode rootNode;
+        try {
+          // src can be a File, URL, InputStream, etc
+          rootNode = mapper.readValue(json, JsonNode.class); 
+        } catch (JsonParseException e) {
+          LOGGER.info("json parse exception after " + numRecords + " records");
+          LOGGER.debug("json parse exception after " + numRecords + " records", e);
+          break;
+        }
+    
+        SolrInputDocument doc = new SolrInputDocument();
+        JsonNode user = rootNode.get("user");
+        JsonNode idNode = rootNode.get("id_str");
+        if (idNode == null || idNode.textValue() == null) {
+          continue; // skip
+        }
+    
+        doc.addField("id", idPrefix + idNode.textValue());
+        tryAddDate(doc, "created_at", rootNode.get("created_at"));
+        tryAddString(doc, "source", rootNode.get("source"));
+        tryAddString(doc, "text", rootNode.get("text"));
+        tryAddInt(doc, "retweet_count", rootNode.get("retweet_count"));
+        tryAddBool(doc, "retweeted", rootNode.get("retweeted"));
+        tryAddLong(doc, "in_reply_to_user_id", rootNode.get("in_reply_to_user_id"));
+        tryAddLong(doc, "in_reply_to_status_id", rootNode.get("in_reply_to_status_id"));
+        tryAddString(doc, "media_url_https", rootNode.get("media_url_https"));
+        tryAddString(doc, "expanded_url", rootNode.get("expanded_url"));
+    
+        tryAddInt(doc, "user_friends_count", user.get("friends_count"));
+        tryAddString(doc, "user_location", user.get("location"));
+        tryAddString(doc, "user_description", user.get("description"));
+        tryAddInt(doc, "user_statuses_count", user.get("statuses_count"));
+        tryAddInt(doc, "user_followers_count", user.get("followers_count"));
+        tryAddString(doc, "user_screen_name", user.get("screen_name"));
+        tryAddString(doc, "user_name", user.get("name"));
+        
+        LOGGER.debug("tweetdoc: {}", doc);
+        parseInfo.getIndexer().load(Collections.singletonList(doc));
+        numRecords++;
       }
-  
-      doc.addField("id", idPrefix + idNode.textValue());
-      tryAddDate(doc, "created_at", rootNode.get("created_at"));
-      tryAddString(doc, "source", rootNode.get("source"));
-      tryAddString(doc, "text", rootNode.get("text"));
-      tryAddInt(doc, "retweet_count", rootNode.get("retweet_count"));
-      tryAddBool(doc, "retweeted", rootNode.get("retweeted"));
-      tryAddLong(doc, "in_reply_to_user_id", rootNode.get("in_reply_to_user_id"));
-      tryAddLong(doc, "in_reply_to_status_id", rootNode.get("in_reply_to_status_id"));
-      tryAddString(doc, "media_url_https", rootNode.get("media_url_https"));
-      tryAddString(doc, "expanded_url", rootNode.get("expanded_url"));
-  
-      tryAddInt(doc, "user_friends_count", user.get("friends_count"));
-      tryAddString(doc, "user_location", user.get("location"));
-      tryAddString(doc, "user_description", user.get("description"));
-      tryAddInt(doc, "user_statuses_count", user.get("statuses_count"));
-      tryAddInt(doc, "user_followers_count", user.get("followers_count"));
-      tryAddString(doc, "user_screen_name", user.get("screen_name"));
-      tryAddString(doc, "user_name", user.get("name"));
-      
-      LOGGER.debug("tweetdoc: {}", doc);
-      parseInfo.getIndexer().load(Collections.singletonList(doc));
-      numRecords++;
+    } finally {
+      LOGGER.info("processed {} records", numRecords);
     }
   }
 
