@@ -124,14 +124,20 @@ public class TikaIndexerTool extends Configured implements Tool {
             System.out.println();
             System.out.print(ToolRunnerHelpFormatter.getGenericCommandUsage());
             //ToolRunner.printGenericCommandUsage(System.out);
-            System.out.println(
+            String msg = 
               "Examples: \n\n" + 
               "sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1" +
               " jar solr-mr-*-job.jar " +
               " --solrhomedir /home/foo/solr" +
               " --outputdir hdfs://c2202.mycompany.com/user/foo/tikaindexer-output" + 
-              " hdfs:///user/foo/tikaindexer-input"  
-              );
+              " hdfs:///user/foo/tikaindexer-input\n" +  
+              "\n" +              
+              "rm -fr myconfig; mkdir myconfig\n" + 
+              "cp src/test/resources/log4j.properties myconfig/mylog4j.properties\n" + 
+              "cp -r src/test/resources/org myconfig/\n" + 
+              "jar -cMvf myconfig.jar -C myconfig .\n" + 
+              "hadoop fs -rm -f -r hdfs:///user/whoschek/test; sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1 jar target/solr-mr-*-job.jar --files src/test/resources/tika-config.xml --libjars myconfig.jar -D mapreduce.map.child.java.opts=-Dlog4j.configuration=mylog4j.properties -D mapred.map.child.java.opts=-Dlog4j.configuration=mylog4j.properties -D mapreduce.reduce.child.java.opts=-Dlog4j.configuration=mylog4j.properties -D mapred.reduce.child.java.opts=-Dlog4j.configuration=mylog4j.properties --solrhomedir src/test/resources/solr/minimr --outputdir hdfs://c2202.halxg.cloudera.com/user/whoschek/test --shards=2 hdfs:///user/whoschek/test-documents/sample-statuses-20120906-141433.avro";
+            System.out.println(msg);
             throw new FoundHelpArgument(); // Trick to prevent processing of any remaining arguments
           }
         });
