@@ -29,15 +29,15 @@ import org.apache.hadoop.util.ToolRunner;
  *
  * Example usage:
  * <pre>
- * sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1 jar solr-mr-1.0-SNAPSHOT.jar org.apache.solr.hadoop.tika.HdfsFindShell -help
+ * sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1 jar solr-mr-1.0-SNAPSHOT.jar org.apache.solr.hadoop.tika.HdfsFindTool -help
  * 
- * sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1 jar solr-mr-1.0-SNAPSHOT.jar org.apache.solr.hadoop.tika.HdfsFindShell -find hdfs:///user/whoschek/solrloadtest/iarchive/1percent/WIDE-20110309005125-crawl338 hdfs:///user/whoschek/solrloadtest/iarchive/1percent/WIDE-20110309002853-crawl337 -name '*.gz' -type f
+ * sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1 jar solr-mr-1.0-SNAPSHOT.jar org.apache.solr.hadoop.tika.HdfsFindTool -find hdfs:///user/whoschek/solrloadtest/iarchive/1percent/WIDE-20110309005125-crawl338 hdfs:///user/whoschek/solrloadtest/iarchive/1percent/WIDE-20110309002853-crawl337 -name '*.gz' -type f
  * </pre>
  */
-public class HdfsFindShell extends FsShell {
+public class HdfsFindTool extends FsShell {
   
   public static void main(String argv[]) throws Exception {
-    FsShell shell = new HdfsFindShell();
+    FsShell shell = new HdfsFindTool();
     int res;
     try {
       res = ToolRunner.run(shell, argv);
