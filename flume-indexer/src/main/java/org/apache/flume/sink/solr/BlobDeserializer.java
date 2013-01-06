@@ -26,6 +26,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
+import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.serialization.EventDeserializer;
 import org.apache.flume.serialization.ResettableInputStream;
@@ -35,30 +36,34 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Lists;
 
 /**
- * A deserializer that reads a whole file BLOB per event.
+ * A deserializer that reads a Binary Large Object (BLOB) per event, typically
+ * one BLOB per file; To be used in conjunction with Flume SpoolDirectorySource.
  */
 @InterfaceAudience.Private
 @InterfaceStability.Evolving
 public class BlobDeserializer implements EventDeserializer {
 
   private ResettableInputStream in;
-  private final int maxFileLength;
+  private final int maxBlobLength;
   private volatile boolean isOpen;
 
-  public static final String MAXFILE_KEY = "maxFileLength";
-  public static final int MAXFILE_DFLT = 64 * 1024 * 1024;
+  public static final String MAX_BLOB_LENGTH_KEY = "maxBlobLength";
+  public static final int MAX_BLOB_LENGTH_DEFAULT = 64 * 1024 * 1024;
 
   private static final int DEFAULT_BUFFER_SIZE = 1024 * 8;
   private static final Logger LOGGER = LoggerFactory.getLogger(BlobDeserializer.class);
       
   protected BlobDeserializer(Context context, ResettableInputStream in) {
     this.in = in;
-    this.maxFileLength = context.getInteger(MAXFILE_KEY, MAXFILE_DFLT);
+    this.maxBlobLength = context.getInteger(MAX_BLOB_LENGTH_KEY, MAX_BLOB_LENGTH_DEFAULT);
+    if (this.maxBlobLength <= 0) {
+      throw new ConfigurationException("Illegal configuration parameter " + MAX_BLOB_LENGTH_KEY + ": " + maxBlobLength);
+    }
     this.isOpen = true;
   }
 
   /**
-   * Reads a blob from a file and returns an event
+   * Reads a BLOB from a file and returns an event
    * @return Event containing parsed line
    * @throws IOException
    */
@@ -66,30 +71,30 @@ public class BlobDeserializer implements EventDeserializer {
   @Override
   public Event readEvent() throws IOException {
     ensureOpen();
-    ByteArrayOutputStream output = new ByteArrayOutputStream();
+    ByteArrayOutputStream blob = new ByteArrayOutputStream();
     byte[] buf = new byte[DEFAULT_BUFFER_SIZE];
-    int totalCount = 0;
+    int blobLength = 0;
     int n = 0;
-    while ((n = in.read(buf, 0, Math.min(buf.length, maxFileLength - totalCount))) != -1) {
-      output.write(buf, 0, n);
-      totalCount += n;
-      if (totalCount >= maxFileLength) {
-        LOGGER.warn("File length exceeds max ({}), truncating event!", maxFileLength);
+    while ((n = in.read(buf, 0, Math.min(buf.length, maxBlobLength - blobLength))) != -1) {
+      blob.write(buf, 0, n);
+      blobLength += n;
+      if (blobLength >= maxBlobLength) {
+        LOGGER.warn("File length exceeds maxBlobLength ({}), truncating BLOB event!", maxBlobLength);
         break;
       }
     }
-    byte[] fileBytes = output.toByteArray();
-    if (n == -1 && totalCount == 0) {
+    
+    if (n == -1 && blobLength == 0) {
       return null;
     } else {
-      return EventBuilder.withBody(fileBytes);
+      return EventBuilder.withBody(blob.toByteArray());
     }
   }
   
   /**
-   * Batch blob read
+   * Batch BLOB read
    * @param numEvents Maximum number of events to return.
-   * @return List of events containing read blobs
+   * @return List of events containing read BLOBs
    * @throws IOException
    */
   @Override
