@@ -86,7 +86,7 @@ public class TestBlobDeserializer {
   public void testMaxLineLength() throws IOException {
     String longLine = "abcdefghijklmnopqrstuvwxyz\n";
     Context ctx = new Context();
-    ctx.put(BlobDeserializer.MAXFILE_KEY, "10");
+    ctx.put(BlobDeserializer.MAX_BLOB_LENGTH_KEY, "10");
 
     ResettableInputStream in = new ResettableTestStringInputStream(longLine);
     EventDeserializer des = new BlobDeserializer(ctx, in);
