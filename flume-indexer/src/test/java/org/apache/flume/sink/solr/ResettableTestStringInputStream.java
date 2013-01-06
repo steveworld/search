@@ -24,8 +24,8 @@ import org.apache.flume.serialization.ResettableInputStream;
 class ResettableTestStringInputStream implements ResettableInputStream {
 
   private String str;
-  int markPos = 0;
-  int curPos = 0;
+  private int markPos = 0;
+  private int curPos = 0;
 
   /**
    * Warning: This test class does not handle character/byte conversion at all!
