@@ -102,7 +102,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       LOG.info("Ignoring file that somehow has been deleted since the job was submitted: {}", path);
       return;
     }
-    LOG.info("Processing {}", path);
+    LOG.info("Processing path {}", path);
     FSDataInputStream in = fs.open(path);
     try {
       Map<String,String> headers = new HashMap<String, String>();
@@ -112,7 +112,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       headers.put(Metadata.RESOURCE_NAME_KEY, path.getName()); // Tika can use the file name in guessing the right MIME type
       indexer.process(new StreamEvent(in, headers));
     } catch (SolrServerException e) {
-      LOG.error("Unable to process event ", e);
+      LOG.error("Unable to process path " + path, e);
     } finally {
       in.close();
     }
