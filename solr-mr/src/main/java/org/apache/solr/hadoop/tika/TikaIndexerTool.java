@@ -41,6 +41,7 @@ import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 
+import org.apache.flume.sink.solr.indexer.TikaIndexer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -380,6 +381,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       job.setOutputKeyClass(Text.class);
       job.setOutputValueClass(SolrInputDocumentWritable.class);
       job.getConfiguration().setInt(BatchWriter.MAX_SEGMENTS, options.maxSegments);
+      job.getConfiguration().set(TikaIndexer.TIKA_CONFIG_LOCATION, "tika-config.xml");
     }
 
     return waitForCompletion(job, options.isVerbose) ? 0 : -1;

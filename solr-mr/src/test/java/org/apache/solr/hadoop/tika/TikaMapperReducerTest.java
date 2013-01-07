@@ -40,12 +40,10 @@ import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(value = Parameterized.class)
 public class TikaMapperReducerTest extends MRUnitBase {
+
   private final String inputAvroFile;
   private final int count;
 
-  private static final String RESOURCES_DIR = "target/test-classes";
-  private static final String DOCUMENTS_DIR = RESOURCES_DIR + "/test-documents";
-  
   @Parameters
   public static Collection<Object[]> data() {
     Object[][] data = new Object[][] {
@@ -67,7 +65,7 @@ public class TikaMapperReducerTest extends MRUnitBase {
     mapReduceDriver = MapReduceDriver.newMapReduceDriver(mapper, myReducer);
 
     Configuration config = mapReduceDriver.getConfiguration();
-    config.set(SolrOutputFormat.ZIP_NAME, solrHomeZip.getName());
+    setupHadoopConfig(config);
 
     mapReduceDriver.withInput(new LongWritable(0L), new Text(new File(DOCUMENTS_DIR, inputAvroFile).toURI().toString()));
 

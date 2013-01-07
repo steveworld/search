@@ -20,13 +20,16 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
 
+import org.apache.flume.sink.solr.indexer.TikaIndexer;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.solr.hadoop.SolrOutputFormat;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 public class MRUnitBase {
+  
   protected static final String RESOURCES_DIR = "target/test-classes";
-
+  protected static final String DOCUMENTS_DIR = RESOURCES_DIR + "/test-documents";
   protected static File solrHomeZip;
 
   @BeforeClass
@@ -38,5 +41,10 @@ public class MRUnitBase {
   @AfterClass
   public static void teardownClass() throws Exception {
     solrHomeZip.delete();
+  }
+  
+  protected void setupHadoopConfig(Configuration config) {
+    config.set(SolrOutputFormat.ZIP_NAME, solrHomeZip.getName());
+    config.set(TikaIndexer.TIKA_CONFIG_LOCATION, RESOURCES_DIR + "/tika-config.xml");
   }
 }

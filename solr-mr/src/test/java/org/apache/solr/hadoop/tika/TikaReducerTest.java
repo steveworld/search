@@ -33,14 +33,10 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mrunit.mapreduce.ReduceDriver;
-import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
-import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.hadoop.BatchWriter;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrOutputFormat;
-import org.apache.solr.hadoop.SolrRecordWriter;
 import org.apache.solr.hadoop.SolrReducer;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -49,6 +45,7 @@ import org.mockito.stubbing.Answer;
 import com.google.common.collect.Lists;
 
 public class TikaReducerTest extends MRUnitBase {
+  
   public static class MySolrReducer extends SolrReducer {
     Context context;
 
@@ -91,7 +88,7 @@ public class TikaReducerTest extends MRUnitBase {
     ReduceDriver<Text, SolrInputDocumentWritable, Text, SolrInputDocumentWritable> reduceDriver = ReduceDriver.newReduceDriver(myReducer);
 
     Configuration config = reduceDriver.getConfiguration();
-    config.set(SolrOutputFormat.ZIP_NAME, solrHomeZip.getName());
+    setupHadoopConfig(config);
 
     List<SolrInputDocumentWritable> values = new ArrayList<SolrInputDocumentWritable>();
     SolrInputDocument sid = new SolrInputDocument();

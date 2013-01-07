@@ -26,21 +26,17 @@ import org.apache.hadoop.mrunit.mapreduce.MapDriver;
 import org.apache.hadoop.mrunit.types.Pair;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
-import org.apache.solr.hadoop.SolrOutputFormat;
 import org.junit.Test;
 
 public class TikaMapperTest extends MRUnitBase {
   
-  private static final String RESOURCES_DIR = "target/test-classes";
-  private static final String DOCUMENTS_DIR = RESOURCES_DIR + "/test-documents";
-
   @Test
   public void testMapper() throws Exception {
     TikaMapper mapper = new TikaMapper();
     MapDriver<LongWritable, Text, Text, SolrInputDocumentWritable> mapDriver = MapDriver.newMapDriver(mapper);;
 
     Configuration config = mapDriver.getConfiguration();
-    config.set(SolrOutputFormat.ZIP_NAME, solrHomeZip.getName());
+    setupHadoopConfig(config);
 
     mapDriver.withInput(new LongWritable(0L), new Text(new File(DOCUMENTS_DIR + "/sample-statuses-20120906-141433.avro").toURI().toString()));
 
