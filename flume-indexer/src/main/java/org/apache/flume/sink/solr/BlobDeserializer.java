@@ -67,7 +67,6 @@ public class BlobDeserializer implements EventDeserializer {
    * @return Event containing a BLOB
    * @throws IOException
    */
-  @SuppressWarnings("resource")
   @Override
   public Event readEvent() throws IOException {
     ensureOpen();
