@@ -71,11 +71,14 @@ public class BlobDeserializer implements EventDeserializer {
   @Override
   public Event readEvent() throws IOException {
     ensureOpen();
-    ByteArrayOutputStream blob = new ByteArrayOutputStream();
-    byte[] buf = new byte[DEFAULT_BUFFER_SIZE];
+    ByteArrayOutputStream blob = null;
+    byte[] buf = new byte[Math.min(maxBlobLength, DEFAULT_BUFFER_SIZE)];
     int blobLength = 0;
     int n = 0;
     while ((n = in.read(buf, 0, Math.min(buf.length, maxBlobLength - blobLength))) != -1) {
+      if (blob == null) {
+        blob = new ByteArrayOutputStream(n);
+      }
       blob.write(buf, 0, n);
       blobLength += n;
       if (blobLength >= maxBlobLength) {
@@ -84,7 +87,7 @@ public class BlobDeserializer implements EventDeserializer {
       }
     }
     
-    if (n == -1 && blobLength == 0) {
+    if (blob == null) {
       return null;
     } else {
       return EventBuilder.withBody(blob.toByteArray());
