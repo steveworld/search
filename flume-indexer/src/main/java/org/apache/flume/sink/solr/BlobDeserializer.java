@@ -64,7 +64,7 @@ public class BlobDeserializer implements EventDeserializer {
 
   /**
    * Reads a BLOB from a file and returns an event
-   * @return Event containing parsed line
+   * @return Event containing a BLOB
    * @throws IOException
    */
   @SuppressWarnings("resource")
