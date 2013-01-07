@@ -19,6 +19,7 @@
 package org.apache.flume.sink.solr.indexer;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -119,6 +120,10 @@ public class TikaIndexer extends SolrIndexer {
     String tikaConfigFilePath = null;
     if (config.hasPath(TIKA_CONFIG_LOCATION)) {
       tikaConfigFilePath = config.getString(TIKA_CONFIG_LOCATION);
+      File file = new File(tikaConfigFilePath); 
+      if (!file.exists()) {
+        throw new ConfigurationException("File not found: " + file + " absolutePath: " + file.getAbsolutePath());
+      }
     }
     String oldProperty = null;
     if (tikaConfigFilePath != null) {

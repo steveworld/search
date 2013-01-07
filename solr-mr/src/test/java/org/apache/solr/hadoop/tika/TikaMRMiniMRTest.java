@@ -64,8 +64,8 @@ public class TikaMRMiniMRTest extends Assert {
   @Parameters
   public static Collection<Object[]> data() {
     Object[][] data = new Object[][] {
-        { "sample-statuses-20120521-100919.avro", 20 },
-        { "sample-statuses-20120906-141433.avro", 2 } };
+        { "sample-statuses-20120906-141433.avro", 2 },
+        { "sample-statuses-20120521-100919.avro", 20 } };
     return Arrays.asList(data);
   }
 
@@ -156,32 +156,12 @@ public class TikaMRMiniMRTest extends Assert {
     JobConf jobConf = getJobConf();
     // enable mapred.job.tracker = local to run in debugger and set breakpoints
     //jobConf.set("mapred.job.tracker", "local");
-
     jobConf.setMaxMapAttempts(1);
     jobConf.setMaxReduceAttempts(1);
     jobConf.setJar(SEARCH_ARCHIVES_JAR);
-    /*
-    Job job = new Job(jobConf);
-
-    job.setInputFormatClass(NLineInputFormat.class);
-
-    job.setMapperClass(TikaMapper.class);
-    job.setReducerClass(SolrReducer.class);
-    job.setNumReduceTasks(1);
-
-    job.setOutputFormatClass(SolrOutputFormat.class);
-    SolrOutputFormat.addSolrConfToDistributedCache(job, solrHomeZip);
-
-    job.setOutputKeyClass(Text.class);
-    job.setOutputValueClass(SolrInputDocumentWritable.class);
-
-
-    FileInputFormat.setInputPaths(job, inDir);
-    FileOutputFormat.setOutputPath(job, outDir);
-
-    assertTrue(job.waitForCompletion(true));
-    */
+    
     String[] args = new String[] {
+        "--files", RESOURCES_DIR + "/tika-config.xml",
         "--solrhomedir=" + MINIMR_CONF_DIR.getAbsolutePath(),
         "--outputdir=" + outDir.toString(),
         "--verbose",
