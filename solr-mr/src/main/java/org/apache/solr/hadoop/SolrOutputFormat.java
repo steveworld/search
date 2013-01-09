@@ -149,9 +149,11 @@ public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
 
   @Override
   public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
-    return new SolrRecordWriter<K, V>(context);
+    Path workDir = getDefaultWorkFile(context, "");
+    int batchSize = getBatchSize(context.getConfiguration());
+    return new SolrRecordWriter<K, V>(context, workDir, batchSize);
   }
-
+  
   public static void setupSolrHomeCache(File solrHomeDir, Job job)
       throws IOException {
     File solrHomeZip = createSolrHomeZip(solrHomeDir);
