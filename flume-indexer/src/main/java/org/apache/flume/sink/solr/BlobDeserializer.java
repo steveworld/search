@@ -18,10 +18,10 @@
  */
 package org.apache.flume.sink.solr;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.annotations.InterfaceAudience;
@@ -67,6 +67,7 @@ public class BlobDeserializer implements EventDeserializer {
    * @return Event containing a BLOB
    * @throws IOException
    */
+  @SuppressWarnings("resource")
   @Override
   public Event readEvent() throws IOException {
     ensureOpen();
