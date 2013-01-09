@@ -18,7 +18,6 @@ package org.apache.solr.hadoop;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,7 +37,6 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskID;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.common.SolrInputDocument;
@@ -105,8 +103,6 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     return requiredConfigDirectories.contains(directory);
   }
 
-  private int batchSize;
-
   /** The path that the final index will be written to */
 
   /** The location in a local temporary directory that the index is built in. */
@@ -135,27 +131,8 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
   /** If true, writes will throw an exception */
   private volatile boolean closing = false;
 
-  public static String getOutFileName(TaskAttemptContext context, String prefix) {
-    TaskID taskId = context.getTaskAttemptID().getTaskID();
-    int partition = taskId.getId();
-    NumberFormat nf = NumberFormat.getInstance();
-    nf.setMinimumIntegerDigits(9);
-    nf.setGroupingUsed(false);
-    NumberFormat nf2 = NumberFormat.getInstance();
-    nf2.setMinimumIntegerDigits(3);
-    nf2.setGroupingUsed(false);
-    StringBuilder result = new StringBuilder();
-    result.append(prefix);
-    result.append("-");
-    result.append(nf.format(partition));
-    result.append("-");
-    result.append(nf2.format(context.getTaskAttemptID().getId()));
-    return result.toString();
-  }
-
-  public SolrRecordWriter(TaskAttemptContext context) {
+  public SolrRecordWriter(TaskAttemptContext context, Path outputShardDir, int batchSize) {
     Configuration conf = context.getConfiguration();
-    batchSize = SolrOutputFormat.getBatchSize(conf);
 
     // setLogLevel("org.apache.solr.core", "WARN");
     // setLogLevel("org.apache.solr.update", "WARN");
@@ -166,9 +143,6 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
 
       Path solrHomeDir = SolrRecordWriter.findSolrConfig(conf);
       FileSystem fs = FileSystem.get(conf);
-      Path outputShardDir = new Path(FileOutputFormat.getOutputPath(context),
-          getOutFileName(context, "shard"));
-
       EmbeddedSolrServer solr = createEmbeddedSolrServer(solrHomeDir, fs, outputShardDir);
       batchWriter = new BatchWriter(solr, batchSize,
           context.getTaskAttemptID().getTaskID(),
@@ -317,6 +291,7 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
       heartBeater.setProgress(context);
     }
     try {
+      
       heartBeater.needHeartBeat();
       batchWriter.close(context);
 //      if (outputZipFile) {
