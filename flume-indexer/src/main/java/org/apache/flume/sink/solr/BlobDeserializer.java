@@ -57,7 +57,8 @@ public class BlobDeserializer implements EventDeserializer {
     this.in = in;
     this.maxBlobLength = context.getInteger(MAX_BLOB_LENGTH_KEY, MAX_BLOB_LENGTH_DEFAULT);
     if (this.maxBlobLength <= 0) {
-      throw new ConfigurationException("Illegal configuration parameter " + MAX_BLOB_LENGTH_KEY + ": " + maxBlobLength);
+      throw new ConfigurationException("Configuration parameter " + MAX_BLOB_LENGTH_KEY
+          + " must be greater than zero: " + maxBlobLength);
     }
     this.isOpen = true;
   }
