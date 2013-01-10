@@ -31,7 +31,6 @@ import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.AbstractSink;
-import org.apache.flume.sink.solr.indexer.Configuration;
 import org.apache.flume.sink.solr.indexer.SolrIndexer;
 import org.apache.flume.sink.solr.indexer.StreamEvent;
 import org.apache.flume.sink.solr.indexer.TikaIndexer;
