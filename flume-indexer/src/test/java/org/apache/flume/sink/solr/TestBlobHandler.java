@@ -53,7 +53,10 @@ public class TestBlobHandler {
     byte[] json = "".getBytes("UTF-8");
     HttpServletRequest req = new FlumeHttpServletRequestWrapper(json);
     List<Event> deserialized = handler.getEvents(req);
-    Assert.assertEquals(0,  deserialized.size());
+    Assert.assertEquals(1,  deserialized.size());
+    Event e = deserialized.get(0);
+    Assert.assertEquals(0, e.getHeaders().size());
+    Assert.assertEquals("", new String(e.getBody(),"UTF-8"));
   }
 
 }
