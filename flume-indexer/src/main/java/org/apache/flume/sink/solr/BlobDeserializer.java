@@ -38,6 +38,9 @@ import com.google.common.collect.Lists;
 /**
  * A deserializer that reads a Binary Large Object (BLOB) per event, typically
  * one BLOB per file; To be used in conjunction with Flume SpoolDirectorySource.
+ * <p>
+ * Note that this approach is not suitable for very large objects because it
+ * buffers up the entire BLOB.
  */
 @InterfaceAudience.Private
 @InterfaceStability.Evolving

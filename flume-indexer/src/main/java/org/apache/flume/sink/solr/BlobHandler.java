@@ -41,6 +41,9 @@ import org.slf4j.LoggerFactory;
  * parameters as well as the Binary Large Object (BLOB) uploaded with this
  * request.
  * <p>
+ * Note that this approach is not suitable for very large objects because it
+ * buffers up the entire BLOB.
+ * <p>
  * Example client usage:
  * <pre>
  * curl --data-binary @sample-statuses-20120906-141433-medium.avro 'http://127.0.0.1:5140?resourceName=sample-statuses-20120906-141433-medium.avro' -H 'Content-Type:application/octet-stream; charset=UTF-8' --verbose
