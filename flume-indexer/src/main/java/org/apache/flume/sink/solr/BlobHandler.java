@@ -92,14 +92,11 @@ public class BlobHandler implements HTTPSourceHandler {
           break;
         }
       }
-      
-      if (blob == null) {
-        return Collections.EMPTY_LIST;
-      } else {
-        Event event = EventBuilder.withBody(blob.toByteArray(), headers);
-        LOGGER.debug("blobEvent: {}", event);
-        return Collections.singletonList(event);
-      }
+
+      byte[] array = blob != null ? blob.toByteArray() : new byte[0];
+      Event event = EventBuilder.withBody(array, headers);
+      LOGGER.debug("blobEvent: {}", event);
+      return Collections.singletonList(event);
     } finally {
       in.close();
     }
