@@ -126,22 +126,56 @@ public class TikaIndexerTool extends Configured implements Tool {
             System.out.print(ToolRunnerHelpFormatter.getGenericCommandUsage());
             //ToolRunner.printGenericCommandUsage(System.out);
             String msg = 
-              "Examples: \n\n" + 
-              "sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1" +
-              " jar solr-mr-*-job.jar " +
-              " --solrhomedir /home/foo/solr" +
-              " --outputdir hdfs://c2202.mycompany.com/user/foo/tikaindexer-output" + 
-              " hdfs:///user/foo/tikaindexer-input\n" +  
-              "\n" +              
-              "rm -fr myconfig; mkdir myconfig\n" + 
-              "cp src/test/resources/log4j.properties myconfig/mylog4j.properties\n" + 
-              "cp -r src/test/resources/org myconfig/\n" + 
-              "jar -cMvf myconfig.jar -C myconfig .\n" + 
-              "\n" +              
-              "  hadoop fs -rm -f -r hdfs:///user/whoschek/test; sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1 jar target/solr-mr-*-job.jar --files src/test/resources/tika-config.xml --libjars myconfig.jar -D mapreduce.map.child.java.opts=-Dlog4j.configuration=mylog4j.properties -D mapred.map.child.java.opts=-Dlog4j.configuration=mylog4j.properties -D mapreduce.reduce.child.java.opts=-Dlog4j.configuration=mylog4j.properties -D mapred.reduce.child.java.opts=-Dlog4j.configuration=mylog4j.properties --solrhomedir src/test/resources/solr/minimr --outputdir hdfs://c2202.halxg.cloudera.com/user/whoschek/test --shards=100 hdfs:///user/whoschek/test-documents/sample-statuses-20120906-141433.avro\n" +
-              "\n" +              
-              "  hadoop fs -rm -f -r hdfs:///user/whoschek/test; hadoop jar target/solr-mr-1.0-SNAPSHOT.jar org.apache.solr.hadoop.tika.HdfsFindTool -find hdfs:///user/whoschek/solrloadtest/twitter/tweets -type f -name 'sample-statuses*.gz' -mmin -1000000 -size -100000000c -size +1000000c | sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1 jar target/solr-mr-*-job.jar --files src/test/resources/tika-config.xml --libjars myconfig.jar,../examples/target/flume-ng-solr-sink-examples-1.2.0-cdh4.2.0-SNAPSHOT.jar -D mapreduce.map.child.java.opts=-Dlog4j.configuration=mylog4j.properties -D mapred.map.child.java.opts=-Dlog4j.configuration=mylog4j.properties -D mapreduce.reduce.child.java.opts=-Dlog4j.configuration=mylog4j.properties -D mapred.reduce.child.java.opts=-Dlog4j.configuration=mylog4j.properties --solrhomedir src/test/resources/solr/minimr --outputdir hdfs://c2202.halxg.cloudera.com/user/whoschek/test --shards=100 --inputlist=-";
-            System.out.println(msg);
+                "Examples: \n\n" + 
+                "  sudo -u hdfs hadoop \\\n" + 
+                "    --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
+                "    jar solr-mr-*-job.jar \\\n" +
+                "    --solrhomedir /home/foo/solr \\\n" +
+                "    --outputdir hdfs://c2202.mycompany.com/user/foo/tikaindexer-output \\\n" + 
+                "    hdfs:///user/foo/tikaindexer-input\n" +  
+                "\n" +              
+                "  rm -fr myconfig; mkdir myconfig\n" + 
+                "  cp src/test/resources/log4j.properties myconfig/mylog4j.properties\n" + 
+                "  cp -r src/test/resources/org myconfig/\n" + 
+                "  jar -cMvf myconfig.jar -C myconfig .\n" + 
+                "\n" +              
+                "  hadoop fs -rm -f -r hdfs:///user/whoschek/test\n" +
+                "  sudo -u hdfs hadoop \\\n" + 
+                "    --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" + 
+                "    jar target/solr-mr-*-job.jar \\\n" +  
+                "    --files src/test/resources/tika-config.xml \\\n" + 
+                "    --libjars myconfig.jar \\\n" + 
+                "    -D mapreduce.map.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
+                "    -D mapred.map.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
+                "    -D mapreduce.reduce.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
+                "    -D mapred.reduce.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
+                "    --solrhomedir src/test/resources/solr/minimr \\\n" + 
+                "    --outputdir hdfs://c2202.halxg.cloudera.com/user/whoschek/test \\\n" + 
+                "    --shards 100 \\\n" + 
+                "    hdfs:///user/whoschek/test-documents/sample-statuses-20120906-141433.avro\n" +
+                "\n" +              
+                "  hadoop fs -rm -f -r hdfs:///user/whoschek/test\n" + 
+                "  hadoop jar target/solr-mr-1.0-SNAPSHOT.jar org.apache.solr.hadoop.tika.HdfsFindTool \\\n" + 
+                "    -find hdfs:///user/whoschek/solrloadtest/twitter/tweets \\\n" + 
+                "    -type f \\\n" + 
+                "    -name 'sample-statuses*.gz' \\\n" + 
+                "    -mmin -1000000 \\\n" + 
+                "    -size -100000000c \\\n" + 
+                "    -size +1000000c \\\n" + 
+                "  | sudo -u hdfs hadoop \\\n" + 
+                "    --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" + 
+                "    jar target/solr-mr-*-job.jar \\\n" + 
+                "    --files src/test/resources/tika-config.xml \\\n" + 
+                "    --libjars myconfig.jar,../examples/target/flume-ng-solr-sink-examples-1.2.0-cdh4.2.0-SNAPSHOT.jar \\\n" + 
+                "    -D mapreduce.map.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
+                "    -D mapred.map.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
+                "    -D mapreduce.reduce.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
+                "    -D mapred.reduce.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
+                "    --solrhomedir src/test/resources/solr/minimr \\\n" + 
+                "    --outputdir hdfs://c2202.halxg.cloudera.com/user/whoschek/test \\\n" + 
+                "    --shards 100 \\\n" + 
+                "    --inputlist -";
+              System.out.println(msg);
             throw new FoundHelpArgument(); // Trick to prevent processing of any remaining arguments
           }
         });
