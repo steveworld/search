@@ -75,6 +75,9 @@ class ToolRunnerHelpFormatter {
           result.append(line + "\n");          
         } else {
           String title = line.substring(0, i).trim();
+          if (title.length() >= 3 && Character.isLetterOrDigit(title.charAt(1)) && Character.isLetterOrDigit(title.charAt(2))) {
+            title = "-" + title; // prefer "--libjars" long arg style over "-libjars" style but retain "-D foo" short arg style        
+          }
           String help = line.substring(i, line.length()).trim();
           StringWriter strWriter = new StringWriter(); 
           PrintWriter writer = new PrintWriter(strWriter, true);
