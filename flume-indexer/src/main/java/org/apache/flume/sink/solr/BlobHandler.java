@@ -46,7 +46,7 @@ import org.slf4j.LoggerFactory;
  * <p>
  * Example client usage:
  * <pre>
- * curl --data-binary @sample-statuses-20120906-141433-medium.avro 'http://127.0.0.1:5140?resourceName=sample-statuses-20120906-141433-medium.avro' -H 'Content-Type:application/octet-stream; charset=UTF-8' --verbose
+ * curl --data-binary @sample-statuses-20120906-141433-medium.avro 'http://127.0.0.1:5140?resourceName=sample-statuses-20120906-141433-medium.avro' --header 'Content-Type:application/octet-stream' --verbose
  * </pre>
  */
 public class BlobHandler implements HTTPSourceHandler {
