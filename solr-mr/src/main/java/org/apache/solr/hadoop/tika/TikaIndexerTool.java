@@ -130,10 +130,12 @@ public class TikaIndexerTool extends Configured implements Tool {
                 "  sudo -u hdfs hadoop \\\n" + 
                 "    --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
                 "    jar solr-mr-*-job.jar \\\n" +
+                "    --files src/test/resources/tika-config.xml \\\n" + 
                 "    --solrhomedir /home/foo/solr \\\n" +
                 "    --outputdir hdfs://c2202.mycompany.com/user/foo/tikaindexer-output \\\n" + 
                 "    hdfs:///user/foo/tikaindexer-input\n" +  
-                "\n" +              
+                "\n" +
+                "  # Prepare a config jar file containing org/apache/tika/mime/custom-mimetypes.xml and custom mylog4j.properties\n" +
                 "  rm -fr myconfig; mkdir myconfig\n" + 
                 "  cp src/test/resources/log4j.properties myconfig/mylog4j.properties\n" + 
                 "  cp -r src/test/resources/org myconfig/\n" + 
