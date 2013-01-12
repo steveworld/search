@@ -132,8 +132,8 @@ public class TikaIndexerTool extends Configured implements Tool {
                 "    jar solr-mr-*-job.jar \\\n" +
                 "    --files src/test/resources/tika-config.xml \\\n" + 
                 "    --solrhomedir /home/foo/solr \\\n" +
-                "    --outputdir hdfs://c2202.mycompany.com/user/foo/tikaindexer-output \\\n" + 
-                "    hdfs:///user/foo/tikaindexer-input\n" +  
+                "    --outputdir hdfs://c2202.mycompany.com/user/foo/outdir \\\n" + 
+                "    hdfs:///user/foo/indir\n" +  
                 "\n" +
                 "  # Prepare a config jar file containing org/apache/tika/mime/custom-mimetypes.xml and custom mylog4j.properties\n" +
                 "  rm -fr myconfig; mkdir myconfig\n" + 
@@ -147,10 +147,8 @@ public class TikaIndexerTool extends Configured implements Tool {
                 "    jar target/solr-mr-*-job.jar \\\n" +  
                 "    --files src/test/resources/tika-config.xml \\\n" + 
                 "    --libjars myconfig.jar \\\n" + 
-                "    -D mapreduce.map.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
-                "    -D mapred.map.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
-                "    -D mapreduce.reduce.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
-                "    -D mapred.reduce.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
+                "    -D mapred.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
+                "    -D mapreduce.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
                 "    --solrhomedir src/test/resources/solr/minimr \\\n" + 
                 "    --outputdir hdfs://c2202.halxg.cloudera.com/user/whoschek/test \\\n" + 
                 "    --shards 100 \\\n" + 
@@ -169,10 +167,8 @@ public class TikaIndexerTool extends Configured implements Tool {
                 "    jar target/solr-mr-*-job.jar \\\n" + 
                 "    --files src/test/resources/tika-config.xml \\\n" + 
                 "    --libjars myconfig.jar,../examples/target/flume-ng-solr-sink-examples-1.2.0-cdh4.2.0-SNAPSHOT.jar \\\n" + 
-                "    -D mapreduce.map.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
-                "    -D mapred.map.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
-                "    -D mapreduce.reduce.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
-                "    -D mapred.reduce.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
+                "    -D mapred.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
+                "    -D mapreduce.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
                 "    --solrhomedir src/test/resources/solr/minimr \\\n" + 
                 "    --outputdir hdfs://c2202.halxg.cloudera.com/user/whoschek/test \\\n" + 
                 "    --shards 100 \\\n" + 
