@@ -239,6 +239,12 @@ public class TwitterSource extends AbstractSource implements EventDrivenSource, 
     }
     if (line == null)
       return null;
+    
+    if (docCount == 0 && line.startsWith("<html>")) {
+      throw new Error(
+          "Authentication Error! Downloads from twitter.com require a valid twitter username and password. " +
+          "These credentials can be specified in the flume config file.");
+    }
     Integer.parseInt(line); // sanity check
 
     while ((line = reader.readLine()) != null) {
