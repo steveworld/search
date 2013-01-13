@@ -24,6 +24,7 @@ import java.io.Writer;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
@@ -47,10 +48,10 @@ import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(value = Parameterized.class)
 public class TikaMRMiniMRTest extends Assert {
+  
   private static final String RESOURCES_DIR = "target/test-classes";
   private static final String DOCUMENTS_DIR = RESOURCES_DIR + "/test-documents";
   private static final File MINIMR_CONF_DIR = new File(RESOURCES_DIR + "/solr/minimr");
-  private static File solrHomeZip;
 
   private static final String SEARCH_ARCHIVES_JAR = JarFinder.getJar(TikaIndexerTool.class);
 
@@ -63,10 +64,10 @@ public class TikaMRMiniMRTest extends Assert {
 
   @Parameters
   public static Collection<Object[]> data() {
-    Object[][] data = new Object[][] {
+    return Arrays.asList(new Object[][] {
         { "sample-statuses-20120906-141433.avro", 2 },
-        { "sample-statuses-20120521-100919.avro", 20 } };
-    return Arrays.asList(data);
+        { "sample-statuses-20120521-100919.avro", 20 }, 
+    });
   }
 
   public TikaMRMiniMRTest(String inputAvroFile, int count) {
@@ -76,8 +77,6 @@ public class TikaMRMiniMRTest extends Assert {
 
   @BeforeClass
   public static void setupClass() throws Exception {
-//    solrHomeZip = SolrOutputFormat.createSolrHomeZip(MINIMR_CONF_DIR);
-//    assertNotNull(solrHomeZip);
     if (System.getProperty("hadoop.log.dir") == null) {
       System.setProperty("hadoop.log.dir", "target");
     }
@@ -115,9 +114,6 @@ public class TikaMRMiniMRTest extends Assert {
 
   @AfterClass
   public static void teardownClass() throws Exception {
-    if (solrHomeZip != null) {
-      solrHomeZip.delete();
-    }
     if (mrCluster != null) {
       mrCluster.shutdown();
       mrCluster = null;
@@ -154,8 +150,13 @@ public class TikaMRMiniMRTest extends Assert {
     fs.copyFromLocalFile(new Path(DOCUMENTS_DIR, inputAvroFile), dataDir);
 
     JobConf jobConf = getJobConf();
-    // enable mapred.job.tracker = local to run in debugger and set breakpoints
-    //jobConf.set("mapred.job.tracker", "local");
+    boolean enableLocalJobRunner = false;
+    if (enableLocalJobRunner) { // enable Hadoop LocalJobRunner; this enables to run in debugger and set breakpoints
+      jobConf.set("mapred.job.tracker", "local");
+      
+      // this is necessary because LocalJobRunner does not seem to implement Hadoop distributed cache feature 
+      FileUtils.copyFile(new File(RESOURCES_DIR + "/tika-config.xml"), new File("tika-config.xml")); 
+    }
     jobConf.setMaxMapAttempts(1);
     jobConf.setMaxReduceAttempts(1);
     jobConf.setJar(SEARCH_ARCHIVES_JAR);
