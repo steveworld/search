@@ -38,6 +38,7 @@ import org.apache.hadoop.util.JarFinder;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.solr.hadoop.BatchWriter;
 import org.apache.solr.hadoop.SolrRecordWriter;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -49,10 +50,12 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(value = Parameterized.class)
 public class TikaMRMiniMRTest extends Assert {
   
+  private static final boolean ENABLE_LOCAL_JOB_RUNNER = false; // for debugging only
   private static final String RESOURCES_DIR = "target/test-classes";
   private static final String DOCUMENTS_DIR = RESOURCES_DIR + "/test-documents";
   private static final File MINIMR_CONF_DIR = new File(RESOURCES_DIR + "/solr/minimr");
-
+  private static final String TIKA_CONFIG_FILE_NAME = "tika-config.xml";
+  
   private static final String SEARCH_ARCHIVES_JAR = JarFinder.getJar(TikaIndexerTool.class);
 
   private static MiniDFSCluster dfsCluster = null;
@@ -123,6 +126,16 @@ public class TikaMRMiniMRTest extends Assert {
       dfsCluster = null;
     }
   }
+  
+  @After
+  public void tearDown() {
+    if (ENABLE_LOCAL_JOB_RUNNER) {
+      File tikaConfigFile = new File(TIKA_CONFIG_FILE_NAME);
+      if (tikaConfigFile.exists()) {
+        assertTrue(tikaConfigFile.delete());
+      }
+    }
+  }
 
   private JobConf getJobConf() {
     return mrCluster.createJobConf();
@@ -150,19 +163,18 @@ public class TikaMRMiniMRTest extends Assert {
     fs.copyFromLocalFile(new Path(DOCUMENTS_DIR, inputAvroFile), dataDir);
 
     JobConf jobConf = getJobConf();
-    boolean enableLocalJobRunner = false;
-    if (enableLocalJobRunner) { // enable Hadoop LocalJobRunner; this enables to run in debugger and set breakpoints
+    if (ENABLE_LOCAL_JOB_RUNNER) { // enable Hadoop LocalJobRunner; this enables to run in debugger and set breakpoints
       jobConf.set("mapred.job.tracker", "local");
       
       // this is necessary because LocalJobRunner does not seem to implement Hadoop distributed cache feature 
-      FileUtils.copyFile(new File(RESOURCES_DIR + "/tika-config.xml"), new File("tika-config.xml")); 
+      FileUtils.copyFile(new File(RESOURCES_DIR + File.separator + TIKA_CONFIG_FILE_NAME), new File(TIKA_CONFIG_FILE_NAME)); 
     }
     jobConf.setMaxMapAttempts(1);
     jobConf.setMaxReduceAttempts(1);
     jobConf.setJar(SEARCH_ARCHIVES_JAR);
     
     String[] args = new String[] {
-        "--files", RESOURCES_DIR + "/tika-config.xml",
+        "--files", RESOURCES_DIR + File.separator + TIKA_CONFIG_FILE_NAME,
         "--solrhomedir=" + MINIMR_CONF_DIR.getAbsolutePath(),
         "--outputdir=" + outDir.toString(),
         "--verbose",
