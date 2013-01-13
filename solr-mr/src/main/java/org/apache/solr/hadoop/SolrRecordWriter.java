@@ -40,6 +40,7 @@ import org.apache.hadoop.mapreduce.TaskID;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.core.Config;
 import org.apache.solr.core.CoreContainer;
 import org.apache.solr.core.CoreDescriptor;
 import org.apache.solr.core.SolrCore;
@@ -188,9 +189,13 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
             solrHomeDir, solrHomeDir.toUri(), loader.getInstanceDir(),
             loader.getConfigDir(), dataDirStr, outputShardDir));
 
-    CoreContainer container = new CoreContainer(loader);
+    CoreContainer container = new CoreContainer(loader) {
+      // workaround since we don't call container#load
+      {initShardHandler(null);}
+    };
     CoreDescriptor descr = new CoreDescriptor(container, "core1",
         solrHomeDir.toString());
+    
     descr.setDataDir(dataDirStr);
     descr.setCoreProperties(props);
     SolrCore core = container.create(descr);
