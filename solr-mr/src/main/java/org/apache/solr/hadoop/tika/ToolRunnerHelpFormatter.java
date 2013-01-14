@@ -27,6 +27,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 
+import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.helper.ASCIITextWidthCounter;
 import net.sourceforge.argparse4j.helper.TextHelper;
 import net.sourceforge.argparse4j.internal.ArgumentParserImpl;
@@ -81,7 +82,7 @@ class ToolRunnerHelpFormatter {
           String help = line.substring(i, line.length()).trim();
           StringWriter strWriter = new StringWriter(); 
           PrintWriter writer = new PrintWriter(strWriter, true);
-          TextHelper.printHelp(writer, title, help, new ASCIITextWidthCounter(), ArgumentParserImpl.FORMAT_WIDTH);
+          TextHelper.printHelp(writer, title, help, new ASCIITextWidthCounter(), ArgumentParsers.getFormatWidth());
           result.append(strWriter.toString());          
         }        
       }
