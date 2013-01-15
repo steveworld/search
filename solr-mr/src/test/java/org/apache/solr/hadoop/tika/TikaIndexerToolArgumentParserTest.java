@@ -81,7 +81,6 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
     assertEquals(null, opts.fairSchedulerPool);
     assertTrue(opts.isVerbose);
     assertTrue(opts.isRandomize);
-    assertFalse(opts.isIdentityTest);
     assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), opts.inputFiles);
     assertEmptySystemErrAndEmptySystemOut();
   }
@@ -124,7 +123,6 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
     assertEquals(null, opts.fairSchedulerPool);
     assertTrue(opts.isVerbose);
     assertTrue(opts.isRandomize);
-    assertFalse(opts.isIdentityTest);
     assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), opts.inputFiles);
     assertEmptySystemErrAndEmptySystemOut();
   }
