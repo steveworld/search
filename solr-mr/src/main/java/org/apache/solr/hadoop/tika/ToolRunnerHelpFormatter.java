@@ -30,7 +30,6 @@ import java.io.UnsupportedEncodingException;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.helper.ASCIITextWidthCounter;
 import net.sourceforge.argparse4j.helper.TextHelper;
-import net.sourceforge.argparse4j.internal.ArgumentParserImpl;
 
 import org.apache.hadoop.util.ToolRunner;
 
