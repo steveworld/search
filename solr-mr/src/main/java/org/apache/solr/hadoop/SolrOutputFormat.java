@@ -187,7 +187,7 @@ public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
     DistributedCache.addCacheArchive(baseZipUrl, jobConf);
     LOG.info("Set Solr distributed cache: " + Arrays.asList(job.getCacheArchives()));
     // Actually send the path for the configuration zip file
-    LOG.info("Set zipPath: " + zipPath);
+    LOG.debug("Set zipPath: " + zipPath);
     jobConf.set(SETUP_OK, zipPath.toString());
   }
 
