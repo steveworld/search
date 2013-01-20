@@ -215,7 +215,7 @@ public class TikaIndexer extends SolrIndexer {
       SolrContentHandler handler = createSolrContentHandler();
       ContentHandler parsingHandler = handler;
       StringWriter debugWriter = null;
-      if (LOGGER.isDebugEnabled()) {
+      if (LOGGER.isTraceEnabled()) {
         debugWriter = new StringWriter();
         ContentHandler serializer = new XMLSerializer(debugWriter, new OutputFormat("XML", "UTF-8", true));
         parsingHandler = new TeeContentHandler(parsingHandler, serializer);
@@ -245,7 +245,7 @@ public class TikaIndexer extends SolrIndexer {
         }
       }
 
-      LOGGER.debug("debug XML doc: {}", debugWriter);
+      LOGGER.trace("debug XML doc: {}", debugWriter);
 
       if (info.isMultiDocumentParser()) {
         return Collections.EMPTY_LIST;
