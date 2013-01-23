@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -175,7 +176,6 @@ public class TikaMRMiniMRTest extends Assert {
     jobConf.setJar(SEARCH_ARCHIVES_JAR);
     
     int shards = 2;
-    numRuns++;
     String[] args = new String[] {
         "--files", RESOURCES_DIR + File.separator + TIKA_CONFIG_FILE_NAME,
         "--solrhomedir=" + MINIMR_CONF_DIR.getAbsolutePath(),
@@ -183,8 +183,11 @@ public class TikaMRMiniMRTest extends Assert {
         "--shards=" + shards,
         "--verbose",
         numRuns % 2 == 0 ? "--inputlist=" + INPATH.toString() : dataDir.toString(),
-        numRuns % 3 == 0 ? "--reducers=" + shards : (numRuns % 3 == 1  ? "--reducers=8" : "--reducers=-1")
+        numRuns % 3 == 0 ? "--reducers=" + shards : (numRuns % 3 == 1  ? "--reducers=-1" : "--reducers=8")
     };
+    if (numRuns % 3 == 2) {
+      args = concat(args, new String[] {"--fanout=2"});
+    }
     TikaIndexerTool tool = new TikaIndexerTool();
     int res = ToolRunner.run(jobConf, tool, args);
     assertEquals(0, res);
@@ -192,7 +195,7 @@ public class TikaMRMiniMRTest extends Assert {
     assertTrue(job.isComplete());
     assertTrue(job.isSuccessful());
 
-    if (numRuns % 2 == 0) {
+    if (numRuns % 3 != 2) {
       // Only run this check if mtree merge is disabled.
       // With mtree merge enabled the BatchWriter counters aren't available anymore because 
       // variable "job" now refers to the merge job rather than the indexing job
@@ -207,5 +210,26 @@ public class TikaMRMiniMRTest extends Assert {
     System.out.println("outputfiles:" + Arrays.toString(outputFiles));
 
     Utils.validateSolrServerDocumentCount(MINIMR_CONF_DIR, fs, outDir, count, shards);
+    numRuns++;
   }
+  
+  protected static <T> T[] concat(T[]... arrays) {
+    if (arrays.length <= 0) {
+      throw new IllegalArgumentException();
+    }
+    Class clazz = null;
+    int length = 0;
+    for (T[] array : arrays) {
+      clazz = array.getClass();
+      length += array.length;
+    }
+    T[] result = (T[]) Array.newInstance(clazz.getComponentType(), length);
+    int pos = 0;
+    for (T[] array : arrays) {
+      System.arraycopy(array, 0, result, pos, array.length);
+      pos += array.length;
+    }
+    return result;
+  }
+
 }

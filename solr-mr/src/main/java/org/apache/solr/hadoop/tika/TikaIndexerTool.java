@@ -76,9 +76,9 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * Public API for a MapReduce job driver that creates a set of Solr index shards from
- * a list of input files and writes the indexes into HDFS, in a scalable and
- * fault-tolerant manner.
+ * Public API for a MapReduce batch job driver that creates a set of Solr index
+ * shards from a list of input files and writes the indexes into HDFS, in a
+ * flexible, scalable and fault-tolerant manner.
  */
 public class TikaIndexerTool extends Configured implements Tool {
   
@@ -117,7 +117,7 @@ public class TikaIndexerTool extends Configured implements Tool {
         .newArgumentParser("hadoop [GenericOptions]... jar solr-mr-*-job.jar ", false)
         .defaultHelp(true)
         .description(
-          "MapReduce job driver that creates a set of Solr index shards from a list of input files " +
+          "MapReduce batch job driver that creates a set of Solr index shards from a list of input files " +
           "and writes the indexes into HDFS, in a flexible, scalable and fault-tolerant manner. " +
           "The program proceeds in several consecutive MapReduce based phases, as follows:" +
           "\n\n" +
@@ -302,7 +302,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       
       Argument fairSchedulerPoolArg = parser.addArgument("--fairschedulerpool")
         .metavar("STRING")
-        .help("Name of MR fair scheduler pool to submit job to");
+        .help("Name of MR fair scheduler pool to submit jobs to");
   
       Argument verboseArg = parser.addArgument("--verbose", "-v")
         .action(Arguments.storeTrue())
