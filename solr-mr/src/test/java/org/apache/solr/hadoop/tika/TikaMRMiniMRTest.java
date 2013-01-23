@@ -173,12 +173,16 @@ public class TikaMRMiniMRTest extends Assert {
     jobConf.setMaxReduceAttempts(1);
     jobConf.setJar(SEARCH_ARCHIVES_JAR);
     
+    int shards = 2;
+    numRuns++;
     String[] args = new String[] {
         "--files", RESOURCES_DIR + File.separator + TIKA_CONFIG_FILE_NAME,
         "--solrhomedir=" + MINIMR_CONF_DIR.getAbsolutePath(),
         "--outputdir=" + outDir.toString(),
+        "--shards=" + shards,
         "--verbose",
-        ++numRuns % 2 == 0 ? "--inputlist=" + INPATH.toString() : dataDir.toString()
+        numRuns % 2 == 0 ? "--inputlist=" + INPATH.toString() : dataDir.toString(),
+        numRuns % 2 == 0 ? "--reducers=" + shards : "--reducers=-1" 
     };
     TikaIndexerTool tool = new TikaIndexerTool();
     int res = ToolRunner.run(jobConf, tool, args);
@@ -187,15 +191,20 @@ public class TikaMRMiniMRTest extends Assert {
     assertTrue(job.isComplete());
     assertTrue(job.isSuccessful());
 
-    assertEquals("Invalid counter " + SolrRecordWriter.class.getName() + "." + BatchWriter.COUNTER_DOCUMENTS_WRITTEN,
-        count, job.getCounters().findCounter("SolrRecordWriter", BatchWriter.COUNTER_DOCUMENTS_WRITTEN).getValue());
-
+    if (numRuns % 2 == 0) {
+      // Only run this check if mtree merge is disabled.
+      // With mtree merge enabled the BatchWriter counters aren't available anymore because 
+      // variable "job" now refers to the merge job rather than the indexing job
+      assertEquals("Invalid counter " + SolrRecordWriter.class.getName() + "." + BatchWriter.COUNTER_DOCUMENTS_WRITTEN,
+          count, job.getCounters().findCounter("SolrRecordWriter", BatchWriter.COUNTER_DOCUMENTS_WRITTEN).getValue());
+    }
+    
     // Check the output is as expected
     outDir = new Path(outDir, TikaIndexerTool.RESULTS_DIR);
     Path[] outputFiles = FileUtil.stat2Paths(fs.listStatus(outDir));
 
     System.out.println("outputfiles:" + Arrays.toString(outputFiles));
 
-    Utils.validateSolrServerDocumentCount(MINIMR_CONF_DIR, fs, outDir, count);
+    Utils.validateSolrServerDocumentCount(MINIMR_CONF_DIR, fs, outDir, count, shards);
   }
 }

@@ -68,6 +68,9 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
         "--outputdir", "file:/tmp/foo",
         "--solrhomedir", "/", 
         "--mappers", "10", 
+        "--reducers", "9", 
+        "--fanout", "8", 
+        "--maxsegments", "7", 
         "--verbose", 
         "file:///home",
         "file:///dev",
@@ -77,6 +80,9 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
     assertEquals(new Path("file:/tmp/foo"), opts.outputDir);
     assertEquals(new File("/"), opts.solrHomeDir);
     assertEquals(10, opts.mappers);
+    assertEquals(9, opts.reducers);
+    assertEquals(8, opts.fanout);
+    assertEquals(7, opts.maxSegments);
     assertEquals(1, opts.shards);
     assertEquals(null, opts.fairSchedulerPool);
     assertTrue(opts.isVerbose);
@@ -203,6 +209,17 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
         "--outputdir", "file:/tmp/foo",
         "--solrhomedir", "/", 
         "--mappers", "-20"
+        };
+    assertArgumentParserException(args);
+  }
+  
+  @Test
+  public void testArgsParserIllegalFanout() {
+    String[] args = new String[] { 
+        "--inputlist", "file:///tmp",
+        "--outputdir", "file:/tmp/foo",
+        "--solrhomedir", "/", 
+        "--fanout", "1" // must be >= 2
         };
     assertArgumentParserException(args);
   }

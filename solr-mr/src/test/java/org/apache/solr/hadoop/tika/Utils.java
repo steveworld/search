@@ -23,6 +23,7 @@ import java.io.IOException;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -35,18 +36,29 @@ import org.xml.sax.SAXException;
 
 public class Utils {
 
-  public static void validateSolrServerDocumentCount(File solrHomeDir, FileSystem fs, Path outDir, int count)
+  public static void validateSolrServerDocumentCount(File solrHomeDir, FileSystem fs, Path outDir, int expectedDocs, int expectedShards)
       throws IOException, ParserConfigurationException, SAXException, SolrServerException {
     
-    EmbeddedSolrServer solr = SolrRecordWriter.createEmbeddedSolrServer(
-        new Path(solrHomeDir.getAbsolutePath()), fs, new Path(outDir, "part-r-00000"));
-    try {
-      SolrQuery query = new SolrQuery();
-      query.setQuery("*:*");
-      QueryResponse resp = solr.query(query);
-      assertEquals(count, resp.getResults().getNumFound());
-    } finally {
-      solr.shutdown();
+    long actualDocs = 0;
+    int actualShards = 0;
+    for (FileStatus dir : fs.listStatus(outDir)) { // for each shard
+      if (dir.getPath().getName().startsWith("part") && dir.isDirectory()) {
+        actualShards++;
+        EmbeddedSolrServer solr = SolrRecordWriter.createEmbeddedSolrServer(
+            new Path(solrHomeDir.getAbsolutePath()), fs, dir.getPath());
+        
+        try {
+          SolrQuery query = new SolrQuery();
+          query.setQuery("*:*");
+          QueryResponse resp = solr.query(query);
+          long numDocs = resp.getResults().getNumFound();
+          actualDocs += numDocs;
+        } finally {
+          solr.shutdown();
+        }
+      }
     }
+    assertEquals(expectedShards, actualShards);
+    assertEquals(expectedDocs, actualDocs);
   }
 }
