@@ -137,6 +137,10 @@ public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
   public static boolean isOutputZipFormat(Configuration conf) {
     return conf.getBoolean(OUTPUT_ZIP_FILE, false);
   }
+  
+  public static String getOutputName(JobContext job) {
+    return FileOutputFormat.getOutputName(job);
+  }
 
   @Override
   public void checkOutputSpecs(JobContext job) throws IOException {
@@ -185,9 +189,9 @@ public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
         zipPath.toString() + '#' + getZipName(jobConf));
 
     DistributedCache.addCacheArchive(baseZipUrl, jobConf);
-    LOG.info("Set Solr distributed cache: " + Arrays.asList(job.getCacheArchives()));
+    LOG.debug("Set Solr distributed cache: {}", Arrays.asList(job.getCacheArchives()));
+    LOG.debug("Set zipPath: {}", zipPath);
     // Actually send the path for the configuration zip file
-    LOG.debug("Set zipPath: " + zipPath);
     jobConf.set(SETUP_OK, zipPath.toString());
   }
 

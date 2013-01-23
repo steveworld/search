@@ -198,7 +198,8 @@ public class BatchWriter {
     LOG.info("Optimizing Solr: forcing merge down to {} segments", maxSegments);
     long start = System.currentTimeMillis();
     solr.optimize(true, false, maxSegments);
-    LOG.info("Optimizing Solr: done forcing merge down to {} segments in {} millis", maxSegments, System.currentTimeMillis() - start);
+    float secs = (System.currentTimeMillis() - start) / 1000.0f;
+    LOG.info("Optimizing Solr: done forcing merge down to {} segments in {} secs", maxSegments, secs);
     context.setStatus("Shutting down Solr");
     // TODO is core close needed? - according to TestEmbeddedSolrServer it's not...
     //core.close();
