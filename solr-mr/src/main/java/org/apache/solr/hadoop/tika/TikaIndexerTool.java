@@ -76,7 +76,7 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * Public API for a MapReduce job that creates a set of Solr index shards from
+ * Public API for a MapReduce job driver that creates a set of Solr index shards from
  * a list of input files and writes the indexes into HDFS, in a scalable and
  * fault-tolerant manner.
  */
@@ -117,7 +117,7 @@ public class TikaIndexerTool extends Configured implements Tool {
         .newArgumentParser("hadoop [GenericOptions]... jar solr-mr-*-job.jar ", false)
         .defaultHelp(true)
         .description(
-            "MapReduce job that creates a set of Solr index shards from a list of input files " +
+            "MapReduce job driver that creates a set of Solr index shards from a list of input files " +
             "and writes the indexes into HDFS, in a scalable and fault-tolerant manner.");
   
       parser.addArgument("--help", "-h")
