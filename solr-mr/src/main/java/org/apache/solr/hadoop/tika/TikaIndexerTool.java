@@ -245,7 +245,7 @@ public class TikaIndexerTool extends Configured implements Tool {
         .type(Integer.class)
         .choices(new RangeArgumentChoice(2, Integer.MAX_VALUE))
         .setDefault(10)
-        .help("Maximum number of intermediate shards to merge per mapper task in the mtree merge MR algorithm. " +
+        .help("Maximum number of intermediate shards to merge per mapper task in the mapper-only phase of the mtree merge algorithm. " +
             "Intermediate merging can be switched on and off by adjusting the fanout parameter. " +
             "It is a trade-off: Intermediate merges requires more I/O bandwidth but can take advantage of more " +
             "resources by utilizing more parallelism. " +
