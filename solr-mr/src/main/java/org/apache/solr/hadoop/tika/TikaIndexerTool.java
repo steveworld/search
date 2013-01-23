@@ -117,9 +117,33 @@ public class TikaIndexerTool extends Configured implements Tool {
         .newArgumentParser("hadoop [GenericOptions]... jar solr-mr-*-job.jar ", false)
         .defaultHelp(true)
         .description(
-            "MapReduce job driver that creates a set of Solr index shards from a list of input files " +
-            "and writes the indexes into HDFS, in a scalable and fault-tolerant manner.");
-  
+          "MapReduce job driver that creates a set of Solr index shards from a list of input files " +
+          "and writes the indexes into HDFS, in a flexible, scalable and fault-tolerant manner. " +
+          "The program proceeds in several consecutive MapReduce based phases, as follows:" +
+          "\n\n" +
+          "1) Randomization phase: This (parallel) phase randomizes the list of input files in order to spread " +
+          "indexing load more evenly among the mappers of the subsequent phase." +  
+          "\n\n" +
+          "2) Mapper phase: This (parallel) phase takes the input files, extracts the relevant data, transforms it " +
+          "and hands SolrInputDocuments to a set of reducers. The ETL functionality is flexible and " +
+          "customizable. Parsers for a set of standard data formats such as Avro, CSV, Text, HTML, XML, " +
+          "PDF, Word, Excel, etc. are provided out of the box, and additional custom parsers for additional " +
+          "file or data formats can be added as Tika plugins. Any kind of data can be detected and indexed - " +
+          "a file is an InputStream of any format and parsers for any data format and any custom ETL logic " +
+          "can be registered. " +
+          "\n\n" +
+          "3) Reducer phase: This (parallel) phase loads the mapper's SolrInputDocuments into one EmbeddedSolrServer per reducer. " +
+          "Each such reducer and Solr server can be seen as a (micro) shard. The Solr servers stores their " +
+          "data in HDFS." + 
+          "\n\n" +
+          "4) Mapper-only merge phase: This (parallel) phase merges the set of reducer shards into the number of solr " +
+          "shards expected by the user, using a set of mapper-only jobs. This phase is omitted if the number " +
+          "of shards is already equal to the number of shards expected by the user. During each iteration each " +
+          "mapper task merges F input shards into one output shard. The parameter F is called fanout." +
+          "\n\n" +
+          "5) Golive phase: This optional (parallel) phase merges the output shards of the previous phase into a set of " +
+          "live customer facing Solr servers, typically a SolrCloud.");
+
       parser.addArgument("--help", "-h")
         .help("Show this help message and exit")
         .action(new HelpArgumentAction() {
@@ -234,7 +258,7 @@ public class TikaIndexerTool extends Configured implements Tool {
         .help("Number of reducers to index into. -1 indicates use all reduce slots available on the cluster. " +
             "0 indicates use one reducer per output shard, which disables the mtree merge MR algorithm. " +
             "The mtree merge MR algorithm improves scalability by spreading load " +
-            "(in particular CPU load) among an arbitrarily large number of parallel reducers, independent of the number " +
+            "(in particular CPU load) among a number of parallel reducers that can be much larger than the number " +
             "of solr shards expected by the user. It can be seen as an extension of concurrent lucene merges " +
             "and tiered lucene merges to the clustered case. The subsequent mapper-only phase " +
             "merges the output of said large number of reducers to the number of shards expected by the user, " +
@@ -375,12 +399,15 @@ public class TikaIndexerTool extends Configured implements Tool {
   
   /** API for Java clients; visible for testing; may become a public API eventually */
   int run(Options options) throws Exception {
-    long startTime = System.currentTimeMillis();
+    long programStartTime = System.currentTimeMillis();
     if (options.fairSchedulerPool != null) {
       getConf().set("mapred.fairscheduler.pool", options.fairSchedulerPool);
     }
     getConf().setInt(BatchWriter.MAX_SEGMENTS, options.maxSegments);
-    getConf().setBoolean("mapred.used.genericoptionsparser", true); // workaround for http://hadoop.6.n7.nabble.com/GenericOptionsParser-warning-td8103.html
+    
+    // switch off a false warning about allegedly not implementing Tool
+    // also see http://hadoop.6.n7.nabble.com/GenericOptionsParser-warning-td8103.html
+    getConf().setBoolean("mapred.used.genericoptionsparser", true); 
 
     job = Job.getInstance(getConf());
     job.setJarByClass(getClass());
@@ -428,16 +455,16 @@ public class TikaIndexerTool extends Configured implements Tool {
     if (options.isRandomize) { 
       // there's no benefit in using many parallel mapper tasks just to randomize the order of a few lines;
       // use sequential algorithm below a certain threshold
-      // TODO: if there are less than a million lines, reduce latency by running main memory sort right away instead of launching a high latency MR job      
+      // TODO: if there are less than a million lines, reduce latency even more by running main memory sort right away instead of launching a high latency MR job      
       int numLinesPerRandomizerSplit = Math.max(1000 * 1000, numLinesPerSplit);
 
-      long start = System.currentTimeMillis();
+      long startTime = System.currentTimeMillis();
       Job randomizerJob = randomizeInputFiles(getConf(), fullInputList, outputStep2Dir, numLinesPerRandomizerSplit);
       LOG.info("Randomizing list of {} input files to spread indexing load more evenly among mappers: {}", numFiles, fullInputList);
       if (!waitForCompletion(randomizerJob, options.isVerbose)) {
         return -1; // job failed
       }
-      float secs = (System.currentTimeMillis() - start) / 1000.0f;
+      float secs = (System.currentTimeMillis() - startTime) / 1000.0f;
       LOG.info("Done. Randomizing list of {} input files took {} secs", numFiles, secs);
     } else {
       outputStep2Dir = outputStep1Dir;
@@ -459,11 +486,11 @@ public class TikaIndexerTool extends Configured implements Tool {
     job.setOutputValueClass(SolrInputDocumentWritable.class);
     job.getConfiguration().set(TikaIndexer.TIKA_CONFIG_LOCATION, "tika-config.xml");
     LOG.info("Indexing {} files using {} real mappers into {} reducers", numFiles, realMappers, reducers);
-    long start = System.currentTimeMillis();
+    long startTime = System.currentTimeMillis();
     if (!waitForCompletion(job, options.isVerbose)) {
       return -1; // job failed
     }
-    float secs = (System.currentTimeMillis() - start) / 1000.0f;
+    float secs = (System.currentTimeMillis() - startTime) / 1000.0f;
     LOG.info("Done. Indexing {} files using {} real mappers into {} reducers took {} secs", numFiles, realMappers, reducers, secs);
 
     int mtreeMergeIterations = 0;
@@ -496,11 +523,11 @@ public class TikaIndexerTool extends Configured implements Tool {
       
       LOG.info("MTree merge iteration {}/{}: Merging {} shards into {} shards using fanout {}", mtreeMergeIteration,
           mtreeMergeIterations, reducers, (reducers / options.fanout), options.fanout);
-      start = System.currentTimeMillis();
+      startTime = System.currentTimeMillis();
       if (!waitForCompletion(job, options.isVerbose)) {
         return -1; // job failed
       }
-      secs = (System.currentTimeMillis() - start) / 1000.0f;
+      secs = (System.currentTimeMillis() - startTime) / 1000.0f;
       LOG.info("MTree merge iteration {}/{}: Done. Merging {} shards into {} shards using fanout {} took {} secs",
           mtreeMergeIteration, mtreeMergeIterations, reducers, (reducers / options.fanout), options.fanout, secs);
       
@@ -520,7 +547,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     if (!rename(outputReduceDir, outputResultsDir, fs)) {
       return -1;
     }
-    goodbye(job, startTime);
+    goodbye(job, programStartTime);
     return 0;
   }
 
