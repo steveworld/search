@@ -43,6 +43,10 @@
           <groupId>org.apache.geronimo.specs</groupId> 
           <artifactId>geronimo-stax-api_1.0_spec</artifactId> <!-- needed by tika-parsers but already provided by JDK -->
         </exclusion>
+        <exclusion>
+          <groupId>xerces</groupId>
+          <artifactId>xercesImpl</artifactId> <!-- used by com.drewnoakes:metadata-extractor:jar but replacing built-in XML parser with legacy xerces is scary and probably don't need it -->
+        </exclusion>
       </exclusions>
     </dependency>
     
