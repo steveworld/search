@@ -133,11 +133,11 @@ public class TikaIndexerTool extends Configured implements Tool {
           "can be registered. " +
           "\n\n" +
           "3) Reducer phase: This (parallel) phase loads the mapper's SolrInputDocuments into one EmbeddedSolrServer per reducer. " +
-          "Each such reducer and Solr server can be seen as a (micro) shard. The Solr servers stores their " +
+          "Each such reducer and Solr server can be seen as a (micro) shard. The Solr servers store their " +
           "data in HDFS." + 
           "\n\n" +
           "4) Mapper-only merge phase: This (parallel) phase merges the set of reducer shards into the number of solr " +
-          "shards expected by the user, using a set of mapper-only jobs. This phase is omitted if the number " +
+          "shards expected by the user, using a tree shaped-chain of mapper-only jobs. This phase is omitted if the number " +
           "of shards is already equal to the number of shards expected by the user. During each iteration each " +
           "mapper task merges F input shards into one output shard. The parameter F is called fanout." +
           "\n\n" +
