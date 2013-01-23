@@ -70,6 +70,7 @@ public class TikaMRMiniMRTest extends Assert {
     return Arrays.asList(new Object[][] {
         { "sample-statuses-20120906-141433.avro", 2 },
         { "sample-statuses-20120521-100919.avro", 20 }, 
+        { "sample-statuses-20120906-141433-medium.avro", 2104 }, 
     });
   }
 
@@ -182,7 +183,7 @@ public class TikaMRMiniMRTest extends Assert {
         "--shards=" + shards,
         "--verbose",
         numRuns % 2 == 0 ? "--inputlist=" + INPATH.toString() : dataDir.toString(),
-        numRuns % 2 == 0 ? "--reducers=" + shards : "--reducers=-1" 
+        numRuns % 3 == 0 ? "--reducers=" + shards : (numRuns % 3 == 1  ? "--reducers=8" : "--reducers=-1")
     };
     TikaIndexerTool tool = new TikaIndexerTool();
     int res = ToolRunner.run(jobConf, tool, args);

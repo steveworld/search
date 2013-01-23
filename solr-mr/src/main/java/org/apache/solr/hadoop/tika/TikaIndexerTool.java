@@ -549,7 +549,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     if (reducers != options.shards) {
       // Ensure fanout isn't misconfigured. fanout can't meaningfully be larger than what would be 
       // required to merge all leaf shards in one single tree merge iteration into root shards
-      options.fanout = Math.min(options.fanout, (int) ceilDivide(reducers , options.shards));
+      options.fanout = Math.min(options.fanout, (int) ceilDivide(reducers, options.shards));
       
       // Ensure invariant reducers == options.shards * (fanout ^ N) where N is an integer >= 1.
       // N is the number of mtree merge iterations.
