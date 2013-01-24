@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
  * 
  * 
  */
-class HeartBeater extends Thread {
+public class HeartBeater extends Thread {
   public static Logger LOG = LoggerFactory.getLogger(HeartBeater.class);
 
   /**
