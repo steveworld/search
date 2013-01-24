@@ -124,11 +124,11 @@ public class TikaIndexerTool extends Configured implements Tool {
           "1) Randomization phase: This (parallel) phase randomizes the list of input files in order to spread " +
           "indexing load more evenly among the mappers of the subsequent phase." +  
           "\n\n" +
-          "2) Mapper phase: This (parallel) phase takes the input files, extracts the relevant data, transforms it " +
+          "2) Mapper phase: This (parallel) phase takes the input files, extracts the relevant content, transforms it " +
           "and hands SolrInputDocuments to a set of reducers. The ETL functionality is flexible and " +
           "customizable. Parsers for a set of standard data formats such as Avro, CSV, Text, HTML, XML, " +
           "PDF, Word, Excel, etc. are provided out of the box, and additional custom parsers for additional " +
-          "file or data formats can be added as Tika plugins. Any kind of data can be detected and indexed - " +
+          "file or data formats can be added as Apache Tika plugins. Any kind of data can be detected and indexed - " +
           "a file is an InputStream of any format and parsers for any data format and any custom ETL logic " +
           "can be registered. " +
           "\n\n" +
@@ -141,7 +141,7 @@ public class TikaIndexerTool extends Configured implements Tool {
           "of shards is already equal to the number of shards expected by the user. During each iteration each " +
           "mapper task merges F input shards into one output shard. The parameter F is called fanout." +
           "\n\n" +
-          "5) Golive phase: This optional (parallel) phase merges the output shards of the previous phase into a set of " +
+          "5) Go-live phase: This optional (parallel) phase merges the output shards of the previous phase into a set of " +
           "live customer facing Solr servers, typically a SolrCloud.");
 
       parser.addArgument("--help", "-h")
