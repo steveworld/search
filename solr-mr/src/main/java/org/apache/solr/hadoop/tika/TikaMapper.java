@@ -48,6 +48,7 @@ import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.PluginInfo;
 import org.apache.solr.core.SolrConfig;
 import org.apache.solr.core.SolrResourceLoader;
+import org.apache.solr.hadoop.HeartBeater;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrMapper;
 import org.apache.solr.handler.extraction.ExtractingRequestHandler;
@@ -67,6 +68,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   private FileSystem fs;
   private Context context;
   private IndexSchema schema;
+  private HeartBeater heartBeater;
 
   public static final String SCHEMA_FIELD_NAME_OF_FILE_URI = "fileURI";
   
@@ -89,6 +91,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     indexer.start();
     indexer.beginTransaction();
     fs = FileSystem.get(context.getConfiguration());
+    heartBeater = new HeartBeater(context);
   }
 
   /**
@@ -96,25 +99,31 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
    */
   @Override
   public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-    String uri = value.toString();
-    Path path = new Path(uri);
-    if (!fs.exists(path)) {
-      LOG.info("Ignoring file that somehow has been deleted since the job was submitted: {}", path);
-      return;
-    }
-    LOG.info("Processing file {}", path);
-    FSDataInputStream in = fs.open(path);
+    heartBeater.needHeartBeat();
     try {
-      Map<String,String> headers = new HashMap<String, String>();
-//      uri = getFileURI(path);   
-      headers.put(schema.getUniqueKeyField().getName(), uri); // use HDFS file path as docId if no docId is specified
-      headers.put(SCHEMA_FIELD_NAME_OF_FILE_URI, uri); // enable explicit storing of path in Solr
-      headers.put(Metadata.RESOURCE_NAME_KEY, path.getName()); // Tika can use the file name in guessing the right MIME type
-      indexer.process(new StreamEvent(in, headers));
-    } catch (SolrServerException e) {
-      LOG.error("Unable to process file " + path, e);
+      String uri = value.toString();
+      Path path = new Path(uri);
+      if (!fs.exists(path)) {
+        LOG.info("Ignoring file that somehow has been deleted since the job was submitted: {}", path);
+        return;
+      }
+      LOG.info("Processing file {}", path);
+      FSDataInputStream in = fs.open(path);
+      try {
+        Map<String,String> headers = new HashMap<String, String>();
+  //      uri = getFileURI(path);   
+        headers.put(schema.getUniqueKeyField().getName(), uri); // use HDFS file path as docId if no docId is specified
+        headers.put(SCHEMA_FIELD_NAME_OF_FILE_URI, uri); // enable explicit storing of path in Solr
+        //headers.put("lastModified", String.valueOf(fs.getFileStatus(path).getModificationTime())); // FIXME also in SpoolDirSource
+        headers.put(Metadata.RESOURCE_NAME_KEY, path.getName()); // Tika can use the file name in guessing the right MIME type
+        indexer.process(new StreamEvent(in, headers));
+      } catch (SolrServerException e) {
+        LOG.error("Unable to process file " + path, e);
+      } finally {
+        in.close();
+      }
     } finally {
-      in.close();
+      heartBeater.cancelHeartBeat();
     }
   }
 
