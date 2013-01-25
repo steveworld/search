@@ -418,7 +418,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       mappers = new JobClient(job.getConfiguration()).getClusterStatus().getMaxMapTasks(); // MR1
       //mappers = job.getCluster().getClusterStatus().getMapSlotCapacity(); // Yarn only
       LOG.info("Cluster reports {} mapper slots", mappers);
-      mappers = 2 * mappers; // better accomodate stragglers
+      mappers = 8 * mappers; // better accomodate stragglers
     }
     if (mappers <= 0) {
       throw new IllegalStateException("Illegal number of mappers: " + mappers);
