@@ -23,9 +23,21 @@ import org.apache.hadoop.mapreduce.Reducer;
 
 public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, SolrInputDocumentWritable> {
 
+  private HeartBeater heartBeater;
+  
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
-    super.setup(context);
     SolrRecordWriter.addReducerContext(context);
+    heartBeater = new HeartBeater(context);
   }
+  
+  protected void reduce(Text key, Iterable<SolrInputDocumentWritable> values, Context context) throws IOException, InterruptedException {
+    heartBeater.needHeartBeat();
+    try {
+      super.reduce(key, values, context);
+    } finally {
+      heartBeater.cancelHeartBeat();
+    }
+  }
+    
 }
