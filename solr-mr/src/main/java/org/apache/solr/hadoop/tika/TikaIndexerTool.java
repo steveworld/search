@@ -200,7 +200,7 @@ public class TikaIndexerTool extends Configured implements Tool {
               "    --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" + 
               "    jar target/solr-mr-*-job.jar \\\n" + 
               "    --files src/test/resources/tika-config.xml \\\n" + 
-              "    --libjars myconfig.jar,../examples/target/flume-ng-solr-sink-examples-1.2.0-cdh4.2.0-SNAPSHOT.jar \\\n" + 
+              "    --libjars myconfig.jar,../examples/target/flume-ng-solr-sink-examples-1.2.0-cdh4.3.0-SNAPSHOT.jar \\\n" + 
               "    -D mapred.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
               "    -D mapreduce.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
               "    --solrhomedir src/test/resources/solr/minimr \\\n" + 
