@@ -45,13 +45,13 @@
   <groupId>org.apache.flume.flume-ng-sinks</groupId>
   <artifactId>flume-ng-solr-sink-parent</artifactId>
   <name>Flume NG Solr Sink Aggregator</name>
-  <version>1.2.0-cdh4.2.0-SNAPSHOT</version>
+  <version>1.2.0-cdh4.3.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <parent>
     <groupId>com.cloudera.cdh</groupId>
     <artifactId>cdh-root</artifactId>
-    <version>4.2.0-SNAPSHOT</version>
+    <version>4.3.0-SNAPSHOT</version>
   </parent>
 
   <!--
