@@ -16,6 +16,7 @@
  */
 package org.apache.solr.hadoop.tika;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -24,6 +25,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -59,6 +61,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
+import com.google.common.base.Joiner;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
@@ -77,6 +80,14 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
     super.setup(context);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("CWD is {}", new File(".").getCanonicalPath());
+      TreeMap map = new TreeMap();
+      for (Map.Entry<String,String> entry : context.getConfiguration()) {
+        map.put(entry.getKey(), entry.getValue());
+      }
+      LOG.debug("Configuration:\n{}", Joiner.on("\n").join(map.entrySet()));
+    }
     this.context = context;
     indexer = new MyIndexer();
     Map<String, Object> params = new HashMap<String,Object>();
