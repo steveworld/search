@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.apache.flume.flume-ng-sinks</groupId>
     <artifactId>flume-ng-solr-sink-parent</artifactId>
-    <version>1.2.0-cdh4.3.0-SNAPSHOT</version>
+    <version>1.2.0-cdh4.2.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.apache.solr</groupId>
@@ -97,7 +97,7 @@
     <dependency>
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
       <artifactId>flume-ng-solr-core-indexer</artifactId>
-      <version>1.2.0-cdh4.3.0-SNAPSHOT</version>
+      <version>1.2.0-cdh4.2.0-SNAPSHOT</version>
     </dependency>
 
     <dependency> <!-- see http://argparse4j.sourceforge.net -->
