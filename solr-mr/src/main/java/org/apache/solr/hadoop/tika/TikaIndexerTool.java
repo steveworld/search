@@ -137,9 +137,10 @@ public class TikaIndexerTool extends Configured implements Tool {
           "data in HDFS." + 
           "\n\n" +
           "4) Mapper-only merge phase: This (parallel) phase merges the set of reducer shards into the number of solr " +
-          "shards expected by the user, using a tree-shaped pipeline of mapper-only jobs. This phase is omitted if the number " +
-          "of shards is already equal to the number of shards expected by the user. During each iteration each " +
-          "mapper task merges F input shards into one output shard. The parameter F is called fanout." +
+          "shards expected by the user, using a mapper-only job. This phase is omitted if the number " +
+          "of shards is already equal to the number of shards expected by the user. " +
+//          "During each iteration each " +
+//          "mapper task merges F input shards into one output shard. The parameter F is called fanout." +
           "\n\n" +
           "5) Go-live phase: This optional (parallel) phase merges the output shards of the previous phase into a set of " +
           "live customer facing Solr servers, typically a SolrCloud.");
@@ -246,14 +247,14 @@ public class TikaIndexerTool extends Configured implements Tool {
       Argument mappersArg = parser.addArgument("--mappers")
         .metavar("INTEGER")
         .type(Integer.class)
-        .choices(new RangeArgumentChoice(-1, Integer.MAX_VALUE))
+        .choices(new RangeArgumentChoice(-1, Integer.MAX_VALUE)) // TODO: also support X% syntax where X is an integer
         .setDefault(-1)
         .help("Maximum number of MR mapper tasks to use. -1 indicates use all map slots available on the cluster");
   
       Argument reducersArg = parser.addArgument("--reducers")
         .metavar("INTEGER")
         .type(Integer.class)
-        .choices(new RangeArgumentChoice(-1, Integer.MAX_VALUE))
+        .choices(new RangeArgumentChoice(-1, Integer.MAX_VALUE)) // TODO: also support X% syntax where X is an integer
         .setDefault(-1)
         .help("Number of reducers to index into. -1 indicates use all reduce slots available on the cluster. " +
             "0 indicates use one reducer per output shard, which disables the mtree merge MR algorithm. " +
@@ -268,14 +269,15 @@ public class TikaIndexerTool extends Configured implements Tool {
         .metavar("INTEGER")
         .type(Integer.class)
         .choices(new RangeArgumentChoice(2, Integer.MAX_VALUE))
-        .setDefault(10)
-        .help("Maximum number of intermediate shards to merge per mapper task in the mapper-only phase of the mtree merge algorithm. " +
-            "Intermediate merging can be switched on and off by adjusting the fanout parameter. " +
-            "It is a trade-off: Intermediate merges requires more I/O bandwidth but can take advantage of more " +
-            "resources by utilizing more parallelism. " +
-            "The fanout is a trade-off between maximizing parallelism " +
-            "(small fanout, e.g. F=2) and minimizing aggregate I/O bandwidth consumption " +
-            "(large fanout, e.g. F=100). ");
+        .setDefault(Integer.MAX_VALUE)
+        .help(FeatureControl.SUPPRESS);
+//        .help("Maximum number of intermediate shards to merge per mapper task in the mapper-only phase of the mtree merge algorithm. " +
+//            "Intermediate merging can be switched on and off by adjusting the fanout parameter. " +
+//            "It is a trade-off: Intermediate merges requires more I/O bandwidth but can take advantage of more " +
+//            "resources by utilizing more parallelism. " +
+//            "The fanout is a trade-off between maximizing parallelism " +
+//            "(small fanout, e.g. F=2) and minimizing aggregate I/O bandwidth consumption " +
+//            "(large fanout, e.g. F=100). ");
       
       Argument shardsArg = parser.addArgument("--shards")
         .metavar("INTEGER")
@@ -289,8 +291,8 @@ public class TikaIndexerTool extends Configured implements Tool {
         .type(Integer.class)
         .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
         .setDefault(1)
-        .help("Maximum number of segments to be contained on output in the index of each shard. " +
-            "After a shard has built its output index it applies a merge policy to merge segments " +
+        .help("Maximum number of segments to be contained on output in the index of each reducer shard. " +
+            "After a reducer has built its output index it applies a merge policy to merge segments " +
             "until there are <= maxSegments lucene segments left in this index. " + 
             "Merging segments involves reading and rewriting all data in all these segment files, " + 
             "potentially multiple times, which is very I/O intensive and time consuming. " + 
@@ -449,8 +451,8 @@ public class TikaIndexerTool extends Configured implements Tool {
     int realMappers = Math.min(mappers, (int) ceilDivide(numFiles, numLinesPerSplit));
     calculateNumReducers(options, realMappers);
     int reducers = options.reducers;
-    LOG.info("Using these parameters: numFiles: {}, mappers: {}, realMappers: {}, reducers: {}, shards: {}, fanout: {}",
-        numFiles, mappers, realMappers, reducers, options.shards, options.fanout);
+    LOG.info("Using these parameters: numFiles: {}, mappers: {}, realMappers: {}, reducers: {}, shards: {}, fanout: {}, maxSegments: {}",
+        numFiles, mappers, realMappers, reducers, options.shards, options.fanout, options.maxSegments);
         
     if (options.isRandomize) { 
       // there's no benefit in using many parallel mapper tasks just to randomize the order of a few lines;
