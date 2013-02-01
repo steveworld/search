@@ -31,6 +31,9 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
+import org.apache.lucene.index.LogMergePolicy;
+import org.apache.lucene.index.MergePolicy;
+import org.apache.lucene.index.TieredMergePolicy;
 import org.apache.lucene.misc.IndexMergeTool;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.Version;
@@ -90,6 +93,28 @@ public class TreeMergeOutputFormat extends FileOutputFormat<Text, NullWritable> 
             //.setMergePolicy(mergePolicy) // TODO: grab tuned MergePolicy from solrconfig.xml?
             //.setMergeScheduler(...) // TODO: grab tuned MergeScheduler from solrconfig.xml?
             ;
+          
+        if (LOG.isDebugEnabled()) {
+          writerConfig.setInfoStream(System.out);
+        }
+//        writerConfig.setRAMBufferSizeMB(100); // improve performance
+//        writerConfig.setMaxThreadStates(1);
+        
+        // disable compound file to improve performance
+        // also see http://lucene.472066.n3.nabble.com/Questions-on-compound-file-format-td489105.html
+        // also see defaults in SolrIndexConfig
+        MergePolicy mergePolicy = writerConfig.getMergePolicy();
+        LOG.debug("mergePolicy was: {}", mergePolicy);
+        if (mergePolicy instanceof TieredMergePolicy) {
+          ((TieredMergePolicy) mergePolicy).setUseCompoundFile(false); 
+//          ((TieredMergePolicy) mergePolicy).setMaxMergeAtOnceExplicit(10000);          
+//          ((TieredMergePolicy) mergePolicy).setMaxMergeAtOnce(10000);       
+//          ((TieredMergePolicy) mergePolicy).setSegmentsPerTier(10000);
+        } else if (mergePolicy instanceof LogMergePolicy) {
+          ((LogMergePolicy) mergePolicy).setUseCompoundFile(false); 
+        }
+        LOG.info("Using mergePolicy: {}", mergePolicy);
+        
         IndexWriter writer = new IndexWriter(mergedIndex, writerConfig);
         
         Directory[] indexes = new Directory[shards.size()];
@@ -102,21 +127,26 @@ public class TreeMergeOutputFormat extends FileOutputFormat<Text, NullWritable> 
         long start = System.currentTimeMillis();
         
         writer.addIndexes(indexes); 
-        // TODO: instead consider using addIndexes(IndexReader... readers) to avoid intermediate 
-        // copying of files into dst directory before running the physical segment merge. 
-        // This can improve performance and turns this phase into a true "logical" merge.
+        // TODO: avoid intermediate copying of files into dst directory; rename the files into the dir instead (cp -> rename) 
+        // This can improve performance and turns this phase into a true "logical" merge, completing in constant time.
         
         float secs = (System.currentTimeMillis() - start) / 1000.0f;
-        LOG.info("Logical merge took {} secs", secs);
-
-        int maxSegments = context.getConfiguration().getInt(BatchWriter.MAX_SEGMENTS, 1);
+        LOG.info("Logical merge took {} secs", secs);        
+        int maxSegments = context.getConfiguration().getInt(TreeMergeMapper.MAX_SEGMENTS_ON_TREE_MERGE, Integer.MAX_VALUE);
         context.setStatus("Optimizing Solr: forcing mtree merge down to " + maxSegments + " segments");
         LOG.info("Optimizing Solr: forcing tree merge down to {} segments", maxSegments);
         start = System.currentTimeMillis();
-        writer.forceMerge(maxSegments);
-        writer.close();
+        if (maxSegments < Integer.MAX_VALUE) {
+          writer.forceMerge(maxSegments);
+        }
         secs = (System.currentTimeMillis() - start) / 1000.0f;
         LOG.info("Optimizing Solr: done forcing tree merge down to {} segments in {} secs", maxSegments, secs);
+        
+        start = System.currentTimeMillis();
+        LOG.info("Optimizing Solr: Closing index writer");
+        writer.close();
+        secs = (System.currentTimeMillis() - start) / 1000.0f;
+        LOG.info("Optimizing Solr: Done closing index writer in {} secs", secs);
         context.setStatus("Done");
       } finally {
         heartBeater.cancelHeartBeat();

@@ -32,6 +32,8 @@ public class TreeMergeMapper extends Mapper<LongWritable, Text, Text, NullWritab
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TreeMergeMapper.class);
 
+  public static final String MAX_SEGMENTS_ON_TREE_MERGE = "maxSegmentsOnTreeMerge";
+
   @Override
   protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
     LOGGER.trace("map key: {}, value: {}", key, value);
