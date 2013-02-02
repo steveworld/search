@@ -427,8 +427,10 @@ public class TikaIndexerTool extends Configured implements Tool {
     }
     options.mappers = mappers;
     
-    FileSystem fs = options.outputDir.getFileSystem(job.getConfiguration());    
-    fs.delete(options.outputDir, true);
+    FileSystem fs = options.outputDir.getFileSystem(job.getConfiguration());
+    if (fs.exists(options.outputDir) && !delete(options.outputDir, true, fs)) {
+      return -1;
+    }
     Path outputResultsDir = new Path(options.outputDir, RESULTS_DIR);
     Path outputReduceDir = new Path(options.outputDir, "reducers");
     Path outputStep1Dir = new Path(options.outputDir, "tmp1");    
