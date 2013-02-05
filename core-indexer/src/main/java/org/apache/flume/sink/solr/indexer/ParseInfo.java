@@ -36,6 +36,7 @@ public final class ParseInfo {
 
   private final StreamEvent event;
   private final SolrIndexer indexer;
+  private final ParseContext parseContext;
   private String id;
   private SolrCollection solrCollection;
   private SolrContentHandler solrContentHandler;
@@ -53,6 +54,8 @@ public final class ParseInfo {
     }
     this.event = event;
     this.indexer = indexer;
+    this.parseContext = new ParseContext();
+    this.parseContext.set(ParseInfo.class, this);
   }
 
   public StreamEvent getEvent() {
@@ -61,6 +64,10 @@ public final class ParseInfo {
 
   public SolrIndexer getIndexer() {
     return indexer;
+  }
+
+  public ParseContext getParseContext() {
+    return parseContext;
   }
 
   public Configuration getConfig() {
