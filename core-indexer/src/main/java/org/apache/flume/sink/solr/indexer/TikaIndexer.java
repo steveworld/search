@@ -94,7 +94,6 @@ public class TikaIndexer extends SolrIndexer {
 
   private TikaConfig tikaConfig;
   private AutoDetectParser autoDetectParser;
-  private ParseContext parseContext;
   private ParseInfo parseInfo;
 
   private static final XPathParser PARSER = new XPathParser("xhtml", XHTMLContentHandler.XHTML);
@@ -155,14 +154,11 @@ public class TikaIndexer extends SolrIndexer {
 
   @Override
   public void process(StreamEvent event) throws IOException, SolrServerException {
-    parseInfo = new ParseInfo(event, this);
-    parseContext = new ParseContext();
-    parseContext.set(ParseInfo.class, parseInfo); // ParseInfo is more practical than ParseContext
+    parseInfo = new ParseInfo(event, this); // ParseInfo is more practical than ParseContext
     try {
       super.process(event);
     } finally {
       parseInfo = null;
-      parseContext = null;
     }
   }
 
@@ -175,7 +171,7 @@ public class TikaIndexer extends SolrIndexer {
     Parser parser = detectParser(event);
 
     // necessary for gzipped files or tar files, etc! copied from TikaCLI
-    parseContext.set(Parser.class, parser);
+    getParseInfo().getParseContext().set(Parser.class, parser);
 
     Metadata metadata = new Metadata();
     ParseInfo info = getParseInfo();
@@ -233,7 +229,7 @@ public class TikaIndexer extends SolrIndexer {
 
       try {
         addPasswordHandler(resourceName);
-        parser.parse(inputStream, parsingHandler, metadata, parseContext);
+        parser.parse(inputStream, parsingHandler, metadata, getParseInfo().getParseContext());
       } catch (Exception e) {
         boolean ignoreTikaException = info.getSolrCollection().getSolrParams()
             .getBool(ExtractingParams.IGNORE_TIKA_EXCEPTION, false);
@@ -482,7 +478,7 @@ public class TikaIndexer extends SolrIndexer {
         epp.parse(is);
       }
     }
-    parseContext.set(PasswordProvider.class, epp);
+    getParseInfo().getParseContext().set(PasswordProvider.class, epp);
     String resourcePassword = getParseInfo().getSolrCollection().getSolrParams()
         .get(ExtractingParams.RESOURCE_PASSWORD);
     if (resourcePassword != null) {
