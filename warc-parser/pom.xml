@@ -15,12 +15,12 @@
   <parent>
     <groupId>org.apache.flume.flume-ng-sinks</groupId>
     <artifactId>flume-ng-solr-sink-parent</artifactId>
-    <version>1.2.0-cdh4.2.0-SNAPSHOT</version>
+    <version>0.1.0-cdh4.2.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.apache.flume.flume-ng-sinks</groupId>
   <artifactId>flume-ng-solr-warc-parser</artifactId>
-  <version>1.2.0-cdh4.2.0-SNAPSHOT</version>
+  <version>0.1.0-cdh4.2.0-SNAPSHOT</version>
   <name>Flume NG Solr Sink WARC Parser</name>
 
   <dependencies>
@@ -35,13 +35,13 @@
     <dependency>
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
       <artifactId>flume-ng-solr-core-indexer</artifactId>
-      <version>${cdh.flume-ng-solr.version}</version>
+      <version>${cdh.search.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
       <artifactId>flume-ng-solr-core-indexer</artifactId>
-      <version>${cdh.flume-ng-solr.version}</version>
+      <version>${cdh.search.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
