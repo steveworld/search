@@ -67,17 +67,19 @@ public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
    */
   public static final String OUTPUT_ZIP_FILE = "solr.output.zip.format";
 
-  static int defaultSolrWriterThreadCount = 2;
+  static int defaultSolrWriterThreadCount = 0;
 
   public static final String SOLR_WRITER_THREAD_COUNT = "solr.record.writer.num.threads";
 
-  static int defaultSolrWriterQueueSize = 100;
+  static int defaultSolrWriterQueueSize = 1;
 
   public static final String SOLR_WRITER_QUEUE_SIZE = "solr.record.writer.max.queues.size";
 
   static int defaultSolrBatchSize = 20;
 
   public static final String SOLR_RECORD_WRITER_BATCH_SIZE = "solr.record.writer.batch.size";
+
+  public static final String SOLR_RECORD_WRITER_MAX_SEGMENTS = "solr.record.writer.maxSegments";
 
   public static String getSetupOk() {
     return SETUP_OK;

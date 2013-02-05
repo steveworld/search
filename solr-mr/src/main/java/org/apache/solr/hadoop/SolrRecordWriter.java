@@ -27,8 +27,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
@@ -40,14 +38,12 @@ import org.apache.hadoop.mapreduce.TaskID;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.common.SolrInputDocument;
-import org.apache.solr.core.Config;
 import org.apache.solr.core.CoreContainer;
 import org.apache.solr.core.CoreDescriptor;
 import org.apache.solr.core.SolrCore;
 import org.apache.solr.core.SolrResourceLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 /**
  * Instantiate a record writer that will build a Solr index.
@@ -115,24 +111,18 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
 //   */
 //  private boolean outputZipFile = false;
 
-  HeartBeater heartBeater = null;
-
-  private BatchWriter batchWriter = null;
+  private final HeartBeater heartBeater;
+  private final BatchWriter batchWriter;
+  private final List<SolrInputDocument> batch;
+  private final int batchSize;
+  private long numDocsWritten = 0;
+  private long nextLogTime = System.currentTimeMillis();
 
   private static HashMap<TaskID, Reducer<?,?,?,?>.Context> contextMap = new HashMap<TaskID, Reducer<?,?,?,?>.Context>();
   
-  protected boolean isClosing() {
-    return closing;
-  }
-
-  protected void setClosing(boolean closing) {
-    this.closing = closing;
-  }
-
-  /** If true, writes will throw an exception */
-  private volatile boolean closing = false;
-
   public SolrRecordWriter(TaskAttemptContext context, Path outputShardDir, int batchSize) {
+    this.batchSize = batchSize;
+    this.batch = new ArrayList(batchSize);
     Configuration conf = context.getConfiguration();
 
     // setLogLevel("org.apache.solr.core", "WARN");
@@ -160,7 +150,7 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
   }
 
   public static EmbeddedSolrServer createEmbeddedSolrServer(Path solrHomeDir, FileSystem fs, Path outputShardDir)
-      throws IOException, ParserConfigurationException, SAXException {
+      throws IOException {
 
     if (solrHomeDir == null) {
       throw new IOException("Unable to find solr home setting");
@@ -273,14 +263,21 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
    */
   @Override
   public void write(K key, V value) throws IOException {
-    if (isClosing()) {
-      throw new IOException("Index is already closing");
-    }
     heartBeater.needHeartBeat();
     try {
       try {
         SolrInputDocumentWritable sidw = (SolrInputDocumentWritable) value;
-        batchWriter.queueBatch(Collections.singleton(sidw.getSolrInputDocument()));
+        batch.add(sidw.getSolrInputDocument());
+        if (batch.size() >= batchSize) {
+          batchWriter.queueBatch(batch);
+          numDocsWritten += batch.size();
+          long now = System.currentTimeMillis();
+          if (now >= nextLogTime) {
+            LOG.info("docsWritten: {}", numDocsWritten);
+            nextLogTime += 1000;
+          }
+          batch.clear();
+        }
       } catch (SolrServerException e) {
         throw new IOException(e);
       }
@@ -296,8 +293,13 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
       heartBeater.setProgress(context);
     }
     try {
-      
       heartBeater.needHeartBeat();
+      if (batch.size() > 0) {
+        batchWriter.queueBatch(batch);
+        numDocsWritten += batch.size();
+        batch.clear();
+      }
+      LOG.info("docsWritten: {}", numDocsWritten);
       batchWriter.close(context);
 //      if (outputZipFile) {
 //        context.setStatus("Writing Zip");
