@@ -45,13 +45,13 @@
   <groupId>org.apache.flume.flume-ng-sinks</groupId>
   <artifactId>flume-ng-solr-sink-parent</artifactId>
   <name>Flume NG Solr Sink Aggregator</name>
-  <version>1.2.0-cdh4.2.0-SNAPSHOT</version>
+  <version>0.1.0-cdh4.2.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <parent>
     <groupId>com.cloudera.cdh</groupId>
     <artifactId>cdh-root</artifactId>
-    <version>4.2.0-SNAPSHOT</version>
+    <version>4.2.0-search-SNAPSHOT</version>
   </parent>
 
   <!--
@@ -83,7 +83,7 @@
   <modules>
     <module>core-indexer</module>
     <module>flume-indexer</module>
-    <!--<module>warc-parser</module>-->
+    <module>warc-parser</module>
     <module>examples</module>
     <module>solr-mr</module>
   </modules>
