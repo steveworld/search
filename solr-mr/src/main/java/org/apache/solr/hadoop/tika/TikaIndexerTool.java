@@ -63,7 +63,6 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.solr.hadoop.BatchWriter;
 import org.apache.solr.hadoop.LineRandomizerMapper;
 import org.apache.solr.hadoop.LineRandomizerReducer;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
@@ -405,7 +404,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     if (options.fairSchedulerPool != null) {
       getConf().set("mapred.fairscheduler.pool", options.fairSchedulerPool);
     }
-    getConf().setInt(BatchWriter.MAX_SEGMENTS, options.maxSegments);
+    getConf().setInt(SolrOutputFormat.SOLR_RECORD_WRITER_MAX_SEGMENTS, options.maxSegments);
     
     // switch off a false warning about allegedly not implementing Tool
     // also see http://hadoop.6.n7.nabble.com/GenericOptionsParser-warning-td8103.html
@@ -415,12 +414,14 @@ public class TikaIndexerTool extends Configured implements Tool {
     job.setJarByClass(getClass());
     job.setJobName(getClass().getName() + "/" + getShortClassName(TikaMapper.class));
 
-    int mappers = options.mappers;
-    if (mappers == -1) { 
-      mappers = new JobClient(job.getConfiguration()).getClusterStatus().getMaxMapTasks(); // MR1
-      //mappers = job.getCluster().getClusterStatus().getMapSlotCapacity(); // Yarn only
-      LOG.info("Cluster reports {} mapper slots", mappers);
+    int mappers = new JobClient(job.getConfiguration()).getClusterStatus().getMaxMapTasks(); // MR1
+    //mappers = job.getCluster().getClusterStatus().getMapSlotCapacity(); // Yarn only
+    LOG.info("Cluster reports {} mapper slots", mappers);
+    
+    if (options.mappers == -1) { 
       mappers = 8 * mappers; // better accomodate stragglers
+    } else {
+      mappers = options.mappers;
     }
     if (mappers <= 0) {
       throw new IllegalStateException("Illegal number of mappers: " + mappers);
@@ -566,14 +567,16 @@ public class TikaIndexerTool extends Configured implements Tool {
       throw new IllegalStateException("Illegal realMappers: " + realMappers);
     }
     
-    int reducers = options.reducers;
-    if (reducers == 0) {
+    int reducers = new JobClient(job.getConfiguration()).getClusterStatus().getMaxReduceTasks(); // MR1
+    //reducers = job.getCluster().getClusterStatus().getReduceSlotCapacity(); // Yarn only      
+    LOG.info("Cluster reports {} reduce slots", reducers);
+
+    if (options.reducers == 0) {
       reducers = options.shards;
-    } else if (reducers == -1) {
-      reducers = new JobClient(job.getConfiguration()).getClusterStatus().getMaxReduceTasks(); // MR1
-      //reducers = job.getCluster().getClusterStatus().getReduceSlotCapacity(); // Yarn only      
-      LOG.info("Cluster reports {} reduce slots", reducers);
+    } else if (options.reducers == -1) {
       reducers = Math.min(reducers, realMappers); // no need to use many reducers when using few mappers
+    } else {
+      reducers = options.reducers;
     }
     reducers = Math.max(reducers, options.shards);
     

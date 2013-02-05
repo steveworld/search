@@ -46,14 +46,10 @@ public class BatchWriter {
 
   public static final String COUNTER_BATCHES_WRITTEN = "BatchesWritten";
 
-  public static final String MAX_SEGMENTS = "MaxSegments";
+  private final EmbeddedSolrServer solr;
 
-  final EmbeddedSolrServer solr;
-
-  final List<SolrInputDocument> batchToWrite;
-
-  volatile Exception batchWriteException = null;
-
+  private volatile Exception batchWriteException = null;
+  
   public Exception getBatchWriteException() {
     return batchWriteException;
   }
@@ -68,7 +64,7 @@ public class BatchWriter {
   /** Queue Size */
   final int queueSize;
 
-  ThreadPoolExecutor batchPool;
+  private final ThreadPoolExecutor batchPool;
 
   private TaskID taskId = null;
 
@@ -166,35 +162,46 @@ public class BatchWriter {
     taskId = tid;
 
     // we need to obtain the settings before the constructor
-    batchPool = new ThreadPoolExecutor(writerThreads, writerThreads, 5,
-        TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(queueSize),
-        new ThreadPoolExecutor.CallerRunsPolicy());
-    this.batchToWrite = new ArrayList<SolrInputDocument>(batchSize);
+    if (writerThreads != 0) {
+      batchPool = new ThreadPoolExecutor(writerThreads, writerThreads, 5,
+          TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(queueSize),
+          new ThreadPoolExecutor.CallerRunsPolicy());
+    } else { // single threaded case
+      batchPool = null;
     }
+  }
 
   public void queueBatch(Collection<SolrInputDocument> batch)
       throws IOException, SolrServerException {
 
     throwIf();
-    batchPool.execute(new Batch(batch));
+    Batch b = new Batch(batch);
+    if (batchPool != null) {
+      batchPool.execute(b);
+    } else { // single threaded case
+      b.run();
+      throwIf();
+    }
   }
 
   public synchronized void close(TaskAttemptContext context)
       throws InterruptedException, SolrServerException, IOException {
 
-    context.setStatus("Waiting for batches to complete");
-    batchPool.shutdown();
-
-    while (!batchPool.isTerminated()) {
-      LOG.info(String.format(
-          "Waiting for %d items and %d threads to finish executing", batchPool
-              .getQueue().size(), batchPool.getActiveCount()));
-      batchPool.awaitTermination(5, TimeUnit.SECONDS);
+    if (batchPool != null) {
+      context.setStatus("Waiting for batches to complete");
+      batchPool.shutdown();
+  
+      while (!batchPool.isTerminated()) {
+        LOG.info(String.format(
+            "Waiting for %d items and %d threads to finish executing", batchPool
+                .getQueue().size(), batchPool.getActiveCount()));
+        batchPool.awaitTermination(5, TimeUnit.SECONDS);
+      }
     }
     //reporter.setStatus("Committing Solr");
     //solr.commit(true, false);
     context.setStatus("Optimizing Solr");
-    int maxSegments = context.getConfiguration().getInt(MAX_SEGMENTS, 1);
+    int maxSegments = context.getConfiguration().getInt(SolrOutputFormat.SOLR_RECORD_WRITER_MAX_SEGMENTS, 1);
     LOG.info("Optimizing Solr: forcing merge down to {} segments", maxSegments);
     long start = System.currentTimeMillis();
     solr.optimize(true, false, maxSegments);
