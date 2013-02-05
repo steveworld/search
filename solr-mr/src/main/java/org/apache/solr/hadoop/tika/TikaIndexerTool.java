@@ -138,8 +138,6 @@ public class TikaIndexerTool extends Configured implements Tool {
           "4) Mapper-only merge phase: This (parallel) phase merges the set of reducer shards into the number of solr " +
           "shards expected by the user, using a mapper-only job. This phase is omitted if the number " +
           "of shards is already equal to the number of shards expected by the user. " +
-//          "During each iteration each " +
-//          "mapper task merges F input shards into one output shard. The parameter F is called fanout." +
           "\n\n" +
           "5) Go-live phase: This optional (parallel) phase merges the output shards of the previous phase into a set of " +
           "live customer facing Solr servers, typically a SolrCloud.");
@@ -270,13 +268,6 @@ public class TikaIndexerTool extends Configured implements Tool {
         .choices(new RangeArgumentChoice(2, Integer.MAX_VALUE))
         .setDefault(Integer.MAX_VALUE)
         .help(FeatureControl.SUPPRESS);
-//        .help("Maximum number of intermediate shards to merge per mapper task in the mapper-only phase of the mtree merge algorithm. " +
-//            "Intermediate merging can be switched on and off by adjusting the fanout parameter. " +
-//            "It is a trade-off: Intermediate merges requires more I/O bandwidth but can take advantage of more " +
-//            "resources by utilizing more parallelism. " +
-//            "The fanout is a trade-off between maximizing parallelism " +
-//            "(small fanout, e.g. F=2) and minimizing aggregate I/O bandwidth consumption " +
-//            "(large fanout, e.g. F=100). ");
       
       Argument shardsArg = parser.addArgument("--shards")
         .metavar("INTEGER")
