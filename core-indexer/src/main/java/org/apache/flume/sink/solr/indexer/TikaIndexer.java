@@ -67,7 +67,6 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.CompositeParser;
-import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.PasswordProvider;
 import org.apache.tika.sax.TeeContentHandler;
@@ -169,13 +168,12 @@ public class TikaIndexer extends SolrIndexer {
   @Override
   protected List<SolrInputDocument> extract(StreamEvent event) {
     Parser parser = detectParser(event);
+    ParseInfo info = getParseInfo();
 
     // necessary for gzipped files or tar files, etc! copied from TikaCLI
-    getParseInfo().getParseContext().set(Parser.class, parser);
+    info.getParseContext().set(Parser.class, parser);
 
-    Metadata metadata = new Metadata();
-    ParseInfo info = getParseInfo();
-    info.setMetadata(metadata);
+    Metadata metadata = info.getMetadata();
 
     // If you specify the resource name (the filename, roughly) with this
     // parameter, then Tika can use it in guessing the right MIME type

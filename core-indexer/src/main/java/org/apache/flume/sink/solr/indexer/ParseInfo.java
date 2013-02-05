@@ -40,7 +40,7 @@ public final class ParseInfo {
   private String id;
   private SolrCollection solrCollection;
   private SolrContentHandler solrContentHandler;
-  private Metadata metadata;
+  private final Metadata metadata = new Metadata();
   private final AtomicLong recordNumber = new AtomicLong();
   private boolean isMultiDocumentParser = false;
   private final Map<String, Object> params = new HashMap();
@@ -100,10 +100,6 @@ public final class ParseInfo {
 
   public Metadata getMetadata() {
     return metadata;
-  }
-
-  public void setMetadata(Metadata metadata) {
-    this.metadata = metadata;
   }
 
   public boolean isMultiDocumentParser() {
