@@ -271,8 +271,7 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
         if (batch.size() >= batchSize) {
           batchWriter.queueBatch(batch);
           numDocsWritten += batch.size();
-          long now = System.currentTimeMillis();
-          if (now >= nextLogTime) {
+          if (System.currentTimeMillis() >= nextLogTime) {
             LOG.info("docsWritten: {}", numDocsWritten);
             nextLogTime += 1000;
           }
