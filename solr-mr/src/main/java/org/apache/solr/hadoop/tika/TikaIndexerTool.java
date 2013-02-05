@@ -58,9 +58,11 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapreduce.Job;
+//import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+//import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.solr.hadoop.LineRandomizerMapper;
@@ -70,6 +72,7 @@ import org.apache.solr.hadoop.SolrOutputFormat;
 import org.apache.solr.hadoop.SolrReducer;
 import org.apache.solr.hadoop.TreeMergeMapper;
 import org.apache.solr.hadoop.TreeMergeOutputFormat;
+//import org.apache.solr.hadoop.TreeMergePartitioner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -159,7 +162,7 @@ public class TikaIndexerTool extends Configured implements Tool {
               "  cp -r src/test/resources/org myconfig/\n" + 
               "  jar -cMvf myconfig.jar -C myconfig .\n" + 
               "\n" +              
-              "  # (Re)index all files in the hdfs:///user/foo/indir directory tree:\n" +
+              "  # (Re)index an Avro based Twitter tweet file:\n" +
               "  sudo -u hdfs hadoop \\\n" + 
               "    --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
               "    jar solr-mr-*-job.jar \\\n" +
@@ -169,8 +172,8 @@ public class TikaIndexerTool extends Configured implements Tool {
               "    -D mapreduce.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
               "    --solrhomedir src/test/resources/solr/minimr \\\n" +
               "    --outputdir hdfs://c2202.halxg.cloudera.com/user/whoschek/test \\\n" + 
-              "    --shards 10 \\\n" + 
-              "    hdfs:///user/foo/indir\n" +  
+              "    --shards 1 \\\n" + 
+              "    hdfs:///user/whoschek/test-documents/sample-statuses-20120906-141433.avro\n" +
               "\n" +
               "  # (Re)index all files that match all of the following conditions:\n" +
               "  # 1) File is contained somewhere in the directory tree rooted at hdfs:///user/whoschek/solrloadtest/twitter/tweets\n" +
