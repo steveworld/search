@@ -57,6 +57,14 @@ public final class ParseInfo {
     this.parseContext = new ParseContext();
     this.parseContext.set(ParseInfo.class, this);
   }
+  
+  public static ParseInfo getParseInfo(ParseContext parseContext) {
+    ParseInfo parseInfo = parseContext.get(ParseInfo.class);
+    if (parseInfo == null) {
+      throw new IllegalStateException();
+    }
+    return parseInfo;
+  }
 
   public StreamEvent getEvent() {
     return event;
