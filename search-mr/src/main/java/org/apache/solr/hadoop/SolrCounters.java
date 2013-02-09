@@ -27,25 +27,25 @@ public enum SolrCounters {
       + ": Number of document batches processed"),
 
   BATCH_WRITE_TIME (getClassName(SolrReducer.class) 
-      + ": Total time spent by all reducers writing document batches"),
+      + ": Time spent by reducers writing batches [ms]"),
 
   PHYSICAL_REDUCER_MERGE_TIME (getClassName(SolrReducer.class)
-      + ": Total time spent by all reducers performing physical merges"),
+      + ": Time spent by reducers on physical merges [ms]"),
   
-  LOGICAL_TREE_MERGE_TIME (getClassName(TreeMergeOutputFormat.class)
-      + ": Total time spent by all mapper-only tasks performing logical tree merges merges"),
+  LOGICAL_TREE_MERGE_TIME (getClassName(TreeMergeMapper.class)
+      + ": Time spent on logical tree merges [ms]"),
 
-  PHYSICAL_TREE_MERGE_TIME (getClassName(TreeMergeOutputFormat.class)
-      + ": Total time spent by all mapper-only tasks performing physical tree merges");
+  PHYSICAL_TREE_MERGE_TIME (getClassName(TreeMergeMapper.class)
+      + ": Time spent on physical tree merges [ms]");
 
-  private final String name;
+  private final String label;
   
-  private SolrCounters(String name) {
-    this.name = name;
+  private SolrCounters(String label) {
+    this.label = label;
   }
   
   public String toString() {
-    return name;
+    return label;
   }
   
   private static String getClassName(Class clazz) {

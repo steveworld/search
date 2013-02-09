@@ -146,8 +146,8 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
         //headers.put("lastModified", String.valueOf(fs.getFileStatus(path).getModificationTime())); // FIXME also in SpoolDirSource
         headers.put(Metadata.RESOURCE_NAME_KEY, path.getName()); // Tika can use the file name in guessing the right MIME type
         indexer.process(new StreamEvent(in, headers));
-        context.getCounter(TikaCounters.FILES_READ).increment(1);
-        context.getCounter(TikaCounters.BYTES_READ).increment(fileLength);
+        context.getCounter(TikaCounters.class.getName(), TikaCounters.FILES_READ.toString()).increment(1);
+        context.getCounter(TikaCounters.class.getName(), TikaCounters.BYTES_READ.toString()).increment(fileLength);
       } catch (SolrServerException e) {
         context.getCounter(getClass().getName() + ".errors", e.getClass().getName()).increment(1);
         LOG.error("Unable to process file " + path, e);

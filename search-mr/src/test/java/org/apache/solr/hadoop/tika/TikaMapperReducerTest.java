@@ -75,7 +75,7 @@ public class TikaMapperReducerTest extends MRUnitBase {
     mapReduceDriver.run();
 
     assertEquals("Invalid counter " + SolrCounters.DOCUMENTS_WRITTEN,
-        count, mapReduceDriver.getCounters().findCounter(SolrCounters.DOCUMENTS_WRITTEN).getValue());
+        count, mapReduceDriver.getCounters().findCounter(SolrCounters.class.getName(), SolrCounters.DOCUMENTS_WRITTEN.toString()).getValue());
   }
   
 }
