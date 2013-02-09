@@ -24,12 +24,6 @@
   <name>Search Contrib</name>
 
   <dependencies>
-    <dependency> <!-- see http://hc.apache.org -->
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient</artifactId>
-      <version>${httpclient.version}</version>
-    </dependency>
-
     <dependency> <!-- see http://flume.apache.org -->
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-ng-core</artifactId>
