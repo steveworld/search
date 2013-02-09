@@ -58,11 +58,9 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapreduce.Job;
-//import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-//import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.solr.hadoop.LineRandomizerMapper;
@@ -72,7 +70,7 @@ import org.apache.solr.hadoop.SolrOutputFormat;
 import org.apache.solr.hadoop.SolrReducer;
 import org.apache.solr.hadoop.TreeMergeMapper;
 import org.apache.solr.hadoop.TreeMergeOutputFormat;
-//import org.apache.solr.hadoop.TreeMergePartitioner;
+import org.apache.solr.hadoop.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -168,8 +166,8 @@ public class TikaIndexerTool extends Configured implements Tool {
               "    jar search-mr-*-job.jar \\\n" +
               "    --files src/test/resources/tika-config.xml \\\n" + 
               "    --libjars myconfig.jar \\\n" + 
-              "    -D mapred.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
-              "    -D mapreduce.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
+              "    -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "    -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "    --solrhomedir src/test/resources/solr/minimr \\\n" +
               "    --outputdir hdfs://c2202.halxg.cloudera.com/user/whoschek/test \\\n" + 
               "    --shards 1 \\\n" + 
@@ -192,9 +190,9 @@ public class TikaIndexerTool extends Configured implements Tool {
               "    --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" + 
               "    jar target/search-mr-*-job.jar \\\n" + 
               "    --files src/test/resources/tika-config.xml \\\n" + 
-              "    --libjars myconfig.jar,../examples/target/examples-0.1.0-cdh4.2.0-SNAPSHOT.jar \\\n" + 
-              "    -D mapred.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
-              "    -D mapreduce.child.java.opts=-Dlog4j.configuration=mylog4j.properties \\\n" + 
+              "    --libjars myconfig.jar,../search-contrib/target/search-contrib-*-SNAPSHOT.jar \\\n" + 
+              "    -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "    -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "    --solrhomedir src/test/resources/solr/minimr \\\n" + 
               "    --outputdir hdfs://c2202.halxg.cloudera.com/user/whoschek/test \\\n" + 
               "    --shards 100 \\\n" + 
@@ -360,6 +358,9 @@ public class TikaIndexerTool extends Configured implements Tool {
     String fairSchedulerPool;
     boolean isRandomize;
     boolean isVerbose;
+    String zkHost;
+    String collection;
+    List<String> solrUrls;
   }
   // END OF INNER CLASS  
 
@@ -397,7 +398,7 @@ public class TikaIndexerTool extends Configured implements Tool {
 
     job = Job.getInstance(getConf());
     job.setJarByClass(getClass());
-    job.setJobName(getClass().getName() + "/" + getShortClassName(TikaMapper.class));
+    job.setJobName(getClass().getName() + "/" + Utils.getShortClassName(TikaMapper.class));
 
     int mappers = new JobClient(job.getConfiguration()).getClusterStatus().getMaxMapTasks(); // MR1
     //mappers = job.getCluster().getClusterStatus().getMapSlotCapacity(); // Yarn only
@@ -465,7 +466,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     NLineInputFormat.setNumLinesPerSplit(job, numLinesPerSplit);    
     FileOutputFormat.setOutputPath(job, outputReduceDir);
     job.setMapperClass(TikaMapper.class);
-    job.setReducerClass(SolrReducer.class);
+    job.setReducerClass(SolrReducer.class); 
     if (reducers != options.shards) {
 //      job.setPartitionerClass(MyPartitionerX.class); FIXME
     }
@@ -492,7 +493,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     while (reducers > options.shards) { // run a mtree merge iteration
       job = Job.getInstance(getConf());
       job.setJarByClass(getClass());
-      job.setJobName(getClass().getName() + "/" + getShortClassName(TreeMergeMapper.class));
+      job.setJobName(getClass().getName() + "/" + Utils.getShortClassName(TreeMergeMapper.class));
       job.setMapperClass(TreeMergeMapper.class);
       job.setOutputFormatClass(TreeMergeOutputFormat.class);
       job.setNumReduceTasks(0);  
@@ -610,7 +611,7 @@ public class TikaIndexerTool extends Configured implements Tool {
   private Job randomizeInputFiles(Configuration baseConfig, Path fullInputList, Path outputStep2Dir, int numLinesPerSplit) throws IOException {
     Job job2 = Job.getInstance(baseConfig);
     job2.setJarByClass(getClass());
-    job2.setJobName(getClass().getName() + "/" + getShortClassName(LineRandomizerMapper.class));
+    job2.setJobName(getClass().getName() + "/" + Utils.getShortClassName(LineRandomizerMapper.class));
     job2.setInputFormatClass(NLineInputFormat.class);
     NLineInputFormat.addInputPath(job2, fullInputList);
     NLineInputFormat.setNumLinesPerSplit(job2, numLinesPerSplit);          
@@ -759,10 +760,6 @@ public class TikaIndexerTool extends Configured implements Tool {
     return success;
   }
 
-  private String getShortClassName(Class clazz) {
-    return clazz.getName().substring(1 + clazz.getName().lastIndexOf('.'));
-  }
-  
   // same as IntMath.divide(p, q, RoundingMode.CEILING)
   private long ceilDivide(long p, long q) {
     long result = p / q;
