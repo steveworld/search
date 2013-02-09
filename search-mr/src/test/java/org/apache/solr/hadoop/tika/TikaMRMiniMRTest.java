@@ -37,7 +37,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.hadoop.util.JarFinder;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.solr.hadoop.BatchWriter;
+import org.apache.solr.hadoop.SolrCounters;
 import org.apache.solr.hadoop.SolrRecordWriter;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -199,8 +199,8 @@ public class TikaMRMiniMRTest extends Assert {
       // Only run this check if mtree merge is disabled.
       // With mtree merge enabled the BatchWriter counters aren't available anymore because 
       // variable "job" now refers to the merge job rather than the indexing job
-      assertEquals("Invalid counter " + SolrRecordWriter.class.getName() + "." + BatchWriter.COUNTER_DOCUMENTS_WRITTEN,
-          count, job.getCounters().findCounter("SolrRecordWriter", BatchWriter.COUNTER_DOCUMENTS_WRITTEN).getValue());
+      assertEquals("Invalid counter " + SolrRecordWriter.class.getName() + "." + SolrCounters.DOCUMENTS_WRITTEN,
+          count, job.getCounters().findCounter(SolrCounters.DOCUMENTS_WRITTEN).getValue());
     }
     
     // Check the output is as expected
@@ -209,7 +209,7 @@ public class TikaMRMiniMRTest extends Assert {
 
     System.out.println("outputfiles:" + Arrays.toString(outputFiles));
 
-    Utils.validateSolrServerDocumentCount(MINIMR_CONF_DIR, fs, outDir, count, shards);
+    TestUtils.validateSolrServerDocumentCount(MINIMR_CONF_DIR, fs, outDir, count, shards);
     numRuns++;
   }
   
