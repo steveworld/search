@@ -132,9 +132,9 @@ public class BatchWriter {
   protected UpdateResponse runUpdate(List<SolrInputDocument> batchToWrite) {
     try {
       UpdateResponse result = solr.add(batchToWrite);
-      SolrRecordWriter.incrementCounter(taskId, SolrCounters.BATCHES_WRITTEN, 1);      
-      SolrRecordWriter.incrementCounter(taskId, SolrCounters.DOCUMENTS_WRITTEN, batchToWrite.size());
-      SolrRecordWriter.incrementCounter(taskId, SolrCounters.BATCH_WRITE_TIME, result.getElapsedTime());
+      SolrRecordWriter.incrementCounter(taskId, SolrCounters.class.getName(), SolrCounters.BATCHES_WRITTEN.toString(), 1);      
+      SolrRecordWriter.incrementCounter(taskId, SolrCounters.class.getName(), SolrCounters.DOCUMENTS_WRITTEN.toString(), batchToWrite.size());
+      SolrRecordWriter.incrementCounter(taskId, SolrCounters.class.getName(), SolrCounters.BATCH_WRITE_TIME.toString(), result.getElapsedTime());
       return result;
     } catch (Throwable e) {
       if (e instanceof Exception) {
@@ -200,7 +200,7 @@ public class BatchWriter {
     LOG.info("Optimizing Solr: forcing merge down to {} segments", maxSegments);
     long start = System.currentTimeMillis();
     solr.optimize(true, false, maxSegments);
-    context.getCounter(SolrCounters.PHYSICAL_REDUCER_MERGE_TIME).increment(System.currentTimeMillis() - start);
+    context.getCounter(SolrCounters.class.getName(), SolrCounters.PHYSICAL_REDUCER_MERGE_TIME.toString()).increment(System.currentTimeMillis() - start);
     float secs = (System.currentTimeMillis() - start) / 1000.0f;
     LOG.info("Optimizing Solr: done forcing merge down to {} segments in {} secs", maxSegments, secs);
     context.setStatus("Shutting down Solr");

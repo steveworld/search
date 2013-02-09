@@ -200,7 +200,7 @@ public class TikaMRMiniMRTest extends Assert {
       // With mtree merge enabled the BatchWriter counters aren't available anymore because 
       // variable "job" now refers to the merge job rather than the indexing job
       assertEquals("Invalid counter " + SolrRecordWriter.class.getName() + "." + SolrCounters.DOCUMENTS_WRITTEN,
-          count, job.getCounters().findCounter(SolrCounters.DOCUMENTS_WRITTEN).getValue());
+          count, job.getCounters().findCounter(SolrCounters.class.getName(), SolrCounters.DOCUMENTS_WRITTEN.toString()).getValue());
     }
     
     // Check the output is as expected

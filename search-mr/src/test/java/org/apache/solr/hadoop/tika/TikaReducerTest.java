@@ -106,7 +106,7 @@ public class TikaReducerTest extends MRUnitBase {
     reduceDriver.run();
 
     assertEquals("Expected 1 counter increment", 1, reduceDriver.getCounters()
-        .findCounter(SolrCounters.DOCUMENTS_WRITTEN).getValue());
+        .findCounter(SolrCounters.class.getName(), SolrCounters.DOCUMENTS_WRITTEN.toString()).getValue());
   }
 
 }

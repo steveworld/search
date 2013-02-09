@@ -28,14 +28,14 @@ public enum TikaCounters {
 
   ERRORS (getClassName(TikaMapper.class) + ": Number of errors");
 
-  private final String name;
+  private final String label;
   
-  private TikaCounters(String name) {
-    this.name = name;
+  private TikaCounters(String label) {
+    this.label = label;
   }
   
   public String toString() {
-    return name;
+    return label;
   }
   
   private static String getClassName(Class clazz) {
