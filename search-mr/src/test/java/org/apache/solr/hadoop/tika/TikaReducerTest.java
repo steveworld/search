@@ -34,7 +34,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mrunit.mapreduce.ReduceDriver;
 import org.apache.solr.common.SolrInputDocument;
-import org.apache.solr.hadoop.BatchWriter;
+import org.apache.solr.hadoop.SolrCounters;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrOutputFormat;
 import org.apache.solr.hadoop.SolrReducer;
@@ -106,7 +106,7 @@ public class TikaReducerTest extends MRUnitBase {
     reduceDriver.run();
 
     assertEquals("Expected 1 counter increment", 1, reduceDriver.getCounters()
-        .findCounter("SolrRecordWriter", BatchWriter.COUNTER_DOCUMENTS_WRITTEN).getValue());
+        .findCounter(SolrCounters.DOCUMENTS_WRITTEN).getValue());
   }
 
 }

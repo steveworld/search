@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.TreeMap;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -53,6 +54,7 @@ import org.apache.solr.core.SolrResourceLoader;
 import org.apache.solr.hadoop.HeartBeater;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrMapper;
+import org.apache.solr.hadoop.Utils;
 import org.apache.solr.handler.extraction.ExtractingRequestHandler;
 import org.apache.solr.request.SolrRequestHandler;
 import org.apache.solr.schema.IndexSchema;
@@ -72,9 +74,12 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   private Context context;
   private IndexSchema schema;
   private HeartBeater heartBeater;
+  
+  private String idPrefix; // for load testing only; enables adding same document many times with a different unique key
+  private Random randomIdPrefix; // for load testing only; enables adding same document many times with a different unique key
 
   public static final String SCHEMA_FIELD_NAME_OF_FILE_URI = "fileURI";
-  
+
   private static final Logger LOG = LoggerFactory.getLogger(TikaMapper.class);
   
   @Override
@@ -108,6 +113,13 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     indexer.beginTransaction();
     fs = FileSystem.get(context.getConfiguration());
     heartBeater = new HeartBeater(context);
+        
+    // config for load testing
+    idPrefix = context.getConfiguration().get(getClass().getName() + ".idPrefix");
+    if ("random".equals(idPrefix)) {
+      randomIdPrefix = Utils.createRandom(context);    
+      idPrefix = null;
+    }
   }
 
   /**
@@ -124,6 +136,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
         return;
       }
       LOG.info("Processing file {}", path);
+      long fileLength = fs.getFileStatus(path).getLen();    
       FSDataInputStream in = fs.open(path);
       try {
         Map<String,String> headers = new HashMap<String, String>();
@@ -133,7 +146,10 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
         //headers.put("lastModified", String.valueOf(fs.getFileStatus(path).getModificationTime())); // FIXME also in SpoolDirSource
         headers.put(Metadata.RESOURCE_NAME_KEY, path.getName()); // Tika can use the file name in guessing the right MIME type
         indexer.process(new StreamEvent(in, headers));
+        context.getCounter(TikaCounters.FILES_READ).increment(1);
+        context.getCounter(TikaCounters.BYTES_READ).increment(fileLength);
       } catch (SolrServerException e) {
+        context.getCounter(getClass().getName() + ".errors", e.getClass().getName()).increment(1);
         LOG.error("Unable to process file " + path, e);
       } finally {
         in.close();
@@ -255,9 +271,18 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     @Override
     public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
       for (SolrInputDocument sid: docs) {
-        Text id = new Text(sid.getFieldValue(schema.getUniqueKeyField().getName()).toString());
+        String uniqueKeyFieldName = schema.getUniqueKeyField().getName();
+        String id = sid.getFieldValue(uniqueKeyFieldName).toString();
+        if (idPrefix != null) { // for load testing only; enables adding same document many times with a different unique key
+          id = idPrefix + id;
+          sid.setField(uniqueKeyFieldName, id);
+        } else if (randomIdPrefix != null) { // for load testing only; enables adding same document many times with a different unique key
+          id = String.valueOf(Math.abs(randomIdPrefix.nextInt())) + "#" + id;
+          sid.setField(uniqueKeyFieldName, id);
+        }
+        
         try {
-          context.write(id, new SolrInputDocumentWritable(sid));
+          context.write(new Text(id), new SolrInputDocumentWritable(sid));
         } catch (InterruptedException e) {
           throw new IOException("Interrupted while writing " + sid, e);
         }

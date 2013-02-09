@@ -69,12 +69,14 @@ import org.slf4j.LoggerFactory;
  * </ul>
  */
 public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
+  
   private static final Logger LOG = LoggerFactory.getLogger(SolrRecordWriter.class);
 
   public final static List<String> allowedConfigDirectories = new ArrayList<String>(
       Arrays.asList(new String[] { "conf", "lib" }));
 
   public final static Set<String> requiredConfigDirectories = new HashSet<String>();
+  
   static {
     requiredConfigDirectories.add("conf");
   }
@@ -198,6 +200,13 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     Reducer<?,?,?,?>.Context context = contextMap.get(taskId);
     if (context != null) {
       context.getCounter(groupName, counterName).increment(incr);
+    }
+  }
+
+  public static void incrementCounter(TaskID taskId, Enum counterName, long incr) {
+    Reducer<?,?,?,?>.Context context = contextMap.get(taskId);
+    if (context != null) {
+      context.getCounter(counterName).increment(incr);
     }
   }
 

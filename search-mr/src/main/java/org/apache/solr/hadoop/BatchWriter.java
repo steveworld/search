@@ -38,18 +38,12 @@ import org.slf4j.LoggerFactory;
  * Enables adding batches of documents to an EmbeddedSolrServer.
  */
 public class BatchWriter {
-  private static final Logger LOG = LoggerFactory.getLogger(BatchWriter.class);
-
-  public static final String COUNTER_BATCHES_WRITE_TIME = "BatchesWriteTime";
-
-  public static final String COUNTER_DOCUMENTS_WRITTEN = "DocumentsWritten";
-
-  public static final String COUNTER_BATCHES_WRITTEN = "BatchesWritten";
-
+  
   private final EmbeddedSolrServer solr;
-
   private volatile Exception batchWriteException = null;
   
+  private static final Logger LOG = LoggerFactory.getLogger(BatchWriter.class);
+
   public Exception getBatchWriteException() {
     return batchWriteException;
   }
@@ -80,10 +74,10 @@ public class BatchWriter {
    * 
    */
 
-  class Batch implements Runnable {
-    List<SolrInputDocument> documents;
-
-    UpdateResponse result;
+  final class Batch implements Runnable {
+    
+    private List<SolrInputDocument> documents;
+    private UpdateResponse result;
 
     public Batch(Collection<SolrInputDocument> batch) {
       documents = new ArrayList<SolrInputDocument>(batch);
@@ -138,17 +132,18 @@ public class BatchWriter {
   protected UpdateResponse runUpdate(List<SolrInputDocument> batchToWrite) {
     try {
       UpdateResponse result = solr.add(batchToWrite);
-      SolrRecordWriter.incrementCounter(taskId, "SolrRecordWriter", COUNTER_BATCHES_WRITTEN, 1);      
-      SolrRecordWriter.incrementCounter(taskId, "SolrRecordWriter", COUNTER_DOCUMENTS_WRITTEN, batchToWrite.size());
-      SolrRecordWriter.incrementCounter(taskId, "SolrRecordWriter", COUNTER_BATCHES_WRITE_TIME, result.getElapsedTime());
+      SolrRecordWriter.incrementCounter(taskId, SolrCounters.BATCHES_WRITTEN, 1);      
+      SolrRecordWriter.incrementCounter(taskId, SolrCounters.DOCUMENTS_WRITTEN, batchToWrite.size());
+      SolrRecordWriter.incrementCounter(taskId, SolrCounters.BATCH_WRITE_TIME, result.getElapsedTime());
       return result;
     } catch (Throwable e) {
-      SolrRecordWriter.incrementCounter(taskId, "SolrRecordWriter", e.getClass().getName(), 1);
       if (e instanceof Exception) {
         setBatchWriteException((Exception) e);
       } else {
         setBatchWriteException(new Exception(e));
       }
+      SolrRecordWriter.incrementCounter(taskId, getClass().getName() + ".errors", e.getClass().getName(), 1);
+      LOG.error("Unable to process batch", e);
       return null;
     }
   }
@@ -205,6 +200,7 @@ public class BatchWriter {
     LOG.info("Optimizing Solr: forcing merge down to {} segments", maxSegments);
     long start = System.currentTimeMillis();
     solr.optimize(true, false, maxSegments);
+    context.getCounter(SolrCounters.PHYSICAL_REDUCER_MERGE_TIME).increment(System.currentTimeMillis() - start);
     float secs = (System.currentTimeMillis() - start) / 1000.0f;
     LOG.info("Optimizing Solr: done forcing merge down to {} segments in {} secs", maxSegments, secs);
     context.setStatus("Shutting down Solr");

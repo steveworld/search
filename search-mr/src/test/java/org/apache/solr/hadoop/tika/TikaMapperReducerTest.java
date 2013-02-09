@@ -27,10 +27,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mrunit.mapreduce.MapReduceDriver;
-import org.apache.solr.hadoop.BatchWriter;
+import org.apache.solr.hadoop.SolrCounters;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrOutputFormat;
-import org.apache.solr.hadoop.SolrRecordWriter;
 import org.apache.solr.hadoop.tika.TikaReducerTest.MySolrReducer;
 import org.apache.solr.hadoop.tika.TikaReducerTest.NullInputFormat;
 import org.junit.Test;
@@ -75,8 +74,8 @@ public class TikaMapperReducerTest extends MRUnitBase {
 
     mapReduceDriver.run();
 
-    assertEquals("Invalid counter " + SolrRecordWriter.class.getName() + "." + BatchWriter.COUNTER_DOCUMENTS_WRITTEN,
-        count, mapReduceDriver.getCounters().findCounter("SolrRecordWriter", BatchWriter.COUNTER_DOCUMENTS_WRITTEN).getValue());
+    assertEquals("Invalid counter " + SolrCounters.DOCUMENTS_WRITTEN,
+        count, mapReduceDriver.getCounters().findCounter(SolrCounters.DOCUMENTS_WRITTEN).getValue());
   }
   
 }

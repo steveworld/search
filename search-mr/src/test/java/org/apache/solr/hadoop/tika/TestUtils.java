@@ -21,8 +21,6 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.io.IOException;
 
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -31,13 +29,12 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.hadoop.SolrRecordWriter;
-import org.xml.sax.SAXException;
 
 
-public class Utils {
+public class TestUtils {
 
   public static void validateSolrServerDocumentCount(File solrHomeDir, FileSystem fs, Path outDir, int expectedDocs, int expectedShards)
-      throws IOException, ParserConfigurationException, SAXException, SolrServerException {
+      throws IOException, SolrServerException {
     
     long actualDocs = 0;
     int actualShards = 0;

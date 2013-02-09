@@ -43,14 +43,7 @@ public class LineRandomizerMapper extends Mapper<LongWritable, Text, LongWritabl
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
     super.setup(context);
-    long taskId = 0;
-    if (context.getTaskAttemptID() != null) { // MRUnit returns null
-      LOGGER.debug("context.getTaskAttemptID().getId(): {}", context.getTaskAttemptID().getId());
-      LOGGER.debug("context.getTaskAttemptID().getTaskID().getId(): {}", context.getTaskAttemptID().getTaskID().getId());
-      taskId = context.getTaskAttemptID().getTaskID().getId(); // taskId = 0, 1, ..., N
-    }
-    // create a good random seed, yet ensure deterministic PRNG sequence for easy reproducability
-    random = new Random(421439783L * (taskId + 1));
+    random = Utils.createRandom(context);
   }
 
   @Override
