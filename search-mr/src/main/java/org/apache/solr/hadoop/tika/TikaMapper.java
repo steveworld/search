@@ -97,7 +97,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     indexer = new MyIndexer();
     Map<String, Object> params = new HashMap<String,Object>();
     for (Map.Entry<String,String> entry : context.getConfiguration()) {
-      if (entry.getValue() != null && entry.getKey().contains("tika")) {
+      if (entry.getValue() != null && (entry.getKey().contains(".tika") || entry.getKey().contains(".Tika"))) {
         params.put(entry.getKey(), entry.getValue());
       }
     }
