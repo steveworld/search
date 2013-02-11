@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.TreeMap;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -54,7 +53,6 @@ import org.apache.solr.core.SolrResourceLoader;
 import org.apache.solr.hadoop.HeartBeater;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrMapper;
-import org.apache.solr.hadoop.Utils;
 import org.apache.solr.handler.extraction.ExtractingRequestHandler;
 import org.apache.solr.request.SolrRequestHandler;
 import org.apache.solr.schema.IndexSchema;
@@ -74,9 +72,6 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   private Context context;
   private IndexSchema schema;
   private HeartBeater heartBeater;
-  
-  private String idPrefix; // for load testing only; enables adding same document many times with a different unique key
-  private Random randomIdPrefix; // for load testing only; enables adding same document many times with a different unique key
 
   public static final String SCHEMA_FIELD_NAME_OF_FILE_URI = "fileURI";
 
@@ -85,19 +80,19 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
     super.setup(context);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("CWD is {}", new File(".").getCanonicalPath());
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("CWD is {}", new File(".").getCanonicalPath());
       TreeMap map = new TreeMap();
       for (Map.Entry<String,String> entry : context.getConfiguration()) {
         map.put(entry.getKey(), entry.getValue());
       }
-      LOG.debug("Configuration:\n{}", Joiner.on("\n").join(map.entrySet()));
+      LOG.trace("Configuration:\n{}", Joiner.on("\n").join(map.entrySet()));
     }
     this.context = context;
     indexer = new MyIndexer();
     Map<String, Object> params = new HashMap<String,Object>();
     for (Map.Entry<String,String> entry : context.getConfiguration()) {
-      if (entry.getValue() != null && (entry.getKey().contains(".tika") || entry.getKey().contains(".Tika"))) {
+      if (entry.getValue() != null && (entry.getKey().contains("tika") || entry.getKey().contains("Tika"))) {
         params.put(entry.getKey(), entry.getValue());
       }
     }
@@ -113,13 +108,6 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     indexer.beginTransaction();
     fs = FileSystem.get(context.getConfiguration());
     heartBeater = new HeartBeater(context);
-        
-    // config for load testing
-    idPrefix = context.getConfiguration().get(getClass().getName() + ".idPrefix");
-    if ("random".equals(idPrefix)) {
-      randomIdPrefix = Utils.createRandom(context);    
-      idPrefix = null;
-    }
   }
 
   /**
@@ -273,14 +261,6 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       for (SolrInputDocument sid: docs) {
         String uniqueKeyFieldName = schema.getUniqueKeyField().getName();
         String id = sid.getFieldValue(uniqueKeyFieldName).toString();
-        if (idPrefix != null) { // for load testing only; enables adding same document many times with a different unique key
-          id = idPrefix + id;
-          sid.setField(uniqueKeyFieldName, id);
-        } else if (randomIdPrefix != null) { // for load testing only; enables adding same document many times with a different unique key
-          id = String.valueOf(Math.abs(randomIdPrefix.nextInt())) + "#" + id;
-          sid.setField(uniqueKeyFieldName, id);
-        }
-        
         try {
           context.write(new Text(id), new SolrInputDocumentWritable(sid));
         } catch (InterruptedException e) {

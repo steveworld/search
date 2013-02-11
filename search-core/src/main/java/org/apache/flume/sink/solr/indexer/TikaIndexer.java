@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -95,6 +96,9 @@ public class TikaIndexer extends SolrIndexer {
   private AutoDetectParser autoDetectParser;
   private ParseInfo parseInfo;
 
+  private String idPrefix; // for load testing only; enables adding same document many times with a different unique key
+  private Random randomIdPrefix; // for load testing only; enables adding same document many times with a different unique key
+
   private static final XPathParser PARSER = new XPathParser("xhtml", XHTMLContentHandler.XHTML);
 
   public static final String TIKA_CONFIG_LOCATION = ExtractingRequestHandler.CONFIG_LOCATION;
@@ -105,6 +109,7 @@ public class TikaIndexer extends SolrIndexer {
   public static final String SOLR_SERVER_QUEUE_LENGTH = "queueLength";
   public static final String SOLR_SERVER_NUM_THREADS = "numThreads";
   public static final String SOLR_HOME_PROPERTY_NAME = "solr.solr.home";
+  public static final String ID_PREFIX = "TikaIndexer.idPrefix"; // for load testing only
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TikaIndexer.class);
 
@@ -145,8 +150,16 @@ public class TikaIndexer extends SolrIndexer {
       }
     }
     autoDetectParser = new AutoDetectParser(tikaConfig);
+        
+    if (config.hasPath(ID_PREFIX)) { // for load testing only
+      idPrefix = config.getString(ID_PREFIX);
+    }
+    if ("random".equals(idPrefix)) { // for load testing only
+      randomIdPrefix = new Random();    
+      idPrefix = null;
+    }
   }
-
+  
   protected TikaConfig getTikaConfig() {
     return tikaConfig;
   }
@@ -302,6 +315,18 @@ public class TikaIndexer extends SolrIndexer {
         }
         doc.setField(uniqueKey.getName(), id + "#" + num);
       }
+      
+      // for load testing only; enables adding same document many times with a different unique key
+      if (idPrefix != null) { 
+        String id = doc.getFieldValue(uniqueKey.getName()).toString();
+        id = idPrefix + id;
+        doc.setField(uniqueKey.getName(), id);
+      } else if (randomIdPrefix != null) {
+        String id = doc.getFieldValue(uniqueKey.getName()).toString();
+        id = String.valueOf(Math.abs(randomIdPrefix.nextInt())) + "#" + id;
+        doc.setField(uniqueKey.getName(), id);
+      }
+
       LOGGER.debug("record #{} loading doc: {}", num, doc);
     }
     super.load(docs, collectionName);
