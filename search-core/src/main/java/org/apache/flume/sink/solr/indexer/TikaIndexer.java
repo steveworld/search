@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.net.MalformedURLException;
+import java.security.SecureRandom;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -155,7 +156,7 @@ public class TikaIndexer extends SolrIndexer {
       idPrefix = config.getString(ID_PREFIX);
     }
     if ("random".equals(idPrefix)) { // for load testing only
-      randomIdPrefix = new Random();    
+      randomIdPrefix = new Random(new SecureRandom().nextLong());    
       idPrefix = null;
     }
   }
