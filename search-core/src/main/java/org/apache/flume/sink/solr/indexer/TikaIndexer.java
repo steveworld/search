@@ -87,10 +87,9 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigValue;
 
 /**
- * EXPERIMENTAL API; Indexer that extracts search documents from events (using Apache Tika and
+ * Indexer that extracts search documents from events (using Apache Tika and
  * Solr Cell), transforms them and loads them into Apache Solr.
  */
-//@InterfaceStability.Evolving
 public class TikaIndexer extends SolrIndexer {
 
   private TikaConfig tikaConfig;

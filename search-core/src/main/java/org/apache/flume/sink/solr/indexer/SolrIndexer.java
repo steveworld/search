@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -33,10 +34,11 @@ import org.apache.solr.common.SolrInputDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Joiner;
 import com.typesafe.config.Config;
 
 /**
- * EXPERIMENTAL API; Indexer that extracts search documents from events, transforms them and
+ * Indexer that extracts search documents from events, transforms them and
  * loads them into Apache Solr.
  */
 public class SolrIndexer {
@@ -91,6 +93,10 @@ public class SolrIndexer {
       solrCollections = Collections.unmodifiableMap(new LinkedHashMap(createSolrCollections()));
     }
     LOGGER.info("Indexer {} started.", getName());
+    for (SolrCollection collection : getSolrCollections().values()) {
+      LOGGER.info("Number of solr schema fields: {}", collection.getSchema().getFields().size());
+      LOGGER.info("Solr schema: \n{}", Joiner.on("\n").join(new TreeMap(collection.getSchema().getFields()).values()));
+    }
   }
 
   public synchronized void stop() {
