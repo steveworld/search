@@ -42,10 +42,9 @@ import com.typesafe.config.ConfigFactory;
 //import org.apache.flume.annotations.InterfaceStability;
 
 /**
- * EXPERIMENTAL API; Flume sink that extracts search documents from Apache Flume events,
+ * Flume sink that extracts search documents from Apache Flume events,
  * transforms them and loads them into Apache Solr.
  */
-// @InterfaceStability.Evolving
 public class SolrSink extends AbstractSink implements Configurable {
 
   private int maxBatchSize = 1000;
