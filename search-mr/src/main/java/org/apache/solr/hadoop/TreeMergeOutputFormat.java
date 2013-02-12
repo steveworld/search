@@ -132,7 +132,9 @@ public class TreeMergeOutputFormat extends FileOutputFormat<Text, NullWritable> 
         // TODO: avoid intermediate copying of files into dst directory; rename the files into the dir instead (cp -> rename) 
         // This can improve performance and turns this phase into a true "logical" merge, completing in constant time.
         
-        context.getCounter(SolrCounters.class.getName(), SolrCounters.LOGICAL_TREE_MERGE_TIME.toString()).increment(System.currentTimeMillis() - start);
+        if (LOG.isDebugEnabled()) {
+          context.getCounter(SolrCounters.class.getName(), SolrCounters.LOGICAL_TREE_MERGE_TIME.toString()).increment(System.currentTimeMillis() - start);
+        }
         float secs = (System.currentTimeMillis() - start) / 1000.0f;
         LOG.info("Logical merge took {} secs", secs);        
         int maxSegments = context.getConfiguration().getInt(TreeMergeMapper.MAX_SEGMENTS_ON_TREE_MERGE, Integer.MAX_VALUE);
@@ -142,7 +144,9 @@ public class TreeMergeOutputFormat extends FileOutputFormat<Text, NullWritable> 
         if (maxSegments < Integer.MAX_VALUE) {
           writer.forceMerge(maxSegments);
         }
-        context.getCounter(SolrCounters.class.getName(), SolrCounters.PHYSICAL_TREE_MERGE_TIME.toString()).increment(System.currentTimeMillis() - start);
+        if (LOG.isDebugEnabled()) {
+          context.getCounter(SolrCounters.class.getName(), SolrCounters.PHYSICAL_TREE_MERGE_TIME.toString()).increment(System.currentTimeMillis() - start);
+        }
         secs = (System.currentTimeMillis() - start) / 1000.0f;
         LOG.info("Optimizing Solr: done forcing tree merge down to {} segments in {} secs", maxSegments, secs);
         
