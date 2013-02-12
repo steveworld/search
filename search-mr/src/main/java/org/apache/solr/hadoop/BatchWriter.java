@@ -134,7 +134,9 @@ public class BatchWriter {
       UpdateResponse result = solr.add(batchToWrite);
       SolrRecordWriter.incrementCounter(taskId, SolrCounters.class.getName(), SolrCounters.BATCHES_WRITTEN.toString(), 1);      
       SolrRecordWriter.incrementCounter(taskId, SolrCounters.class.getName(), SolrCounters.DOCUMENTS_WRITTEN.toString(), batchToWrite.size());
-      SolrRecordWriter.incrementCounter(taskId, SolrCounters.class.getName(), SolrCounters.BATCH_WRITE_TIME.toString(), result.getElapsedTime());
+      if (LOG.isDebugEnabled()) {
+        SolrRecordWriter.incrementCounter(taskId, SolrCounters.class.getName(), SolrCounters.BATCH_WRITE_TIME.toString(), result.getElapsedTime());
+      }
       return result;
     } catch (Throwable e) {
       if (e instanceof Exception) {
