@@ -31,9 +31,12 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TikaIndexerToolArgumentParserTest extends Assert {
-
+  private static final Logger LOG = LoggerFactory.getLogger(TikaIndexerToolArgumentParserTest.class);
+  
   private FileSystem fs; 
   private TikaIndexerTool.MyArgumentParser parser;
   private TikaIndexerTool.Options opts;
@@ -71,11 +74,13 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
         "--reducers", "9", 
         "--fanout", "8", 
         "--maxsegments", "7", 
+        "--shards", "1",
         "--verbose", 
         "file:///home",
         "file:///dev",
         };
-    assertNull(parser.parseArgs(args, fs, opts));
+    Integer res = parser.parseArgs(args, fs, opts);
+    assertNull(res != null ? res.toString() : "", res);
     assertEquals(Collections.singletonList(new Path("file:///tmp")), opts.inputLists);
     assertEquals(new Path("file:/tmp/foo"), opts.outputDir);
     assertEquals(new File("/"), opts.solrHomeDir);
@@ -83,7 +88,7 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
     assertEquals(9, opts.reducers);
     assertEquals(8, opts.fanout);
     assertEquals(7, opts.maxSegments);
-    assertEquals(1, opts.shards);
+    assertEquals(new Integer(1), opts.shards);
     assertEquals(null, opts.fairSchedulerPool);
     assertTrue(opts.isVerbose);
     assertTrue(opts.isRandomize);
@@ -98,6 +103,7 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
         "--inputlist", "file:///",
         "--outputdir", "file:/tmp/foo",
         "--solrhomedir", "/", 
+        "--shards", "1",
         "file:///home",
         "file:///dev",
         };
@@ -116,6 +122,7 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
         "--outputdir=file:/tmp/foo",
         "--solrhomedir=/", 
         "--mappers=10", 
+        "--shards", "1",
         "--verbose", 
         "file:///home",
         "file:///dev",
@@ -125,7 +132,7 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
     assertEquals(new Path("file:/tmp/foo"), opts.outputDir);
     assertEquals(new File("/"), opts.solrHomeDir);
     assertEquals(10, opts.mappers);
-    assertEquals(1, opts.shards);
+    assertEquals(new Integer(1), opts.shards);
     assertEquals(null, opts.fairSchedulerPool);
     assertTrue(opts.isVerbose);
     assertTrue(opts.isRandomize);
@@ -140,6 +147,7 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
         "--inputlist=file:///",
         "--outputdir=file:/tmp/foo",
         "--solrhomedir=/", 
+        "--shards", "1",
         "file:///home",
         "file:///dev",
         };
@@ -167,6 +175,7 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
         "--inputlist", "file:///tmp",
         "--outputdir", "file:/tmp/foo",
         "--solrhomedir", "/", 
+        "--shards", "1",
         };
     assertNull(parser.parseArgs(args, fs, opts));
     assertEmptySystemErrAndEmptySystemOut();
@@ -224,21 +233,125 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
     assertArgumentParserException(args);
   }
   
+  @Test
+  public void testArgsSolrUrlDoesNotMatchShards() {
+    String[] args = new String[] { 
+        "--inputlist", "file:///tmp",
+        "--outputdir", "file:/tmp/foo",
+        "--solrhomedir", "/", 
+        "--shards", "2", 
+        "--shardurl", "http://localhost:8983/solr/collection1",
+        "--golive"
+        };
+    assertArgumentParserException(args);
+  }
+  
+  @Test
+  public void testArgsSolrUrlNoGoLive() {
+    String[] args = new String[] { 
+        "--inputlist", "file:///tmp",
+        "--outputdir", "file:/tmp/foo",
+        "--solrhomedir", "/", 
+        "--shardurl", "http://localhost:8983/solr/collection1"
+        };
+    assertArgumentParserException(args);
+  }
+  
+  @Test
+  public void testArgsSolrUrlsAndZkhost() {
+    String[] args = new String[] { 
+        "--inputlist", "file:///tmp",
+        "--outputdir", "file:/tmp/foo",
+        "--solrhomedir", "/", 
+        "--shardurl", "http://localhost:8983/solr/collection1",
+        "--shardurl", "http://localhost:8983/solr/collection1",
+        "--shards", "2",
+        "--zkhost", "http://localhost:2185",
+        "--golive"
+        };
+    assertArgumentParserException(args);
+  }
+  
+  @Test
+  public void testArgsGoLiveAndSolrUrl() {
+    String[] args = new String[] { 
+        "--inputlist", "file:///tmp",
+        "--outputdir", "file:/tmp/foo",
+        "--solrhomedir", "/", 
+        "--shardurl", "http://localhost:8983/solr/collection1",
+        "--shardurl", "http://localhost:8983/solr/collection1",
+        "--golive"
+        };
+    Integer result = parser.parseArgs(args, fs, opts);
+    assertNull(result);
+    assertEmptySystemErrAndEmptySystemOut();
+  }
+  
+  @Test
+  public void testArgsZkHostNoGoLive() {
+    String[] args = new String[] { 
+        "--inputlist", "file:///tmp",
+        "--outputdir", "file:/tmp/foo",
+        "--solrhomedir", "/", 
+        "--zkhost", "http://localhost:2185",
+        };
+    assertArgumentParserException(args);
+  }
+  
+  @Test
+  public void testArgsGoLiveZkHostNoCollection() {
+    String[] args = new String[] { 
+        "--inputlist", "file:///tmp",
+        "--outputdir", "file:/tmp/foo",
+        "--solrhomedir", "/", 
+        "--zkhost", "http://localhost:2185",
+
+        "--golive"
+        };
+    assertArgumentParserException(args);
+  }
+  
+  @Test
+  public void testArgsGoLiveNoZkHostOrSolrUrl() {
+    String[] args = new String[] { 
+        "--inputlist", "file:///tmp",
+        "--outputdir", "file:/tmp/foo",
+        "--solrhomedir", "/", 
+        "--golive"
+        };
+    assertArgumentParserException(args);
+  }
+  
+  @Test
+  public void testArgsLoneCollection() {
+    String[] args = new String[] { 
+        "--inputlist", "file:///tmp",
+        "--outputdir", "file:/tmp/foo",
+        "--solrhomedir", "/", 
+        "--collection", "collection1", 
+        "--shardurl", "http://localhost:8983/solr/collection1",
+        "--golive"
+        };
+    assertArgumentParserException(args);
+  }
+  
+  
   private void assertEmptySystemErrAndEmptySystemOut() {
     assertEquals(0, bout.toByteArray().length);
     assertEquals(0, berr.toByteArray().length);
   }
   
   private void assertArgumentParserException(String[] args) {
-    assertEquals(new Integer(1), parser.parseArgs(args, fs, opts));
-    assertEquals(0, bout.toByteArray().length);
+    assertEquals("should have returned fail code", new Integer(1), parser.parseArgs(args, fs, opts));
+    assertEquals("no sys out expected", 0, bout.toByteArray().length);
     String usageText;
     try {
       usageText = new String(berr.toByteArray(), "UTF-8");
     } catch (UnsupportedEncodingException e) {
       throw new RuntimeException("unreachable");
     }
-    assertTrue(usageText.startsWith("usage: hadoop "));
+    
+    assertTrue("should start with usage msg:" + usageText, usageText.startsWith("usage: hadoop "));
   }
   
 }

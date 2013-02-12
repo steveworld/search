@@ -32,17 +32,30 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.impl.action.HelpArgumentAction;
 import net.sourceforge.argparse4j.impl.choice.RangeArgumentChoice;
 import net.sourceforge.argparse4j.inf.Argument;
+import net.sourceforge.argparse4j.inf.ArgumentGroup;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.FeatureControl;
+import net.sourceforge.argparse4j.inf.MutuallyExclusiveGroup;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 import org.apache.flume.sink.solr.indexer.TikaIndexer;
@@ -58,11 +71,19 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.RecordWriter;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.CloudSolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.request.CoreAdminRequest;
+import org.apache.solr.hadoop.BatchWriter;
 import org.apache.solr.hadoop.LineRandomizerMapper;
 import org.apache.solr.hadoop.LineRandomizerReducer;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
@@ -154,6 +175,7 @@ public class TikaIndexerTool extends Configured implements Tool {
             //ToolRunner.printGenericCommandUsage(System.out);
             System.out.println(
               "Examples: \n\n" + 
+
               "  # Prepare a config jar file containing org/apache/tika/mime/custom-mimetypes.xml and custom mylog4j.properties:\n" +
               "  rm -fr myconfig; mkdir myconfig\n" + 
               "  cp src/test/resources/log4j.properties myconfig/mylog4j.properties\n" + 
@@ -196,7 +218,33 @@ public class TikaIndexerTool extends Configured implements Tool {
               "    --solrhomedir src/test/resources/solr/minimr \\\n" + 
               "    --outputdir hdfs://c2202.halxg.cloudera.com/user/whoschek/test \\\n" + 
               "    --shards 100 \\\n" + 
-              "    --inputlist -"
+              "    --inputlist -\n\n" +
+              " # merge resulting index shards into a live Solr cluster\n" +
+              " # for a SolrCloud cluster see the next example\n" +
+              "  sudo -u hdfs hadoop \\\n" + 
+              "    --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
+              "    jar solr-mr-*-job.jar \\\n" +
+              "    --files src/test/resources/tika-config.xml \\\n" + 
+              "    --solrhomedir /home/foo/solr \\\n" +
+              "    --outputdir hdfs://c2202.mycompany.com/user/foo/outdir \\\n" + 
+              "    --shards 2 \\\n" + 
+              "    --shardurl http://solrhost:7777/solr/collection1 \\\n" + 
+              "    --shardurl http://solrhost:8888/solr/collection1 \\\n" + 
+              "    --golive \\\n" + 
+              "    hdfs:///user/foo/indir\n" +  
+              "\n" +
+              " # merge resulting index shards into a live SolrCloud cluster\n" +
+              " # and discover shards and urls through ZooKeeper\n" +
+              "  sudo -u hdfs hadoop \\\n" + 
+              "    --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
+              "    jar solr-mr-*-job.jar \\\n" +
+              "    --files src/test/resources/tika-config.xml \\\n" + 
+              "    --solrhomedir /home/foo/solr \\\n" +
+              "    --outputdir hdfs://c2202.mycompany.com/user/foo/outdir \\\n" + 
+              "    --zkhost host:2182/solr \\\n" + 
+              "    --collection collection1 \\\n" + 
+              "    --golive \\\n" + 
+              "    hdfs:///user/foo/indir\n"
             );
             throw new FoundHelpArgument(); // Trick to prevent processing of any remaining arguments
           }
@@ -226,6 +274,67 @@ public class TikaIndexerTool extends Configured implements Tool {
         }.verifyScheme(fs.getScheme()).verifyIsAbsolute().verifyCanWriteParent())
         .required(true)
         .help("HDFS directory to write Solr indexes to");
+      
+      MutuallyExclusiveGroup clusterInfoGroup = parser
+          .addMutuallyExclusiveGroup("Cluster Info");
+      clusterInfoGroup
+          .description("Mutually exclusive arguments that provide information about your Solr cluster. If you are not using --golive, pass the --shards argument. "
+              + "If you are building shards for a non SolrCloud cluster, pass the --shardurl argument. If you are building shards for a SolrCloud cluster, "
+              + "pass the --zkhost argument. Using --golive requires either --shardurl or -zkhost.");
+      clusterInfoGroup.required(true);
+
+      ArgumentGroup goLiveGroup = parser.addArgumentGroup("Go Live Options");
+      goLiveGroup
+          .description("Options for deploying the shards that are built into a live cluster. Also see the Cluster Info arguments.");
+
+      Argument solrurlsArg = clusterInfoGroup.addArgument("--shardurl")
+          .metavar("URL")
+          .action(Arguments.append())
+          .type(String.class)
+          .help("Solr URL to merge resulting shard into if using --golive eg http://host.com:8983/solr/collection1. " + 
+                "Pass as many URLs as --shards specified. " +
+                "If you are merging shards into a SolrCloud cluster, use --zkhost instead");
+      
+      Argument zkServerAddressArg = clusterInfoGroup
+          .addArgument("--zkhost")
+          .metavar("STRING")
+          .help(
+              "The address of a ZooKeeper instance being used by a SolrCloud cluster. "
+                  + "This ZooKeeper instance will be examined to determine the number of output "
+                  + "shards to create as well as the Solr URLs to merge the output shards into when using the --golive option. "
+                  + "Requires that you also pass the --collection to merge the shards into."
+                  + "\n\nFormat is: a comma separated host:port pairs, each corresponding to a zk "
+                  + "server. e.g. \"127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002\" If "
+                  + "the optional chroot suffix is used the example would look "
+                  + "like: \"127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a\" "
+                  + "where the client would be rooted at \"/app/a\" and all paths"
+                  + "would be relative to this root - ie getting/setting/etc... "
+                  + "\"/foo/bar\" would result in operations being run on "
+                  + "\"/app/a/foo/bar\" (from the server perspective).");
+
+      Argument shardsArg = clusterInfoGroup.addArgument("--shards")
+        .metavar("INTEGER")
+        .type(Integer.class)
+        .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
+        .setDefault(1)
+        .help("Number of output shards to use");
+      
+      Argument goLiveArg = goLiveGroup.addArgument("--golive")
+          .action(Arguments.storeTrue())
+          .help("Allows you to optionally merge the final index shards into a live Solr cluster after they are built. " +
+                " You can pass the ZooKeeper address with --zkhost and the relevant cluster information will be auto detected. " +
+                "If you are not using a SolrCloud cluster, --shardurl arguments can be used to specify each SolrCore to merge each shard into.");
+
+      Argument collectionArg = goLiveGroup.addArgument("--collection")
+          .metavar("STRING")
+          .help("The SolrCloud collection to merge shards into when using --golive and --zkhost");
+      
+      Argument golivethreadsArg = goLiveGroup.addArgument("--golivethreads")
+          .metavar("INTEGER")
+          .type(Integer.class)
+          .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
+          .setDefault(400)
+          .help("Number of merges to run at one time");
       
       Argument solrHomeDirArg = parser.addArgument("--solrhomedir")
         .metavar("DIR")
@@ -260,13 +369,6 @@ public class TikaIndexerTool extends Configured implements Tool {
         .choices(new RangeArgumentChoice(2, Integer.MAX_VALUE))
         .setDefault(Integer.MAX_VALUE)
         .help(FeatureControl.SUPPRESS);
-      
-      Argument shardsArg = parser.addArgument("--shards")
-        .metavar("INTEGER")
-        .type(Integer.class)
-        .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
-        .setDefault(1)
-        .help("Number of output shards to use");
   
       Argument maxSegmentsArg = parser.addArgument("--maxsegments")
         .metavar("INTEGER")
@@ -330,12 +432,55 @@ public class TikaIndexerTool extends Configured implements Tool {
       opts.fairSchedulerPool = (String) ns.get(fairSchedulerPoolArg.getDest());
       opts.isRandomize = !ns.getBoolean(noRandomizeArg.getDest());
       opts.isVerbose = ns.getBoolean(verboseArg.getDest());
-      
+      opts.shardUrls = ns.getList(solrurlsArg.getDest());
+      opts.goLive = ns.getBoolean(goLiveArg.getDest());
+      opts.golivethreads = ns.getInt(golivethreadsArg.getDest());
+      opts.zkHost = (String) ns.get(zkServerAddressArg.getDest());
+      opts.collection = (String) ns.get(collectionArg.getDest());
+
+      try {
+        verifyGoLiveArgs(opts, parser);
+      } catch (ArgumentParserException e) {
+        parser.handleError(e);
+        return 1;
+      }
+
       if (opts.inputLists.isEmpty() && opts.inputFiles.isEmpty()) {
         LOG.info("No input files specified - nothing to process");
         return 0; // nothing to process
       }
       return null;     
+    }
+
+    private void verifyGoLiveArgs(Options opts, ArgumentParser parser) throws ArgumentParserException {
+      
+      if ((opts.shardUrls != null || opts.zkHost != null) && !opts.goLive) {
+        throw new ArgumentParserException(
+            "You cannot pass --shardurl or --zkhost without --golive", parser);
+      }
+      
+      if (opts.zkHost != null && opts.collection == null) {
+        throw new ArgumentParserException(
+            "You must pass --collection when using --zkhost", parser);
+      }
+      
+      if (opts.goLive && opts.zkHost == null && opts.shardUrls == null) {
+        throw new ArgumentParserException("--golive requires that you pass --shardurl or --zkhost", parser);
+      }
+      
+      if (opts.collection != null && opts.zkHost == null) {
+        throw new ArgumentParserException("--collection should only be used with --golive and --zkhost", parser);
+      }
+      
+      
+      // verify zk 
+      if (opts.zkHost != null) {
+        ZooKeeperInspector zki = new ZooKeeperInspector();
+        Exception e = zki.verifyZkHost(opts.zkHost, opts.collection);
+        if (e != null) {
+          throw new ArgumentParserException(e, parser);
+        }
+      }
     }
     
     /** Marker trick to prevent processing of any remaining arguments once --help option has been parsed */
@@ -346,21 +491,23 @@ public class TikaIndexerTool extends Configured implements Tool {
 
   
   static final class Options {    
+    boolean goLive;
+    String collection;
+    String zkHost;
+    Integer golivethreads;
+    List<String> shardUrls;
     List<Path> inputLists;
     List<Path> inputFiles;
     Path outputDir;
     int mappers;
     int reducers;
     int fanout;
-    int shards;
+    Integer shards;
     int maxSegments;
     File solrHomeDir;
     String fairSchedulerPool;
     boolean isRandomize;
     boolean isVerbose;
-    String zkHost;
-    String collection;
-    List<String> solrUrls;
   }
   // END OF INNER CLASS  
 
@@ -400,6 +547,15 @@ public class TikaIndexerTool extends Configured implements Tool {
     job.setJarByClass(getClass());
     job.setJobName(getClass().getName() + "/" + Utils.getShortClassName(TikaMapper.class));
 
+    if (options.zkHost != null) {
+      ZooKeeperInspector zki = new ZooKeeperInspector();
+      zki.extractShardCountAndSolrUrlsFromZk(options);
+    }
+    
+    if (options.shardUrls != null) {
+      options.shards = options.shardUrls.size();
+    }
+    
     int mappers = new JobClient(job.getConfiguration()).getClusterStatus().getMaxMapTasks(); // MR1
     //mappers = job.getCluster().getClusterStatus().getMapSlotCapacity(); // Yarn only
     LOG.info("Cluster reports {} mapper slots", mappers);
@@ -478,9 +634,13 @@ public class TikaIndexerTool extends Configured implements Tool {
     job.getConfiguration().set(TikaIndexer.TIKA_CONFIG_LOCATION, "tika-config.xml");
     LOG.info("Indexing {} files using {} real mappers into {} reducers", numFiles, realMappers, reducers);
     long startTime = System.currentTimeMillis();
-    if (!waitForCompletion(job, options.isVerbose)) {
-      return -1; // job failed
+    boolean success = waitForCompletion(job, options.isVerbose);
+
+    if (!success) {
+      LOG.error("Job failed!");
+      return -1;
     }
+
     float secs = (System.currentTimeMillis() - startTime) / 1000.0f;
     LOG.info("Done. Indexing {} files using {} real mappers into {} reducers took {} secs", numFiles, realMappers, reducers, secs);
 
@@ -538,8 +698,14 @@ public class TikaIndexerTool extends Configured implements Tool {
     if (!rename(outputReduceDir, outputResultsDir, fs)) {
       return -1;
     }
+
+    if (options.goLive) {
+      success = mergeIndexes(options, fs, outputResultsDir);
+    }
+    
     goodbye(job, programStartTime);
-    return 0;
+    
+    return success ? 0 : -1;
   }
 
   private void calculateNumReducers(Options options, int realMappers) throws IOException {
@@ -582,6 +748,147 @@ public class TikaIndexerTool extends Configured implements Tool {
       assert reducers % options.fanout == 0;
     }
     options.reducers = reducers;
+  }
+  
+  // TODO: handle clusters with replicas
+  private boolean mergeIndexes(Options options, FileSystem fs,
+      Path outputResultsDir) throws FileNotFoundException, IOException,
+      SolrServerException {
+    LOG.info("Merging constructed shards into Solr cluster...");
+    boolean success = false;
+    long start = System.currentTimeMillis();
+    int concurrentMerges = options.golivethreads;
+    ThreadPoolExecutor executor = new ThreadPoolExecutor(concurrentMerges,
+        concurrentMerges, 1, TimeUnit.SECONDS,
+        new LinkedBlockingQueue<Runnable>());
+    try {
+      CompletionService<Request> completionService = new ExecutorCompletionService<Request>(
+          executor);
+      Set<Future<Request>> pending = new HashSet<Future<Request>>();
+      
+      FileStatus[] outDirs = fs.listStatus(outputResultsDir);
+      int cnt = -1;
+      for (final FileStatus file : outDirs) {
+        
+        LOG.debug("processing:" + file.getPath());
+
+        if (file.getPath().getName().startsWith(SolrOutputFormat.getOutputName(job) + "-") && file.isDirectory()) {
+          cnt++;
+          String url = options.shardUrls.get(cnt);
+          
+          String baseUrl = url;
+          if (baseUrl.endsWith("/")) {
+            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+          }
+          
+          int lastPathIndex = baseUrl.lastIndexOf("/");
+          if (lastPathIndex == -1) {
+            LOG.error("Found unexpected solrurl, merge failed: " + baseUrl);
+            return false;
+          }
+          
+          final String name = baseUrl.substring(lastPathIndex + 1);
+          baseUrl = baseUrl.substring(0, lastPathIndex);
+          final String mergeUrl = baseUrl;
+
+          Callable<Request> task = new Callable<Request>() {
+            @Override
+            public Request call() {
+              Request req = new Request();
+              LOG.info("merge " + file.getPath() + " into " + mergeUrl);
+              final HttpSolrServer server = new HttpSolrServer(mergeUrl);
+              try {
+                CoreAdminRequest.MergeIndexes mergeRequest = new CoreAdminRequest.MergeIndexes();
+                mergeRequest.setCoreName(name);
+                mergeRequest.setIndexDirs(Arrays.asList(new String[] {file.getPath()
+                    .toString().substring("hdfs:/".length())
+                    + "/data/index"}));
+                try {
+                  mergeRequest.process(server);
+                  req.success = true;
+                } catch (SolrServerException e) {
+                  req.e = e;
+                  return req;
+                } catch (IOException e) {
+                  req.e = e;
+                  return req;
+                }
+              } finally {
+                server.shutdown();
+              }
+              return req;
+            }
+          };
+          pending.add(completionService.submit(task));
+        }
+      }
+      
+      while (pending != null && pending.size() > 0) {
+        try {
+          Future<Request> future = completionService.take();
+          if (future == null) break;
+          pending.remove(future);
+          
+          try {
+            Request req = future.get();
+            
+            if (!req.success) {
+              // failed
+              LOG.error("A merge command failed", req.e);
+              return false;
+            }
+            
+          } catch (ExecutionException e) {
+            LOG.error("Error sending merge command", e);
+            return false;
+          }
+          
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          LOG.error("Index merge process interrupted", e);
+          return false;
+        }
+      }
+      
+      cnt = -1;
+      
+      
+      try {
+        LOG.info("Committing...");
+        if (options.zkHost != null) {
+          CloudSolrServer server = new CloudSolrServer(options.zkHost);
+          server.setDefaultCollection(options.collection);
+          server.commit();
+          server.shutdown();
+        } else {
+          for (String url : options.shardUrls) {
+            // TODO: we should do these concurrently
+            HttpSolrServer server = new HttpSolrServer(url);
+            server.commit();
+            server.shutdown();
+          }
+        }
+        LOG.info("Done committing");
+      } catch (Exception e) {
+        LOG.error("Error sending commits to Solr cluster", e);
+        return false;
+      }
+
+      success = true;
+      return true;
+    } finally {
+      shutdownNowAndAwaitTermination(executor);
+      long end = System.currentTimeMillis();
+      long took = end - start;
+      LOG.info("Merging index shards into live Solr cluster took " + took / 1000.0 / 60 + " min");
+      if (success) {
+        LOG.info("Merging completed successfully");
+      } else {
+        LOG.info("Merging failed");
+      }
+    }
+    
+    // if an output dir does not exist, we should fail and do no merge?
   }
 
   /**
@@ -774,6 +1081,29 @@ public class TikaIndexerTool extends Configured implements Tool {
    */
   private double log(double base, double value) {
     return Math.log(value) / Math.log(base);
+  }
+  
+  public static void shutdownNowAndAwaitTermination(ExecutorService pool) {
+    pool.shutdown(); // Disable new tasks from being submitted
+    pool.shutdownNow(); // Cancel currently executing tasks
+    boolean shutdown = false;
+    while (!shutdown) {
+      try {
+        // Wait a while for existing tasks to terminate
+        shutdown = pool.awaitTermination(5, TimeUnit.SECONDS);
+      } catch (InterruptedException ie) {
+        // Preserve interrupt status
+        Thread.currentThread().interrupt();
+      }
+      if (!shutdown) {
+        pool.shutdownNow(); // Cancel currently executing tasks
+      }
+    }
+  }
+  
+  static class Request {
+    Exception e;
+    boolean success = false;
   }
 
 }
