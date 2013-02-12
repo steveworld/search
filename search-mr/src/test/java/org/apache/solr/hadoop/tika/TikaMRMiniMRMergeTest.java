@@ -64,7 +64,6 @@ public class TikaMRMiniMRMergeTest extends AbstractFullDistribZkTestBase {
   private static final String DOCUMENTS_DIR = RESOURCES_DIR + "/test-documents";
   private static final File MINIMR_CONF_DIR = new File(RESOURCES_DIR
       + "/solr/minimr");
-  private static File solrHomeZip;
   
   private static final String SEARCH_ARCHIVES_JAR = JarFinder
       .getJar(TikaIndexerTool.class);
@@ -105,6 +104,11 @@ public class TikaMRMiniMRMergeTest extends AbstractFullDistribZkTestBase {
     conf.set("dfs.block.access.token.enable", "false");
     conf.set("dfs.permissions", "true");
     conf.set("hadoop.security.authentication", "simple");
+    
+    
+    createTempDir();
+    System.setProperty("test.build.data", dataDir + File.separator + "hdfs" + File.separator + "build");
+    System.setProperty("test.cache.data", dataDir + File.separator + "hdfs" + File.separator + "cache");
     
     dfsCluster = new MiniDFSCluster(conf, dataNodes, true, null);
     FileSystem fileSystem = dfsCluster.getFileSystem();
@@ -149,10 +153,6 @@ public class TikaMRMiniMRMergeTest extends AbstractFullDistribZkTestBase {
   
   @AfterClass
   public static void teardownClass() throws Exception {
-    
-    if (solrHomeZip != null) {
-      solrHomeZip.delete();
-    }
     if (mrCluster != null) {
       mrCluster.shutdown();
       mrCluster = null;
@@ -312,8 +312,6 @@ public class TikaMRMiniMRMergeTest extends AbstractFullDistribZkTestBase {
     jetty.setDataDir(uri.toString().substring("hdfs:/".length(),
         uri.toString().length())
         + "/" + new File(dataDir).getName());
-    System.setProperty("solr.ulog.dir", uri.toString() + "/"
-        + new File(dataDir).getName());
     
     if (System.getProperty("collection") == null) {
       System.setProperty("collection", "collection1");
