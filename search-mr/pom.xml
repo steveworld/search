@@ -59,6 +59,14 @@
   </profiles>
   
   <dependencies>
+      
+    <dependency> <!-- see http://lucene.apache.org/solr -->
+      <groupId>org.apache.solr</groupId>
+      <artifactId>solr-test-framework</artifactId>
+      <version>${solr.version}</version>
+      <scope>test</scope>
+    </dependency>    
+  
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
@@ -149,11 +157,12 @@
     </dependency>
     
     <dependency>
-    	<groupId>org.apache.hadoop</groupId>
-    	<artifactId>hadoop-minicluster</artifactId>
-    	<version>${hadoop.version}</version>
-    	<scope>test</scope>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-minicluster</artifactId>
+      <version>${hadoop.version}</version>
+      <scope>test</scope>
     </dependency>
+
   </dependencies>
 
   <build>
@@ -163,7 +172,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${surefire.version}</version>
         <configuration>
-          <argLine>-Xmx256m -XX:MaxDirectMemorySize=256m</argLine> <!-- fix for CDH-9445 -->
+          <argLine>-Xmx256m -XX:MaxDirectMemorySize=256m</argLine>
           <environmentVariables>
             <MALLOC_ARENA_MAX>4</MALLOC_ARENA_MAX>
           </environmentVariables>
