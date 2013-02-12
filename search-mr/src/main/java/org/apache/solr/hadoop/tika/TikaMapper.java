@@ -43,6 +43,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.SolrPingResponse;
 import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.common.SolrInputField;
 import org.apache.solr.common.params.MapSolrParams;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.DateUtil;
@@ -135,7 +136,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
         headers.put(Metadata.RESOURCE_NAME_KEY, path.getName()); // Tika can use the file name in guessing the right MIME type
         indexer.process(new StreamEvent(in, headers));
         context.getCounter(TikaCounters.class.getName(), TikaCounters.FILES_READ.toString()).increment(1);
-        context.getCounter(TikaCounters.class.getName(), TikaCounters.BYTES_READ.toString()).increment(fileLength);
+        context.getCounter(TikaCounters.class.getName(), TikaCounters.FILE_BYTES_READ.toString()).increment(fileLength);
       } catch (SolrServerException e) {
         context.getCounter(getClass().getName() + ".errors", e.getClass().getName()).increment(1);
         LOG.error("Unable to process file " + path, e);
@@ -258,14 +259,42 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
 
     @Override
     public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
-      for (SolrInputDocument sid: docs) {
+      for (SolrInputDocument doc: docs) {
         String uniqueKeyFieldName = schema.getUniqueKeyField().getName();
-        String id = sid.getFieldValue(uniqueKeyFieldName).toString();
+        String id = doc.getFieldValue(uniqueKeyFieldName).toString();
         try {
-          context.write(new Text(id), new SolrInputDocumentWritable(sid));
+          context.write(new Text(id), new SolrInputDocumentWritable(doc));
         } catch (InterruptedException e) {
-          throw new IOException("Interrupted while writing " + sid, e);
+          throw new IOException("Interrupted while writing " + doc, e);
         }
+
+        if (LOG.isDebugEnabled()) {
+          long numParserOutputBytes = 0;
+          for (SolrInputField field : doc.values()) {
+            numParserOutputBytes += sizeOf(field.getValue());
+          }
+          context.getCounter(TikaCounters.class.getName(), TikaCounters.PARSER_OUTPUT_BYTES.toString()).increment(numParserOutputBytes);
+        }
+      }
+      context.getCounter(TikaCounters.class.getName(), TikaCounters.DOCS_READ.toString()).increment(docs.size());
+    }
+
+    // just an approximation
+    private long sizeOf(Object value) {
+      if (value instanceof CharSequence) {
+        return ((CharSequence) value).length();
+      } else if (value instanceof Integer) {
+        return 4;
+      } else if (value instanceof Long) {
+        return 8;
+      } else if (value instanceof Collection) {
+        long size = 0;
+        for (Object val : (Collection) value) {
+          size += sizeOf(val);
+        }
+        return size;      
+      } else {
+        return String.valueOf(value).length();
       }
     }
 
