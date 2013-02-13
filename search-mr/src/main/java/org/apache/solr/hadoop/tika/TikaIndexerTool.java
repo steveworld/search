@@ -672,7 +672,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       return -1;
     }
 
-    if (options.goLive && !mergeIndexes(options, fs, outputResultsDir)) {
+    if (options.goLive && !goLive(options, fs, outputResultsDir)) {
       return -1;
     }
     
@@ -723,7 +723,7 @@ public class TikaIndexerTool extends Configured implements Tool {
   }
   
   // TODO: handle clusters with replicas
-  private boolean mergeIndexes(Options options, FileSystem fs,
+  private boolean goLive(Options options, FileSystem fs,
       Path outputResultsDir) throws FileNotFoundException, IOException {
     LOG.info("Live merging of output shards into Solr cluster...");
     boolean success = false;
