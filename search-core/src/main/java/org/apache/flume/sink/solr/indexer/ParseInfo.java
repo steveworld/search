@@ -43,7 +43,7 @@ public final class ParseInfo {
   private final Metadata metadata = new Metadata();
   private final AtomicLong recordNumber = new AtomicLong();
   private boolean isMultiDocumentParser = false;
-  private Exception exception;
+  private Throwable throwable;
   private final Map<String, Object> params = new HashMap();
 
   public ParseInfo(StreamEvent event, SolrIndexer indexer) {
@@ -127,12 +127,12 @@ public final class ParseInfo {
     return params;
   }
 
-  public Exception getException() {
-    return exception;
+  public Throwable getThrowable() {
+    return throwable;
   }
 
-  public void setException(Exception exception) {
-    this.exception = exception;
+  public void setThrowable(Throwable throwable) {
+    this.throwable = throwable;
   }
 
 }
