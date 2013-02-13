@@ -178,6 +178,7 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
         "--shards", "1",
         };
     assertNull(parser.parseArgs(args, fs, opts));
+    assertEquals(new Integer(1), opts.shards);
     assertEmptySystemErrAndEmptySystemOut();
   }
 
@@ -234,20 +235,45 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
   }
   
   @Test
-  public void testArgsSolrUrlDoesNotMatchShards() {
+  public void testArgsShardUrlOk() {
     String[] args = new String[] { 
         "--inputlist", "file:///tmp",
         "--outputdir", "file:/tmp/foo",
         "--solrhomedir", "/", 
-        "--shards", "2", 
         "--shardurl", "http://localhost:8983/solr/collection1",
-        "--golive"
+        "--shardurl", "http://localhost:8983/solr/collection2",
+        };
+    assertNull(parser.parseArgs(args, fs, opts));
+    assertEquals(Arrays.asList("http://localhost:8983/solr/collection1", "http://localhost:8983/solr/collection2"), opts.shardUrls);
+    assertEquals(new Integer(2), opts.shards);
+    assertEmptySystemErrAndEmptySystemOut();
+  }
+  
+  @Test
+  public void testArgsShardUrlMustHaveAParam() {
+    String[] args = new String[] { 
+        "--inputlist", "file:///tmp",
+        "--outputdir", "file:/tmp/foo",
+        "--solrhomedir", "/", 
+        "--shardurl",
         };
     assertArgumentParserException(args);
   }
   
   @Test
-  public void testArgsSolrUrlNoGoLive() {
+  public void testArgsShardUrlAndShardsAreMutuallyExclusive() {
+    String[] args = new String[] { 
+        "--inputlist", "file:///tmp",
+        "--outputdir", "file:/tmp/foo",
+        "--solrhomedir", "/", 
+        "--shards", "1", 
+        "--shardurl", "http://localhost:8983/solr/collection1",
+        };
+    assertArgumentParserException(args);
+  }
+  
+  @Test
+  public void testArgsShardUrlNoGoLive() {
     String[] args = new String[] { 
         "--inputlist", "file:///tmp",
         "--outputdir", "file:/tmp/foo",
@@ -260,7 +286,7 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
   }
   
   @Test
-  public void testArgsSolrUrlsAndZkhost() {
+  public void testArgsShardUrlsAndZkhostAreMutuallyExclusive() {
     String[] args = new String[] { 
         "--inputlist", "file:///tmp",
         "--outputdir", "file:/tmp/foo",
