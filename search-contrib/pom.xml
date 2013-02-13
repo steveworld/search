@@ -57,8 +57,8 @@
             <phase>generate-sources</phase>
             <configuration>
               <target>
-                <mkdir dir="${project.build.directory}/generated-sources/src/main/java/org/apache/flume/sink/solr/indexer"/>
-                <copy file="${basedir}/../search-core/src/test/java/org/apache/flume/sink/solr/indexer/TwitterTestParser.java" todir="${project.build.directory}/generated-sources/src/main/java/org/apache/flume/sink/solr/indexer">
+                <mkdir dir="${project.build.directory}/generated-sources/src/main/java/org/apache/solr/tika"/>
+                <copy file="${basedir}/../search-core/src/test/java/org/apache/solr/tika/TwitterTestParser.java" todir="${project.build.directory}/generated-sources/src/main/java/org/apache/solr/tika">
                 </copy>
               </target>
             </configuration>

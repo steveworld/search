@@ -29,11 +29,6 @@ import java.util.TreeMap;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.flume.sink.solr.indexer.ConfigurationException;
-import org.apache.flume.sink.solr.indexer.DocumentLoader;
-import org.apache.flume.sink.solr.indexer.SolrCollection;
-import org.apache.flume.sink.solr.indexer.StreamEvent;
-import org.apache.flume.sink.solr.indexer.TikaIndexer;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -57,6 +52,11 @@ import org.apache.solr.hadoop.SolrMapper;
 import org.apache.solr.handler.extraction.ExtractingRequestHandler;
 import org.apache.solr.request.SolrRequestHandler;
 import org.apache.solr.schema.IndexSchema;
+import org.apache.solr.tika.ConfigurationException;
+import org.apache.solr.tika.DocumentLoader;
+import org.apache.solr.tika.SolrCollection;
+import org.apache.solr.tika.StreamEvent;
+import org.apache.solr.tika.TikaIndexer;
 import org.apache.tika.metadata.Metadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

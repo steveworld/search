@@ -27,8 +27,8 @@ import java.util.Map;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.interceptor.Interceptor;
-import org.apache.flume.sink.solr.indexer.MediaTypeDetector;
-import org.apache.flume.sink.solr.indexer.StreamEvent;
+import org.apache.solr.tika.MediaTypeDetector;
+import org.apache.solr.tika.StreamEvent;
 import org.apache.tika.metadata.Metadata;
 
 /**

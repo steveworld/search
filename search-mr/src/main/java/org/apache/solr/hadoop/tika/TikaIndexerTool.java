@@ -59,7 +59,6 @@ import net.sourceforge.argparse4j.inf.FeatureControl;
 import net.sourceforge.argparse4j.inf.MutuallyExclusiveGroup;
 import net.sourceforge.argparse4j.inf.Namespace;
 
-import org.apache.flume.sink.solr.indexer.TikaIndexer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -90,6 +89,7 @@ import org.apache.solr.hadoop.SolrReducer;
 import org.apache.solr.hadoop.TreeMergeMapper;
 import org.apache.solr.hadoop.TreeMergeOutputFormat;
 import org.apache.solr.hadoop.Utils;
+import org.apache.solr.tika.TikaIndexer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

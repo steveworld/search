@@ -20,9 +20,9 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
 
-import org.apache.flume.sink.solr.indexer.TikaIndexer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.solr.hadoop.SolrOutputFormat;
+import org.apache.solr.tika.TikaIndexer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
