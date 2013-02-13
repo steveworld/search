@@ -55,6 +55,7 @@ import org.apache.solr.schema.IndexSchema;
 import org.apache.solr.tika.ConfigurationException;
 import org.apache.solr.tika.DocumentLoader;
 import org.apache.solr.tika.SolrCollection;
+import org.apache.solr.tika.SolrIndexer;
 import org.apache.solr.tika.StreamEvent;
 import org.apache.solr.tika.TikaIndexer;
 import org.apache.tika.metadata.Metadata;
@@ -68,7 +69,7 @@ import com.typesafe.config.ConfigFactory;
 
 public class TikaMapper extends SolrMapper<LongWritable, Text> {
 
-  private MyIndexer indexer;
+  private SolrIndexer indexer;
   private FileSystem fs;
   private Context context;
   private IndexSchema schema;
@@ -78,6 +79,10 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
 
   private static final Logger LOG = LoggerFactory.getLogger(TikaMapper.class);
   
+  protected IndexSchema getSchema() {
+    return schema;
+  }
+
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
     super.setup(context);
@@ -90,7 +95,6 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       LOG.trace("Configuration:\n{}", Joiner.on("\n").join(map.entrySet()));
     }
     this.context = context;
-    indexer = new MyIndexer();
     Map<String, Object> params = new HashMap<String,Object>();
     for (Map.Entry<String,String> entry : context.getConfiguration()) {
       if (entry.getValue() != null && (entry.getKey().contains("tika") || entry.getKey().contains("Tika"))) {
@@ -104,11 +108,22 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
 //      throw new IllegalStateException("Missing tika.config parameter"); // for debugging      
     }
     Config config = ConfigFactory.parseMap(params);
+    indexer = createSolrIndexer(context);
     indexer.configure(config);
     indexer.start();
+    for (SolrCollection collection : indexer.getSolrCollections().values()) {
+      schema = collection.getSchema();
+    }
+    if (schema == null) {
+      throw new IllegalStateException("Schema must not be null");
+    }
     indexer.beginTransaction();
     fs = FileSystem.get(context.getConfiguration());
     heartBeater = new HeartBeater(context);
+  }
+
+  protected SolrIndexer createSolrIndexer(Context context) {
+    return new MyTikaIndexer();
   }
 
   /**
@@ -130,7 +145,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       try {
         Map<String,String> headers = new HashMap<String, String>();
   //      uri = getFileURI(path);   
-        headers.put(schema.getUniqueKeyField().getName(), uri); // use HDFS file path as docId if no docId is specified
+        headers.put(getSchema().getUniqueKeyField().getName(), uri); // use HDFS file path as docId if no docId is specified
         headers.put(SCHEMA_FIELD_NAME_OF_FILE_URI, uri); // enable explicit storing of path in Solr
         //headers.put("lastModified", String.valueOf(fs.getFileStatus(path).getModificationTime())); // FIXME also in SpoolDirSource
         headers.put(Metadata.RESOURCE_NAME_KEY, path.getName()); // Tika can use the file name in guessing the right MIME type
@@ -178,7 +193,10 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     indexer.stop();
   }
 
-  private class MyIndexer extends TikaIndexer {
+  private class MyTikaIndexer extends TikaIndexer {
+    
+    private IndexSchema mySchema;
+    
     // FIXME don't copy this code from flume solr sink
     @Override
     protected Map<String, SolrCollection> createSolrCollections() {
@@ -187,7 +205,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
         SolrResourceLoader loader = new SolrResourceLoader(solrHomeDir.toString());
         // TODO allow config to be configured by job?
         SolrConfig solrConfig = new SolrConfig(loader, "solrconfig.xml", null);
-        schema = new IndexSchema(solrConfig, null, null);
+        mySchema = new IndexSchema(solrConfig, null, null);
 
         SolrParams params = new MapSolrParams(new HashMap<String,String>());
         Collection<String> dateFormats = DateUtil.DEFAULT_DATE_FORMATS;
@@ -234,7 +252,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
             break; // found it
           }
         }
-        collection.setSchema(schema);
+        collection.setSchema(mySchema);
         collection.setSolrParams(params);
         collection.setDateFormats(dateFormats);
 
@@ -249,73 +267,73 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       return Collections.singletonMap(collection.getName(), collection);
     }
 
-  }
+    private class MyDocumentLoader implements DocumentLoader {
 
-  private class MyDocumentLoader implements DocumentLoader {
+      @Override
+      public void beginTransaction() {
+      }
 
-    @Override
-    public void beginTransaction() {
-    }
-
-    @Override
-    public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
-      for (SolrInputDocument doc : docs) {
-        String uniqueKeyFieldName = schema.getUniqueKeyField().getName();
-        String id = doc.getFieldValue(uniqueKeyFieldName).toString();
-        try {
-          context.write(new Text(id), new SolrInputDocumentWritable(doc));
-        } catch (InterruptedException e) {
-          throw new IOException("Interrupted while writing " + doc, e);
-        }
-
-        if (LOG.isDebugEnabled()) {
-          long numParserOutputBytes = 0;
-          for (SolrInputField field : doc.values()) {
-            numParserOutputBytes += sizeOf(field.getValue());
+      @Override
+      public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
+        for (SolrInputDocument doc : docs) {
+          String uniqueKeyFieldName = mySchema.getUniqueKeyField().getName();
+          String id = doc.getFieldValue(uniqueKeyFieldName).toString();
+          try {
+            context.write(new Text(id), new SolrInputDocumentWritable(doc));
+          } catch (InterruptedException e) {
+            throw new IOException("Interrupted while writing " + doc, e);
           }
-          context.getCounter(TikaCounters.class.getName(), TikaCounters.PARSER_OUTPUT_BYTES.toString()).increment(numParserOutputBytes);
+
+          if (LOG.isDebugEnabled()) {
+            long numParserOutputBytes = 0;
+            for (SolrInputField field : doc.values()) {
+              numParserOutputBytes += sizeOf(field.getValue());
+            }
+            context.getCounter(TikaCounters.class.getName(), TikaCounters.PARSER_OUTPUT_BYTES.toString()).increment(numParserOutputBytes);
+          }
+        }
+        context.getCounter(TikaCounters.class.getName(), TikaCounters.DOCS_READ.toString()).increment(docs.size());
+      }
+
+      // just an approximation
+      private long sizeOf(Object value) {
+        if (value instanceof CharSequence) {
+          return ((CharSequence) value).length();
+        } else if (value instanceof Integer) {
+          return 4;
+        } else if (value instanceof Long) {
+          return 8;
+        } else if (value instanceof Collection) {
+          long size = 0;
+          for (Object val : (Collection) value) {
+            size += sizeOf(val);
+          }
+          return size;      
+        } else {
+          return String.valueOf(value).length();
         }
       }
-      context.getCounter(TikaCounters.class.getName(), TikaCounters.DOCS_READ.toString()).increment(docs.size());
-    }
 
-    // just an approximation
-    private long sizeOf(Object value) {
-      if (value instanceof CharSequence) {
-        return ((CharSequence) value).length();
-      } else if (value instanceof Integer) {
-        return 4;
-      } else if (value instanceof Long) {
-        return 8;
-      } else if (value instanceof Collection) {
-        long size = 0;
-        for (Object val : (Collection) value) {
-          size += sizeOf(val);
-        }
-        return size;      
-      } else {
-        return String.valueOf(value).length();
+      @Override
+      public void commitTransaction() {
       }
+
+      @Override
+      public UpdateResponse rollback() throws SolrServerException, IOException {
+        return new UpdateResponse();
+      }
+
+      @Override
+      public void shutdown() {
+      }
+
+      @Override
+      public SolrPingResponse ping() throws SolrServerException, IOException {
+        return new SolrPingResponse();
+      }
+      
     }
 
-    @Override
-    public void commitTransaction() {
-    }
-
-    @Override
-    public UpdateResponse rollback() throws SolrServerException, IOException {
-      return new UpdateResponse();
-    }
-
-    @Override
-    public void shutdown() {
-    }
-
-    @Override
-    public SolrPingResponse ping() throws SolrServerException, IOException {
-      return new SolrPingResponse();
-    }
-    
   }
 
 }
