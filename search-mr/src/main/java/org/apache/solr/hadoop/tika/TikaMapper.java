@@ -259,7 +259,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
 
     @Override
     public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
-      for (SolrInputDocument doc: docs) {
+      for (SolrInputDocument doc : docs) {
         String uniqueKeyFieldName = schema.getUniqueKeyField().getName();
         String id = doc.getFieldValue(uniqueKeyFieldName).toString();
         try {
