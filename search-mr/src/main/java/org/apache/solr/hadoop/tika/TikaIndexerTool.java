@@ -610,11 +610,8 @@ public class TikaIndexerTool extends Configured implements Tool {
     job.getConfiguration().set(TikaIndexer.TIKA_CONFIG_LOCATION, "tika-config.xml");
     LOG.info("Indexing {} files using {} real mappers into {} reducers", numFiles, realMappers, reducers);
     long startTime = System.currentTimeMillis();
-    boolean success = waitForCompletion(job, options.isVerbose);
-
-    if (!success) {
-      LOG.error("Job failed!");
-      return -1;
+    if (!waitForCompletion(job, options.isVerbose)) {
+      return -1; // job failed
     }
 
     float secs = (System.currentTimeMillis() - startTime) / 1000.0f;
