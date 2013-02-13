@@ -50,6 +50,7 @@ import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.impl.action.HelpArgumentAction;
 import net.sourceforge.argparse4j.impl.choice.RangeArgumentChoice;
+import net.sourceforge.argparse4j.impl.type.FileArgumentType;
 import net.sourceforge.argparse4j.inf.Argument;
 import net.sourceforge.argparse4j.inf.ArgumentGroup;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
@@ -265,7 +266,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       
       Argument outputDirArg = parser.addArgument("--outputdir")
         .metavar("HDFS_URI")
-        .type(new ArgumentTypes.PathArgumentType(fs) {
+        .type(new PathArgumentType(fs) {
           @Override
           public Path convert(ArgumentParser parser, Argument arg, String value) throws ArgumentParserException {
             Path path = super.convert(parser, arg, value);
@@ -281,7 +282,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       
       Argument solrHomeDirArg = parser.addArgument("--solrhomedir")
           .metavar("DIR")
-          .type(new ArgumentTypes.FileArgumentType().verifyIsDirectory().verifyCanRead())
+          .type(new FileArgumentType().verifyIsDirectory().verifyCanRead())
           .required(true)
           .help("Local dir containing Solr conf/ and lib/");
     
@@ -405,7 +406,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       // trailing positional arguments
       Argument inputFilesArg = parser.addArgument("inputfiles")
         .metavar("HDFS_URI")
-        .type(new ArgumentTypes.PathArgumentType(fs).verifyScheme(fs.getScheme()).verifyExists().verifyCanRead())
+        .type(new PathArgumentType(fs).verifyScheme(fs.getScheme()).verifyExists().verifyCanRead())
         .nargs("*")
         .setDefault()
         .help("HDFS URI of file or dir to index");
