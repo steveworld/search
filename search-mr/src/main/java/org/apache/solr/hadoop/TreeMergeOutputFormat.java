@@ -142,7 +142,9 @@ public class TreeMergeOutputFormat extends FileOutputFormat<Text, NullWritable> 
         LOG.info("Optimizing Solr: forcing tree merge down to {} segments", maxSegments);
         start = System.currentTimeMillis();
         if (maxSegments < Integer.MAX_VALUE) {
-          writer.forceMerge(maxSegments);
+          writer.forceMerge(maxSegments); 
+          // TODO: consider perf enhancement for no-deletes merges: bulk-copy the postings data 
+          // see http://lucene.472066.n3.nabble.com/Experience-with-large-merge-factors-tp1637832p1647046.html
         }
         if (LOG.isDebugEnabled()) {
           context.getCounter(SolrCounters.class.getName(), SolrCounters.PHYSICAL_TREE_MERGE_TIME.toString()).increment(System.currentTimeMillis() - start);
