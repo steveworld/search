@@ -27,22 +27,16 @@ import org.apache.solr.common.cloud.Slice;
 import org.apache.solr.common.cloud.SolrZkClient;
 import org.apache.solr.common.cloud.ZkCoreNodeProps;
 import org.apache.solr.common.cloud.ZkStateReader;
-import org.apache.solr.hadoop.tika.TikaIndexerTool.Options;
-import org.apache.zookeeper.KeeperException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ZooKeeperInspector {
-  private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperInspector.class);
   
-  public void extractShardCountAndSolrUrlsFromZk(Options options)
-      throws KeeperException, InterruptedException {
-    // TODO: assert if one is set, bother are set (collectin, zkServerAddress
-    // also check that --solrurl is not being used
-    
+  public List<String> extractShardUrlsFromZk(String zkHost, String collection) {
+    if (collection == null) { 
+      throw new IllegalArgumentException();
+    }
     SolrZkClient zkClient = null;
     try {
-      zkClient = new SolrZkClient(options.zkHost, 15000);
+      zkClient = new SolrZkClient(zkHost, 15000);
     } catch (Exception e) {
       throw new IllegalArgumentException("Could not connect to ZooKeeper", e);
     }
@@ -57,15 +51,13 @@ public class ZooKeeperInspector {
       
       DocCollection docCollection;
       try {
-        docCollection = zkStateReader.getClusterState()
-          .getCollection(options.collection);
+        docCollection = zkStateReader.getClusterState().getCollection(collection);
       } catch (SolrException e) {
         throw new IllegalArgumentException("Could not find collection in ZooKeeper: "
-            + options.collection, e);
+            + collection, e);
       }
 
       Collection<Slice> slices = docCollection.getSlices();
-      options.shards = slices.size();
       List<String> solrUrls = new ArrayList<String>(slices.size());
       for (Slice slice : slices) {
         if (slice.getLeader() == null) {
@@ -74,45 +66,12 @@ public class ZooKeeperInspector {
         ZkCoreNodeProps props = new ZkCoreNodeProps(slice.getLeader());
         solrUrls.add(props.getCoreUrl());
       }
-      options.shardUrls = solrUrls;
+      return solrUrls;
     } finally {
       if (zkClient != null) {
         zkClient.close();
       }
     }
-  }
-  
-  public Exception verifyZkHost(String zkHost, String collection) {
-    SolrZkClient client = null;
-    try {
-      try {
-        client = new SolrZkClient(zkHost, 15000);
-      } catch (Exception e) {
-        return new IllegalArgumentException("Could not connect to ZooKeeper at " + zkHost, e);
-      }
-      
-      ZkStateReader zkStateReader = new ZkStateReader(client);
-      try {
-        zkStateReader.createClusterStateWatchersAndUpdate();
-      } catch (Exception e) {
-        return new IllegalArgumentException("Did not find expected information for SolrCloud in ZooKeeper - perhaps you meant to add a chroot to the address?", e);
-      }
-      
-      try {
-        zkStateReader.getClusterState().getCollection(collection);
-      } catch (SolrException e) {
-        return new IllegalArgumentException("Could not find collection in ZooKeeper: "
-            + collection, e);
-      }
-      
-      
-    } finally {
-      if (client != null) {
-        client.close();
-      }
-    }
-    
-    return null;
   }
   
 }
