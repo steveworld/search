@@ -348,18 +348,18 @@ public class TikaIndexerTool extends Configured implements Tool {
         		"shards for a SolrCloud cluster, pass the --zkhost argument. " +
         		"Using --golive requires either --shardurl or --zkhost.");
 
-      Argument solrUrlsArg = clusterInfoGroup.addArgument("--shardurl")
+      Argument shardUrlsArg = clusterInfoGroup.addArgument("--shardurl")
         .metavar("URL")
-        .action(Arguments.append())
         .type(String.class)
+        .action(Arguments.append())
         .help("Solr URL to merge resulting shard into if using --golive. " +
         		  "Example: http://solr001.mycompany.com:8983/solr/collection1. " + 
               "Multiple --shardurl arguments can be specified, one for each desired shard. " +
               "If you are merging shards into a SolrCloud cluster, use --zkhost instead.");
       
-      Argument zkServerAddressArg = clusterInfoGroup
-        .addArgument("--zkhost")
+      Argument zkServerAddressArg = clusterInfoGroup.addArgument("--zkhost")
         .metavar("STRING")
+        .type(String.class)
         .help("The address of a ZooKeeper instance being used by a SolrCloud cluster. "
                 + "This ZooKeeper instance will be examined to determine the number of output "
                 + "shards to create as well as the Solr URLs to merge the output shards into when using the --golive option. "
@@ -435,7 +435,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       opts.isRandomize = !ns.getBoolean(noRandomizeArg.getDest());
       opts.isVerbose = ns.getBoolean(verboseArg.getDest());
       opts.zkHost = (String) ns.get(zkServerAddressArg.getDest());
-      opts.shardUrls = ns.getList(solrUrlsArg.getDest());
+      opts.shardUrls = ns.getList(shardUrlsArg.getDest());
       opts.shards = ns.getInt(shardsArg.getDest());
       opts.goLive = ns.getBoolean(goLiveArg.getDest());
       opts.golivethreads = ns.getInt(golivethreadsArg.getDest());
