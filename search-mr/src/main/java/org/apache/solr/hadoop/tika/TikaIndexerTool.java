@@ -518,7 +518,6 @@ public class TikaIndexerTool extends Configured implements Tool {
 
     job = Job.getInstance(getConf());
     job.setJarByClass(getClass());
-    job.setJobName(getClass().getName() + "/" + Utils.getShortClassName(TikaMapper.class));
 
     verifyGoLiveArgs(options, null); // reverify, in case we got called directly rather than from the CLI API
     
@@ -587,12 +586,18 @@ public class TikaIndexerTool extends Configured implements Tool {
     NLineInputFormat.addInputPath(job, outputStep2Dir);
     NLineInputFormat.setNumLinesPerSplit(job, numLinesPerSplit);    
     FileOutputFormat.setOutputPath(job, outputReduceDir);
-    if (job.getConfiguration().getClass(JobContext.MAP_CLASS_ATTR, null) == null) { // enable customization
-      job.setMapperClass(TikaMapper.class);
+    
+    Class mapperClass = job.getConfiguration().getClass(JobContext.MAP_CLASS_ATTR, null);
+    if (mapperClass == null) { // enable customization
+      mapperClass = TikaMapper.class;
     }
+    job.setMapperClass(mapperClass);
+    job.setJobName(getClass().getName() + "/" + Utils.getShortClassName(mapperClass));
+    
     if (job.getConfiguration().getClass(JobContext.REDUCE_CLASS_ATTR, null) == null) { // enable customization
       job.setReducerClass(SolrReducer.class);
     }
+    
     if (reducers != options.shards) {
 //      job.setPartitionerClass(MyPartitionerX.class); FIXME
     }
