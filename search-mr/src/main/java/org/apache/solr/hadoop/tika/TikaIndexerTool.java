@@ -1025,12 +1025,18 @@ public class TikaIndexerTool extends Configured implements Tool {
         throw new ArgumentParserException("--zkhost requires ZooKeeper " + opts.zkHost
             + " to contain at least one SolrCore for collection: " + opts.collection, parser);
       }
+    } else if (opts.shardUrls != null && opts.shardUrls.size() == 0) {
+      throw new ArgumentParserException("--shardurl requires at least one URL", parser);
     }
     
     if (opts.shardUrls != null) {
       opts.shards = opts.shardUrls.size();
     }
+    
     assert opts.shards != null;
+    if (opts.shards <= 0) {
+      throw new ArgumentParserException("--shards must be a positive number: " + opts.shards, parser);
+    }
   }
   
   private boolean waitForCompletion(Job job, boolean isVerbose) throws IOException, InterruptedException, ClassNotFoundException {
