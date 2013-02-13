@@ -46,6 +46,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.apache.lucene.util.LuceneTestCase.SuppressCodecs;
 
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakAction;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
@@ -59,6 +60,7 @@ import com.carrotsearch.randomizedtesting.annotations.ThreadLeakZombies.Conseque
 @ThreadLeakLingering(linger = 0)
 @ThreadLeakZombies(Consequence.CONTINUE)
 @ThreadLeakScope(Scope.NONE)
+@SuppressCodecs({"Lucene3x", "Lucene40"})
 public class TikaMRMiniMRMergeTest extends AbstractFullDistribZkTestBase {
   private static final String RESOURCES_DIR = "target/test-classes";
   private static final String DOCUMENTS_DIR = RESOURCES_DIR + "/test-documents";
