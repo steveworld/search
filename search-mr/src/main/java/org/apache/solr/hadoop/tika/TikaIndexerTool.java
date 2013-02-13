@@ -71,6 +71,7 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
@@ -586,8 +587,12 @@ public class TikaIndexerTool extends Configured implements Tool {
     NLineInputFormat.addInputPath(job, outputStep2Dir);
     NLineInputFormat.setNumLinesPerSplit(job, numLinesPerSplit);    
     FileOutputFormat.setOutputPath(job, outputReduceDir);
-    job.setMapperClass(TikaMapper.class);
-    job.setReducerClass(SolrReducer.class); 
+    if (job.getConfiguration().getClass(JobContext.MAP_CLASS_ATTR, null) == null) { // enable customization
+      job.setMapperClass(TikaMapper.class);
+    }
+    if (job.getConfiguration().getClass(JobContext.REDUCE_CLASS_ATTR, null) == null) { // enable customization
+      job.setReducerClass(SolrReducer.class);
+    }
     if (reducers != options.shards) {
 //      job.setPartitionerClass(MyPartitionerX.class); FIXME
     }
