@@ -148,10 +148,8 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
   @Override
   @Before
   public void setUp() throws Exception {
+    assumeTrue("This test cannot currently run under yarn", isMR1);
     super.setUp();
-    if (!isMR1) {
-      return;
-    }
     System.setProperty("host", "127.0.0.1");
     System.setProperty("numShards", Integer.toString(sliceCount));
     
@@ -161,10 +159,10 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
   @Override
   @After
   public void tearDown() throws Exception {
-    super.tearDown();
     if (!isMR1) {
       return;
     }
+    super.tearDown();
     System.clearProperty("host");
     System.clearProperty("numShards");
     FileSystem.closeAll();
@@ -193,7 +191,6 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
   @Test
   @Override
   public void testDistribSearch() throws Exception {
-    assumeTrue("This test cannot currently run under yarn", isMR1);
     super.testDistribSearch();
   }
   
