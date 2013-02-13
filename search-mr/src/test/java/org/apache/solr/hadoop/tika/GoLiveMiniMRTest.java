@@ -73,6 +73,7 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
   private static MiniDFSCluster dfsCluster = null;
   private static MiniMRCluster mrCluster = null;
   private static int numRuns = 0;
+  private static boolean isMR1 = true;
  
   private final String inputAvroFile1;
   private final String inputAvroFile2;
@@ -96,6 +97,17 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
   
   @BeforeClass
   public static void setupClass() throws Exception {
+    // this test currently hangs/crashes with yarn 
+    try {
+      Class.forName("org.apache.hadoop.mapred.JobTracker");
+    } catch (Exception e) {
+      isMR1 = false;
+    }
+    
+    if (!isMR1) {
+      return;
+    }
+ 
     if (System.getProperty("hadoop.log.dir") == null) {
       System.setProperty("hadoop.log.dir", "target");
     }
@@ -137,7 +149,9 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    
+    if (!isMR1) {
+      return;
+    }
     System.setProperty("host", "127.0.0.1");
     System.setProperty("numShards", Integer.toString(sliceCount));
     
@@ -147,14 +161,21 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
   @Override
   @After
   public void tearDown() throws Exception {
-    System.clearProperty("host");
-    printLayout();
     super.tearDown();
+    if (!isMR1) {
+      return;
+    }
+    System.clearProperty("host");
+    System.clearProperty("numShards");
     FileSystem.closeAll();
   }
   
   @AfterClass
   public static void teardownClass() throws Exception {
+    if (!isMR1) {
+      return;
+    }
+    
     if (mrCluster != null) {
       mrCluster.shutdown();
       mrCluster = null;
@@ -172,6 +193,7 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
   @Test
   @Override
   public void testDistribSearch() throws Exception {
+    assumeTrue("This test cannot currently run under yarn", isMR1);
     super.testDistribSearch();
   }
   
