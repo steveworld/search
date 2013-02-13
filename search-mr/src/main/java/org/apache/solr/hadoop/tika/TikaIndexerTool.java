@@ -1072,7 +1072,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     return Math.log(value) / Math.log(base);
   }
   
-  public static void shutdownNowAndAwaitTermination(ExecutorService pool) {
+  private void shutdownNowAndAwaitTermination(ExecutorService pool) {
     pool.shutdown(); // Disable new tasks from being submitted
     pool.shutdownNow(); // Cancel currently executing tasks
     boolean shutdown = false;
@@ -1090,7 +1090,8 @@ public class TikaIndexerTool extends Configured implements Tool {
     }
   }
   
-  static class Request {
+  
+  private static final class Request {
     Exception e;
     boolean success = false;
   }
