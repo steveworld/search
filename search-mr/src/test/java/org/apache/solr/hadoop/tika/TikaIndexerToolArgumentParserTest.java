@@ -254,7 +254,9 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
         "--solrhomedir", "/", 
         "--shardurl", "http://localhost:8983/solr/collection1"
         };
-    assertArgumentParserException(args);
+    assertNull(parser.parseArgs(args, fs, opts));
+    assertEmptySystemErrAndEmptySystemOut();
+    assertEquals(new Integer(1), opts.shards);
   }
   
   @Test
@@ -265,7 +267,6 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
         "--solrhomedir", "/", 
         "--shardurl", "http://localhost:8983/solr/collection1",
         "--shardurl", "http://localhost:8983/solr/collection1",
-        "--shards", "2",
         "--zkhost", "http://localhost:2185",
         "--golive"
         };
@@ -320,21 +321,7 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
         "--golive"
         };
     assertArgumentParserException(args);
-  }
-  
-  @Test
-  public void testArgsLoneCollection() {
-    String[] args = new String[] { 
-        "--inputlist", "file:///tmp",
-        "--outputdir", "file:/tmp/foo",
-        "--solrhomedir", "/", 
-        "--collection", "collection1", 
-        "--shardurl", "http://localhost:8983/solr/collection1",
-        "--golive"
-        };
-    assertArgumentParserException(args);
-  }
-  
+  }  
   
   private void assertEmptySystemErrAndEmptySystemOut() {
     assertEquals(0, bout.toByteArray().length);

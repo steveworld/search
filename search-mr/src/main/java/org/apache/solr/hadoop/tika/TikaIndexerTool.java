@@ -71,9 +71,6 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.RecordWriter;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
@@ -83,7 +80,6 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.CloudSolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
-import org.apache.solr.hadoop.BatchWriter;
 import org.apache.solr.hadoop.LineRandomizerMapper;
 import org.apache.solr.hadoop.LineRandomizerReducer;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
@@ -352,14 +348,14 @@ public class TikaIndexerTool extends Configured implements Tool {
         		"shards for a SolrCloud cluster, pass the --zkhost argument. " +
         		"Using --golive requires either --shardurl or --zkhost.");
 
-      Argument solrurlsArg = clusterInfoGroup.addArgument("--shardurl")
+      Argument solrUrlsArg = clusterInfoGroup.addArgument("--shardurl")
         .metavar("URL")
         .action(Arguments.append())
         .type(String.class)
         .help("Solr URL to merge resulting shard into if using --golive. " +
         		  "Example: http://solr001.mycompany.com:8983/solr/collection1. " + 
               "Multiple --shardurl arguments can be specified, one for each desired shard. " +
-              "If you are merging shards into a SolrCloud cluster, use --zkhost instead");
+              "If you are merging shards into a SolrCloud cluster, use --zkhost instead.");
       
       Argument zkServerAddressArg = clusterInfoGroup
         .addArgument("--zkhost")
@@ -432,16 +428,16 @@ public class TikaIndexerTool extends Configured implements Tool {
       opts.mappers = ns.getInt(mappersArg.getDest());
       opts.reducers = ns.getInt(reducersArg.getDest());
       opts.fanout = ns.getInt(fanoutArg.getDest());
-      opts.shards = ns.getInt(shardsArg.getDest());
       opts.maxSegments = ns.getInt(maxSegmentsArg.getDest());
       opts.solrHomeDir = (File) ns.get(solrHomeDirArg.getDest());
       opts.fairSchedulerPool = (String) ns.get(fairSchedulerPoolArg.getDest());
       opts.isRandomize = !ns.getBoolean(noRandomizeArg.getDest());
       opts.isVerbose = ns.getBoolean(verboseArg.getDest());
-      opts.shardUrls = ns.getList(solrurlsArg.getDest());
+      opts.zkHost = (String) ns.get(zkServerAddressArg.getDest());
+      opts.shardUrls = ns.getList(solrUrlsArg.getDest());
+      opts.shards = ns.getInt(shardsArg.getDest());
       opts.goLive = ns.getBoolean(goLiveArg.getDest());
       opts.golivethreads = ns.getInt(golivethreadsArg.getDest());
-      opts.zkHost = (String) ns.get(zkServerAddressArg.getDest());
       opts.collection = (String) ns.get(collectionArg.getDest());
 
       try {
@@ -458,37 +454,6 @@ public class TikaIndexerTool extends Configured implements Tool {
       return null;     
     }
 
-    private void verifyGoLiveArgs(Options opts, ArgumentParser parser) throws ArgumentParserException {
-      
-      if ((opts.shardUrls != null || opts.zkHost != null) && !opts.goLive) {
-        throw new ArgumentParserException(
-            "You cannot pass --shardurl or --zkhost without --golive", parser);
-      }
-      
-      if (opts.zkHost != null && opts.collection == null) {
-        throw new ArgumentParserException(
-            "You must pass --collection when using --zkhost", parser);
-      }
-      
-      if (opts.goLive && opts.zkHost == null && opts.shardUrls == null) {
-        throw new ArgumentParserException("--golive requires that you pass --shardurl or --zkhost", parser);
-      }
-      
-      if (opts.collection != null && opts.zkHost == null) {
-        throw new ArgumentParserException("--collection should only be used with --golive and --zkhost", parser);
-      }
-      
-      
-      // verify zk 
-      if (opts.zkHost != null) {
-        ZooKeeperInspector zki = new ZooKeeperInspector();
-        Exception e = zki.verifyZkHost(opts.zkHost, opts.collection);
-        if (e != null) {
-          throw new ArgumentParserException(e, parser);
-        }
-      }
-    }
-    
     /** Marker trick to prevent processing of any remaining arguments once --help option has been parsed */
     private static final class FoundHelpArgument extends RuntimeException {      
     }
@@ -553,14 +518,7 @@ public class TikaIndexerTool extends Configured implements Tool {
     job.setJarByClass(getClass());
     job.setJobName(getClass().getName() + "/" + Utils.getShortClassName(TikaMapper.class));
 
-    if (options.zkHost != null) {
-      ZooKeeperInspector zki = new ZooKeeperInspector();
-      zki.extractShardCountAndSolrUrlsFromZk(options);
-    }
-    
-    if (options.shardUrls != null) {
-      options.shards = options.shardUrls.size();
-    }
+    verifyGoLiveArgs(options, null); // reverify, in case we got called directly rather than from the CLI API
     
     int mappers = new JobClient(job.getConfiguration()).getClusterStatus().getMaxMapTasks(); // MR1
     //mappers = job.getCluster().getClusterStatus().getMapSlotCapacity(); // Yarn only
@@ -758,8 +716,7 @@ public class TikaIndexerTool extends Configured implements Tool {
   
   // TODO: handle clusters with replicas
   private boolean mergeIndexes(Options options, FileSystem fs,
-      Path outputResultsDir) throws FileNotFoundException, IOException,
-      SolrServerException {
+      Path outputResultsDir) throws FileNotFoundException, IOException {
     LOG.info("Merging constructed shards into Solr cluster...");
     boolean success = false;
     long start = System.currentTimeMillis();
@@ -1038,6 +995,33 @@ public class TikaIndexerTool extends Configured implements Tool {
     return numFiles;
   }
 
+  private static void verifyGoLiveArgs(Options opts, ArgumentParser parser) throws ArgumentParserException {      
+    if (opts.goLive && opts.zkHost == null && opts.shardUrls == null) {
+      throw new ArgumentParserException("--golive requires that you also pass --shardurl or --zkhost", parser);
+    }
+    
+    if (opts.zkHost != null && opts.collection == null) {
+      throw new ArgumentParserException("--zkhost requires that you also pass --collection", parser);
+    }
+    
+    // verify zk 
+    if (opts.zkHost != null) {
+      assert opts.collection != null;
+      ZooKeeperInspector zki = new ZooKeeperInspector();
+      try {
+        opts.shardUrls = zki.extractShardUrlsFromZk(opts.zkHost, opts.collection);
+      } catch (Exception e) {
+        throw new ArgumentParserException(e, parser);          
+      }
+      assert opts.shardUrls != null;
+    }
+    
+    if (opts.shardUrls != null) {
+      opts.shards = opts.shardUrls.size();
+    }
+    assert opts.shards != null;
+  }
+  
   private boolean waitForCompletion(Job job, boolean isVerbose) throws IOException, InterruptedException, ClassNotFoundException {
     LOG.trace("Running job: " + getJobInfo(job));
     boolean success = job.waitForCompletion(isVerbose);
