@@ -368,12 +368,12 @@ public class TikaIndexerTool extends Configured implements Tool {
                 + "This ZooKeeper instance will be examined to determine the number of output "
                 + "shards to create as well as the Solr URLs to merge the output shards into when using the --golive option. "
                 + "Requires that you also pass the --collection to merge the shards into."
-                + "\n\nFormat is: a comma separated host:port pairs, each corresponding to a zk "
-                + "server. e.g. \"127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002\" If "
+                + "\n\nFormat is: a list of comma separated host:port pairs, each corresponding to a zk "
+                + "server. Example: \"127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002\" If "
                 + "the optional chroot suffix is used the example would look "
                 + "like: \"127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a\" "
-                + "where the client would be rooted at \"/app/a\" and all paths"
-                + "would be relative to this root - ie getting/setting/etc... "
+                + "where the client would be rooted at \"/app/a\" and all paths "
+                + "would be relative to this root - i.e. getting/setting/etc... "
                 + "\"/foo/bar\" would result in operations being run on "
                 + "\"/app/a/foo/bar\" (from the server perspective).");
 
