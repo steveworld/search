@@ -841,9 +841,8 @@ public class TikaIndexerTool extends Configured implements Tool {
       return true;
     } finally {
       shutdownNowAndAwaitTermination(executor);
-      long end = System.currentTimeMillis();
-      long took = end - start;
-      LOG.info("Merging index shards into live Solr cluster took " + took / 1000.0 / 60 + " min");
+      float secs = (System.currentTimeMillis() - start) / 1000.0f;
+      LOG.info("Merging index shards into live Solr cluster took " + secs + " secs");
       if (success) {
         LOG.info("Merging completed successfully");
       } else {
