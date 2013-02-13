@@ -664,13 +664,12 @@ public class TikaIndexerTool extends Configured implements Tool {
       return -1;
     }
 
-    if (options.goLive) {
-      success = mergeIndexes(options, fs, outputResultsDir);
+    if (options.goLive && !mergeIndexes(options, fs, outputResultsDir)) {
+      return -1;
     }
     
-    goodbye(job, programStartTime);
-    
-    return success ? 0 : -1;
+    goodbye(job, programStartTime);    
+    return 0;
   }
 
   private void calculateNumReducers(Options options, int realMappers) throws IOException {
