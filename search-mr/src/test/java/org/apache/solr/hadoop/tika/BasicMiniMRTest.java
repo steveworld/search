@@ -49,7 +49,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(value = Parameterized.class)
-public class TikaMRMiniMRTest extends Assert {
+public class BasicMiniMRTest extends Assert {
   
   private static final boolean ENABLE_LOCAL_JOB_RUNNER = false; // for debugging only
   private static final String RESOURCES_DIR = "target/test-classes";
@@ -75,7 +75,7 @@ public class TikaMRMiniMRTest extends Assert {
     });
   }
 
-  public TikaMRMiniMRTest(String inputAvroFile, int count) {
+  public BasicMiniMRTest(String inputAvroFile, int count) {
     this.inputAvroFile = inputAvroFile;
     this.count = count;
   }
