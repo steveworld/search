@@ -176,6 +176,14 @@ public class TikaMRMiniMRTest extends Assert {
     jobConf.setJar(SEARCH_ARCHIVES_JAR);
     
     int shards = 2;
+    int maxReducers = Integer.MAX_VALUE;
+    if (ENABLE_LOCAL_JOB_RUNNER) {
+      // local job runner has a couple of limitations: only one reducer is supported and the DistributedCache doesn't work.
+      // see http://blog.cloudera.com/blog/2009/07/advice-on-qa-testing-your-mapreduce-jobs/
+      maxReducers = 1;
+      shards = 1;
+    }
+    
     String[] args = new String[] {
         "--files", RESOURCES_DIR + File.separator + TIKA_CONFIG_FILE_NAME,
         "--solrhomedir=" + MINIMR_CONF_DIR.getAbsolutePath(),
@@ -183,7 +191,7 @@ public class TikaMRMiniMRTest extends Assert {
         "--shards=" + shards,
         "--verbose",
         numRuns % 2 == 0 ? "--inputlist=" + INPATH.toString() : dataDir.toString(),
-        numRuns % 3 == 0 ? "--reducers=" + shards : (numRuns % 3 == 1  ? "--reducers=-1" : "--reducers=8")
+        numRuns % 3 == 0 ? "--reducers=" + shards : (numRuns % 3 == 1  ? "--reducers=-1" : "--reducers=" + Math.min(8, maxReducers))
     };
     if (numRuns % 3 == 2) {
       args = concat(args, new String[] {"--fanout=2"});
