@@ -89,6 +89,8 @@ public class TestWarcParser extends SolrJettyTestBase {
     final Map<String, String> context = new HashMap();
     context.put(TikaIndexer.TIKA_CONFIG_LOCATION, RESOURCES_DIR + "/tika-config.xml");
     context.put(TikaIndexer.SOLR_COLLECTION_LIST + ".testcoll." + TikaIndexer.SOLR_CLIENT_HOME, RESOURCES_DIR + "/solr/collection1");
+    // tell the TikaIndexer to pass a  GZIPInputStream to tika.  This is temporary until CDH-10671 is addressed.
+    context.put("tika.autoGUNZIP", "true");
     
     final SolrServer solrServer;
     if (EXTERNAL_SOLR_SERVER_URL != null) {
@@ -264,10 +266,7 @@ public class TestWarcParser extends SolrJettyTestBase {
     for (int i = 0; i < 1; i++) {
       String path = RESOURCES_DIR + "/test-documents";
       Map<String,Integer> numRecords = new HashMap();
-      // There are actually 140 html docs in sampleWarcFile,
-      // but the parser is unable to parse one of them for some reason.  No such problem if
-      // the file is gunziped beforehand for some reason.
-      numRecords.put(path + sampleWarcFile, 139);
+      numRecords.put(path + sampleWarcFile, 140);
       
       for (String file : files) {
         File f = new File(file);

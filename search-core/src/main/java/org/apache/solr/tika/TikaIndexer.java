@@ -24,6 +24,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PushbackInputStream;
 import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.security.SecureRandom;
@@ -41,6 +42,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.zip.GZIPInputStream;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -98,6 +100,7 @@ public class TikaIndexer extends SolrIndexer {
 
   private String idPrefix; // for load testing only; enables adding same document many times with a different unique key
   private Random randomIdPrefix; // for load testing only; enables adding same document many times with a different unique key
+  private boolean useAutoGUNZIP = false;
 
   private static final XPathParser PARSER = new XPathParser("xhtml", XHTMLContentHandler.XHTML);
 
@@ -110,6 +113,9 @@ public class TikaIndexer extends SolrIndexer {
   public static final String SOLR_SERVER_NUM_THREADS = "solr.server.numThreads";
   public static final String SOLR_HOME_PROPERTY_NAME = "solr.solr.home";
   public static final String ID_PREFIX = "TikaIndexer.idPrefix"; // for load testing only
+  // pass a GZIPInputStream to tika (if detected as GZIP File).  This is temporary,
+  // and thus visibility is private, until CDH-10671 is addressed.
+  private static final String TIKA_AUTO_GUNZIP = "tika.autoGUNZIP";
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TikaIndexer.class);
 
@@ -158,6 +164,9 @@ public class TikaIndexer extends SolrIndexer {
       randomIdPrefix = new Random(new SecureRandom().nextLong());    
       idPrefix = null;
     }
+    if (config.hasPath(TIKA_AUTO_GUNZIP)) {
+      useAutoGUNZIP = "true".equals(config.getString(TIKA_AUTO_GUNZIP));
+    }
   }
   
   protected TikaConfig getTikaConfig() {
@@ -176,6 +185,59 @@ public class TikaIndexer extends SolrIndexer {
 
   protected final ParseInfo getParseInfo() {
     return parseInfo;
+  }
+
+  /**
+   * @return a clone of metadata
+   */
+  protected Metadata cloneMetadata(Metadata metadata) {
+    Metadata clone = new Metadata();
+    for (String name : metadata.names()) {
+      String [] str = metadata.getValues(name);
+      for (int i = 0; i < str.length; ++i) {
+        clone.add(name, str[i]);
+      }
+    }
+    return clone;
+  }
+
+  /**
+   * @return an input stream to use, which will be a GZIPInputStream in the case
+   * where the input stream is over gzipped data.
+   */
+  protected InputStreamMetadata detectGZIPInputStream(InputStream inputStream, Metadata metadata) {
+    if (useAutoGUNZIP) {
+      String resourceName = metadata.get(Metadata.RESOURCE_NAME_KEY);
+      if (resourceName != null && resourceName.endsWith(".gz")) {
+        int magicPrefixSize = 2;
+        PushbackInputStream pbis = new PushbackInputStream(inputStream, magicPrefixSize);
+        try {
+          byte [] readMagicPrefix = new byte[magicPrefixSize];
+          int totalBytesRead = 0;
+          int read;
+          while (totalBytesRead != magicPrefixSize && (read = pbis.read(readMagicPrefix, totalBytesRead, magicPrefixSize - totalBytesRead )) != -1) {
+            totalBytesRead += read;
+          }
+          if (totalBytesRead > 0) pbis.unread( readMagicPrefix, 0, totalBytesRead );
+          if (totalBytesRead == magicPrefixSize) {
+            // Check if stream has GZIP_MAGIC prefix
+            if ((readMagicPrefix[0] == (byte) GZIPInputStream.GZIP_MAGIC)
+              && (readMagicPrefix[1] == (byte) (GZIPInputStream.GZIP_MAGIC >> 8))) {
+              Metadata entryData = cloneMetadata(metadata);
+              // Remove the .gz extension
+              String newName =
+                resourceName.substring(0, resourceName.length() - ".gz".length());
+              entryData.set(Metadata.RESOURCE_NAME_KEY, newName);
+              return new InputStreamMetadata(new GZIPInputStream(pbis), entryData);
+            }
+          }
+        } catch (IOException ioe) {
+          LOGGER.info("Unable to read from stream to determine if gzip input stream.", ioe);
+        }
+        return new InputStreamMetadata(pbis, metadata);
+      }
+    }
+    return new InputStreamMetadata(inputStream, metadata);
   }
 
   @Override
@@ -212,6 +274,7 @@ public class TikaIndexer extends SolrIndexer {
     InputStream inputStream = null;
     try {
       inputStream = TikaInputStream.get(event.getBody());
+
       for (Entry<String, String> entry : event.getHeaders().entrySet()) {
         if (entry.getKey().equals(info.getSolrCollection().getSchema().getUniqueKeyField().getName())) {
           info.setId(entry.getValue()); // TODO: hack alert!
@@ -239,6 +302,15 @@ public class TikaIndexer extends SolrIndexer {
 
       info.setSolrContentHandler(handler);
 
+      // Standard tika parsers occasionally have trouble with gzip data.
+      // To avoid this issue, pass a GZIPInputStream if appropriate.
+      InputStreamMetadata inputStreamMetadata = detectGZIPInputStream(inputStream,  metadata);
+      inputStream = inputStreamMetadata.inputStream;
+      // It is possible the inputStreamMetadata.metadata has a modified RESOURCE_NAME from
+      // the original metadata due to how we handle GZIPInputStreams.  Pass this to tika
+      // so the correct parser will be invoked (i.e. not the built-in gzip parser).
+      // We leave ParseInfo.metdata untouched so it contains the correct, original resourceName.
+      metadata = inputStreamMetadata.metadata;
       try {
         addPasswordHandler(resourceName);
         parser.parse(inputStream, parsingHandler, metadata, getParseInfo().getParseContext());
@@ -519,5 +591,14 @@ public class TikaIndexer extends SolrIndexer {
       LOGGER.debug("Literal password supplied for file {}", resourceName);
     }
   }
-
+  
+  protected static class InputStreamMetadata {
+    public InputStream inputStream;
+    public Metadata metadata;
+ 
+    public InputStreamMetadata(InputStream inputStream, Metadata metadata) {
+      this.inputStream = inputStream;
+      this.metadata = metadata;
+    }
+  }
 }
