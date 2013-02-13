@@ -1022,7 +1022,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       }
       assert opts.shardUrls != null;
       if (opts.shardUrls.size() == 0) {
-        throw new ArgumentParserException("--golive requires ZooKeeper " + opts.zkHost
+        throw new ArgumentParserException("--zkhost requires ZooKeeper " + opts.zkHost
             + " to contain at least one SolrCore for collection: " + opts.collection, parser);
       }
     }
