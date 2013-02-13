@@ -717,7 +717,7 @@ public class TikaIndexerTool extends Configured implements Tool {
   // TODO: handle clusters with replicas
   private boolean mergeIndexes(Options options, FileSystem fs,
       Path outputResultsDir) throws FileNotFoundException, IOException {
-    LOG.info("Live merging output shards into Solr cluster...");
+    LOG.info("Live merging of output shards into Solr cluster...");
     boolean success = false;
     long start = System.currentTimeMillis();
     int concurrentMerges = options.golivethreads;
