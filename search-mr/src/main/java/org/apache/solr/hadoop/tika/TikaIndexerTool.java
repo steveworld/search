@@ -717,7 +717,7 @@ public class TikaIndexerTool extends Configured implements Tool {
   // TODO: handle clusters with replicas
   private boolean mergeIndexes(Options options, FileSystem fs,
       Path outputResultsDir) throws FileNotFoundException, IOException {
-    LOG.info("Merging constructed shards into Solr cluster...");
+    LOG.info("Live merging output shards into Solr cluster...");
     boolean success = false;
     long start = System.currentTimeMillis();
     int concurrentMerges = options.golivethreads;
@@ -746,7 +746,7 @@ public class TikaIndexerTool extends Configured implements Tool {
           
           int lastPathIndex = baseUrl.lastIndexOf("/");
           if (lastPathIndex == -1) {
-            LOG.error("Found unexpected solrurl, merge failed: " + baseUrl);
+            LOG.error("Found unexpected solrurl, live merge failed: " + baseUrl);
             return false;
           }
           
@@ -758,7 +758,7 @@ public class TikaIndexerTool extends Configured implements Tool {
             @Override
             public Request call() {
               Request req = new Request();
-              LOG.info("merge " + file.getPath() + " into " + mergeUrl);
+              LOG.info("Live merge " + file.getPath() + " into " + mergeUrl);
               final HttpSolrServer server = new HttpSolrServer(mergeUrl);
               try {
                 CoreAdminRequest.MergeIndexes mergeRequest = new CoreAdminRequest.MergeIndexes();
@@ -797,18 +797,18 @@ public class TikaIndexerTool extends Configured implements Tool {
             
             if (!req.success) {
               // failed
-              LOG.error("A merge command failed", req.e);
+              LOG.error("A live merge command failed", req.e);
               return false;
             }
             
           } catch (ExecutionException e) {
-            LOG.error("Error sending merge command", e);
+            LOG.error("Error sending live merge command", e);
             return false;
           }
           
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
-          LOG.error("Index merge process interrupted", e);
+          LOG.error("Live merge process interrupted", e);
           return false;
         }
       }
@@ -817,7 +817,7 @@ public class TikaIndexerTool extends Configured implements Tool {
       
       
       try {
-        LOG.info("Committing...");
+        LOG.info("Committing live merge...");
         if (options.zkHost != null) {
           CloudSolrServer server = new CloudSolrServer(options.zkHost);
           server.setDefaultCollection(options.collection);
@@ -831,9 +831,9 @@ public class TikaIndexerTool extends Configured implements Tool {
             server.shutdown();
           }
         }
-        LOG.info("Done committing");
+        LOG.info("Done committing live merge");
       } catch (Exception e) {
-        LOG.error("Error sending commits to Solr cluster", e);
+        LOG.error("Error sending commits to live Solr cluster", e);
         return false;
       }
 
@@ -842,11 +842,11 @@ public class TikaIndexerTool extends Configured implements Tool {
     } finally {
       shutdownNowAndAwaitTermination(executor);
       float secs = (System.currentTimeMillis() - start) / 1000.0f;
-      LOG.info("Merging index shards into live Solr cluster took " + secs + " secs");
+      LOG.info("Live merging of index shards into Solr cluster took " + secs + " secs");
       if (success) {
-        LOG.info("Merging completed successfully");
+        LOG.info("Live merging completed successfully");
       } else {
-        LOG.info("Merging failed");
+        LOG.info("Live merging failed");
       }
     }
     
