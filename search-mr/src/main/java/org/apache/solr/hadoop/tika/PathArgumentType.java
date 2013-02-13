@@ -146,71 +146,71 @@ public class PathArgumentType implements ArgumentType<Path> {
     return file;
   }
   
-  protected void verifyExists(ArgumentParser parser, Path file) throws ArgumentParserException, IOException {
+  private void verifyExists(ArgumentParser parser, Path file) throws ArgumentParserException, IOException {
     if (!fs.exists(file)) {
       throw new ArgumentParserException("File not found: " + file, parser);
     }
   }    
   
-  protected void verifyNotExists(ArgumentParser parser, Path file) throws ArgumentParserException, IOException {
+  private void verifyNotExists(ArgumentParser parser, Path file) throws ArgumentParserException, IOException {
     if (fs.exists(file)) {
       throw new ArgumentParserException("File found: " + file, parser);
     }
   }    
   
-  protected void verifyIsFile(ArgumentParser parser, Path file) throws ArgumentParserException, IOException {
+  private void verifyIsFile(ArgumentParser parser, Path file) throws ArgumentParserException, IOException {
     if (!fs.isFile(file)) {
       throw new ArgumentParserException("Not a file: " + file, parser);
     }
   }    
   
-  protected void verifyIsDirectory(ArgumentParser parser, Path file) throws ArgumentParserException, IOException {
+  private void verifyIsDirectory(ArgumentParser parser, Path file) throws ArgumentParserException, IOException {
     if (!fs.isDirectory(file)) {
       throw new ArgumentParserException("Not a directory: " + file, parser);
     }
   }    
   
-  protected void verifyCanRead(ArgumentParser parser, Path file) throws ArgumentParserException, IOException {
+  private void verifyCanRead(ArgumentParser parser, Path file) throws ArgumentParserException, IOException {
     verifyExists(parser, file);
     if (!fs.getFileStatus(file).getPermission().getUserAction().implies(FsAction.READ)) {
       throw new ArgumentParserException("Insufficient permissions to read file: " + file, parser);
     }
   }    
   
-  protected void verifyCanWrite(ArgumentParser parser, Path file) throws ArgumentParserException, IOException {
+  private void verifyCanWrite(ArgumentParser parser, Path file) throws ArgumentParserException, IOException {
     verifyExists(parser, file);
     if (!fs.getFileStatus(file).getPermission().getUserAction().implies(FsAction.WRITE)) {
       throw new ArgumentParserException("Insufficient permissions to write file: " + file, parser);
     }
   }    
   
-  protected void verifyCanWriteParent(ArgumentParser parser, Path file) throws ArgumentParserException, IOException {
+  private void verifyCanWriteParent(ArgumentParser parser, Path file) throws ArgumentParserException, IOException {
     Path parent = file.getParent();
     if (parent == null || !fs.exists(parent) || !fs.getFileStatus(parent).getPermission().getUserAction().implies(FsAction.WRITE)) {
       throw new ArgumentParserException("Cannot write parent of file: " + file, parser);
     }
   }    
   
-  protected void verifyCanExecute(ArgumentParser parser, Path file) throws ArgumentParserException, IOException {
+  private void verifyCanExecute(ArgumentParser parser, Path file) throws ArgumentParserException, IOException {
     verifyExists(parser, file);
     if (!fs.getFileStatus(file).getPermission().getUserAction().implies(FsAction.EXECUTE)) {
       throw new ArgumentParserException("Insufficient permissions to execute file: " + file, parser);
     }
   }    
   
-  protected void verifyIsAbsolute(ArgumentParser parser, Path file) throws ArgumentParserException {
+  private void verifyIsAbsolute(ArgumentParser parser, Path file) throws ArgumentParserException {
     if (!file.isAbsolute()) {
       throw new ArgumentParserException("Not an absolute file: " + file, parser);
     }
   }    
   
-  protected void verifyScheme(ArgumentParser parser, Path file) throws ArgumentParserException {
+  private void verifyScheme(ArgumentParser parser, Path file) throws ArgumentParserException {
     if (!verifyScheme.equals(file.toUri().getScheme())) {
       throw new ArgumentParserException("Scheme of path: " + file + " must be: " + verifyScheme, parser);
     }
   }
 
-  protected boolean isSystemIn(Path file) {
+  private boolean isSystemIn(Path file) {
     return acceptSystemIn && file.toString().equals("-");
   }
   
