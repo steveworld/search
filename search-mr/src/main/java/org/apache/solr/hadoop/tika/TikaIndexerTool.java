@@ -162,7 +162,8 @@ public class TikaIndexerTool extends Configured implements Tool {
           "of shards is already equal to the number of shards expected by the user. " +
           "\n\n" +
           "5) Go-live phase: This optional (parallel) phase merges the output shards of the previous phase into a set of " +
-          "live customer facing Solr servers, typically a SolrCloud.");
+          "live customer facing Solr servers, typically a SolrCloud. " +
+          "If this phase is omitted you can explicitly point each Solr server to one of the HDFS output shard directories.");
 
       parser.addArgument("--help", "-h")
         .help("Show this help message and exit")
@@ -218,30 +219,36 @@ public class TikaIndexerTool extends Configured implements Tool {
               "    --solrhomedir src/test/resources/solr/minimr \\\n" + 
               "    --outputdir hdfs://c2202.halxg.cloudera.com/user/whoschek/test \\\n" + 
               "    --shards 100 \\\n" + 
-              "    --inputlist -\n\n" +
-              " # merge resulting index shards into a live Solr cluster\n" +
-              " # for a SolrCloud cluster see the next example\n" +
+              "    --inputlist -\n" +
+              "\n" +
+              "  # Go live by merging resulting index shards into a live Solr cluster\n" +
+              "  # (explicitly specify Solr URLs - for a SolrCloud cluster see next example):\n" +
               "  sudo -u hdfs hadoop \\\n" + 
               "    --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
-              "    jar solr-mr-*-job.jar \\\n" +
+              "    jar target/search-mr-*-job.jar \\\n" +
               "    --files src/test/resources/tika-config.xml \\\n" + 
-              "    --solrhomedir /home/foo/solr \\\n" +
-              "    --outputdir hdfs://c2202.mycompany.com/user/foo/outdir \\\n" + 
-              "    --shards 2 \\\n" + 
-              "    --shardurl http://solrhost:7777/solr/collection1 \\\n" + 
-              "    --shardurl http://solrhost:8888/solr/collection1 \\\n" + 
+              "    --libjars myconfig.jar \\\n" + 
+              "    -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "    -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "    --solrhomedir src/test/resources/solr/minimr \\\n" + 
+              "    --outputdir hdfs://c2202.halxg.cloudera.com/user/whoschek/test \\\n" + 
+              "    --shardurl http://solr001.mycompany.com:8983/solr/collection1 \\\n" + 
+              "    --shardurl http://solr002.mycompany.com:8983/solr/collection1 \\\n" + 
               "    --golive \\\n" + 
               "    hdfs:///user/foo/indir\n" +  
               "\n" +
-              " # merge resulting index shards into a live SolrCloud cluster\n" +
-              " # and discover shards and urls through ZooKeeper\n" +
+              "  # Go live by merging resulting index shards into a live SolrCloud cluster\n" +
+              "  # (discover shards and Solr URLs through ZooKeeper):\n" +
               "  sudo -u hdfs hadoop \\\n" + 
               "    --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
-              "    jar solr-mr-*-job.jar \\\n" +
+              "    jar target/search-mr-*-job.jar \\\n" +
               "    --files src/test/resources/tika-config.xml \\\n" + 
-              "    --solrhomedir /home/foo/solr \\\n" +
-              "    --outputdir hdfs://c2202.mycompany.com/user/foo/outdir \\\n" + 
-              "    --zkhost host:2182/solr \\\n" + 
+              "    --libjars myconfig.jar \\\n" + 
+              "    -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "    -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "    --solrhomedir src/test/resources/solr/minimr \\\n" + 
+              "    --outputdir hdfs://c2202.halxg.cloudera.com/user/whoschek/test \\\n" + 
+              "    --zkhost zk01.mycompany.com:2182/solr \\\n" + 
               "    --collection collection1 \\\n" + 
               "    --golive \\\n" + 
               "    hdfs:///user/foo/indir\n"
@@ -275,73 +282,12 @@ public class TikaIndexerTool extends Configured implements Tool {
         .required(true)
         .help("HDFS directory to write Solr indexes to");
       
-      MutuallyExclusiveGroup clusterInfoGroup = parser
-          .addMutuallyExclusiveGroup("Cluster Info");
-      clusterInfoGroup
-          .description("Mutually exclusive arguments that provide information about your Solr cluster. If you are not using --golive, pass the --shards argument. "
-              + "If you are building shards for a non SolrCloud cluster, pass the --shardurl argument. If you are building shards for a SolrCloud cluster, "
-              + "pass the --zkhost argument. Using --golive requires either --shardurl or -zkhost.");
-      clusterInfoGroup.required(true);
-
-      ArgumentGroup goLiveGroup = parser.addArgumentGroup("Go Live Options");
-      goLiveGroup
-          .description("Options for deploying the shards that are built into a live cluster. Also see the Cluster Info arguments.");
-
-      Argument solrurlsArg = clusterInfoGroup.addArgument("--shardurl")
-          .metavar("URL")
-          .action(Arguments.append())
-          .type(String.class)
-          .help("Solr URL to merge resulting shard into if using --golive eg http://host.com:8983/solr/collection1. " + 
-                "Pass as many URLs as --shards specified. " +
-                "If you are merging shards into a SolrCloud cluster, use --zkhost instead");
-      
-      Argument zkServerAddressArg = clusterInfoGroup
-          .addArgument("--zkhost")
-          .metavar("STRING")
-          .help(
-              "The address of a ZooKeeper instance being used by a SolrCloud cluster. "
-                  + "This ZooKeeper instance will be examined to determine the number of output "
-                  + "shards to create as well as the Solr URLs to merge the output shards into when using the --golive option. "
-                  + "Requires that you also pass the --collection to merge the shards into."
-                  + "\n\nFormat is: a comma separated host:port pairs, each corresponding to a zk "
-                  + "server. e.g. \"127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002\" If "
-                  + "the optional chroot suffix is used the example would look "
-                  + "like: \"127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a\" "
-                  + "where the client would be rooted at \"/app/a\" and all paths"
-                  + "would be relative to this root - ie getting/setting/etc... "
-                  + "\"/foo/bar\" would result in operations being run on "
-                  + "\"/app/a/foo/bar\" (from the server perspective).");
-
-      Argument shardsArg = clusterInfoGroup.addArgument("--shards")
-        .metavar("INTEGER")
-        .type(Integer.class)
-        .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
-        .setDefault(1)
-        .help("Number of output shards to use");
-      
-      Argument goLiveArg = goLiveGroup.addArgument("--golive")
-          .action(Arguments.storeTrue())
-          .help("Allows you to optionally merge the final index shards into a live Solr cluster after they are built. " +
-                " You can pass the ZooKeeper address with --zkhost and the relevant cluster information will be auto detected. " +
-                "If you are not using a SolrCloud cluster, --shardurl arguments can be used to specify each SolrCore to merge each shard into.");
-
-      Argument collectionArg = goLiveGroup.addArgument("--collection")
-          .metavar("STRING")
-          .help("The SolrCloud collection to merge shards into when using --golive and --zkhost");
-      
-      Argument golivethreadsArg = goLiveGroup.addArgument("--golivethreads")
-          .metavar("INTEGER")
-          .type(Integer.class)
-          .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
-          .setDefault(400)
-          .help("Number of merges to run at one time");
-      
       Argument solrHomeDirArg = parser.addArgument("--solrhomedir")
-        .metavar("DIR")
-        .type(new ArgumentTypes.FileArgumentType().verifyIsDirectory().verifyCanRead())
-        .required(true)
-        .help("Local dir containing Solr conf/ and lib/");
-  
+          .metavar("DIR")
+          .type(new ArgumentTypes.FileArgumentType().verifyIsDirectory().verifyCanRead())
+          .required(true)
+          .help("Local dir containing Solr conf/ and lib/");
+    
       Argument mappersArg = parser.addArgument("--mappers")
         .metavar("INTEGER")
         .type(Integer.class)
@@ -362,7 +308,7 @@ public class TikaIndexerTool extends Configured implements Tool {
             "and tiered lucene merges to the clustered case. The subsequent mapper-only phase " +
             "merges the output of said large number of reducers to the number of shards expected by the user, " +
             "again by utilizing more available parallelism on the cluster.");
-      
+        
       Argument fanoutArg = parser.addArgument("--fanout")
         .metavar("INTEGER")
         .type(Integer.class)
@@ -397,7 +343,67 @@ public class TikaIndexerTool extends Configured implements Tool {
       Argument noRandomizeArg = parser.addArgument("--norandomize")
         .action(Arguments.storeTrue())
         .help(FeatureControl.SUPPRESS);
-  
+    
+      MutuallyExclusiveGroup clusterInfoGroup = parser.addMutuallyExclusiveGroup("Cluster arguments")
+        .required(true)
+        .description("Mutually exclusive arguments that provide information about your Solr cluster. " +
+        		"If you are not using --golive, pass the --shards argument. If you are building shards for " +
+        		"a non SolrCloud cluster, pass the --shardurl argument one or more times. If you are building " +
+        		"shards for a SolrCloud cluster, pass the --zkhost argument. " +
+        		"Using --golive requires either --shardurl or --zkhost.");
+
+      Argument solrurlsArg = clusterInfoGroup.addArgument("--shardurl")
+        .metavar("URL")
+        .action(Arguments.append())
+        .type(String.class)
+        .help("Solr URL to merge resulting shard into if using --golive. " +
+        		  "Example: http://solr001.mycompany.com:8983/solr/collection1. " + 
+              "Multiple --shardurl arguments can be specified, one for each desired shard. " +
+              "If you are merging shards into a SolrCloud cluster, use --zkhost instead");
+      
+      Argument zkServerAddressArg = clusterInfoGroup
+        .addArgument("--zkhost")
+        .metavar("STRING")
+        .help("The address of a ZooKeeper instance being used by a SolrCloud cluster. "
+                + "This ZooKeeper instance will be examined to determine the number of output "
+                + "shards to create as well as the Solr URLs to merge the output shards into when using the --golive option. "
+                + "Requires that you also pass the --collection to merge the shards into."
+                + "\n\nFormat is: a comma separated host:port pairs, each corresponding to a zk "
+                + "server. e.g. \"127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002\" If "
+                + "the optional chroot suffix is used the example would look "
+                + "like: \"127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a\" "
+                + "where the client would be rooted at \"/app/a\" and all paths"
+                + "would be relative to this root - ie getting/setting/etc... "
+                + "\"/foo/bar\" would result in operations being run on "
+                + "\"/app/a/foo/bar\" (from the server perspective).");
+
+      Argument shardsArg = clusterInfoGroup.addArgument("--shards")
+        .metavar("INTEGER")
+        .type(Integer.class)
+        .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
+        .help("Number of output shards to use");
+      
+      ArgumentGroup goLiveGroup = parser.addArgumentGroup("Go live arguments")
+        .description("Arguments for merging the shards that are built into a live Solr cluster. Also see the Cluster arguments.");
+
+      Argument goLiveArg = goLiveGroup.addArgument("--golive")
+        .action(Arguments.storeTrue())
+        .help("Allows you to optionally merge the final index shards into a live Solr cluster after they are built. " +
+              "You can pass the ZooKeeper address with --zkhost and the relevant cluster information will be auto detected. " +
+              "If you are not using a SolrCloud cluster, --shardurl arguments can be used to specify each SolrCore to merge " +
+              "each shard into.");
+
+      Argument collectionArg = goLiveGroup.addArgument("--collection")
+        .metavar("STRING")
+        .help("The SolrCloud collection to merge shards into when using --golive and --zkhost");
+      
+      Argument golivethreadsArg = goLiveGroup.addArgument("--golivethreads")
+        .metavar("INTEGER")
+        .type(Integer.class)
+        .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
+        .setDefault(1000)
+        .help("Maximum number of live merges to run in parallel at one time");
+      
       // trailing positional arguments
       Argument inputFilesArg = parser.addArgument("inputfiles")
         .metavar("HDFS_URI")
