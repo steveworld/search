@@ -61,7 +61,7 @@ import com.carrotsearch.randomizedtesting.annotations.ThreadLeakZombies.Conseque
 @ThreadLeakZombies(Consequence.CONTINUE)
 @ThreadLeakScope(Scope.NONE)
 @SuppressCodecs({"Lucene3x", "Lucene40"})
-public class TikaMRMiniMRMergeTest extends AbstractFullDistribZkTestBase {
+public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
   private static final String RESOURCES_DIR = "target/test-classes";
   private static final String DOCUMENTS_DIR = RESOURCES_DIR + "/test-documents";
   private static final File MINIMR_CONF_DIR = new File(RESOURCES_DIR
@@ -84,7 +84,7 @@ public class TikaMRMiniMRMergeTest extends AbstractFullDistribZkTestBase {
     return MINIMR_CONF_DIR.getAbsolutePath();
   }
   
-  public TikaMRMiniMRMergeTest() {
+  public GoLiveMiniMRTest() {
     this.inputAvroFile1 = "sample-statuses-20120521-100919.avro";
     this.inputAvroFile2 = "sample-statuses-20120906-141433.avro";
     this.inputAvroFile3 = "sample-statuses-20120906-141433-medium.avro";
