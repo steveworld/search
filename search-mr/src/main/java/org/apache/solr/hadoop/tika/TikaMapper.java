@@ -188,6 +188,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
 
   @Override
   protected void cleanup(Context context) throws IOException, InterruptedException {
+    heartBeater.close();
     super.cleanup(context);
     indexer.commitTransaction();
     indexer.stop();

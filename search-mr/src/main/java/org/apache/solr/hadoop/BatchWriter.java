@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Enables adding batches of documents to an EmbeddedSolrServer.
  */
-public class BatchWriter {
+class BatchWriter {
   
   private final EmbeddedSolrServer solr;
   private volatile Exception batchWriteException = null;

@@ -16,6 +16,7 @@
  */
 package org.apache.solr.hadoop;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
@@ -44,6 +45,7 @@ import org.slf4j.LoggerFactory;
  * 
  */
 public class HeartBeater extends Thread {
+  
   public static Logger LOG = LoggerFactory.getLogger(HeartBeater.class);
 
   /**
@@ -51,19 +53,17 @@ public class HeartBeater extends Thread {
    * be an atomic long but then missmatches in need/cancel could result in
    * negative counts.
    */
-  volatile int threadsNeedingHeartBeat = 0;
+  private volatile int threadsNeedingHeartBeat = 0;
 
-  Progressable progress;
+  private Progressable progress;
 
   /**
    * The amount of time to wait between checks for the need to issue a heart
    * beat. In milliseconds.
    */
-  long waitTimeMs = TimeUnit.MILLISECONDS.convert(60, TimeUnit.SECONDS);
-
-  public Progressable getProgress() {
-    return progress;
-  }
+  private final long waitTimeMs = TimeUnit.MILLISECONDS.convert(60, TimeUnit.SECONDS);
+  
+  private final CountDownLatch isClosing = new CountDownLatch(1);
 
   /**
    * Create the heart beat object thread set it to daemon priority and start the
@@ -75,6 +75,10 @@ public class HeartBeater extends Thread {
     this.progress = progress;
     LOG.info("Heart beat reporting class is " + progress.getClass().getName());
     start();
+  }
+
+  public Progressable getProgress() {
+    return progress;
   }
 
   public void setProgress(Progressable progress) {
@@ -99,7 +103,9 @@ public class HeartBeater extends Thread {
                   threadsNeedingHeartBeat));
             }
           }
-          this.wait(waitTimeMs);
+        }
+        if (isClosing.await(waitTimeMs, TimeUnit.MILLISECONDS)) {
+          return;
         }
       } catch (Throwable e) {
         LOG.error("HeartBeat throwable", e);
@@ -142,5 +148,10 @@ public class HeartBeater extends Thread {
     if (progress instanceof TaskInputOutputContext) {
       ((TaskInputOutputContext<?,?,?,?>) progress).setStatus(status);
     }
+  }
+  
+  /** Releases any resources */
+  public void close() {
+    isClosing.countDown();
   }
 }

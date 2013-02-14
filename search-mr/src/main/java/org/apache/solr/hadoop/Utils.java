@@ -16,26 +16,8 @@
  */
 package org.apache.solr.hadoop;
 
-import java.util.Random;
-
-import org.apache.hadoop.mapreduce.Mapper.Context;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public final class Utils {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
-
-  public static Random createRandom(Context context) {
-    long taskId = 0;
-    if (context.getTaskAttemptID() != null) { // MRUnit returns null
-      LOGGER.debug("context.getTaskAttemptID().getId(): {}", context.getTaskAttemptID().getId());
-      LOGGER.debug("context.getTaskAttemptID().getTaskID().getId(): {}", context.getTaskAttemptID().getTaskID().getId());
-      taskId = context.getTaskAttemptID().getTaskID().getId(); // taskId = 0, 1, ..., N
-    }
-    // create a good random seed, yet ensure deterministic PRNG sequence for easy reproducability
-    return new Random(421439783L * (taskId + 1));
-  }
 
   public static String getShortClassName(Class clazz) {
     int i = clazz.getName().lastIndexOf('.'); // regular class
