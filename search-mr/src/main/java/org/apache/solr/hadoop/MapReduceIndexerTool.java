@@ -126,7 +126,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       }
       
       ArgumentParser parser = ArgumentParsers
-        .newArgumentParser("hadoop [GenericOptions]... jar search-mr-*-job.jar ", false)
+        .newArgumentParser("hadoop [GenericOptions]... jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName(), false)
         .defaultHelp(true)
         .description(
           "MapReduce batch job driver that creates a set of Solr index shards from a list of input files " +
