@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -14,21 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.solr.hadoop.tika;
+package org.apache.solr.hadoop;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.io.IOException;
 
-import org.apache.commons.lang.SystemUtils;
-import org.junit.Test;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/** Print some info about the environment in which the unit tests are running */
-public class PrintEnvironmentTest {
+public class IdentityMapper extends Mapper<LongWritable, Text, Text, NullWritable> {
 
-  @Test
-  public void testEnvironment() throws UnknownHostException {
-    System.out.println("Running test suite with java version: " + SystemUtils.JAVA_VERSION + " "
-        + SystemUtils.JAVA_VM_NAME + " on " + SystemUtils.OS_NAME + " " + SystemUtils.OS_VERSION + "/"
-        + SystemUtils.OS_ARCH + " on host: " + InetAddress.getLocalHost().getHostName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(IdentityMapper.class);
+
+  @Override
+  protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+    LOGGER.info("map key: {}, value: {}", key, value);
+    context.write(value, NullWritable.get());
   }
 }

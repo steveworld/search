@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.solr.hadoop.tika;
+package org.apache.solr.hadoop;
 
 import java.io.File;
 import java.util.List;
@@ -26,6 +26,7 @@ import org.apache.hadoop.mrunit.mapreduce.MapDriver;
 import org.apache.hadoop.mrunit.types.Pair;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
+import org.apache.solr.hadoop.tika.TikaMapper;
 import org.junit.Test;
 
 public class TikaMapperTest extends MRUnitBase {

@@ -193,9 +193,11 @@
             <descriptor>src/main/assembly/hadoop-job.xml</descriptor>
           </descriptors>
           <archive>
+            <!--
             <manifest>
-              <mainClass>org.apache.solr.hadoop.tika.TikaIndexerTool</mainClass>
+              <mainClass>org.apache.solr.hadoop.MapReduceIndexerTool</mainClass>
             </manifest>
+            -->
           </archive>
         </configuration>
         <executions>

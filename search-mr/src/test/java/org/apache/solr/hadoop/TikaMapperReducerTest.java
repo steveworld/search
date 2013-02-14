@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.solr.hadoop.tika;
+package org.apache.solr.hadoop;
 
 import static org.junit.Assert.assertEquals;
 
@@ -30,8 +30,9 @@ import org.apache.hadoop.mrunit.mapreduce.MapReduceDriver;
 import org.apache.solr.hadoop.SolrCounters;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrOutputFormat;
-import org.apache.solr.hadoop.tika.TikaReducerTest.MySolrReducer;
-import org.apache.solr.hadoop.tika.TikaReducerTest.NullInputFormat;
+import org.apache.solr.hadoop.TikaReducerTest.MySolrReducer;
+import org.apache.solr.hadoop.TikaReducerTest.NullInputFormat;
+import org.apache.solr.hadoop.tika.TikaMapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;

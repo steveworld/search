@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.solr.hadoop.tika;
+package org.apache.solr.hadoop;
 
 import java.util.ArrayList;
 import java.util.Collection;

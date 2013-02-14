@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.solr.hadoop.tika;
+package org.apache.solr.hadoop;
 
 import java.io.File;
 import java.io.OutputStream;
@@ -39,6 +39,7 @@ import org.apache.hadoop.util.JarFinder;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.solr.hadoop.SolrCounters;
 import org.apache.solr.hadoop.SolrRecordWriter;
+import org.apache.solr.hadoop.MapReduceIndexerTool;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -57,7 +58,7 @@ public class BasicMiniMRTest extends Assert {
   private static final File MINIMR_CONF_DIR = new File(RESOURCES_DIR + "/solr/minimr");
   private static final String TIKA_CONFIG_FILE_NAME = "tika-config.xml";
   
-  private static final String SEARCH_ARCHIVES_JAR = JarFinder.getJar(TikaIndexerTool.class);
+  private static final String SEARCH_ARCHIVES_JAR = JarFinder.getJar(MapReduceIndexerTool.class);
 
   private static MiniDFSCluster dfsCluster = null;
   private static MiniMRCluster mrCluster = null;
@@ -196,7 +197,7 @@ public class BasicMiniMRTest extends Assert {
     if (numRuns % 3 == 2) {
       args = concat(args, new String[] {"--fanout=2"});
     }
-    TikaIndexerTool tool = new TikaIndexerTool();
+    MapReduceIndexerTool tool = new MapReduceIndexerTool();
     int res = ToolRunner.run(jobConf, tool, args);
     assertEquals(0, res);
     Job job = tool.job;
@@ -212,7 +213,7 @@ public class BasicMiniMRTest extends Assert {
     }
     
     // Check the output is as expected
-    outDir = new Path(outDir, TikaIndexerTool.RESULTS_DIR);
+    outDir = new Path(outDir, MapReduceIndexerTool.RESULTS_DIR);
     Path[] outputFiles = FileUtil.stat2Paths(fs.listStatus(outDir));
 
     System.out.println("outputfiles:" + Arrays.toString(outputFiles));

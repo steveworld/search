@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.solr.hadoop.tika;
+package org.apache.solr.hadoop;
 
 
 import java.io.BufferedInputStream;
@@ -81,14 +81,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.CloudSolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
-import org.apache.solr.hadoop.LineRandomizerMapper;
-import org.apache.solr.hadoop.LineRandomizerReducer;
-import org.apache.solr.hadoop.SolrInputDocumentWritable;
-import org.apache.solr.hadoop.SolrOutputFormat;
-import org.apache.solr.hadoop.SolrReducer;
-import org.apache.solr.hadoop.TreeMergeMapper;
-import org.apache.solr.hadoop.TreeMergeOutputFormat;
-import org.apache.solr.hadoop.Utils;
+import org.apache.solr.hadoop.tika.TikaMapper;
 import org.apache.solr.tika.TikaIndexer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,7 +92,7 @@ import org.slf4j.LoggerFactory;
  * shards from a list of input files and writes the indexes into HDFS, in a
  * flexible, scalable and fault-tolerant manner.
  */
-public class TikaIndexerTool extends Configured implements Tool {
+public class MapReduceIndexerTool extends Configured implements Tool {
   
   Job job; // visible for testing only
   
@@ -108,7 +101,7 @@ public class TikaIndexerTool extends Configured implements Tool {
   /** A list of input file URLs. Used as input to the Mapper */
   private static final String FULL_INPUT_LIST = "full-input-list.txt";
 
-  private static final Logger LOG = LoggerFactory.getLogger(TikaIndexerTool.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MapReduceIndexerTool.class);
 
   
   /**
@@ -184,7 +177,7 @@ public class TikaIndexerTool extends Configured implements Tool {
               "  # (Re)index an Avro based Twitter tweet file:\n" +
               "  sudo -u hdfs hadoop \\\n" + 
               "    --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
-              "    jar search-mr-*-job.jar \\\n" +
+              "    jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
               "    --files src/test/resources/tika-config.xml \\\n" + 
               "    --libjars myconfig.jar \\\n" + 
               "    -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
@@ -200,7 +193,7 @@ public class TikaIndexerTool extends Configured implements Tool {
               "  # 3) file was last modified less than 100000 minutes ago\n" +
               "  # 4) file size is between 1 MB and 1 GB\n" +
               "  # Also include extra library jar file containing JSON tweet Java parser:\n" +
-              "  hadoop jar target/search-mr-*-job.jar org.apache.solr.hadoop.tika.HdfsFindTool \\\n" + 
+              "  hadoop jar target/search-mr-*-job.jar " + HdfsFindTool.class.getName() + " \\\n" + 
               "    -find hdfs:///user/whoschek/solrloadtest/twitter/tweets \\\n" + 
               "    -type f \\\n" + 
               "    -name 'sample-statuses*.gz' \\\n" + 
@@ -209,7 +202,7 @@ public class TikaIndexerTool extends Configured implements Tool {
               "    -size +1000000c \\\n" + 
               "  | sudo -u hdfs hadoop \\\n" + 
               "    --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" + 
-              "    jar target/search-mr-*-job.jar \\\n" + 
+              "    jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
               "    --files src/test/resources/tika-config.xml \\\n" + 
               "    --libjars myconfig.jar,../search-contrib/target/search-contrib-*-SNAPSHOT.jar \\\n" + 
               "    -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
@@ -223,7 +216,7 @@ public class TikaIndexerTool extends Configured implements Tool {
               "  # (explicitly specify Solr URLs - for a SolrCloud cluster see next example):\n" +
               "  sudo -u hdfs hadoop \\\n" + 
               "    --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
-              "    jar target/search-mr-*-job.jar \\\n" +
+              "    jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
               "    --files src/test/resources/tika-config.xml \\\n" + 
               "    --libjars myconfig.jar \\\n" + 
               "    -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
@@ -239,7 +232,7 @@ public class TikaIndexerTool extends Configured implements Tool {
               "  # (discover shards and Solr URLs through ZooKeeper):\n" +
               "  sudo -u hdfs hadoop \\\n" + 
               "    --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
-              "    jar target/search-mr-*-job.jar \\\n" +
+              "    jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
               "    --files src/test/resources/tika-config.xml \\\n" + 
               "    --libjars myconfig.jar \\\n" + 
               "    -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
@@ -488,11 +481,11 @@ public class TikaIndexerTool extends Configured implements Tool {
   
   /** API for command line clients */
   public static void main(String[] args) throws Exception  {
-    int res = ToolRunner.run(new Configuration(), new TikaIndexerTool(), args);
+    int res = ToolRunner.run(new Configuration(), new MapReduceIndexerTool(), args);
     System.exit(res);
   }
 
-  public TikaIndexerTool() {}
+  public MapReduceIndexerTool() {}
 
   @Override
   public int run(String[] args) throws Exception {
