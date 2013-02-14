@@ -152,7 +152,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
         indexer.process(new StreamEvent(in, headers));
         context.getCounter(TikaCounters.class.getName(), TikaCounters.FILES_READ.toString()).increment(1);
         context.getCounter(TikaCounters.class.getName(), TikaCounters.FILE_BYTES_READ.toString()).increment(fileLength);
-      } catch (SolrServerException e) {
+      } catch (Exception e) {
         context.getCounter(getClass().getName() + ".errors", e.getClass().getName()).increment(1);
         LOG.error("Unable to process file " + path, e);
       } finally {
