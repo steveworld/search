@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.solr.hadoop.tika;
+package org.apache.solr.hadoop;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -27,6 +27,7 @@ import java.util.Collections;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.solr.hadoop.MapReduceIndexerTool;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -34,12 +35,12 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TikaIndexerToolArgumentParserTest extends Assert {
-  private static final Logger LOG = LoggerFactory.getLogger(TikaIndexerToolArgumentParserTest.class);
+public class MapReduceIndexerToolArgumentParserTest extends Assert {
+  private static final Logger LOG = LoggerFactory.getLogger(MapReduceIndexerToolArgumentParserTest.class);
   
   private FileSystem fs; 
-  private TikaIndexerTool.MyArgumentParser parser;
-  private TikaIndexerTool.Options opts;
+  private MapReduceIndexerTool.MyArgumentParser parser;
+  private MapReduceIndexerTool.Options opts;
   private PrintStream oldSystemOut;
   private PrintStream oldSystemErr;
   private ByteArrayOutputStream bout;
@@ -48,8 +49,8 @@ public class TikaIndexerToolArgumentParserTest extends Assert {
   @Before
   public void setUp() throws IOException {
     fs = FileSystem.get(new Configuration());
-    parser = new TikaIndexerTool.MyArgumentParser();
-    opts = new TikaIndexerTool.Options();
+    parser = new MapReduceIndexerTool.MyArgumentParser();
+    opts = new MapReduceIndexerTool.Options();
     oldSystemOut = System.out;
     bout = new ByteArrayOutputStream();
     System.setOut(new PrintStream(bout, true, "UTF-8"));

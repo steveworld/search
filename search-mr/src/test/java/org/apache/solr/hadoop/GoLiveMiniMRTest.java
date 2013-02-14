@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.solr.hadoop.tika;
+package org.apache.solr.hadoop;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,6 +41,7 @@ import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.cloud.AbstractFullDistribZkTestBase;
 import org.apache.solr.common.cloud.SolrZkClient;
+import org.apache.solr.hadoop.MapReduceIndexerTool;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -68,7 +69,7 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
       + "/solr/minimr");
   
   private static final String SEARCH_ARCHIVES_JAR = JarFinder
-      .getJar(TikaIndexerTool.class);
+      .getJar(MapReduceIndexerTool.class);
   
   private static MiniDFSCluster dfsCluster = null;
   private static MiniMRCluster mrCluster = null;
@@ -232,7 +233,7 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
         "--verbose",
         "--golive"};
     
-    TikaIndexerTool tool = new TikaIndexerTool();
+    MapReduceIndexerTool tool = new MapReduceIndexerTool();
     int res = ToolRunner.run(jobConf, tool, args);
     assertEquals(0, res);
     Job job = tool.job;

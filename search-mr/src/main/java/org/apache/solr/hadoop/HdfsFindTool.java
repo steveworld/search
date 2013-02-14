@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.solr.hadoop.tika;
+package org.apache.solr.hadoop;
 
 import org.apache.hadoop.fs.FsShell;
 import org.apache.hadoop.fs.shell.CommandFactory;
