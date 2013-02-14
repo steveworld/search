@@ -1004,7 +1004,6 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       throw new ArgumentParserException("--zkhost requires that you also pass --collection", parser);
     }
     
-    // verify zk 
     if (opts.zkHost != null) {
       assert opts.collection != null;
       ZooKeeperInspector zki = new ZooKeeperInspector();
@@ -1018,18 +1017,25 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         throw new ArgumentParserException("--zkhost requires ZooKeeper " + opts.zkHost
             + " to contain at least one SolrCore for collection: " + opts.collection, parser);
       }
-    } else if (opts.shardUrls != null && opts.shardUrls.size() == 0) {
-      throw new ArgumentParserException("--shardurl requires at least one URL", parser);
+    } else if (opts.shardUrls != null) {
+      if (opts.shardUrls.size() == 0) {
+        throw new ArgumentParserException("--shardurl requires at least one URL", parser);
+      }
+    } else if (opts.shards != null) {
+      if (opts.shards <= 0) {
+        throw new ArgumentParserException("--shards must be a positive number: " + opts.shards, parser);
+      }
+    } else {
+      throw new ArgumentParserException("You must specify one of the following (mutually exclusive) arguments: " +
+      		"--zkhost or --shardurl or --shards", parser);
     }
-    
+
     if (opts.shardUrls != null) {
       opts.shards = opts.shardUrls.size();
     }
     
     assert opts.shards != null;
-    if (opts.shards <= 0) {
-      throw new ArgumentParserException("--shards must be a positive number: " + opts.shards, parser);
-    }
+    assert opts.shards > 0;
   }
   
   private boolean waitForCompletion(Job job, boolean isVerbose) throws IOException, InterruptedException, ClassNotFoundException {

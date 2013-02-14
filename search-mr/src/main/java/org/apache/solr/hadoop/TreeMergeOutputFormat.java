@@ -160,6 +160,7 @@ public class TreeMergeOutputFormat extends FileOutputFormat<Text, NullWritable> 
         context.setStatus("Done");
       } finally {
         heartBeater.cancelHeartBeat();
+        heartBeater.close();
       }
     }    
   }

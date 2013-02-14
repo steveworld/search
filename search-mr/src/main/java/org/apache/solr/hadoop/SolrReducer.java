@@ -40,4 +40,9 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
     }
   }
     
+  @Override
+  protected void cleanup(Context context) throws IOException, InterruptedException {
+    heartBeater.close();
+    super.cleanup(context);
+  }
 }

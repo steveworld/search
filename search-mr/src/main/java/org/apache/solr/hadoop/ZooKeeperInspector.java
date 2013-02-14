@@ -28,7 +28,7 @@ import org.apache.solr.common.cloud.SolrZkClient;
 import org.apache.solr.common.cloud.ZkCoreNodeProps;
 import org.apache.solr.common.cloud.ZkStateReader;
 
-public class ZooKeeperInspector {
+class ZooKeeperInspector {
   
   public List<String> extractShardUrlsFromZk(String zkHost, String collection) {
     if (collection == null) { 

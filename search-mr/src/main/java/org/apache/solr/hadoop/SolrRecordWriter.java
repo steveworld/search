@@ -68,7 +68,7 @@ import org.slf4j.LoggerFactory;
  * {@link SolrDocumentConverter}.
  * </ul>
  */
-public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
+class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
   
   private static final Logger LOG = LoggerFactory.getLogger(SolrRecordWriter.class);
 
@@ -323,6 +323,7 @@ public class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
       throw new IOException(e);
     } finally {
       heartBeater.cancelHeartBeat();
+      heartBeater.close();
 //      File tempFile = new File(temp.toString());
 //      if (tempFile.exists()) {
 //        FileUtils.forceDelete(new File(temp.toString()));
