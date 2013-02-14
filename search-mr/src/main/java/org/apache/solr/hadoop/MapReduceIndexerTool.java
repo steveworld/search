@@ -645,7 +645,22 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     }
     assert reducers == options.shards;
     
-    // publish results dir
+    // normalize output shard dir prefix, i.e.
+    // rename part-r-00000 to part-00000 (stems from zero tree merge iterations)
+    // rename part-m-00000 to part-00000 (stems from > 0 tree merge iterations)
+    for (FileStatus stats : fs.listStatus(outputReduceDir)) {
+      String dirPrefix = SolrOutputFormat.getOutputName(job);
+      Path srcPath = stats.getPath();
+      if (fs.isDirectory(srcPath) && srcPath.getName().startsWith(dirPrefix)) {
+        String dstName = dirPrefix + srcPath.getName().substring(dirPrefix.length() + "-m".length(), srcPath.getName().length());
+        Path dstPath = new Path(srcPath.getParent(), dstName);
+        if (!rename(srcPath, dstPath, fs)) {
+          return -1;
+        }        
+      }
+    };    
+    
+    // publish results dir    
     if (!rename(outputReduceDir, outputResultsDir, fs)) {
       return -1;
     }
