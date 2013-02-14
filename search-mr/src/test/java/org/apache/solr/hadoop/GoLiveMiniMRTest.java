@@ -35,26 +35,25 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.hadoop.util.JarFinder;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.lucene.util.LuceneTestCase.SuppressCodecs;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.embedded.JettySolrRunner;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.cloud.AbstractFullDistribZkTestBase;
 import org.apache.solr.common.cloud.SolrZkClient;
-import org.apache.solr.hadoop.MapReduceIndexerTool;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.apache.lucene.util.LuceneTestCase.SuppressCodecs;
 
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakAction;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakAction.Action;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
-import com.carrotsearch.randomizedtesting.annotations.ThreadLeakZombies;
-import com.carrotsearch.randomizedtesting.annotations.ThreadLeakAction.Action;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope.Scope;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakZombies;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakZombies.Consequence;
 
 @ThreadLeakAction({Action.WARN})
@@ -63,6 +62,7 @@ import com.carrotsearch.randomizedtesting.annotations.ThreadLeakZombies.Conseque
 @ThreadLeakScope(Scope.NONE)
 @SuppressCodecs({"Lucene3x", "Lucene40"})
 public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
+  
   private static final String RESOURCES_DIR = "target/test-classes";
   private static final String DOCUMENTS_DIR = RESOURCES_DIR + "/test-documents";
   private static final File MINIMR_CONF_DIR = new File(RESOURCES_DIR
@@ -74,7 +74,6 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
   private static MiniDFSCluster dfsCluster = null;
   private static MiniMRCluster mrCluster = null;
   private static int numRuns = 0;
-  private static boolean isMR1 = true;
  
   private final String inputAvroFile1;
   private final String inputAvroFile2;
@@ -96,19 +95,20 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     shardCount = 3;
   }
   
+  private static boolean isYarn() {
+    try {
+      Job.class.getMethod("getCluster");
+      return true;
+    } catch (NoSuchMethodException e) {
+      return false;
+    }    
+  }
+  
   @BeforeClass
   public static void setupClass() throws Exception {
-    // this test currently hangs/crashes with yarn 
-    try {
-      Class.forName("org.apache.hadoop.mapred.JobTracker");
-    } catch (Exception e) {
-      isMR1 = false;
-    }
-    
-    if (!isMR1) {
-      return;
-    }
- 
+//    if (isYarn()) {
+//      org.junit.Assume.assumeTrue(false); // ignore test on Yarn until CDH-10420 is fixed
+//    }
     if (System.getProperty("hadoop.log.dir") == null) {
       System.setProperty("hadoop.log.dir", "target");
     }
@@ -149,7 +149,6 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
   @Override
   @Before
   public void setUp() throws Exception {
-    assumeTrue("This test cannot currently run under yarn", isMR1);
     super.setUp();
     System.setProperty("host", "127.0.0.1");
     System.setProperty("numShards", Integer.toString(sliceCount));
@@ -160,9 +159,6 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
   @Override
   @After
   public void tearDown() throws Exception {
-    if (!isMR1) {
-      return;
-    }
     super.tearDown();
     System.clearProperty("host");
     System.clearProperty("numShards");
@@ -171,10 +167,6 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
   
   @AfterClass
   public static void teardownClass() throws Exception {
-    if (!isMR1) {
-      return;
-    }
-    
     if (mrCluster != null) {
       mrCluster.shutdown();
       mrCluster = null;
