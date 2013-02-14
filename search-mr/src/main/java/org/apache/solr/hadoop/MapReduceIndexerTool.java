@@ -32,19 +32,8 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
@@ -77,10 +66,6 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.CloudSolrServer;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
-import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.hadoop.tika.TikaMapper;
 import org.apache.solr.tika.TikaIndexer;
 import org.slf4j.Logger;
@@ -665,7 +650,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       return -1;
     }
 
-    if (options.goLive && !goLive(options, fs, outputResultsDir)) {
+    if (options.goLive && !new GoLive().goLive(options, SolrOutputFormat.getOutputName(job) + "-", fs, outputResultsDir)) {
       return -1;
     }
     
@@ -715,145 +700,6 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     options.reducers = reducers;
   }
   
-  // TODO: handle clusters with replicas
-  private boolean goLive(Options options, FileSystem fs,
-      Path outputResultsDir) throws FileNotFoundException, IOException {
-    LOG.info("Live merging of output shards into Solr cluster...");
-    boolean success = false;
-    long start = System.currentTimeMillis();
-    int concurrentMerges = options.golivethreads;
-    ThreadPoolExecutor executor = new ThreadPoolExecutor(concurrentMerges,
-        concurrentMerges, 1, TimeUnit.SECONDS,
-        new LinkedBlockingQueue<Runnable>());
-    try {
-      CompletionService<Request> completionService = new ExecutorCompletionService<Request>(
-          executor);
-      Set<Future<Request>> pending = new HashSet<Future<Request>>();
-      
-      FileStatus[] outDirs = fs.listStatus(outputResultsDir);
-      int cnt = -1;
-      for (final FileStatus file : outDirs) {
-        
-        LOG.debug("processing:" + file.getPath());
-
-        if (file.getPath().getName().startsWith(SolrOutputFormat.getOutputName(job) + "-") && file.isDirectory()) {
-          cnt++;
-          String url = options.shardUrls.get(cnt);
-          
-          String baseUrl = url;
-          if (baseUrl.endsWith("/")) {
-            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
-          }
-          
-          int lastPathIndex = baseUrl.lastIndexOf("/");
-          if (lastPathIndex == -1) {
-            LOG.error("Found unexpected solrurl, live merge failed: " + baseUrl);
-            return false;
-          }
-          
-          final String name = baseUrl.substring(lastPathIndex + 1);
-          baseUrl = baseUrl.substring(0, lastPathIndex);
-          final String mergeUrl = baseUrl;
-
-          Callable<Request> task = new Callable<Request>() {
-            @Override
-            public Request call() {
-              Request req = new Request();
-              LOG.info("Live merge " + file.getPath() + " into " + mergeUrl);
-              final HttpSolrServer server = new HttpSolrServer(mergeUrl);
-              try {
-                CoreAdminRequest.MergeIndexes mergeRequest = new CoreAdminRequest.MergeIndexes();
-                mergeRequest.setCoreName(name);
-                mergeRequest.setIndexDirs(Arrays.asList(new String[] {file.getPath()
-                    .toString().substring("hdfs:/".length())
-                    + "/data/index"}));
-                try {
-                  mergeRequest.process(server);
-                  req.success = true;
-                } catch (SolrServerException e) {
-                  req.e = e;
-                  return req;
-                } catch (IOException e) {
-                  req.e = e;
-                  return req;
-                }
-              } finally {
-                server.shutdown();
-              }
-              return req;
-            }
-          };
-          pending.add(completionService.submit(task));
-        }
-      }
-      
-      while (pending != null && pending.size() > 0) {
-        try {
-          Future<Request> future = completionService.take();
-          if (future == null) break;
-          pending.remove(future);
-          
-          try {
-            Request req = future.get();
-            
-            if (!req.success) {
-              // failed
-              LOG.error("A live merge command failed", req.e);
-              return false;
-            }
-            
-          } catch (ExecutionException e) {
-            LOG.error("Error sending live merge command", e);
-            return false;
-          }
-          
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          LOG.error("Live merge process interrupted", e);
-          return false;
-        }
-      }
-      
-      cnt = -1;
-      
-      
-      try {
-        LOG.info("Committing live merge...");
-        if (options.zkHost != null) {
-          CloudSolrServer server = new CloudSolrServer(options.zkHost);
-          server.setDefaultCollection(options.collection);
-          server.commit();
-          server.shutdown();
-        } else {
-          for (String url : options.shardUrls) {
-            // TODO: we should do these concurrently
-            HttpSolrServer server = new HttpSolrServer(url);
-            server.commit();
-            server.shutdown();
-          }
-        }
-        LOG.info("Done committing live merge");
-      } catch (Exception e) {
-        LOG.error("Error sending commits to live Solr cluster", e);
-        return false;
-      }
-
-      success = true;
-      return true;
-    } finally {
-      shutdownNowAndAwaitTermination(executor);
-      float secs = (System.currentTimeMillis() - start) / 1000.0f;
-      LOG.info("Live merging of index shards into Solr cluster took " + secs + " secs");
-      if (success) {
-        LOG.info("Live merging completed successfully");
-      } else {
-        LOG.info("Live merging failed");
-      }
-    }
-    
-    // if an output dir does not exist, we should fail and do no merge?
-  }
-
   /**
    * To uniformly spread load across all mappers we randomize fullInputList
    * with a separate small Mapper & Reducer preprocessing step. This way
@@ -1089,28 +935,4 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     return Math.log(value) / Math.log(base);
   }
   
-  private void shutdownNowAndAwaitTermination(ExecutorService pool) {
-    pool.shutdown(); // Disable new tasks from being submitted
-    pool.shutdownNow(); // Cancel currently executing tasks
-    boolean shutdown = false;
-    while (!shutdown) {
-      try {
-        // Wait a while for existing tasks to terminate
-        shutdown = pool.awaitTermination(5, TimeUnit.SECONDS);
-      } catch (InterruptedException ie) {
-        // Preserve interrupt status
-        Thread.currentThread().interrupt();
-      }
-      if (!shutdown) {
-        pool.shutdownNow(); // Cancel currently executing tasks
-      }
-    }
-  }
-  
-  
-  private static final class Request {
-    Exception e;
-    boolean success = false;
-  }
-
 }
