@@ -193,12 +193,9 @@ public class WarcParser extends AbstractParser {
         try {
           HttpMessage response = parser.parse();
           Header httpHeader = response.getLastHeader(HttpHeaders.CONTENT_TYPE);
-          metadata.set(DATE_META_KEY, warcHeader.getDate());
-          metadata.set(URL_META_KEY, warcHeader.getUrl());
-          metadata.set(MIMETYPE_META_KEY, httpHeader.getValue());
           if (httpHeader != null && httpHeader.getValue().startsWith(MediaType.TEXT_HTML.toString())) {
             SessionInputStream sessionInputStream = new SessionInputStream(inbuffer);
-            process(sessionInputStream, xhtml, metadata, context);
+            process(sessionInputStream, xhtml, metadata, context, warcHeader, httpHeader);
           }
         } catch (HttpException ex) {
           LOGGER.warn("Unable to parse http for document: " + ex.getMessage() + " "
@@ -217,23 +214,29 @@ public class WarcParser extends AbstractParser {
 
   /** Processes the given Warc record */
   protected void process(SessionInputStream sessionInputStream, XHTMLContentHandler handler,
-      Metadata metadata, ParseContext context)
+      Metadata metadata, ParseContext context, ArchiveRecordHeader warcHeader, Header httpHeader)
       throws IOException, SAXException, SolrServerException {
-    List<SolrInputDocument> docs = extract(sessionInputStream, handler, metadata, context);
+    List<SolrInputDocument> docs = extract(sessionInputStream, handler, metadata, context, warcHeader, httpHeader);
     docs = transform(docs, metadata, context);
     load(docs, metadata, context);
   }
 
   /** Extracts zero or more Solr documents from the given Avro record */
   protected List<SolrInputDocument> extract(SessionInputStream is, XHTMLContentHandler handler,
-      Metadata metadata, ParseContext context) throws SAXException, IOException {
+      Metadata metadata, ParseContext context, ArchiveRecordHeader warcHeader, Header httpHeader)
+      throws SAXException, IOException {
     SolrContentHandler solrHandler = getParseInfo(context).getSolrContentHandler();
     handler.startDocument();
     solrHandler.startDocument(); // this is necessary because handler.startDocument() does not delegate all the way down to solrHandler
 
-    if (extractor.shouldParseEmbedded(metadata)) {
-      extractor.parseEmbedded(is, handler, metadata, true);
+    Metadata entryData = new Metadata();
+    entryData.set(metadata.RESOURCE_NAME_KEY, metadata.get(metadata.RESOURCE_NAME_KEY));
+    if (extractor.shouldParseEmbedded(entryData)) {
+      extractor.parseEmbedded(is, handler, entryData, true);
     }
+    entryData.set(DATE_META_KEY, warcHeader.getDate());
+    entryData.set(URL_META_KEY, warcHeader.getUrl());
+    entryData.set(MIMETYPE_META_KEY, httpHeader.getValue());
 
     // Add the metadata added by the embedded parser into the
     // ParseInfo's metadata.  This is to guarantee that the
@@ -242,24 +245,33 @@ public class WarcParser extends AbstractParser {
     // WarcParser is the metadata that is used by the SolrContentHandler,
     // since a parser that ran before (e.g. PackageParser) can pass in a
     // different metadata object.
+    Metadata addedMetadata = new Metadata();
     Metadata parseInfoMetadata = getParseInfo(context).getMetadata();
-    for (String name : metadata.names()) {
+    for (String name : entryData.names()) {
       // What to do if same metadata field is already written?  Let's not
       // overwrite for now.
       if (parseInfoMetadata.get(name) == null) {
-        String [] values = metadata.getValues(name);
+        String [] values = entryData.getValues(name);
         for (String val : values) {
           parseInfoMetadata.add(name, val);
+          addedMetadata.add(name, val);
         }
       }
       else {
         LOGGER.warn("Not setting metadata for: " + name +
-          " because already set to: " + metadata.get(name));
+          " because already set to: " + parseInfoMetadata.get(name));
       }
     }
+
     // handler.endDocument(); // this would cause a bug!
     solrHandler.endDocument();
     SolrInputDocument doc = solrHandler.newDocument().deepCopy();
+    // Now that the SolrInputDocument has been generated, reset parseInfoMetdata
+    // to its prior state
+    for (String name : addedMetadata.names()) {
+      parseInfoMetadata.remove(name);
+    }
+
     return Collections.singletonList(doc);
   }
 
