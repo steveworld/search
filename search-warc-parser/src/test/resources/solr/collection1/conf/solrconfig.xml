@@ -982,8 +982,9 @@
 
       <str name="fmap.content">text</str>
 
-      <!-- twitter feed schema -->
-      <str name="capture">id</str>
+      <!-- warc html schema.  Since these fields are copied into the
+           metadata, they don't need to be captured here. -->
+      <!--<str name="capture">id</str>
       <str name="capture">text</str>
       <str name="capture">date</str>
       <str name="capture">url</str>
@@ -992,7 +993,7 @@
       <str name="capture">title</str>
       <str name="capture">description</str>
       <str name="capture">keywords</str>
-      <str name="capture">language</str>
+      <str name="capture">language</str>-->
       
       
       <!-- capture link hrefs but ignore div attributes -->
