@@ -651,7 +651,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     for (FileStatus stats : fs.listStatus(outputReduceDir)) {
       String dirPrefix = SolrOutputFormat.getOutputName(job);
       Path srcPath = stats.getPath();
-      if (fs.isDirectory(srcPath) && srcPath.getName().startsWith(dirPrefix)) {
+      if (stats.isDirectory() && srcPath.getName().startsWith(dirPrefix)) {
         String dstName = dirPrefix + srcPath.getName().substring(dirPrefix.length() + "-m".length(), srcPath.getName().length());
         Path dstPath = new Path(srcPath.getParent(), dstName);
         if (!rename(srcPath, dstPath, fs)) {
