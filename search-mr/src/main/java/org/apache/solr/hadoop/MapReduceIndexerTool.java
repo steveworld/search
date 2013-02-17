@@ -139,12 +139,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
           "\n\n" +
           "5) Go-live phase: This optional (parallel) phase merges the output shards of the previous phase into a set of " +
           "live customer facing Solr servers, typically a SolrCloud. " +
-          "If this phase is omitted you can explicitly point each Solr server to one of the HDFS output shard directories." +
-          "\n\n" +
-          "This program implements the same partitioning semantics as the standard SolrCloud Near-Real-Time (NRT) API. " +
-          "This enables to mix batch updates from MapReduce ingestion with updates from standard Solr NRT " +
-          "ingestion on the same SolrCloud cluster."
-      );
+          "If this phase is omitted you can explicitly point each Solr server to one of the HDFS output shard directories.");
 
       parser.addArgument("--help", "-h")
         .help("Show this help message and exit")
@@ -229,7 +224,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "    -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "    --solrhomedir src/test/resources/solr/minimr \\\n" + 
               "    --outputdir hdfs://c2202.halxg.cloudera.com/user/whoschek/test \\\n" + 
-              "    --zkhost zk01.mycompany.com:2182/solr \\\n" + 
+              "    --zkhost zk01.mycompany.com:2181/solr \\\n" + 
               "    --collection collection1 \\\n" + 
               "    --golive \\\n" + 
               "    hdfs:///user/foo/indir\n"
@@ -350,14 +345,19 @@ public class MapReduceIndexerTool extends Configured implements Tool {
             + "shards to create as well as the Solr URLs to merge the output shards into when using the --golive option. "
             + "Requires that you also pass the --collection to merge the shards into.\n"
             + "\n"
+            + "The --zkhost option implements the same partitioning semantics as the standard SolrCloud " 
+            + "Near-Real-Time (NRT) API. This enables to mix batch updates from MapReduce ingestion with "
+            + "updates from standard Solr NRT ingestion on the same SolrCloud cluster, "
+            + "using identical unique document keys.\n"
+            + "\n"
             + "Format is: a list of comma separated host:port pairs, each corresponding to a zk "
-            + "server. Example: \"127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002\" If "
+            + "server. Example: \"127.0.0.1:2181,127.0.0.1:2182,127.0.0.1:2183\" If "
             + "the optional chroot suffix is used the example would look "
-            + "like: \"127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a\" "
-            + "where the client would be rooted at \"/app/a\" and all paths "
+            + "like: \"127.0.0.1:2181/solr,127.0.0.1:2182/solr,127.0.0.1:2183/solr\" "
+            + "where the client would be rooted at \"/solr\" and all paths "
             + "would be relative to this root - i.e. getting/setting/etc... "
             + "\"/foo/bar\" would result in operations being run on "
-            + "\"/app/a/foo/bar\" (from the server perspective).");
+            + "\"/solr/foo/bar\" (from the server perspective).");
 
       Argument shardsArg = clusterInfoGroup.addArgument("--shards")
         .metavar("INTEGER")
