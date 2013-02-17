@@ -141,8 +141,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
           "live customer facing Solr servers, typically a SolrCloud. " +
           "If this phase is omitted you can explicitly point each Solr server to one of the HDFS output shard directories." +
           "\n\n" +
-          "This program implements the same partitioning semantics as the standard SolrCloud NRT API. " +
-          "This enables to mix batch updates from MapReduce ingestion with updates from standard Solr Near-Real-Time (NRT) " +
+          "This program implements the same partitioning semantics as the standard SolrCloud Near-Real-Time (NRT) API. " +
+          "This enables to mix batch updates from MapReduce ingestion with updates from standard Solr NRT " +
           "ingestion on the same SolrCloud cluster."
       );
 
