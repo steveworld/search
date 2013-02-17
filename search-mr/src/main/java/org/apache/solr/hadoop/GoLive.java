@@ -83,7 +83,7 @@ class GoLive {
           
           int lastPathIndex = baseUrl.lastIndexOf("/");
           if (lastPathIndex == -1) {
-            LOG.error("Found unexpected solrurl, live merge failed: " + baseUrl);
+            LOG.error("Found unexpected shardurl, live merge failed: " + baseUrl);
             return false;
           }
           
