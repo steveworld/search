@@ -52,9 +52,9 @@ public class SolrCloudPartitioner extends Partitioner<Text, SolrInputDocumentWri
   private int shards = 0;
   private final SolrParams emptySolrParams = new MapSolrParams(Collections.EMPTY_MAP);
   
-  public static final String SHARDS = "shards";
-  public static final String ZKHOST = "zkHost";
-  public static final String COLLECTION = "collection";
+  public static final String SHARDS = SolrCloudPartitioner.class.getName() + ".shards";
+  public static final String ZKHOST = SolrCloudPartitioner.class.getName() + ".zkHost";
+  public static final String COLLECTION = SolrCloudPartitioner.class.getName() + ".collection";
   
   private static final Logger LOG = LoggerFactory.getLogger(SolrCloudPartitioner.class);
   
@@ -119,6 +119,7 @@ public class SolrCloudPartitioner extends Partitioner<Text, SolrInputDocumentWri
 
     // map doc to micro shard aka leaf shard, akin to HashBasedRouter.sliceHash()
     // taking into account mtree merge algorithm
+    assert numPartitions % shards == 0; // Also note that numPartitions is equal to the number of reducers
     int hashCode = Hash.murmurhash3_x86_32(keyStr, 0, keyStr.length(), 0); 
     int offset = (hashCode & Integer.MAX_VALUE) % (numPartitions / shards);
     int microShard = (rootShard * (numPartitions / shards)) + offset;
