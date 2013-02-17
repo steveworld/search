@@ -65,11 +65,9 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
   
   private static final String RESOURCES_DIR = "target/test-classes";
   private static final String DOCUMENTS_DIR = RESOURCES_DIR + "/test-documents";
-  private static final File MINIMR_CONF_DIR = new File(RESOURCES_DIR
-      + "/solr/minimr");
+  private static final File MINIMR_CONF_DIR = new File(RESOURCES_DIR + "/solr/minimr");
   
-  private static final String SEARCH_ARCHIVES_JAR = JarFinder
-      .getJar(MapReduceIndexerTool.class);
+  private static final String SEARCH_ARCHIVES_JAR = JarFinder.getJar(MapReduceIndexerTool.class);
   
   private static MiniDFSCluster dfsCluster = null;
   private static MiniMRCluster mrCluster = null;
@@ -219,11 +217,14 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
         "--solrhomedir=" + MINIMR_CONF_DIR.getAbsolutePath(),
         "--outputdir=" + outDir.toString(),
         "--mappers=3",
-        ++numRuns % 2 == 0 ? "--inputlist=" + INPATH.toString() : dataDir
-            .toString(), "--shardurl", cloudJettys.get(0).url, "--shardurl",
-        cloudJettys.get(1).url, "--shardurl", cloudJettys.get(2).url, "--golivethreads", Integer.toString(random().nextInt(15) + 1),
+        ++numRuns % 2 == 0 ? "--inputlist=" + INPATH.toString() : dataDir.toString(), 
+        "--shardurl", cloudJettys.get(0).url, 
+        "--shardurl", cloudJettys.get(1).url, 
+        "--shardurl", cloudJettys.get(2).url, 
+        "--golivethreads", Integer.toString(random().nextInt(15) + 1),
         "--verbose",
-        "--golive"};
+        "--golive"
+    };
     
     MapReduceIndexerTool tool = new MapReduceIndexerTool();
     int res = ToolRunner.run(jobConf, tool, args);
@@ -250,9 +251,12 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
         "--mappers=3",
         "--verbose",
         "--golive",
-        ++numRuns % 2 == 0 ? "--inputlist=" + INPATH.toString() : dataDir
-            .toString(), "--shardurl", cloudJettys.get(0).url, "--shardurl",
-        cloudJettys.get(1).url, "--shardurl", cloudJettys.get(2).url, "--golivethreads", Integer.toString(random().nextInt(15) + 1)};
+        ++numRuns % 2 == 0 ? "--inputlist=" + INPATH.toString() : dataDir.toString(), 
+        "--shardurl", cloudJettys.get(0).url, 
+        "--shardurl", cloudJettys.get(1).url, 
+        "--shardurl", cloudJettys.get(2).url, 
+        "--golivethreads", Integer.toString(random().nextInt(15) + 1)
+    };
     
     res = ToolRunner.run(jobConf, tool, args);
     assertEquals(0, res);
@@ -279,11 +283,13 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
         "--solrhomedir=" + MINIMR_CONF_DIR.getAbsolutePath(),
         "--outputdir=" + outDir.toString(),
         "--mappers=3",
+        "--reducers=6",
         "--verbose",
         "--golive",
-        ++numRuns % 2 == 0 ? "--inputlist=" + INPATH.toString() : dataDir
-            .toString(), "--zkhost",
-        zkServer.getZkAddress(), "--collection", "collection1"};
+        ++numRuns % 2 == 0 ? "--inputlist=" + INPATH.toString() : dataDir.toString(), 
+        "--zkhost", zkServer.getZkAddress(), 
+        "--collection", "collection1"
+    };
 
     res = ToolRunner.run(jobConf, tool, args);
     assertEquals(0, res);
@@ -292,7 +298,6 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     assertTrue(job.isSuccessful());
     
     results = server.query(new SolrQuery("*:*"));
-
     
     assertEquals(2124, results.getResults().getNumFound());
     
@@ -300,8 +305,7 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
   }
   
   private Path upAvroFile(FileSystem fs, Path inDir, String DATADIR,
-      Path dataDir, String localFile) throws IOException,
-      UnsupportedEncodingException {
+      Path dataDir, String localFile) throws IOException, UnsupportedEncodingException {
     Path INPATH = new Path(inDir, "input.txt");
     OutputStream os = fs.create(INPATH);
     Writer wr = new OutputStreamWriter(os, "UTF-8");
@@ -317,7 +321,6 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
       String shardList, String solrConfigOverride, String schemaOverride)
       throws Exception {
     
-
     JettySolrRunner jetty = new JettySolrRunner(solrHome.getAbsolutePath(),
         context, 0, solrConfigOverride, schemaOverride);
 
@@ -339,13 +342,13 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     return jetty;
   }
   
-  private static void putConfig(SolrZkClient zkClient, File solrhome,
-      final String name) throws Exception {
+  private static void putConfig(SolrZkClient zkClient, File solrhome, String name) throws Exception {
     putConfig(zkClient, solrhome, name, name);
   }
   
-  private static void putConfig(SolrZkClient zkClient, File solrhome,
-      final String srcName, String destName) throws Exception {
+  private static void putConfig(SolrZkClient zkClient, File solrhome, String srcName, String destName)
+      throws Exception {
+    
     File file = new File(solrhome, "conf" + File.separator + srcName);
     if (!file.exists()) {
       // LOG.info("skipping " + file.getAbsolutePath() +
