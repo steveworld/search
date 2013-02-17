@@ -139,7 +139,12 @@ public class MapReduceIndexerTool extends Configured implements Tool {
           "\n\n" +
           "5) Go-live phase: This optional (parallel) phase merges the output shards of the previous phase into a set of " +
           "live customer facing Solr servers, typically a SolrCloud. " +
-          "If this phase is omitted you can explicitly point each Solr server to one of the HDFS output shard directories.");
+          "If this phase is omitted you can explicitly point each Solr server to one of the HDFS output shard directories." +
+          "\n\n" +
+          "This program implements the same partitioning semantics as the standard SolrCloud NRT API. " +
+          "This enables to mix batch updates from MapReduce ingestion with updates from standard Solr Near-Real-Time (NRT) " +
+          "ingestion on the same SolrCloud cluster."
+      );
 
       parser.addArgument("--help", "-h")
         .help("Show this help message and exit")
@@ -323,17 +328,17 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       MutuallyExclusiveGroup clusterInfoGroup = parser.addMutuallyExclusiveGroup("Cluster arguments")
         .required(true)
         .description("Mutually exclusive arguments that provide information about your Solr cluster. " +
-        		"If you are not using --golive, pass the --shards argument. If you are building shards for " +
-        		"a non SolrCloud cluster, pass the --shardurl argument one or more times. If you are building " +
-        		"shards for a SolrCloud cluster, pass the --zkhost argument. " +
-        		"Using --golive requires either --shardurl or --zkhost.");
+              "If you are not using --golive, pass the --shards argument. If you are building shards for " +
+              "a non SolrCloud cluster, pass the --shardurl argument one or more times. If you are building " +
+              "shards for a SolrCloud cluster, pass the --zkhost argument. " +
+              "Using --golive requires either --shardurl or --zkhost.");
 
       Argument shardUrlsArg = clusterInfoGroup.addArgument("--shardurl")
         .metavar("URL")
         .type(String.class)
         .action(Arguments.append())
         .help("Solr URL to merge resulting shard into if using --golive. " +
-        		  "Example: http://solr001.mycompany.com:8983/solr/collection1. " + 
+              "Example: http://solr001.mycompany.com:8983/solr/collection1. " + 
               "Multiple --shardurl arguments can be specified, one for each desired shard. " +
               "If you are merging shards into a SolrCloud cluster, use --zkhost instead.");
       
@@ -577,9 +582,27 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       job.setReducerClass(SolrReducer.class);
     }
     
-    if (reducers != options.shards) {
-//      job.setPartitionerClass(MyPartitionerX.class); FIXME
+    if (options.zkHost != null) {
+      assert options.collection != null;
+      /*
+       * MapReduce partitioner that partitions the Mapper output such that each
+       * SolrInputDocument gets sent to the SolrCloud shard that it would have
+       * been sent to if the document were ingested via the standard SolrCloud
+       * Near Real Time (NRT) API.
+       * 
+       * In other words, this class implements the same partitioning semantics
+       * as the standard SolrCloud NRT API. This enables to mix batch updates
+       * from MapReduce ingestion with updates from standard NRT ingestion on
+       * the same SolrCloud cluster.
+       */
+      if (job.getConfiguration().getClass(JobContext.PARTITIONER_CLASS_ATTR, null) == null) { // enable customization
+        job.setPartitionerClass(SolrCloudPartitioner.class);
+      }
+      job.getConfiguration().set(SolrCloudPartitioner.ZKHOST, options.zkHost);
+      job.getConfiguration().set(SolrCloudPartitioner.COLLECTION, options.collection);
+      job.getConfiguration().setInt(SolrCloudPartitioner.SHARDS, options.shards);
     }
+    
     job.setOutputFormatClass(SolrOutputFormat.class);
     SolrOutputFormat.setupSolrHomeCache(options.solrHomeDir, job);      
     job.setNumReduceTasks(reducers);  
@@ -652,7 +675,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       String dirPrefix = SolrOutputFormat.getOutputName(job);
       Path srcPath = stats.getPath();
       if (stats.isDirectory() && srcPath.getName().startsWith(dirPrefix)) {
-        String dstName = dirPrefix + srcPath.getName().substring(dirPrefix.length() + "-m".length(), srcPath.getName().length());
+        String dstName = dirPrefix + srcPath.getName().substring(dirPrefix.length() + "-m".length());
         Path dstPath = new Path(srcPath.getParent(), dstName);
         if (!rename(srcPath, dstPath, fs)) {
           return -1;
@@ -869,8 +892,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       assert opts.collection != null;
       ZooKeeperInspector zki = new ZooKeeperInspector();
       try {
-        opts.shardUrls = zki.extractShardUrlsFromZk(opts.zkHost, opts.collection);
-        LOG.debug("Using SolrCloud shard URLs: {}", opts.shardUrls);
+        opts.shardUrls = zki.extractShardUrls(opts.zkHost, opts.collection);
       } catch (Exception e) {
         LOG.debug("Cannot extract SolrCloud shard URLs from ZooKeeper", e);
         throw new ArgumentParserException(e, parser);          
@@ -880,6 +902,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         throw new ArgumentParserException("--zkhost requires ZooKeeper " + opts.zkHost
             + " to contain at least one SolrCore for collection: " + opts.collection, parser);
       }
+      LOG.debug("Using SolrCloud shard URLs: {}", opts.shardUrls);
     } else if (opts.shardUrls != null) {
       if (opts.shardUrls.size() == 0) {
         throw new ArgumentParserException("--shardurl requires at least one URL", parser);
@@ -889,8 +912,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         throw new ArgumentParserException("--shards must be a positive number: " + opts.shards, parser);
       }
     } else {
-      throw new ArgumentParserException("You must specify one of the following (mutually exclusive) arguments: " +
-      		"--zkhost or --shardurl or --shards", parser);
+      throw new ArgumentParserException("You must specify one of the following (mutually exclusive) arguments: "
+          + "--zkhost or --shardurl or --shards", parser);
     }
 
     if (opts.shardUrls != null) {
