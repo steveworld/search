@@ -38,7 +38,7 @@ class ZooKeeperInspector {
     try {
       zkClient = new SolrZkClient(zkHost, 15000);
     } catch (Exception e) {
-      throw new IllegalArgumentException("Could not connect to ZooKeeper", e);
+      throw new IllegalArgumentException("Cannot connect to ZooKeeper: " + zkHost, e);
     }
     
     try {
@@ -46,22 +46,22 @@ class ZooKeeperInspector {
       try {
         zkStateReader.createClusterStateWatchersAndUpdate();
       } catch (Exception e) {
-        throw new IllegalArgumentException("Did not find expected information for SolrCloud in ZooKeeper", e);
+        throw new IllegalArgumentException("Cannot find expected information for SolrCloud in ZooKeeper: " + zkHost, e);
       }
       
       DocCollection docCollection;
       try {
         docCollection = zkStateReader.getClusterState().getCollection(collection);
       } catch (SolrException e) {
-        throw new IllegalArgumentException("Could not find collection in ZooKeeper: "
-            + collection, e);
+        throw new IllegalArgumentException("Cannot find collection '" + collection + "' in ZooKeeper: " + zkHost, e);
       }
 
       Collection<Slice> slices = docCollection.getSlices();
       List<String> solrUrls = new ArrayList<String>(slices.size());
       for (Slice slice : slices) {
         if (slice.getLeader() == null) {
-          throw new IllegalArgumentException("It looks like not all of your shards are registered in ZooKeeper yet");
+          throw new IllegalArgumentException("Cannot find SolrCloud slice leader. " +
+          		"It looks like not all of your shards are registered in ZooKeeper yet");
         }
         ZkCoreNodeProps props = new ZkCoreNodeProps(slice.getLeader());
         solrUrls.add(props.getCoreUrl());

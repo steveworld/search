@@ -499,6 +499,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     job.setJarByClass(getClass());
 
     verifyGoLiveArgs(options, null); // reverify, in case we got called directly rather than from the CLI API
+    if (true) return 0;
     
     int mappers = new JobClient(job.getConfiguration()).getClusterStatus().getMaxMapTasks(); // MR1
     //mappers = job.getCluster().getClusterStatus().getMapSlotCapacity(); // Yarn only
@@ -870,7 +871,9 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       ZooKeeperInspector zki = new ZooKeeperInspector();
       try {
         opts.shardUrls = zki.extractShardUrlsFromZk(opts.zkHost, opts.collection);
+        LOG.debug("Using SolrCloud shard URLs: {}", opts.shardUrls);
       } catch (Exception e) {
+        LOG.debug("Cannot extract SolrCloud shard URLs from ZooKeeper", e);
         throw new ArgumentParserException(e, parser);          
       }
       assert opts.shardUrls != null;
