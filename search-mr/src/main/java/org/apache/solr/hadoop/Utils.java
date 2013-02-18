@@ -20,9 +20,13 @@ package org.apache.solr.hadoop;
 public final class Utils {
 
   public static String getShortClassName(Class clazz) {
-    int i = clazz.getName().lastIndexOf('.'); // regular class
-    int j = clazz.getName().lastIndexOf('$'); // inner class
-    return clazz.getName().substring(1 + Math.max(i, j));
+    return getShortClassName(clazz.getName());
+  }
+  
+  public static String getShortClassName(String className) {
+    int i = className.lastIndexOf('.'); // regular class
+    int j = className.lastIndexOf('$'); // inner class
+    return className.substring(1 + Math.max(i, j));
   }
   
 }
