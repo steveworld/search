@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
  * In other words, this class implements the same partitioning semantics as the
  * standard SolrCloud NRT API. This enables to mix batch updates from MapReduce
  * ingestion with updates from standard NRT ingestion on the same SolrCloud
- * cluster.
+ * cluster, using identical unique document keys.
  */
 public class SolrCloudPartitioner extends Partitioner<Text, SolrInputDocumentWritable> implements Configurable {
   
@@ -101,7 +101,10 @@ public class SolrCloudPartitioner extends Partitioner<Text, SolrInputDocumentWri
     DocRouter docRouter = docCollection.getRouter();
     SolrInputDocument doc = value.getSolrInputDocument();
     String keyStr = key.toString();
-    Slice slice = docRouter.getTargetSlice(keyStr, doc, emptySolrParams, docCollection); // TODO: optimize impl?
+    
+    // TODO: performance: replace linear search in HashBasedRouter.hashToSlice() with binary search on sorted hash ranges
+    Slice slice = docRouter.getTargetSlice(keyStr, doc, emptySolrParams, docCollection); 
+    
 //    LOG.info("slice: {}", slice);
     if (slice == null) { // TODO: consider falling back to some default partitioning scheme?
       throw new IllegalStateException("No slice found for docRouterClass: " + docRouter.getClass().getName());

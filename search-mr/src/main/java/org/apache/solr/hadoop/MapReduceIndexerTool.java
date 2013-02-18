@@ -351,13 +351,13 @@ public class MapReduceIndexerTool extends Configured implements Tool {
             + "using identical unique document keys.\n"
             + "\n"
             + "Format is: a list of comma separated host:port pairs, each corresponding to a zk "
-            + "server. Example: \"127.0.0.1:2181,127.0.0.1:2182,127.0.0.1:2183\" If "
+            + "server. Example: '127.0.0.1:2181,127.0.0.1:2182,127.0.0.1:2183' If "
             + "the optional chroot suffix is used the example would look "
-            + "like: \"127.0.0.1:2181/solr,127.0.0.1:2182/solr,127.0.0.1:2183/solr\" "
-            + "where the client would be rooted at \"/solr\" and all paths "
+            + "like: '127.0.0.1:2181/solr,127.0.0.1:2182/solr,127.0.0.1:2183/solr' "
+            + "where the client would be rooted at '/solr' and all paths "
             + "would be relative to this root - i.e. getting/setting/etc... "
-            + "\"/foo/bar\" would result in operations being run on "
-            + "\"/solr/foo/bar\" (from the server perspective).");
+            + "'/foo/bar' would result in operations being run on "
+            + "'/solr/foo/bar' (from the server perspective).");
 
       Argument shardsArg = clusterInfoGroup.addArgument("--shards")
         .metavar("INTEGER")
@@ -571,14 +571,14 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     NLineInputFormat.setNumLinesPerSplit(job, numLinesPerSplit);    
     FileOutputFormat.setOutputPath(job, outputReduceDir);
     
-    Class mapperClass = job.getConfiguration().getClass(JobContext.MAP_CLASS_ATTR, null);
+    String mapperClass = job.getConfiguration().get(JobContext.MAP_CLASS_ATTR);
     if (mapperClass == null) { // enable customization
-      mapperClass = TikaMapper.class;
+      mapperClass = TikaMapper.class.getName();
+      job.setMapperClass(TikaMapper.class);
     }
-    job.setMapperClass(mapperClass);
     job.setJobName(getClass().getName() + "/" + Utils.getShortClassName(mapperClass));
     
-    if (job.getConfiguration().getClass(JobContext.REDUCE_CLASS_ATTR, null) == null) { // enable customization
+    if (job.getConfiguration().get(JobContext.REDUCE_CLASS_ATTR) == null) { // enable customization
       job.setReducerClass(SolrReducer.class);
     }
     
@@ -593,15 +593,15 @@ public class MapReduceIndexerTool extends Configured implements Tool {
        * In other words, this class implements the same partitioning semantics
        * as the standard SolrCloud NRT API. This enables to mix batch updates
        * from MapReduce ingestion with updates from standard NRT ingestion on
-       * the same SolrCloud cluster.
+       * the same SolrCloud cluster, using identical unique document keys.
        */
-      if (job.getConfiguration().getClass(JobContext.PARTITIONER_CLASS_ATTR, null) == null) { // enable customization
+      if (job.getConfiguration().get(JobContext.PARTITIONER_CLASS_ATTR) == null) { // enable customization
         job.setPartitionerClass(SolrCloudPartitioner.class);
       }
       job.getConfiguration().set(SolrCloudPartitioner.ZKHOST, options.zkHost);
       job.getConfiguration().set(SolrCloudPartitioner.COLLECTION, options.collection);
-      job.getConfiguration().setInt(SolrCloudPartitioner.SHARDS, options.shards);
     }
+    job.getConfiguration().setInt(SolrCloudPartitioner.SHARDS, options.shards);
     
     job.setOutputFormatClass(SolrOutputFormat.class);
     SolrOutputFormat.setupSolrHomeCache(options.solrHomeDir, job);      
