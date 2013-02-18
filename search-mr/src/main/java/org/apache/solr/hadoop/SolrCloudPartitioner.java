@@ -52,7 +52,7 @@ public class SolrCloudPartitioner extends Partitioner<Text, SolrInputDocumentWri
   
   private Configuration conf;
   private DocCollection docCollection;
-  private Map<String, Integer> sliceNumbers;
+  private Map<String, Integer> shardNumbers;
   private int shards = 0;
   private final SolrParams emptySolrParams = new MapSolrParams(Collections.EMPTY_MAP);
   
@@ -88,9 +88,12 @@ public class SolrCloudPartitioner extends Partitioner<Text, SolrInputDocumentWri
       throw new IllegalArgumentException("Incompatible shards: + " + shards + " for docCollection: " + docCollection);
     }    
     List<Slice> slices = new ZooKeeperInspector().getSortedSlices(docCollection.getSlices());
-    sliceNumbers = new HashMap();
+    if (slices.size() != shards) {
+      throw new IllegalStateException("Incompatible sorted shards: + " + shards + " for docCollection: " + docCollection);
+    }    
+    shardNumbers = new HashMap();
     for (int i = 0; i < slices.size(); i++) {
-      sliceNumbers.put(slices.get(i).getName(), i);
+      shardNumbers.put(slices.get(i).getName(), i);
     }
     LOG.debug("Using SolrCloud docCollection: {}", docCollection);
     DocRouter docRouter = docCollection.getRouter();
@@ -111,7 +114,7 @@ public class SolrCloudPartitioner extends Partitioner<Text, SolrInputDocumentWri
     SolrInputDocument doc = value.getSolrInputDocument();
     String keyStr = key.toString();
     
-    // TODO: performance: replace linear search in HashBasedRouter.hashToSlice() with binary search on sorted hash ranges
+    // TODO: scalability: replace linear search in HashBasedRouter.hashToSlice() with binary search on sorted hash ranges
     Slice slice = docRouter.getTargetSlice(keyStr, doc, emptySolrParams, docCollection); 
     
 //    LOG.info("slice: {}", slice);
@@ -119,7 +122,7 @@ public class SolrCloudPartitioner extends Partitioner<Text, SolrInputDocumentWri
       throw new IllegalStateException("No matching slice found! The slice seems unavailable. docRouterClass: "
           + docRouter.getClass().getName());
     }
-    int rootShard = sliceNumbers.get(slice.getName());
+    int rootShard = shardNumbers.get(slice.getName());
     if (rootShard < 0 || rootShard >= shards) {
       throw new IllegalStateException("Illegal shard number " + rootShard + " for slice: " + slice + ", docCollection: "
           + docCollection);
