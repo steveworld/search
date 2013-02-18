@@ -91,7 +91,7 @@ public class SolrCloudPartitioner extends Partitioner<Text, SolrInputDocumentWri
     if (slices.size() != shards) {
       throw new IllegalStateException("Incompatible sorted shards: + " + shards + " for docCollection: " + docCollection);
     }    
-    shardNumbers = new HashMap();
+    shardNumbers = new HashMap(10 * slices.size()); // sparse for performance
     for (int i = 0; i < slices.size(); i++) {
       shardNumbers.put(slices.get(i).getName(), i);
     }
