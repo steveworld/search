@@ -19,6 +19,8 @@ package org.apache.solr.hadoop;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.apache.solr.common.SolrException;
@@ -35,12 +37,12 @@ final class ZooKeeperInspector {
   
   public List<String> extractShardUrls(String zkHost, String collection) {
     DocCollection docCollection = extractDocCollection(zkHost, collection);
-    Collection<Slice> slices = docCollection.getSlices();
+    List<Slice> slices = getSortedSlices(docCollection.getSlices());
     List<String> solrUrls = new ArrayList<String>(slices.size());
     for (Slice slice : slices) {
       if (slice.getLeader() == null) {
         throw new IllegalArgumentException("Cannot find SolrCloud slice leader. " +
-        		"It looks like not all of your shards are registered in ZooKeeper yet");
+            "It looks like not all of your shards are registered in ZooKeeper yet");
       }
       ZkCoreNodeProps props = new ZkCoreNodeProps(slice.getLeader());
       solrUrls.add(props.getCoreUrl());
@@ -76,4 +78,16 @@ final class ZooKeeperInspector {
       zkClient.close();
     }    
   }
+  
+  public List<Slice> getSortedSlices(Collection<Slice> slices) {
+    List<Slice> sorted = new ArrayList(slices);
+    Collections.sort(sorted, new Comparator<Slice>() {
+      @Override
+      public int compare(Slice slice1, Slice slice2) {
+        return slice1.getName().compareTo(slice2.getName());
+      }      
+    });
+    return sorted;
+  }
+  
 }

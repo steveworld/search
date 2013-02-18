@@ -688,7 +688,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       return -1;
     }
 
-    if (options.goLive && !new GoLive().goLive(options, SolrOutputFormat.getOutputName(job) + "-", fs, outputResultsDir)) {
+    if (options.goLive && !new GoLive().goLive(options, findOutputShardDirs(outputResultsDir, fs))) {
       return -1;
     }
     
@@ -849,22 +849,13 @@ public class MapReduceIndexerTool extends Configured implements Tool {
   private int createTreeMergeInputDirList(Path outputReduceDir, FileSystem fs, Path fullInputList)
       throws FileNotFoundException, IOException, UnsupportedEncodingException {
     
-    FileStatus[] dirs = fs.listStatus(outputReduceDir, new PathFilter() {      
-      @Override
-      public boolean accept(Path path) {
-        return path.getName().startsWith(SolrOutputFormat.getOutputName(job));
-      }
-    });    
-    Arrays.sort(dirs); // FIXME: handle more than 99999 shards (need numeric sort rather than lexicographical sort)
+    FileStatus[] dirs = findOutputShardDirs(outputReduceDir, fs);
     int numFiles = 0;
     FSDataOutputStream out = fs.create(fullInputList);
     try {
       Writer writer = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"));
       for (FileStatus stat : dirs) {
         LOG.debug("Adding path {}", stat.getPath());
-        if (!stat.isDirectory()) {
-          throw new IllegalStateException("Not a directory: " + stat.getPath());
-        }
         Path dir = new Path(stat.getPath(), "data/index");
         if (!fs.isDirectory(dir)) {
           throw new IllegalStateException("Not a directory: " + dir);
@@ -877,6 +868,25 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       out.close();
     }
     return numFiles;
+  }
+
+  private FileStatus[] findOutputShardDirs(Path outputReduceDir, FileSystem fs) throws FileNotFoundException,
+      IOException {
+    
+    final String dirPrefix = SolrOutputFormat.getOutputName(job);
+    FileStatus[] dirs = fs.listStatus(outputReduceDir, new PathFilter() {      
+      @Override
+      public boolean accept(Path path) {
+        return path.getName().startsWith(dirPrefix);
+      }
+    });
+    for (FileStatus dir : dirs) {
+      if (!dir.isDirectory()) {
+        throw new IllegalStateException("Not a directory: " + dir.getPath());
+      }
+    }
+    Arrays.sort(dirs); // FIXME: handle more than 99999 shards (need numeric sort rather than lexicographical sort)
+    return dirs;
   }
 
   private static void verifyGoLiveArgs(Options opts, ArgumentParser parser) throws ArgumentParserException {      

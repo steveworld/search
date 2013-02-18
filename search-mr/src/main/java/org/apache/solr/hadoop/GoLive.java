@@ -17,7 +17,6 @@
 
 package org.apache.solr.hadoop;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -33,8 +32,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.CloudSolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
@@ -52,8 +49,7 @@ class GoLive {
   private static final Logger LOG = LoggerFactory.getLogger(GoLive.class);
   
   // TODO: handle clusters with replicas
-  public boolean goLive(Options options, String dirPrefix, FileSystem fs, Path outputResultsDir)
-      throws FileNotFoundException, IOException {
+  public boolean goLive(Options options, FileStatus[] outDirs) {
     LOG.info("Live merging of output shards into Solr cluster...");
     boolean success = false;
     long start = System.currentTimeMillis();
@@ -61,66 +57,63 @@ class GoLive {
     ThreadPoolExecutor executor = new ThreadPoolExecutor(concurrentMerges,
         concurrentMerges, 1, TimeUnit.SECONDS,
         new LinkedBlockingQueue<Runnable>());
+    
     try {
-      CompletionService<Request> completionService = new ExecutorCompletionService<Request>(
-          executor);
+      CompletionService<Request> completionService = new ExecutorCompletionService<Request>(executor);
       Set<Future<Request>> pending = new HashSet<Future<Request>>();
       
-      FileStatus[] outDirs = fs.listStatus(outputResultsDir);
       int cnt = -1;
-      for (final FileStatus file : outDirs) {
+      for (final FileStatus dir : outDirs) {
         
-        LOG.debug("processing:" + file.getPath());
+        LOG.debug("processing:" + dir.getPath());
 
-        if (file.getPath().getName().startsWith(dirPrefix) && file.isDirectory()) {
-          cnt++;
-          String url = options.shardUrls.get(cnt);
-          
-          String baseUrl = url;
-          if (baseUrl.endsWith("/")) {
-            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
-          }
-          
-          int lastPathIndex = baseUrl.lastIndexOf("/");
-          if (lastPathIndex == -1) {
-            LOG.error("Found unexpected shardurl, live merge failed: " + baseUrl);
-            return false;
-          }
-          
-          final String name = baseUrl.substring(lastPathIndex + 1);
-          baseUrl = baseUrl.substring(0, lastPathIndex);
-          final String mergeUrl = baseUrl;
-
-          Callable<Request> task = new Callable<Request>() {
-            @Override
-            public Request call() {
-              Request req = new Request();
-              LOG.info("Live merge " + file.getPath() + " into " + mergeUrl);
-              final HttpSolrServer server = new HttpSolrServer(mergeUrl);
-              try {
-                CoreAdminRequest.MergeIndexes mergeRequest = new CoreAdminRequest.MergeIndexes();
-                mergeRequest.setCoreName(name);
-                mergeRequest.setIndexDirs(Arrays.asList(new String[] {file.getPath()
-                    .toString().substring("hdfs:/".length())
-                    + "/data/index"}));
-                try {
-                  mergeRequest.process(server);
-                  req.success = true;
-                } catch (SolrServerException e) {
-                  req.e = e;
-                  return req;
-                } catch (IOException e) {
-                  req.e = e;
-                  return req;
-                }
-              } finally {
-                server.shutdown();
-              }
-              return req;
-            }
-          };
-          pending.add(completionService.submit(task));
+        cnt++;
+        String url = options.shardUrls.get(cnt);
+        
+        String baseUrl = url;
+        if (baseUrl.endsWith("/")) {
+          baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
         }
+        
+        int lastPathIndex = baseUrl.lastIndexOf("/");
+        if (lastPathIndex == -1) {
+          LOG.error("Found unexpected shardurl, live merge failed: " + baseUrl);
+          return false;
+        }
+        
+        final String name = baseUrl.substring(lastPathIndex + 1);
+        baseUrl = baseUrl.substring(0, lastPathIndex);
+        final String mergeUrl = baseUrl;
+
+        Callable<Request> task = new Callable<Request>() {
+          @Override
+          public Request call() {
+            Request req = new Request();
+            LOG.info("Live merge " + dir.getPath() + " into " + mergeUrl);
+            final HttpSolrServer server = new HttpSolrServer(mergeUrl);
+            try {
+              CoreAdminRequest.MergeIndexes mergeRequest = new CoreAdminRequest.MergeIndexes();
+              mergeRequest.setCoreName(name);
+              mergeRequest.setIndexDirs(Arrays.asList(new String[] {dir.getPath()
+                  .toString().substring("hdfs:/".length())
+                  + "/data/index"}));
+              try {
+                mergeRequest.process(server);
+                req.success = true;
+              } catch (SolrServerException e) {
+                req.e = e;
+                return req;
+              } catch (IOException e) {
+                req.e = e;
+                return req;
+              }
+            } finally {
+              server.shutdown();
+            }
+            return req;
+          }
+        };
+        pending.add(completionService.submit(task));
       }
       
       while (pending != null && pending.size() > 0) {

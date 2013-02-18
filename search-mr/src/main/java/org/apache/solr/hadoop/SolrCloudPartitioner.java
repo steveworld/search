@@ -19,6 +19,9 @@
 package org.apache.solr.hadoop;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
@@ -49,6 +52,7 @@ public class SolrCloudPartitioner extends Partitioner<Text, SolrInputDocumentWri
   
   private Configuration conf;
   private DocCollection docCollection;
+  private Map<String, Integer> sliceNumbers;
   private int shards = 0;
   private final SolrParams emptySolrParams = new MapSolrParams(Collections.EMPTY_MAP);
   
@@ -83,12 +87,17 @@ public class SolrCloudPartitioner extends Partitioner<Text, SolrInputDocumentWri
     if (docCollection.getSlicesMap().size() != shards) {
       throw new IllegalArgumentException("Incompatible shards: + " + shards + " for docCollection: " + docCollection);
     }    
+    List<Slice> slices = new ZooKeeperInspector().getSortedSlices(docCollection.getSlices());
+    sliceNumbers = new HashMap();
+    for (int i = 0; i < slices.size(); i++) {
+      sliceNumbers.put(slices.get(i).getName(), i);
+    }
     LOG.debug("Using SolrCloud docCollection: {}", docCollection);
     DocRouter docRouter = docCollection.getRouter();
     if (docRouter == null) {
       throw new IllegalArgumentException("docRouter must not be null");
     }
-    LOG.info("Using SolrCloud docRouterClass: {}", docRouter.getClass());
+    LOG.info("Using SolrCloud docRouterClass: {}", docRouter.getClass());    
   }
 
   @Override
@@ -106,15 +115,11 @@ public class SolrCloudPartitioner extends Partitioner<Text, SolrInputDocumentWri
     Slice slice = docRouter.getTargetSlice(keyStr, doc, emptySolrParams, docCollection); 
     
 //    LOG.info("slice: {}", slice);
-    if (slice == null) { // TODO: consider falling back to some default partitioning scheme?
-      throw new IllegalStateException("No slice found for docRouterClass: " + docRouter.getClass().getName());
+    if (slice == null) {
+      throw new IllegalStateException("No matching slice found! The slice seems unavailable. docRouterClass: "
+          + docRouter.getClass().getName());
     }
-    String sliceName = slice.getName();
-    String prefix = "shard";
-    if (!sliceName.startsWith(prefix)) {
-      throw new IllegalStateException("Illegal slice name prefix for slice: " + slice);        
-    }
-    int rootShard = Integer.parseInt(sliceName.substring(prefix.length())) - 1;
+    int rootShard = sliceNumbers.get(slice.getName());
     if (rootShard < 0 || rootShard >= shards) {
       throw new IllegalStateException("Illegal shard number " + rootShard + " for slice: " + slice + ", docCollection: "
           + docCollection);
