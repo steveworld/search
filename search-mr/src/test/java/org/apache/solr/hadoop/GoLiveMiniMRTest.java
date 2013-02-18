@@ -211,6 +211,11 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     jobConf.setMaxReduceAttempts(1);
     jobConf.setJar(SEARCH_ARCHIVES_JAR);
     
+    MapReduceIndexerTool tool;
+    int res;
+    QueryResponse results;
+    HttpSolrServer server = new HttpSolrServer(cloudJettys.get(0).url);
+
     String[] args = new String[] {
         "--files",
         RESOURCES_DIR + "/tika-config.xml",
@@ -226,21 +231,17 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
         "--golive"
     };
     
-    MapReduceIndexerTool tool = new MapReduceIndexerTool();
-    int res = ToolRunner.run(jobConf, tool, args);
-    assertEquals(0, res);
-    Job job = tool.job;
-    assertTrue(job.isComplete());
-    assertTrue(job.isSuccessful());
+    if (true) {
+      tool = new MapReduceIndexerTool();
+      res = ToolRunner.run(jobConf, tool, args);
+      assertEquals(0, res);
+      assertTrue(tool.job.isComplete());
+      assertTrue(tool.job.isSuccessful());
+      results = server.query(new SolrQuery("*:*"));
+      assertEquals(20, results.getResults().getNumFound());
+    }    
     
-    HttpSolrServer server = new HttpSolrServer(cloudJettys.get(0).url);
-    
-    QueryResponse results = server.query(new SolrQuery("*:*"));
-
-    assertEquals(20, results.getResults().getNumFound());
-    
-    fs.delete(inDir, true);
-    
+    fs.delete(inDir, true);    
     INPATH = upAvroFile(fs, inDir, DATADIR, dataDir, inputAvroFile2);
     
     args = new String[] {
@@ -258,23 +259,21 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
         "--golivethreads", Integer.toString(random().nextInt(15) + 1)
     };
     
-    res = ToolRunner.run(jobConf, tool, args);
-    assertEquals(0, res);
-    job = tool.job;
-    assertTrue(job.isComplete());
-    assertTrue(job.isSuccessful());
-    
-    results = server.query(new SolrQuery("*:*"));
-
-    assertEquals(32, results.getResults().getNumFound());
-    
+    if (true) {
+      tool = new MapReduceIndexerTool();
+      res = ToolRunner.run(jobConf, tool, args);
+      assertEquals(0, res);
+      assertTrue(tool.job.isComplete());
+      assertTrue(tool.job.isSuccessful());      
+      results = server.query(new SolrQuery("*:*"));
+      assertEquals(32, results.getResults().getNumFound());
+    }    
     
     cloudClient.deleteByQuery("*:*");
     cloudClient.commit();
     
     // try using zookeeper
-    fs.delete(inDir, true);
-    
+    fs.delete(inDir, true);    
     INPATH = upAvroFile(fs, inDir, DATADIR, dataDir, inputAvroFile3);
     
     args = new String[] {
@@ -291,15 +290,16 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
         "--collection", "collection1"
     };
 
-    res = ToolRunner.run(jobConf, tool, args);
-    assertEquals(0, res);
-    job = tool.job;
-    assertTrue(job.isComplete());
-    assertTrue(job.isSuccessful());
-    
-    results = server.query(new SolrQuery("*:*"));
-    
-    assertEquals(2124, results.getResults().getNumFound());
+    if (true) {
+      tool = new MapReduceIndexerTool();
+      res = ToolRunner.run(jobConf, tool, args);
+      assertEquals(0, res);
+      assertTrue(tool.job.isComplete());
+      assertTrue(tool.job.isSuccessful());
+      
+      results = server.query(new SolrQuery("*:*"));      
+      assertEquals(2124, results.getResults().getNumFound());
+    }    
     
     server.shutdown();
   }
