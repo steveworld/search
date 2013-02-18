@@ -17,6 +17,7 @@
 package org.apache.solr.hadoop.tika;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,6 +31,7 @@ import java.util.TreeMap;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -46,6 +48,7 @@ import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.PluginInfo;
 import org.apache.solr.core.SolrConfig;
 import org.apache.solr.core.SolrResourceLoader;
+import org.apache.solr.hadoop.DefaultUpdateConflictResolver;
 import org.apache.solr.hadoop.HeartBeater;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrMapper;
@@ -75,7 +78,8 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   private IndexSchema schema;
   private HeartBeater heartBeater;
 
-  public static final String SCHEMA_FIELD_NAME_OF_FILE_URI = "fileURI";
+  public static final String SCHEMA_FIELD_NAME_OF_FILE_URI = "file_uri";
+  private static final String SCHEMA_FIELD_NAME_OF_FILE_LAST_MODIFIED = DefaultUpdateConflictResolver.ORDER_BY_FIELD_NAME_DEFAULT;
 
   private static final Logger LOG = LoggerFactory.getLogger(TikaMapper.class);
   
@@ -135,23 +139,24 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     try {
       String uri = value.toString();
       Path path = new Path(uri);
-      if (!fs.exists(path)) {
+      FileStatus stats;
+      try {
+        stats = fs.getFileStatus(path);
+      } catch (FileNotFoundException e) {
+        stats = null;
+      }
+      if (stats == null) {
         LOG.info("Ignoring file that somehow has been deleted since the job was submitted: {}", path);
         return;
       }
       LOG.info("Processing file {}", path);
-      long fileLength = fs.getFileStatus(path).getLen();    
+//    uri = getFileURI(path);   
+      Map<String,String> headers = getHeaders(stats, uri);
       FSDataInputStream in = fs.open(path);
       try {
-        Map<String,String> headers = new HashMap<String, String>();
-  //      uri = getFileURI(path);   
-        headers.put(getSchema().getUniqueKeyField().getName(), uri); // use HDFS file path as docId if no docId is specified
-        headers.put(SCHEMA_FIELD_NAME_OF_FILE_URI, uri); // enable explicit storing of path in Solr
-        //headers.put("lastModified", String.valueOf(fs.getFileStatus(path).getModificationTime())); // FIXME also in SpoolDirSource
-        headers.put(Metadata.RESOURCE_NAME_KEY, path.getName()); // Tika can use the file name in guessing the right MIME type
         indexer.process(new StreamEvent(in, headers));
         context.getCounter(TikaCounters.class.getName(), TikaCounters.FILES_READ.toString()).increment(1);
-        context.getCounter(TikaCounters.class.getName(), TikaCounters.FILE_BYTES_READ.toString()).increment(fileLength);
+        context.getCounter(TikaCounters.class.getName(), TikaCounters.FILE_BYTES_READ.toString()).increment(stats.getLen());
       } catch (Exception e) {
         context.getCounter(getClass().getName() + ".errors", e.getClass().getName()).increment(1);
         LOG.error("Unable to process file " + path, e);
@@ -161,6 +166,17 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     } finally {
       heartBeater.cancelHeartBeat();
     }
+  }
+  
+  protected Map<String, String> getHeaders(FileStatus file, String uri) {
+    Map<String,String> headers = new HashMap<String, String>();
+    //  uri = getFileURI(path);   
+    headers.put(getSchema().getUniqueKeyField().getName(), uri); // use HDFS file path as docId if no docId is specified
+    headers.put(SCHEMA_FIELD_NAME_OF_FILE_URI, uri); // enable explicit storing of path in Solr
+    headers.put(SCHEMA_FIELD_NAME_OF_FILE_LAST_MODIFIED, String.valueOf(file.getModificationTime())); // FIXME also in SpoolDirSource
+    headers.put(Metadata.RESOURCE_NAME_KEY, file.getPath().getName()); // Tika can use the file name in guessing the right MIME type
+    // TODO: also add file length, owner, group, perms, file extension?
+    return headers;
   }
 
   // TODO: figure out best approach, also consider escaping issues
