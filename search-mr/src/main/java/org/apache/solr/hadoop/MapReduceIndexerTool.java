@@ -688,7 +688,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       return -1;
     }
 
-    if (options.goLive && !new GoLive().goLive(options, findOutputShardDirs(outputResultsDir, fs))) {
+    if (options.goLive && !new GoLive().goLive(options, listSortedOutputShardDirs(outputResultsDir, fs))) {
       return -1;
     }
     
@@ -849,7 +849,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
   private int createTreeMergeInputDirList(Path outputReduceDir, FileSystem fs, Path fullInputList)
       throws FileNotFoundException, IOException, UnsupportedEncodingException {
     
-    FileStatus[] dirs = findOutputShardDirs(outputReduceDir, fs);
+    FileStatus[] dirs = listSortedOutputShardDirs(outputReduceDir, fs);
     int numFiles = 0;
     FSDataOutputStream out = fs.create(fullInputList);
     try {
@@ -870,7 +870,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     return numFiles;
   }
 
-  private FileStatus[] findOutputShardDirs(Path outputReduceDir, FileSystem fs) throws FileNotFoundException,
+  private FileStatus[] listSortedOutputShardDirs(Path outputReduceDir, FileSystem fs) throws FileNotFoundException,
       IOException {
     
     final String dirPrefix = SolrOutputFormat.getOutputName(job);

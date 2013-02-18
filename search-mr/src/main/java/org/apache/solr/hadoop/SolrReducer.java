@@ -34,8 +34,8 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
     SolrRecordWriter.addReducerContext(context);
-    Class<? extends UpdateConflictResolver> resolverClass = context.getConfiguration().getClass(UPDATE_CONFLICT_RESOLVER,
-        DefaultUpdateConflictResolver.class, UpdateConflictResolver.class);
+    Class<? extends UpdateConflictResolver> resolverClass = context.getConfiguration().getClass(
+        UPDATE_CONFLICT_RESOLVER, DefaultUpdateConflictResolver.class, UpdateConflictResolver.class);
     
     if (resolverClass != null) {
       resolver = ReflectionUtils.newInstance(resolverClass, context.getConfiguration());

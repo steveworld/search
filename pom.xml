@@ -72,7 +72,7 @@
     <httpclient.version>4.1.3</httpclient.version>
     <slf4j.version>1.7.2</slf4j.version>
     <typesafe.config.version>1.0.0</typesafe.config.version>
-    <argparse4j.version>0.3.1</argparse4j.version>    
+    <argparse4j.version>0.3.2</argparse4j.version>    
     <junit.version>4.10</junit.version>
     <surefire.version>2.12.4</surefire.version>
     <maven.antrun.plugin.version>1.7</maven.antrun.plugin.version>
