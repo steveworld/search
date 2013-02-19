@@ -35,12 +35,12 @@ import org.apache.solr.common.SolrInputField;
  * from least recent to most recent (partial) update, based on a configurable
  * numeric field, which defaults to the file lastModified timestamp.
  */
-public class DefaultUpdateConflictResolver implements UpdateConflictResolver, Configurable {
+public class SortingUpdateConflictResolver implements UpdateConflictResolver, Configurable {
 
   private Configuration conf;
   private String orderByFieldName = ORDER_BY_FIELD_NAME_DEFAULT;
   
-  public static final String ORDER_BY_FIELD_NAME_KEY = DefaultUpdateConflictResolver.class.getName() + ".orderByFieldName";
+  public static final String ORDER_BY_FIELD_NAME_KEY = SortingUpdateConflictResolver.class.getName() + ".orderByFieldName";
   public static final String ORDER_BY_FIELD_NAME_DEFAULT = "file_last_modified";
 
   private static final Comparator TIMESTAMP_COMPARATOR = new TimeStampComparator();
