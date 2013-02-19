@@ -59,7 +59,7 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
 
   private Iterable<SolrInputDocumentWritable> resolve(final Text key, final Iterable<SolrInputDocumentWritable> values) {
     if (resolver instanceof NoChangeUpdateConflictResolver) {
-      return values;
+      return values; // fast path
     }
     return new Iterable<SolrInputDocumentWritable>() {
       @Override

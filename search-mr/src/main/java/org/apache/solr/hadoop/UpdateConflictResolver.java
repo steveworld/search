@@ -60,6 +60,7 @@ public interface UpdateConflictResolver {
    * @param collidingUpdates
    *          all updates in the MapReduce job that have a key equal to
    *          {@code uniqueKey} mentioned above.
+   * @return the order in which the updates shall be applied to Solr
    */
   Iterator<SolrInputDocument> orderUpdates(Text uniqueKey, Iterator<SolrInputDocument> collidingUpdates);
   
