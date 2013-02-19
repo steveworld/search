@@ -48,7 +48,7 @@ import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.PluginInfo;
 import org.apache.solr.core.SolrConfig;
 import org.apache.solr.core.SolrResourceLoader;
-import org.apache.solr.hadoop.DefaultUpdateConflictResolver;
+import org.apache.solr.hadoop.SortingUpdateConflictResolver;
 import org.apache.solr.hadoop.HeartBeater;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrMapper;
@@ -79,7 +79,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   private HeartBeater heartBeater;
 
   public static final String SCHEMA_FIELD_NAME_OF_FILE_URI = "file_uri";
-  private static final String SCHEMA_FIELD_NAME_OF_FILE_LAST_MODIFIED = DefaultUpdateConflictResolver.ORDER_BY_FIELD_NAME_DEFAULT;
+  private static final String SCHEMA_FIELD_NAME_OF_FILE_LAST_MODIFIED = SortingUpdateConflictResolver.ORDER_BY_FIELD_NAME_DEFAULT;
 
   private static final Logger LOG = LoggerFactory.getLogger(TikaMapper.class);
   

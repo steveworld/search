@@ -20,6 +20,7 @@ package org.apache.solr.hadoop;
 
 import java.util.Iterator;
 
+import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.io.Text;
 import org.apache.solr.common.SolrInputDocument;
 
@@ -38,6 +39,11 @@ import org.apache.solr.common.SolrInputDocument;
  * 
  * The caller of this interface (i.e. the Hadoop Reducer) will then apply the
  * updates to Solr in the order returned by the orderUpdates() method.
+ * 
+ * Configuration: If an UpdateConflictResolver implementation also implements
+ * {@link Configurable} then the Hadoop Reducer will call
+ * {@link Configurable#setConf(org.apache.hadoop.conf.Configuration)} on
+ * instance construction and pass the standard Hadoop configuration information.
  */
 public interface UpdateConflictResolver {
   
@@ -46,8 +52,14 @@ public interface UpdateConflictResolver {
    * key, this method returns zero or more documents in an application specific
    * order.
    * 
-   * The caller will then apply the updates to Solr in the order returned by the
-   * orderUpdate() method.
+   * The caller will then apply the updates for this key to Solr in the order
+   * returned by the orderUpdate() method.
+   * 
+   * @param uniqueKey
+   *          the document key common to all collidingUpdates mentioned below
+   * @param collidingUpdates
+   *          all updates in the MapReduce job that have a key equal to
+   *          {@code uniqueKey} mentioned above.
    */
   Iterator<SolrInputDocument> orderUpdates(Text uniqueKey, Iterator<SolrInputDocument> collidingUpdates);
   

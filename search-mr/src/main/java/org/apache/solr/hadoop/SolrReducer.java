@@ -35,25 +35,22 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
   protected void setup(Context context) throws IOException, InterruptedException {
     SolrRecordWriter.addReducerContext(context);
     Class<? extends UpdateConflictResolver> resolverClass = context.getConfiguration().getClass(
-        UPDATE_CONFLICT_RESOLVER, DefaultUpdateConflictResolver.class, UpdateConflictResolver.class);
+        UPDATE_CONFLICT_RESOLVER, SortingUpdateConflictResolver.class, UpdateConflictResolver.class);
     
-    if (resolverClass != null) {
-      resolver = ReflectionUtils.newInstance(resolverClass, context.getConfiguration());
-      /*
-       * Note that ReflectionUtils.newInstance() above also implicitly calls
-       * resolver.configure(context.getConfiguration()) if the resolver
-       * implements org.apache.hadoop.conf.Configurable
-       */
-    }
-    heartBeater = new HeartBeater(context);
+    this.resolver = ReflectionUtils.newInstance(resolverClass, context.getConfiguration());
+    /*
+     * Note that ReflectionUtils.newInstance() above also implicitly calls
+     * resolver.configure(context.getConfiguration()) if the resolver
+     * implements org.apache.hadoop.conf.Configurable
+     */
+
+    this.heartBeater = new HeartBeater(context);
   }
   
   protected void reduce(Text key, Iterable<SolrInputDocumentWritable> values, Context context) throws IOException, InterruptedException {
     heartBeater.needHeartBeat();
     try {
-      if (resolver != null) {        
-        values = resolve(key, values);
-      }
+      values = resolve(key, values);
       super.reduce(key, values, context);
     } finally {
       heartBeater.cancelHeartBeat();
@@ -61,6 +58,9 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
   }
 
   private Iterable<SolrInputDocumentWritable> resolve(final Text key, final Iterable<SolrInputDocumentWritable> values) {
+    if (resolver instanceof NoChangeUpdateConflictResolver) {
+      return values;
+    }
     return new Iterable<SolrInputDocumentWritable>() {
       @Override
       public Iterator<SolrInputDocumentWritable> iterator() {
@@ -81,20 +81,20 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
   ///////////////////////////////////////////////////////////////////////////////
   private static final class WrapIterator implements Iterator<SolrInputDocumentWritable> {
     
-    private Iterator<SolrInputDocument> iter;
+    private Iterator<SolrInputDocument> parent;
 
-    private WrapIterator(Iterator<SolrInputDocument> iter) {
-      this.iter = iter;
+    private WrapIterator(Iterator<SolrInputDocument> parent) {
+      this.parent = parent;
     }
 
     @Override
     public boolean hasNext() {
-      return iter.hasNext();
+      return parent.hasNext();
     }
 
     @Override
     public SolrInputDocumentWritable next() {
-      return new SolrInputDocumentWritable(iter.next());
+      return new SolrInputDocumentWritable(parent.next());
     }
 
     @Override
@@ -110,20 +110,20 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
   ///////////////////////////////////////////////////////////////////////////////
   private static final class UnwrapIterator implements Iterator<SolrInputDocument> {
     
-    private Iterator<SolrInputDocumentWritable> iter;
+    private Iterator<SolrInputDocumentWritable> parent;
 
-    private UnwrapIterator(Iterator<SolrInputDocumentWritable> iter) {
-      this.iter = iter;
+    private UnwrapIterator(Iterator<SolrInputDocumentWritable> parent) {
+      this.parent = parent;
     }
 
     @Override
     public boolean hasNext() {
-      return iter.hasNext();
+      return parent.hasNext();
     }
 
     @Override
     public SolrInputDocument next() {
-      return iter.next().getSolrInputDocument();
+      return parent.next().getSolrInputDocument();
     }
 
     @Override
