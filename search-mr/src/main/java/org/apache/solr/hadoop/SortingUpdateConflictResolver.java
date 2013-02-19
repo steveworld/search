@@ -33,7 +33,7 @@ import org.apache.solr.common.SolrInputField;
 /**
  * UpdateConflictResolver implementation that orders colliding updates ascending
  * from least recent to most recent (partial) update, based on a configurable
- * numeric field, which defaults to the file lastModified timestamp.
+ * numeric field, which defaults to the file_last_modified timestamp.
  */
 public class SortingUpdateConflictResolver implements UpdateConflictResolver, Configurable {
 
@@ -43,8 +43,6 @@ public class SortingUpdateConflictResolver implements UpdateConflictResolver, Co
   public static final String ORDER_BY_FIELD_NAME_KEY = SortingUpdateConflictResolver.class.getName() + ".orderByFieldName";
   public static final String ORDER_BY_FIELD_NAME_DEFAULT = "file_last_modified";
 
-  private static final Comparator TIMESTAMP_COMPARATOR = new TimeStampComparator();
-  
   @Override
   public void setConf(Configuration conf) {
     this.conf = conf;
@@ -62,20 +60,21 @@ public class SortingUpdateConflictResolver implements UpdateConflictResolver, Co
   
   @Override
   public Iterator<SolrInputDocument> orderUpdates(Text uniqueKey, Iterator<SolrInputDocument> collidingUpdates) {    
-    return sort(collidingUpdates, getOrderByFieldName(), TIMESTAMP_COMPARATOR);
+    return sort(collidingUpdates, getOrderByFieldName(), new TimeStampComparator());
   }
 
   protected Iterator<SolrInputDocument> sort(Iterator<SolrInputDocument> collidingUpdates, final String fieldName, final Comparator c) {
-    List<SolrInputDocument> sortedUpdates = new ArrayList(1);
+    // TODO: use an external merge sort in the pathological case where there are a huge amount of collisions
+    List<SolrInputDocument> sortedUpdates = new ArrayList(1); 
     while (collidingUpdates.hasNext()) {
       sortedUpdates.add(collidingUpdates.next());
     }
     if (sortedUpdates.size() > 1) { // conflicts are rare
       Collections.sort(sortedUpdates, new Comparator<SolrInputDocument>() {
         @Override
-        public int compare(SolrInputDocument w1, SolrInputDocument w2) {
-          SolrInputField f1 = w1.getField(fieldName);
-          SolrInputField f2 = w2.getField(fieldName);
+        public int compare(SolrInputDocument doc1, SolrInputDocument doc2) {
+          SolrInputField f1 = doc1.getField(fieldName);
+          SolrInputField f2 = doc2.getField(fieldName);
           if (f1 == f2) {
             return 0;
           } else if (f1 == null) {
