@@ -549,14 +549,14 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     
     LOG.info("Randomizing list of {} input files to spread indexing load more evenly among mappers: {}", numFiles, fullInputList);
     long startTime = System.currentTimeMillis();      
-    if (numFiles < job.getConfiguration().getInt(MAIN_MEMORY_RANDOMIZATION_THRESHOLD, 1000 * 1000)) {
+    if (numFiles < job.getConfiguration().getInt(MAIN_MEMORY_RANDOMIZATION_THRESHOLD, 100 * 1000)) {
       // If there are few input files reduce latency by directly running main memory randomization 
       // instead of launching a high latency MapReduce job
       randomizeFewInputFiles(fs, outputStep2Dir, fullInputList);
     } else {
       // Randomize using a MapReduce job. Use sequential algorithm below a certain threshold because there's no
       // benefit in using many parallel mapper tasks just to randomize the order of a few lines each
-      int numLinesPerRandomizerSplit = Math.max(1000 * 1000, numLinesPerSplit);
+      int numLinesPerRandomizerSplit = Math.max(10 * 1000 * 1000, numLinesPerSplit);
       Job randomizerJob = randomizeManyInputFiles(getConf(), fullInputList, outputStep2Dir, numLinesPerRandomizerSplit);
       if (!waitForCompletion(randomizerJob, options.isVerbose)) {
         return -1; // job failed
@@ -822,7 +822,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     FSDataOutputStream out = fs.create(new Path(outputStep2Dir, FULL_INPUT_LIST));
     Writer writer = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"));
     try {
-      for (String line: lines) {
+      for (String line : lines) {
         writer.write(line + "\n");
       } 
     } finally {
