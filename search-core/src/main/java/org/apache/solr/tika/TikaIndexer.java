@@ -104,10 +104,10 @@ public class TikaIndexer extends SolrIndexer {
   public static final String TIKA_CONFIG_LOCATION = ExtractingRequestHandler.CONFIG_LOCATION;
   public static final String SOLR_COLLECTION_LIST = "collection";
   public static final String SOLR_CLIENT_HOME = "solr.home";
-  public static final String SOLR_ZK_CONNECT_STRING = "zkConnectString";
-  public static final String SOLR_SERVER_URL = "url";
-  public static final String SOLR_SERVER_QUEUE_LENGTH = "queueLength";
-  public static final String SOLR_SERVER_NUM_THREADS = "numThreads";
+  public static final String ZK_HOST = "zkHost";
+  public static final String SOLR_SERVER_URL = "solr.server.url";
+  public static final String SOLR_SERVER_QUEUE_LENGTH = "solr.server.queueLength";
+  public static final String SOLR_SERVER_NUM_THREADS = "solr.server.numThreads";
   public static final String SOLR_HOME_PROPERTY_NAME = "solr.solr.home";
   public static final String ID_PREFIX = "TikaIndexer.idPrefix"; // for load testing only
 
@@ -368,22 +368,29 @@ public class TikaIndexer extends SolrIndexer {
     int i = 0;
     for (String collectionName : collectionNames) {
       String solrHome = null;
-      for (Map.Entry<String, ConfigValue> entry : subContext.entrySet()) {
-        if (entry.getKey().equals(collectionName + "." + SOLR_CLIENT_HOME)) {
-          solrHome = entry.getValue().unwrapped().toString();
-          assert solrHome != null;
-          break;
-        }
-      }
-
-      LOGGER.debug("solrHome: {}", solrHome);
       SolrParams params = new MapSolrParams(new HashMap());
-      String zkConnectString = null;
-      String solrServerUrl = "http://127.0.0.1:8983/solr/collection1";
+      String zkHost = null;
+      String solrServerUrl = "http://127.0.0.1:8983/solr/" + collectionName;
       int solrServerNumThreads = 2;
       int solrServerQueueLength = solrServerNumThreads;
       Collection<String> dateFormats = DateUtil.DEFAULT_DATE_FORMATS;
       IndexSchema schema;
+      for (Map.Entry<String, ConfigValue> entry : subContext.entrySet()) {
+        if (entry.getKey().equals(collectionName + "." + SOLR_CLIENT_HOME)) {
+          solrHome = entry.getValue().unwrapped().toString();
+          assert solrHome != null;
+        } else if (entry.getKey().equals(collectionName + "." + ZK_HOST)) {
+          zkHost = entry.getValue().unwrapped().toString();
+          assert zkHost != null;
+        } else if (entry.getKey().equals(collectionName + "." + SOLR_SERVER_URL)) {
+          solrServerUrl = entry.getValue().unwrapped().toString();
+          assert solrServerUrl != null;
+        }
+      }
+
+      LOGGER.debug("solrHome: {}", solrHome);
+      LOGGER.debug("zkHost: {}", zkHost);
+      LOGGER.debug("solrServerUrl: {}", solrServerUrl);
 
       String oldSolrHome = null;
       if (solrHome != null) {
@@ -423,14 +430,14 @@ public class TikaIndexer extends SolrIndexer {
               if (o != null && o instanceof NamedList) {
                 SolrParams invariants = SolrParams.toSolrParams((NamedList) o);
               }
-              o = initArgs.get("server");
-              if (o != null && o instanceof NamedList) {
-                SolrParams solrServerParams = SolrParams.toSolrParams((NamedList) o);
-                zkConnectString = solrServerParams.get(SOLR_ZK_CONNECT_STRING, zkConnectString);
-                solrServerUrl = solrServerParams.get(SOLR_SERVER_URL, solrServerUrl);
-                solrServerNumThreads = solrServerParams.getInt(SOLR_SERVER_NUM_THREADS, solrServerNumThreads);
-                solrServerQueueLength = solrServerParams.getInt(SOLR_SERVER_QUEUE_LENGTH, solrServerNumThreads);
-              }
+//              o = initArgs.get("server");
+//              if (o != null && o instanceof NamedList) {
+//                SolrParams solrServerParams = SolrParams.toSolrParams((NamedList) o);
+//                zkConnectString = solrServerParams.get(SOLR_ZK_CONNECT_STRING, zkConnectString);
+//                solrServerUrl = solrServerParams.get(SOLR_SERVER_URL, solrServerUrl);
+//                solrServerNumThreads = solrServerParams.getInt(SOLR_SERVER_NUM_THREADS, solrServerNumThreads);
+//                solrServerQueueLength = solrServerParams.getInt(SOLR_SERVER_QUEUE_LENGTH, solrServerNumThreads);
+//              }
 
               NamedList configDateFormats = (NamedList) initArgs.get(ExtractingRequestHandler.DATE_FORMATS);
               if (configDateFormats != null && configDateFormats.size() > 0) {
@@ -465,10 +472,12 @@ public class TikaIndexer extends SolrIndexer {
       SolrCollection solrCollection;
       if (testServers.size() > 0) {
         solrCollection = new SolrCollection(collectionName, testServers.get(i));
-      } else if (zkConnectString != null) {
+      } else if (zkHost != null) {
         try {
-          solrCollection = new SolrCollection(collectionName, new SolrServerDocumentLoader(new CloudSolrServer(
-              zkConnectString)));
+          CloudSolrServer server = new CloudSolrServer(zkHost);
+          server.setDefaultCollection(collectionName);
+          server.connect();
+          solrCollection = new SolrCollection(collectionName, new SolrServerDocumentLoader(server));
         } catch (MalformedURLException e) {
           throw new ConfigurationException(e);
         }
