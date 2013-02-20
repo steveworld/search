@@ -352,7 +352,7 @@ public class TikaIndexer extends SolrIndexer {
      * source of truth, simplify and make it unnecessary to parse schema.xml and
      * solrconfig.xml on the client side.
      */
-    Config context = getConfig().getTreeConfig();
+    Config context = getConfig();
     List<DocumentLoader> testServers = createTestSolrServers();
     Map<String, SolrCollection> collections = new LinkedHashMap();
     Config subContext = context.getConfig(SOLR_COLLECTION_LIST);

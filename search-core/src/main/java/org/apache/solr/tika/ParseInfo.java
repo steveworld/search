@@ -26,6 +26,8 @@ import org.apache.solr.handler.extraction.SolrContentHandler;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 
+import com.typesafe.config.Config;
+
 /**
  * Conduit for passing state between parser and sink components in cases where
  * API calls or {@link ParseContext} don't permit direct parameter passing.
@@ -79,7 +81,7 @@ public final class ParseInfo {
     return parseContext;
   }
 
-  public Configuration getConfig() {
+  public Config getConfig() {
     return indexer.getConfig();
   }
 
