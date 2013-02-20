@@ -1002,9 +1002,6 @@
       <str name="fmap.div">ignored_</str>
       -->            
     </lst>
-    <lst name="server">
-      <str name="url">http://127.0.0.1:8983/solr/collection1</str>
-    </lst>
   </requestHandler>
 
 

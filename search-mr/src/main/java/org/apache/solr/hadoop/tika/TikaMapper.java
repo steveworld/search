@@ -48,10 +48,10 @@ import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.PluginInfo;
 import org.apache.solr.core.SolrConfig;
 import org.apache.solr.core.SolrResourceLoader;
-import org.apache.solr.hadoop.SortingUpdateConflictResolver;
 import org.apache.solr.hadoop.HeartBeater;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrMapper;
+import org.apache.solr.hadoop.SortingUpdateConflictResolver;
 import org.apache.solr.handler.extraction.ExtractingRequestHandler;
 import org.apache.solr.request.SolrRequestHandler;
 import org.apache.solr.schema.IndexSchema;
@@ -245,15 +245,6 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
               if (o != null && o instanceof NamedList) {
                 SolrParams invariants = SolrParams.toSolrParams((NamedList) o);
               }
-// FIXME add this back
-//              o = initArgs.get("server");
-//              if (o != null && o instanceof NamedList) {
-//                SolrParams solrServerParams = SolrParams.toSolrParams((NamedList) o);
-//                zkConnectString = solrServerParams.get(SOLR_ZK_CONNECT_STRING, zkConnectString);
-//                solrServerUrl = solrServerParams.get(SOLR_SERVER_URL, solrServerUrl);
-//                solrServerNumThreads = solrServerParams.getInt(SOLR_SERVER_NUM_THREADS, solrServerNumThreads);
-//                solrServerQueueLength = solrServerParams.getInt(SOLR_SERVER_QUEUE_LENGTH, solrServerNumThreads);
-//              }
 
               NamedList configDateFormats = (NamedList) initArgs.get(ExtractingRequestHandler.DATE_FORMATS);
               if (configDateFormats != null && configDateFormats.size() > 0) {
