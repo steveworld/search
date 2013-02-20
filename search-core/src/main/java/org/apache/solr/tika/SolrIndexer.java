@@ -44,7 +44,7 @@ import com.typesafe.config.Config;
 public class SolrIndexer {
 
   private String name;
-  private Configuration config;
+  private Config config;
   private Map<String, SolrCollection> solrCollections; // proxies to remote solr
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SolrIndexer.class);
@@ -53,11 +53,11 @@ public class SolrIndexer {
   }
   
   public void configure(Config config) {
-    this.config = new Configuration(config);
+    this.config = config;
   }
   
   /** Returns the configuration settings */
-  protected Configuration getConfig() {
+  protected Config getConfig() {
       return config;
   }
 
