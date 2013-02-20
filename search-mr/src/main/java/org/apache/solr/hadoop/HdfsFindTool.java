@@ -29,9 +29,9 @@ import org.apache.hadoop.util.ToolRunner;
  *
  * Example usage:
  * <pre>
- * sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1 jar solr-mr-1.0-SNAPSHOT.jar org.apache.solr.hadoop.tika.HdfsFindTool -help
+ * sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1 jar search-mr-*-job.jar org.apache.solr.hadoop.HdfsFindTool -help
  * 
- * sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1 jar solr-mr-1.0-SNAPSHOT.jar org.apache.solr.hadoop.tika.HdfsFindTool -find hdfs:///user/whoschek/solrloadtest/iarchive/1percent/WIDE-20110309005125-crawl338 hdfs:///user/whoschek/solrloadtest/iarchive/1percent/WIDE-20110309002853-crawl337 -name '*.gz' -type f
+ * sudo -u hdfs hadoop --config /etc/hadoop/conf.cloudera.mapreduce1 jar search-mr-*-job.jar org.apache.solr.hadoop.HdfsFindTool -find hdfs:///user/whoschek/solrloadtest/iarchive/1percent/WIDE-20110309005125-crawl338 hdfs:///user/whoschek/solrloadtest/iarchive/1percent/WIDE-20110309002853-crawl337 -name '*.gz' -type f
  * </pre>
  */
 public class HdfsFindTool extends FsShell {
