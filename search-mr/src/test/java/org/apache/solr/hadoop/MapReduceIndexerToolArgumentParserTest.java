@@ -27,16 +27,12 @@ import java.util.Collections;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.solr.hadoop.MapReduceIndexerTool;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class MapReduceIndexerToolArgumentParserTest extends Assert {
-  private static final Logger LOG = LoggerFactory.getLogger(MapReduceIndexerToolArgumentParserTest.class);
   
   private FileSystem fs; 
   private MapReduceIndexerTool.MyArgumentParser parser;
@@ -92,7 +88,6 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
     assertEquals(new Integer(1), opts.shards);
     assertEquals(null, opts.fairSchedulerPool);
     assertTrue(opts.isVerbose);
-    assertTrue(opts.isRandomize);
     assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), opts.inputFiles);
     assertEmptySystemErrAndEmptySystemOut();
   }
@@ -136,7 +131,6 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
     assertEquals(new Integer(1), opts.shards);
     assertEquals(null, opts.fairSchedulerPool);
     assertTrue(opts.isVerbose);
-    assertTrue(opts.isRandomize);
     assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), opts.inputFiles);
     assertEmptySystemErrAndEmptySystemOut();
   }

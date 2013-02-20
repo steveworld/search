@@ -197,6 +197,10 @@ public class BasicMiniMRTest extends Assert {
     if (numRuns % 3 == 2) {
       args = concat(args, new String[] {"--fanout=2"});
     }
+    if (numRuns == 0) {
+      // force (slow) MapReduce based randomization to get coverage for that as well
+      args = concat(new String[] {"-D", MapReduceIndexerTool.MAIN_MEMORY_RANDOMIZATION_THRESHOLD + "=-1"}, args); 
+    }
     MapReduceIndexerTool tool = new MapReduceIndexerTool();
     int res = ToolRunner.run(jobConf, tool, args);
     assertEquals(0, res);

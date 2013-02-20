@@ -30,10 +30,12 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
@@ -83,6 +85,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
   
   public static final String RESULTS_DIR = "results";
 
+  static final String MAIN_MEMORY_RANDOMIZATION_THRESHOLD = MapReduceIndexerTool.class.getName() + ".mainMemoryRandomizationThreshold";
+  
   /** A list of input file URLs. Used as input to the Mapper */
   private static final String FULL_INPUT_LIST = "full-input-list.txt";
 
@@ -316,10 +320,6 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .action(Arguments.storeTrue())
         .help("Turn on verbose output");
   
-      Argument noRandomizeArg = parser.addArgument("--norandomize")
-        .action(Arguments.storeTrue())
-        .help(FeatureControl.SUPPRESS);
-    
       MutuallyExclusiveGroup clusterInfoGroup = parser.addMutuallyExclusiveGroup("Cluster arguments")
         .required(true)
         .description("Mutually exclusive arguments that provide information about your Solr cluster. " +
@@ -417,7 +417,6 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       opts.maxSegments = ns.getInt(maxSegmentsArg.getDest());
       opts.solrHomeDir = (File) ns.get(solrHomeDirArg.getDest());
       opts.fairSchedulerPool = (String) ns.get(fairSchedulerPoolArg.getDest());
-      opts.isRandomize = !ns.getBoolean(noRandomizeArg.getDest());
       opts.isVerbose = ns.getBoolean(verboseArg.getDest());
       opts.zkHost = (String) ns.get(zkServerAddressArg.getDest());
       opts.shardUrls = ns.getList(shardUrlsArg.getDest());
@@ -463,7 +462,6 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     int maxSegments;
     File solrHomeDir;
     String fairSchedulerPool;
-    boolean isRandomize;
     boolean isVerbose;
   }
   // END OF INNER CLASS  
@@ -548,23 +546,25 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     LOG.info("Using these parameters: numFiles: {}, mappers: {}, realMappers: {}, reducers: {}, shards: {}, fanout: {}, maxSegments: {}",
         numFiles, mappers, realMappers, reducers, options.shards, options.fanout, options.maxSegments);
         
-    if (options.isRandomize) { 
-      // there's no benefit in using many parallel mapper tasks just to randomize the order of a few lines;
-      // use sequential algorithm below a certain threshold
-      // TODO: if there are less than a million lines, reduce latency even more by running main memory sort right away instead of launching a high latency MR job      
+    
+    LOG.info("Randomizing list of {} input files to spread indexing load more evenly among mappers: {}", numFiles, fullInputList);
+    long startTime = System.currentTimeMillis();      
+    if (numFiles < job.getConfiguration().getInt(MAIN_MEMORY_RANDOMIZATION_THRESHOLD, 1000 * 1000)) {
+      // If there are few input files reduce latency by directly running main memory randomization 
+      // instead of launching a high latency MapReduce job
+      randomizeFewInputFiles(fs, outputStep2Dir, fullInputList);
+    } else {
+      // Randomize using a MapReduce job. Use sequential algorithm below a certain threshold because there's no
+      // benefit in using many parallel mapper tasks just to randomize the order of a few lines each
       int numLinesPerRandomizerSplit = Math.max(1000 * 1000, numLinesPerSplit);
-
-      long startTime = System.currentTimeMillis();
-      Job randomizerJob = randomizeInputFiles(getConf(), fullInputList, outputStep2Dir, numLinesPerRandomizerSplit);
-      LOG.info("Randomizing list of {} input files to spread indexing load more evenly among mappers: {}", numFiles, fullInputList);
+      Job randomizerJob = randomizeManyInputFiles(getConf(), fullInputList, outputStep2Dir, numLinesPerRandomizerSplit);
       if (!waitForCompletion(randomizerJob, options.isVerbose)) {
         return -1; // job failed
       }
-      float secs = (System.currentTimeMillis() - startTime) / 1000.0f;
-      LOG.info("Done. Randomizing list of {} input files took {} secs", numFiles, secs);
-    } else {
-      outputStep2Dir = outputStep1Dir;
     }
+    float secs = (System.currentTimeMillis() - startTime) / 1000.0f;
+    LOG.info("Done. Randomizing list of {} input files took {} secs", numFiles, secs);
+    
     
     job.setInputFormatClass(NLineInputFormat.class);
     NLineInputFormat.addInputPath(job, outputStep2Dir);
@@ -610,12 +610,12 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     job.setOutputValueClass(SolrInputDocumentWritable.class);
     job.getConfiguration().set(TikaIndexer.TIKA_CONFIG_LOCATION, "tika-config.xml");
     LOG.info("Indexing {} files using {} real mappers into {} reducers", numFiles, realMappers, reducers);
-    long startTime = System.currentTimeMillis();
+    startTime = System.currentTimeMillis();
     if (!waitForCompletion(job, options.isVerbose)) {
       return -1; // job failed
     }
 
-    float secs = (System.currentTimeMillis() - startTime) / 1000.0f;
+    secs = (System.currentTimeMillis() - startTime) / 1000.0f;
     LOG.info("Done. Indexing {} files using {} real mappers into {} reducers took {} secs", numFiles, realMappers, reducers, secs);
 
     int mtreeMergeIterations = 0;
@@ -738,47 +738,6 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     options.reducers = reducers;
   }
   
-  /**
-   * To uniformly spread load across all mappers we randomize fullInputList
-   * with a separate small Mapper & Reducer preprocessing step. This way
-   * each input line ends up on a random position in the output file list.
-   * Each mapper indexes a disjoint consecutive set of files such that each
-   * set has roughly the same size, at least from a probabilistic
-   * perspective.
-   * 
-   * For example an input file with the following input list of URLs:
-   * 
-   * A
-   * B
-   * C
-   * D
-   * 
-   * might be randomized into the following output list of URLs:
-   * 
-   * C
-   * A
-   * D
-   * B
-   * 
-   * The implementation sorts the list of lines by randomly generated numbers.
-   */
-  private Job randomizeInputFiles(Configuration baseConfig, Path fullInputList, Path outputStep2Dir, int numLinesPerSplit) throws IOException {
-    Job job2 = Job.getInstance(baseConfig);
-    job2.setJarByClass(getClass());
-    job2.setJobName(getClass().getName() + "/" + Utils.getShortClassName(LineRandomizerMapper.class));
-    job2.setInputFormatClass(NLineInputFormat.class);
-    NLineInputFormat.addInputPath(job2, fullInputList);
-    NLineInputFormat.setNumLinesPerSplit(job2, numLinesPerSplit);          
-    job2.setMapperClass(LineRandomizerMapper.class);
-    job2.setReducerClass(LineRandomizerReducer.class);
-    job2.setOutputFormatClass(TextOutputFormat.class);
-    FileOutputFormat.setOutputPath(job2, outputStep2Dir);
-    job2.setNumReduceTasks(1);
-    job2.setOutputKeyClass(LongWritable.class);
-    job2.setOutputValueClass(Text.class);
-    return job2;
-  }
-
   private long addInputFiles(List<Path> inputFiles, List<Path> inputLists, Path fullInputList, Configuration conf) throws IOException {
     long numFiles = 0;
     FileSystem fs = fullInputList.getFileSystem(conf);
@@ -846,6 +805,72 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     return numFiles;
   }
   
+  private void randomizeFewInputFiles(FileSystem fs, Path outputStep2Dir, Path fullInputList) throws UnsupportedEncodingException, IOException {
+    List<String> lines = new ArrayList();
+    BufferedReader reader = new BufferedReader(new InputStreamReader(fs.open(fullInputList), "UTF-8"));
+    try {
+      String line;
+      while ((line = reader.readLine()) != null) {
+        lines.add(line);
+      }
+    } finally {
+      reader.close();
+    }
+    
+    Collections.shuffle(lines, new Random(421439783L)); // constant seed for reproducability
+    
+    FSDataOutputStream out = fs.create(new Path(outputStep2Dir, FULL_INPUT_LIST));
+    Writer writer = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"));
+    try {
+      for (String line: lines) {
+        writer.write(line + "\n");
+      } 
+    } finally {
+      writer.close();
+    }
+  }
+
+  /**
+   * To uniformly spread load across all mappers we randomize fullInputList
+   * with a separate small Mapper & Reducer preprocessing step. This way
+   * each input line ends up on a random position in the output file list.
+   * Each mapper indexes a disjoint consecutive set of files such that each
+   * set has roughly the same size, at least from a probabilistic
+   * perspective.
+   * 
+   * For example an input file with the following input list of URLs:
+   * 
+   * A
+   * B
+   * C
+   * D
+   * 
+   * might be randomized into the following output list of URLs:
+   * 
+   * C
+   * A
+   * D
+   * B
+   * 
+   * The implementation sorts the list of lines by randomly generated numbers.
+   */
+  private Job randomizeManyInputFiles(Configuration baseConfig, Path fullInputList, Path outputStep2Dir, int numLinesPerSplit) throws IOException {
+    Job job2 = Job.getInstance(baseConfig);
+    job2.setJarByClass(getClass());
+    job2.setJobName(getClass().getName() + "/" + Utils.getShortClassName(LineRandomizerMapper.class));
+    job2.setInputFormatClass(NLineInputFormat.class);
+    NLineInputFormat.addInputPath(job2, fullInputList);
+    NLineInputFormat.setNumLinesPerSplit(job2, numLinesPerSplit);          
+    job2.setMapperClass(LineRandomizerMapper.class);
+    job2.setReducerClass(LineRandomizerReducer.class);
+    job2.setOutputFormatClass(TextOutputFormat.class);
+    FileOutputFormat.setOutputPath(job2, outputStep2Dir);
+    job2.setNumReduceTasks(1);
+    job2.setOutputKeyClass(LongWritable.class);
+    job2.setOutputValueClass(Text.class);
+    return job2;
+  }
+
   private int createTreeMergeInputDirList(Path outputReduceDir, FileSystem fs, Path fullInputList)
       throws FileNotFoundException, IOException, UnsupportedEncodingException {
     
