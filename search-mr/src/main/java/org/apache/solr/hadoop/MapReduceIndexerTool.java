@@ -28,7 +28,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -85,7 +84,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
   
   public static final String RESULTS_DIR = "results";
 
-  static final String MAIN_MEMORY_RANDOMIZATION_THRESHOLD = MapReduceIndexerTool.class.getName() + ".mainMemoryRandomizationThreshold";
+  static final String MAIN_MEMORY_RANDOMIZATION_THRESHOLD = 
+      MapReduceIndexerTool.class.getName() + ".mainMemoryRandomizationThreshold";
   
   /** A list of input file URLs. Used as input to the Mapper */
   private static final String FULL_INPUT_LIST = "full-input-list.txt";
@@ -543,7 +543,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     int realMappers = Math.min(mappers, (int) ceilDivide(numFiles, numLinesPerSplit));
     calculateNumReducers(options, realMappers);
     int reducers = options.reducers;
-    LOG.info("Using these parameters: numFiles: {}, mappers: {}, realMappers: {}, reducers: {}, shards: {}, fanout: {}, maxSegments: {}",
+    LOG.info("Using these parameters: " +
+    		"numFiles: {}, mappers: {}, realMappers: {}, reducers: {}, shards: {}, fanout: {}, maxSegments: {}",
         numFiles, mappers, realMappers, reducers, options.shards, options.fanout, options.maxSegments);
         
     
@@ -738,7 +739,9 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     options.reducers = reducers;
   }
   
-  private long addInputFiles(List<Path> inputFiles, List<Path> inputLists, Path fullInputList, Configuration conf) throws IOException {
+  private long addInputFiles(List<Path> inputFiles, List<Path> inputLists, Path fullInputList, Configuration conf) 
+      throws IOException {
+    
     long numFiles = 0;
     FileSystem fs = fullInputList.getFileSystem(conf);
     FSDataOutputStream out = fs.create(fullInputList);
@@ -805,7 +808,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     return numFiles;
   }
   
-  private void randomizeFewInputFiles(FileSystem fs, Path outputStep2Dir, Path fullInputList) throws UnsupportedEncodingException, IOException {
+  private void randomizeFewInputFiles(FileSystem fs, Path outputStep2Dir, Path fullInputList) throws IOException {    
     List<String> lines = new ArrayList();
     BufferedReader reader = new BufferedReader(new InputStreamReader(fs.open(fullInputList), "UTF-8"));
     try {
@@ -854,7 +857,9 @@ public class MapReduceIndexerTool extends Configured implements Tool {
    * 
    * The implementation sorts the list of lines by randomly generated numbers.
    */
-  private Job randomizeManyInputFiles(Configuration baseConfig, Path fullInputList, Path outputStep2Dir, int numLinesPerSplit) throws IOException {
+  private Job randomizeManyInputFiles(Configuration baseConfig, Path fullInputList, Path outputStep2Dir, int numLinesPerSplit) 
+      throws IOException {
+    
     Job job2 = Job.getInstance(baseConfig);
     job2.setJarByClass(getClass());
     job2.setJobName(getClass().getName() + "/" + Utils.getShortClassName(LineRandomizerMapper.class));
@@ -872,7 +877,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
   }
 
   private int createTreeMergeInputDirList(Path outputReduceDir, FileSystem fs, Path fullInputList)
-      throws FileNotFoundException, IOException, UnsupportedEncodingException {
+      throws FileNotFoundException, IOException {
     
     FileStatus[] dirs = listSortedOutputShardDirs(outputReduceDir, fs);
     int numFiles = 0;
@@ -959,7 +964,9 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     assert opts.shards > 0;
   }
   
-  private boolean waitForCompletion(Job job, boolean isVerbose) throws IOException, InterruptedException, ClassNotFoundException {
+  private boolean waitForCompletion(Job job, boolean isVerbose) 
+      throws IOException, InterruptedException, ClassNotFoundException {
+    
     LOG.trace("Running job: " + getJobInfo(job));
     boolean success = job.waitForCompletion(isVerbose);
     if (!success) {
