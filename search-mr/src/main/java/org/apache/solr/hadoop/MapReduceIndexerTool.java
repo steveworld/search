@@ -131,7 +131,15 @@ public class MapReduceIndexerTool extends Configured implements Tool {
           "PDF, Word, Excel, etc. are provided out of the box, and additional custom parsers for additional " +
           "file or data formats can be added as Apache Tika plugins. Any kind of data can be detected and indexed - " +
           "a file is an InputStream of any format and parsers for any data format and any custom ETL logic " +
-          "can be registered. " +
+          "can be registered.\n" +
+          "Files are mapped to MIME types via the standard Tika configuration mechanism, i.e. by passing on the " +
+          "classpath the config files org/apache/tika/mime/tika-mimetypes.xml (which already ships embedded in " +
+          "tika-core.jar - see " +
+          "http://github.com/apache/tika/blob/trunk/tika-core/src/main/resources/org/apache/tika/mime/tika-mimetypes.xml) " +
+          "and optionally also the config file org/apache/tika/mime/custom-mimetypes.xml, which extends and overrides " +
+          "the settings in tika-mimetypes.xml with custom directives.\n" +
+          "Next, MIME types are mapped to Tika parsers (Java classes) via the standard Tika configuration mechanism, " +
+          "i.e. by passing the config file tika-config.xml." +
           "\n\n" +
           "3) Reducer phase: This (parallel) phase loads the mapper's SolrInputDocuments into one EmbeddedSolrServer per reducer. " +
           "Each such reducer and Solr server can be seen as a (micro) shard. The Solr servers store their " +
@@ -324,7 +332,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .required(true)
         .description("Mutually exclusive arguments that provide information about your Solr cluster. " +
               "If you are not using --golive, pass the --shards argument. If you are building shards for " +
-              "a non SolrCloud cluster, pass the --shardurl argument one or more times. If you are building " +
+              "a Non-SolrCloud cluster, pass the --shardurl argument one or more times. If you are building " +
               "shards for a SolrCloud cluster, pass the --zkhost argument. " +
               "Using --golive requires either --shardurl or --zkhost.");
 
