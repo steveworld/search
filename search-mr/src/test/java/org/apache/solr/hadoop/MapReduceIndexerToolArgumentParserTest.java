@@ -89,6 +89,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
     assertEquals(null, opts.fairSchedulerPool);
     assertTrue(opts.isVerbose);
     assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), opts.inputFiles);
+    assertEquals(SortingUpdateConflictResolver.class.getName(), opts.updateConflictResolver);
     assertEmptySystemErrAndEmptySystemOut();
   }
 

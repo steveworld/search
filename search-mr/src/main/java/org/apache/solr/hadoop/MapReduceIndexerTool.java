@@ -132,7 +132,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
           "file or data formats can be added as Apache Tika plugins. Any kind of data can be detected and indexed - " +
           "a file is an InputStream of any format and parsers for any data format and any custom ETL logic " +
           "can be registered.\n" +
-          "Files are mapped to MIME types via the standard Tika configuration mechanism, i.e. by passing on the " +
+          "Input files are mapped to MIME types via the standard Tika configuration mechanism, i.e. by passing on the " +
           "classpath the config files org/apache/tika/mime/tika-mimetypes.xml (which already ships embedded in " +
           "tika-core.jar - see " +
           "http://github.com/apache/tika/blob/trunk/tika-core/src/main/resources/org/apache/tika/mime/tika-mimetypes.xml) " +
@@ -296,7 +296,23 @@ public class MapReduceIndexerTool extends Configured implements Tool {
             "and tiered lucene merges to the clustered case. The subsequent mapper-only phase " +
             "merges the output of said large number of reducers to the number of shards expected by the user, " +
             "again by utilizing more available parallelism on the cluster.");
-        
+
+      Argument updateConflictResolverArg = parser.addArgument("--updateconflictresolver")
+      .metavar("FQCN")
+      .type(String.class)
+      .setDefault(SortingUpdateConflictResolver.class.getName())
+      .help("Fully qualified class name of a Java class that implements the UpdateConflictResolver interface. This enables " +
+      		"deduplication and ordering of a series of document updates for the same unique document key. For example, " +
+      		"a MapReduce batch job might index multiple files in the same job where some of the files contain old and " +
+      		"new versions of the very same document, using the same unique document key.\n" +
+      		"Typically, implementations of this interface forbid collisions by throwing an exception, or ignore all but " +
+      		"the most recent document version, or, in the general case, order colliding updates ascending from least " +
+      		"recent to most recent (partial) update. The caller of this interface (i.e. the Hadoop Reducer) will then " +
+      		"apply the updates to Solr in the order returned by the orderUpdates() method.\n" +
+      		"The default SortingUpdateConflictResolver implementation orders colliding updates ascending from least " +
+      		"recent to most recent (partial) update, based on a configurable numeric field, which defaults to the " +
+      		"file_last_modified timestamp.");
+      
       Argument fanoutArg = parser.addArgument("--fanout")
         .metavar("INTEGER")
         .type(Integer.class)
@@ -421,17 +437,18 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       opts.outputDir = (Path) ns.get(outputDirArg.getDest());
       opts.mappers = ns.getInt(mappersArg.getDest());
       opts.reducers = ns.getInt(reducersArg.getDest());
+      opts.updateConflictResolver = ns.getString(updateConflictResolverArg.getDest());
       opts.fanout = ns.getInt(fanoutArg.getDest());
       opts.maxSegments = ns.getInt(maxSegmentsArg.getDest());
       opts.solrHomeDir = (File) ns.get(solrHomeDirArg.getDest());
-      opts.fairSchedulerPool = (String) ns.get(fairSchedulerPoolArg.getDest());
+      opts.fairSchedulerPool = ns.getString(fairSchedulerPoolArg.getDest());
       opts.isVerbose = ns.getBoolean(verboseArg.getDest());
-      opts.zkHost = (String) ns.get(zkServerAddressArg.getDest());
+      opts.zkHost = ns.getString(zkServerAddressArg.getDest());
       opts.shardUrls = ns.getList(shardUrlsArg.getDest());
       opts.shards = ns.getInt(shardsArg.getDest());
       opts.goLive = ns.getBoolean(goLiveArg.getDest());
       opts.golivethreads = ns.getInt(golivethreadsArg.getDest());
-      opts.collection = (String) ns.get(collectionArg.getDest());
+      opts.collection = ns.getString(collectionArg.getDest());
 
       try {
         verifyGoLiveArgs(opts, parser);
@@ -465,6 +482,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     Path outputDir;
     int mappers;
     int reducers;
+    String updateConflictResolver;
     int fanout;
     Integer shards;
     int maxSegments;
@@ -590,6 +608,10 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     if (job.getConfiguration().get(JobContext.REDUCE_CLASS_ATTR) == null) { // enable customization
       job.setReducerClass(SolrReducer.class);
     }
+    if (options.updateConflictResolver == null) {
+      throw new IllegalArgumentException("updateConflictResolver must not be null");
+    }
+    job.getConfiguration().set(SolrReducer.UPDATE_CONFLICT_RESOLVER, options.updateConflictResolver);
     
     if (options.zkHost != null) {
       assert options.collection != null;
