@@ -474,10 +474,10 @@ public class TikaIndexer extends SolrIndexer {
         solrCollection = new SolrCollection(collectionName, testServers.get(i));
       } else if (zkHost != null) {
         try {
-          CloudSolrServer server = new CloudSolrServer(zkHost);
-          server.setDefaultCollection(collectionName);
-          server.connect();
-          solrCollection = new SolrCollection(collectionName, new SolrServerDocumentLoader(server));
+          CloudSolrServer cloudSolrServer = new CloudSolrServer(zkHost);
+          cloudSolrServer.setDefaultCollection(collectionName);
+          cloudSolrServer.connect();
+          solrCollection = new SolrCollection(collectionName, new SolrServerDocumentLoader(cloudSolrServer));
         } catch (MalformedURLException e) {
           throw new ConfigurationException(e);
         }
