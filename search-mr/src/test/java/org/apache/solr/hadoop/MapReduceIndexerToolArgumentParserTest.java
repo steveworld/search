@@ -179,6 +179,20 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   }
 
   @Test
+  public void testArgsParserUpdateConflictResolver() {
+    String[] args = new String[] { 
+        "--inputlist", "file:///tmp",
+        "--outputdir", "file:/tmp/foo",
+        "--solrhomedir", "/", 
+        "--shards", "1",
+        "--updateconflictresolver", NoChangeUpdateConflictResolver.class.getName(),
+        };
+    assertNull(parser.parseArgs(args, fs, opts));
+    assertEquals(NoChangeUpdateConflictResolver.class.getName(), opts.updateConflictResolver);
+    assertEmptySystemErrAndEmptySystemOut();
+  }
+
+  @Test
   public void testArgsParserUnknownArgName() {
     String[] args = new String[] { 
         "--xxxxxxxxinputlist", "file:///tmp",

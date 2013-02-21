@@ -139,7 +139,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
           "and optionally also the config file org/apache/tika/mime/custom-mimetypes.xml, which extends and overrides " +
           "the settings in tika-mimetypes.xml with custom directives.\n" +
           "Next, MIME types are mapped to Tika parsers (Java classes) via the standard Tika configuration mechanism, " +
-          "i.e. by passing the config file tika-config.xml." +
+          "i.e. by passing the config file tika-config.xml. This config file lists which Java parser classes are " +
+          "invoked for which MIME types." +
           "\n\n" +
           "3) Reducer phase: This (parallel) phase loads the mapper's SolrInputDocuments into one EmbeddedSolrServer per reducer. " +
           "Each such reducer and Solr server can be seen as a (micro) shard. The Solr servers store their " +
@@ -180,18 +181,18 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "    -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "    -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "    --solrhomedir src/test/resources/solr/minimr \\\n" +
-              "    --outputdir hdfs://c2202.halxg.cloudera.com/user/whoschek/test \\\n" + 
+              "    --outputdir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
               "    --shards 1 \\\n" + 
-              "    hdfs:///user/whoschek/test-documents/sample-statuses-20120906-141433.avro\n" +
+              "    hdfs:///user/$USER/test-documents/sample-statuses-20120906-141433.avro\n" +
               "\n" +
               "  # (Re)index all files that match all of the following conditions:\n" +
-              "  # 1) File is contained somewhere in the directory tree rooted at hdfs:///user/whoschek/solrloadtest/twitter/tweets\n" +
+              "  # 1) File is contained somewhere in the directory tree rooted at hdfs:///user/$USER/solrloadtest/twitter/tweets\n" +
               "  # 2) file name matches the glob pattern 'sample-statuses*.gz'\n" +
               "  # 3) file was last modified less than 100000 minutes ago\n" +
               "  # 4) file size is between 1 MB and 1 GB\n" +
               "  # Also include extra library jar file containing JSON tweet Java parser:\n" +
               "  hadoop jar target/search-mr-*-job.jar " + HdfsFindTool.class.getName() + " \\\n" + 
-              "    -find hdfs:///user/whoschek/solrloadtest/twitter/tweets \\\n" + 
+              "    -find hdfs:///user/$USER/solrloadtest/twitter/tweets \\\n" + 
               "    -type f \\\n" + 
               "    -name 'sample-statuses*.gz' \\\n" + 
               "    -mmin -1000000 \\\n" + 
@@ -205,7 +206,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "    -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "    -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "    --solrhomedir src/test/resources/solr/minimr \\\n" + 
-              "    --outputdir hdfs://c2202.halxg.cloudera.com/user/whoschek/test \\\n" + 
+              "    --outputdir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
               "    --shards 100 \\\n" + 
               "    --inputlist -\n" +
               "\n" +
@@ -219,7 +220,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "    -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "    -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "    --solrhomedir src/test/resources/solr/minimr \\\n" + 
-              "    --outputdir hdfs://c2202.halxg.cloudera.com/user/whoschek/test \\\n" + 
+              "    --outputdir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
               "    --shardurl http://solr001.mycompany.com:8983/solr/collection1 \\\n" + 
               "    --shardurl http://solr002.mycompany.com:8983/solr/collection1 \\\n" + 
               "    --golive \\\n" + 
@@ -235,7 +236,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "    -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "    -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "    --solrhomedir src/test/resources/solr/minimr \\\n" + 
-              "    --outputdir hdfs://c2202.halxg.cloudera.com/user/whoschek/test \\\n" + 
+              "    --outputdir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
               "    --zkhost zk01.mycompany.com:2181/solr \\\n" + 
               "    --collection collection1 \\\n" + 
               "    --golive \\\n" + 
@@ -248,7 +249,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       Argument inputListArg = parser.addArgument("--inputlist")
         .action(Arguments.append())
         .metavar("URI")
-  //      .type(new ArgumentTypes.PathArgumentType(fs).verifyExists().verifyCanRead())
+  //      .type(new PathArgumentType(fs).verifyExists().verifyCanRead())
         .type(Path.class)
         .help("Local URI or HDFS URI of a file containing a list of HDFS URIs to index, one URI per line. " + 
               "If '-' is specified, URIs are read from the standard input. " + 
@@ -276,6 +277,22 @@ public class MapReduceIndexerTool extends Configured implements Tool {
           .required(true)
           .help("Local dir containing Solr conf/ and lib/");
     
+      Argument updateConflictResolverArg = parser.addArgument("--updateconflictresolver")
+      .metavar("FQCN")
+      .type(String.class)
+      .setDefault(SortingUpdateConflictResolver.class.getName())
+      .help("Fully qualified class name of a Java class that implements the UpdateConflictResolver interface. " +
+      		"This enables deduplication and ordering of a series of document updates for the same unique document " +
+      		"key. For example, a MapReduce batch job might index multiple files in the same job where some of the " +
+      		"files contain old and new versions of the very same document, using the same unique document key.\n" +
+          "Typically, implementations of this interface forbid collisions by throwing an exception, or ignore all but " +
+          "the most recent document version, or, in the general case, order colliding updates ascending from least " +
+          "recent to most recent (partial) update. The caller of this interface (i.e. the Hadoop Reducer) will then " +
+          "apply the updates to Solr in the order returned by the orderUpdates() method.\n" +
+          "The default SortingUpdateConflictResolver implementation orders colliding updates ascending from least " +
+          "recent to most recent (partial) update, based on a configurable numeric Solr field, which defaults to the " +
+          "file_last_modified timestamp.");
+      
       Argument mappersArg = parser.addArgument("--mappers")
         .metavar("INTEGER")
         .type(Integer.class)
@@ -297,22 +314,6 @@ public class MapReduceIndexerTool extends Configured implements Tool {
             "merges the output of said large number of reducers to the number of shards expected by the user, " +
             "again by utilizing more available parallelism on the cluster.");
 
-      Argument updateConflictResolverArg = parser.addArgument("--updateconflictresolver")
-      .metavar("FQCN")
-      .type(String.class)
-      .setDefault(SortingUpdateConflictResolver.class.getName())
-      .help("Fully qualified class name of a Java class that implements the UpdateConflictResolver interface. This enables " +
-      		"deduplication and ordering of a series of document updates for the same unique document key. For example, " +
-      		"a MapReduce batch job might index multiple files in the same job where some of the files contain old and " +
-      		"new versions of the very same document, using the same unique document key.\n" +
-      		"Typically, implementations of this interface forbid collisions by throwing an exception, or ignore all but " +
-      		"the most recent document version, or, in the general case, order colliding updates ascending from least " +
-      		"recent to most recent (partial) update. The caller of this interface (i.e. the Hadoop Reducer) will then " +
-      		"apply the updates to Solr in the order returned by the orderUpdates() method.\n" +
-      		"The default SortingUpdateConflictResolver implementation orders colliding updates ascending from least " +
-      		"recent to most recent (partial) update, based on a configurable numeric Solr field, which defaults to the " +
-      		"file_last_modified timestamp.");
-      
       Argument fanoutArg = parser.addArgument("--fanout")
         .metavar("INTEGER")
         .type(Integer.class)
