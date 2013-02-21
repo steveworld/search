@@ -186,7 +186,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "    hdfs:///user/$USER/test-documents/sample-statuses-20120906-141433.avro\n" +
               "\n" +
               "  # (Re)index all files that match all of the following conditions:\n" +
-              "  # 1) File is contained somewhere in the directory tree rooted at hdfs:///user/$USER/solrloadtest/twitter/tweets\n" +
+              "  # 1) File is contained in dir tree hdfs:///user/$USER/solrloadtest/twitter/tweets\n" +
               "  # 2) file name matches the glob pattern 'sample-statuses*.gz'\n" +
               "  # 3) file was last modified less than 100000 minutes ago\n" +
               "  # 4) file size is between 1 MB and 1 GB\n" +
