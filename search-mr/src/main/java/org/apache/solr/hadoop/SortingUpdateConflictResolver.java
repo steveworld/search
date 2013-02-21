@@ -33,7 +33,7 @@ import org.apache.solr.common.SolrInputField;
 /**
  * UpdateConflictResolver implementation that orders colliding updates ascending
  * from least recent to most recent (partial) update, based on a configurable
- * numeric field, which defaults to the file_last_modified timestamp.
+ * numeric Solr field, which defaults to the file_last_modified timestamp.
  */
 public class SortingUpdateConflictResolver implements UpdateConflictResolver, Configurable {
 

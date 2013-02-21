@@ -310,7 +310,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       		"recent to most recent (partial) update. The caller of this interface (i.e. the Hadoop Reducer) will then " +
       		"apply the updates to Solr in the order returned by the orderUpdates() method.\n" +
       		"The default SortingUpdateConflictResolver implementation orders colliding updates ascending from least " +
-      		"recent to most recent (partial) update, based on a configurable numeric field, which defaults to the " +
+      		"recent to most recent (partial) update, based on a configurable numeric Solr field, which defaults to the " +
       		"file_last_modified timestamp.");
       
       Argument fanoutArg = parser.addArgument("--fanout")
