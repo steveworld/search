@@ -326,8 +326,7 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
 
     jetty.setShards(shardList);
     URI uri = dfsCluster.getFileSystem().getUri();
-    jetty.setDataDir(uri.toString().substring("hdfs:/".length(),
-        uri.toString().length())
+    jetty.setDataDir(uri.toString()
         + "/" + new File(dataDir).getName());
     
     if (System.getProperty("collection") == null) {
@@ -336,7 +335,6 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     
     jetty.start();
     
-    System.clearProperty("solr.ulog.dir");
     System.clearProperty("collection");
     
     return jetty;
