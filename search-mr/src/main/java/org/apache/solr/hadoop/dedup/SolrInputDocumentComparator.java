@@ -24,7 +24,8 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.SolrInputField;
 
 /**
- * TODO 
+ * Default mechanism of determining which of two Solr documents with the same
+ * key is the more recent version.
  */
 public final class SolrInputDocumentComparator implements Comparator<SolrInputDocument> {
   
