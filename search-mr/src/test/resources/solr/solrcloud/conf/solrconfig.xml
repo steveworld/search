@@ -202,7 +202,7 @@
          More details on the nuances of each LockFactory...
          http://wiki.apache.org/lucene-java/AvailableLockFactories
     -->
-      <lockType>none</lockType>
+      <lockType>hdfs</lockType>
 
     <!-- Unlock On Startup
 
