@@ -23,6 +23,9 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.hadoop.dedup.NoChangeUpdateConflictResolver;
+import org.apache.solr.hadoop.dedup.RetainMostRecentUpdateConflictResolver;
+import org.apache.solr.hadoop.dedup.UpdateConflictResolver;
 
 public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, SolrInputDocumentWritable> {
 
@@ -35,7 +38,7 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
   protected void setup(Context context) throws IOException, InterruptedException {
     SolrRecordWriter.addReducerContext(context);
     Class<? extends UpdateConflictResolver> resolverClass = context.getConfiguration().getClass(
-        UPDATE_CONFLICT_RESOLVER, SortingUpdateConflictResolver.class, UpdateConflictResolver.class);
+        UPDATE_CONFLICT_RESOLVER, RetainMostRecentUpdateConflictResolver.class, UpdateConflictResolver.class);
     
     this.resolver = ReflectionUtils.newInstance(resolverClass, context.getConfiguration());
     /*

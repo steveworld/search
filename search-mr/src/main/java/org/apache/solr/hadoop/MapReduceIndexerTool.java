@@ -67,6 +67,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.solr.hadoop.dedup.RetainMostRecentUpdateConflictResolver;
 import org.apache.solr.hadoop.tika.TikaMapper;
 import org.apache.solr.tika.TikaIndexer;
 import org.slf4j.Logger;
@@ -280,7 +281,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       Argument updateConflictResolverArg = parser.addArgument("--updateconflictresolver")
       .metavar("FQCN")
       .type(String.class)
-      .setDefault(SortingUpdateConflictResolver.class.getName())
+      .setDefault(RetainMostRecentUpdateConflictResolver.class.getName())
       .help("Fully qualified class name of a Java class that implements the UpdateConflictResolver interface. " +
       		"This enables deduplication and ordering of a series of document updates for the same unique document " +
       		"key. For example, a MapReduce batch job might index multiple files in the same job where some of the " +

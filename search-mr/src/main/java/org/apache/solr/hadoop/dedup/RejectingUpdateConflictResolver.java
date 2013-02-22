@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.solr.hadoop;
+package org.apache.solr.hadoop.dedup;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -28,7 +28,7 @@ import org.apache.solr.common.SolrInputDocument;
  * UpdateConflictResolver implementation that rejects multiple documents with
  * the same key with an exception.
  */
-public final class ForbiddedUpdateConflictResolver implements UpdateConflictResolver {
+public final class RejectingUpdateConflictResolver implements UpdateConflictResolver {
 
   @Override
   public Iterator<SolrInputDocument> orderUpdates(Text uniqueKey, Iterator<SolrInputDocument> collidingUpdates) {    

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.solr.hadoop;
+package org.apache.solr.hadoop.dedup;
 
 import java.util.Iterator;
 
