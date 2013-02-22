@@ -166,9 +166,8 @@ class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     if (!fs.exists(solrDataDir) && !fs.mkdirs(solrDataDir)) {
       throw new IOException("Unable to create " + solrDataDir);
     }
-    // FIXME hdfsdirectory expects absolute path, solr doesn't generally
-    // though
-    String dataDirStr = solrDataDir.toUri().toString().substring("hdfs://".length() - 1); // FIXME hack alert!
+
+    String dataDirStr = solrDataDir.toUri().toString();
     props.setProperty("solr.data.dir", dataDirStr);
     props.setProperty("solr.home", solrHomeDir.toString());
 

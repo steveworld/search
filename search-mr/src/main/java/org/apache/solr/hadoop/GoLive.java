@@ -95,8 +95,7 @@ class GoLive {
               CoreAdminRequest.MergeIndexes mergeRequest = new CoreAdminRequest.MergeIndexes();
               mergeRequest.setCoreName(name);
               mergeRequest.setIndexDirs(Arrays.asList(new String[] {dir.getPath()
-                  .toString().substring("hdfs:/".length())
-                  + "/data/index"}));
+                  .toString() + "/data/index"}));
               try {
                 mergeRequest.process(server);
                 req.success = true;
