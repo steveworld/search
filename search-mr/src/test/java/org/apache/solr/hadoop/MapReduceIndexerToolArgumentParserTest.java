@@ -27,6 +27,8 @@ import java.util.Collections;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.solr.hadoop.dedup.NoChangeUpdateConflictResolver;
+import org.apache.solr.hadoop.dedup.RetainMostRecentUpdateConflictResolver;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -89,7 +91,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
     assertEquals(null, opts.fairSchedulerPool);
     assertTrue(opts.isVerbose);
     assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), opts.inputFiles);
-    assertEquals(SortingUpdateConflictResolver.class.getName(), opts.updateConflictResolver);
+    assertEquals(RetainMostRecentUpdateConflictResolver.class.getName(), opts.updateConflictResolver);
     assertEmptySystemErrAndEmptySystemOut();
   }
 

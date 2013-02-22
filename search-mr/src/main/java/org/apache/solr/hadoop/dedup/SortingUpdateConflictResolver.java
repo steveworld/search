@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.solr.hadoop;
+package org.apache.solr.hadoop.dedup;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,7 +28,6 @@ import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.solr.common.SolrInputDocument;
-import org.apache.solr.common.SolrInputField;
 
 /**
  * UpdateConflictResolver implementation that orders colliding updates ascending
@@ -60,66 +59,19 @@ public class SortingUpdateConflictResolver implements UpdateConflictResolver, Co
   
   @Override
   public Iterator<SolrInputDocument> orderUpdates(Text uniqueKey, Iterator<SolrInputDocument> collidingUpdates) {    
-    return sort(collidingUpdates, getOrderByFieldName(), new TimeStampComparator());
+    return sort(collidingUpdates, getOrderByFieldName(), new SolrInputDocumentComparator.TimeStampComparator());
   }
 
-  protected Iterator<SolrInputDocument> sort(Iterator<SolrInputDocument> collidingUpdates, final String fieldName, final Comparator c) {
+  protected Iterator<SolrInputDocument> sort(Iterator<SolrInputDocument> collidingUpdates, String fieldName, Comparator child) {
     // TODO: use an external merge sort in the pathological case where there are a huge amount of collisions
     List<SolrInputDocument> sortedUpdates = new ArrayList(1); 
     while (collidingUpdates.hasNext()) {
       sortedUpdates.add(collidingUpdates.next());
     }
     if (sortedUpdates.size() > 1) { // conflicts are rare
-      Collections.sort(sortedUpdates, new Comparator<SolrInputDocument>() {
-        @Override
-        public int compare(SolrInputDocument doc1, SolrInputDocument doc2) {
-          SolrInputField f1 = doc1.getField(fieldName);
-          SolrInputField f2 = doc2.getField(fieldName);
-          if (f1 == f2) {
-            return 0;
-          } else if (f1 == null) {
-            return -1;
-          } else if (f2 == null) {
-            return 1;
-          }
-          
-          Object v1 = f1.getFirstValue();
-          Object v2 = f2.getFirstValue();          
-          return c.compare(v1, v2);
-        }
-      });
+      Collections.sort(sortedUpdates, new SolrInputDocumentComparator(fieldName, child));
     }
     return sortedUpdates.iterator();
   }
-  
-  
-  ///////////////////////////////////////////////////////////////////////////////
-  // Nested classes:
-  ///////////////////////////////////////////////////////////////////////////////
-  public static final class TimeStampComparator implements Comparator {
-
-    @Override
-    public int compare(Object v1, Object v2) {
-      if (v1 == v2) {
-        return 0;
-      } else if (v1 == null) {
-        return -1;
-      } else if (v2 == null) {
-        return 1;
-      }
-      long t1 = getLong(v1);
-      long t2 = getLong(v2);          
-      return (t1 < t2 ? -1 : (t1==t2 ? 0 : 1));
-    }
     
-    private long getLong(Object v) {
-      if (v instanceof Long) {
-        return ((Long) v).longValue();
-      } else {
-        return Long.parseLong(v.toString());
-      }
-    }      
-    
-  }
-
 }
