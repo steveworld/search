@@ -76,7 +76,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Public API for a MapReduce batch job driver that creates a set of Solr index
- * shards from a list of input files and writes the indexes into HDFS, in a
+ * shards from a set of input files and writes the indexes into HDFS, in a
  * flexible, scalable and fault-tolerant manner.
  */
 public class MapReduceIndexerTool extends Configured implements Tool {
@@ -119,9 +119,10 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .newArgumentParser("hadoop [GenericOptions]... jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName(), false)
         .defaultHelp(true)
         .description(
-          "MapReduce batch job driver that creates a set of Solr index shards from a list of input files " +
+          "MapReduce batch job driver that creates a set of Solr index shards from a set of input files " +
           "and writes the indexes into HDFS, in a flexible, scalable and fault-tolerant manner. " +
-          "The program proceeds in several consecutive MapReduce based phases, as follows:" +
+          "It also supports merging the output shards into a set of live customer facing Solr servers, " +
+          "typically a SolrCloud. The program proceeds in several consecutive MapReduce based phases, as follows:" +
           "\n\n" +
           "1) Randomization phase: This (parallel) phase randomizes the list of input files in order to spread " +
           "indexing load more evenly among the mappers of the subsequent phase." +  
@@ -252,9 +253,9 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .metavar("URI")
   //      .type(new PathArgumentType(fs).verifyExists().verifyCanRead())
         .type(Path.class)
-        .help("Local URI or HDFS URI of a file containing a list of HDFS URIs to index, one URI per line. " + 
+        .help("Local URI or HDFS URI of a file containing a list of HDFS URIs to index, one URI per line in the file. " + 
               "If '-' is specified, URIs are read from the standard input. " + 
-              "Multiple --inputlist arguments can be specified");
+              "Multiple --inputlist arguments can be specified.");
       
       Argument outputDirArg = parser.addArgument("--outputdir")
         .metavar("HDFS_URI")
@@ -270,13 +271,16 @@ public class MapReduceIndexerTool extends Configured implements Tool {
           }
         }.verifyScheme(fs.getScheme()).verifyIsAbsolute().verifyCanWriteParent())
         .required(true)
-        .help("HDFS directory to write Solr indexes to");
+        .help("HDFS directory to write Solr indexes to. Inside there one output directory per shard will be generated. " +
+        		  "Example: hdfs://c2202.mycompany.com/user/$USER/test");
       
       Argument solrHomeDirArg = parser.addArgument("--solrhomedir")
           .metavar("DIR")
           .type(new FileArgumentType().verifyIsDirectory().verifyCanRead())
           .required(true)
-          .help("Local dir containing Solr conf/ and lib/");
+          .help("Relative or absolute path to a local dir containing Solr conf/ dir and in particular " +
+          		  "conf/solrconfig.xml and optionally also lib/ dir. This directory will be uploaded to each MR task. " +
+          		  "Example: src/test/resources/solr/minimr");
     
       Argument updateConflictResolverArg = parser.addArgument("--updateconflictresolver")
       .metavar("FQCN")
@@ -298,14 +302,16 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .type(Integer.class)
         .choices(new RangeArgumentChoice(-1, Integer.MAX_VALUE)) // TODO: also support X% syntax where X is an integer
         .setDefault(-1)
-        .help("Maximum number of MR mapper tasks to use. -1 indicates use all map slots available on the cluster");
+        .help("Tuning knob that indicates the maximum number of MR mapper tasks to use. -1 indicates use all map slots " +
+        		  "available on the cluster.");
   
       Argument reducersArg = parser.addArgument("--reducers")
         .metavar("INTEGER")
         .type(Integer.class)
         .choices(new RangeArgumentChoice(-1, Integer.MAX_VALUE)) // TODO: also support X% syntax where X is an integer
         .setDefault(-1)
-        .help("Number of reducers to index into. -1 indicates use all reduce slots available on the cluster. " +
+        .help("Tuning knob that indicates the number of reducers to index into. " +
+        		"-1 indicates use all reduce slots available on the cluster. " +
             "0 indicates use one reducer per output shard, which disables the mtree merge MR algorithm. " +
             "The mtree merge MR algorithm improves scalability by spreading load " +
             "(in particular CPU load) among a number of parallel reducers that can be much larger than the number " +
@@ -326,8 +332,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .type(Integer.class)
         .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
         .setDefault(1)
-        .help("Maximum number of segments to be contained on output in the index of each reducer shard. " +
-            "After a reducer has built its output index it applies a merge policy to merge segments " +
+        .help("Tuning knob that indicates the maximum number of segments to be contained on output in the index of " +
+        		"each reducer shard. After a reducer has built its output index it applies a merge policy to merge segments " +
             "until there are <= maxSegments lucene segments left in this index. " + 
             "Merging segments involves reading and rewriting all data in all these segment files, " + 
             "potentially multiple times, which is very I/O intensive and time consuming. " + 
@@ -339,11 +345,20 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       
       Argument fairSchedulerPoolArg = parser.addArgument("--fairschedulerpool")
         .metavar("STRING")
-        .help("Name of MR fair scheduler pool to submit jobs to");
+        .help("Tuning knob that indicates the name of the fair scheduler pool to submit jobs to. " +
+              "The Fair Scheduler is a pluggable MapReduce scheduler that provides a way to share large clusters. " +
+              "Fair scheduling is a method of assigning resources to jobs such that all jobs get, on average, an " +
+              "equal share of resources over time. When there is a single job running, that job uses the entire " +
+              "cluster. When other jobs are submitted, tasks slots that free up are assigned to the new jobs, so " +
+              "that each job gets roughly the same amount of CPU time. Unlike the default Hadoop scheduler, which " +
+              "forms a queue of jobs, this lets short jobs finish in reasonable time while not starving long jobs. " +
+              "It is also an easy way to share a cluster between multiple of users. Fair sharing can also work with " +
+              "job priorities - the priorities are used as weights to determine the fraction of total compute time " +
+              "that each job gets.");
   
       Argument verboseArg = parser.addArgument("--verbose", "-v")
         .action(Arguments.storeTrue())
-        .help("Turn on verbose output");
+        .help("Turn on verbose output.");
   
       MutuallyExclusiveGroup clusterInfoGroup = parser.addMutuallyExclusiveGroup("Cluster arguments")
         .required(true)
@@ -388,10 +403,11 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .metavar("INTEGER")
         .type(Integer.class)
         .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
-        .help("Number of output shards to use");
+        .help("Number of output shards to generate.");
       
       ArgumentGroup goLiveGroup = parser.addArgumentGroup("Go live arguments")
-        .description("Arguments for merging the shards that are built into a live Solr cluster. Also see the Cluster arguments.");
+        .description("Arguments for merging the shards that are built into a live Solr cluster. " +
+        		         "Also see the Cluster arguments.");
 
       Argument goLiveArg = goLiveGroup.addArgument("--golive")
         .action(Arguments.storeTrue())
@@ -402,14 +418,14 @@ public class MapReduceIndexerTool extends Configured implements Tool {
 
       Argument collectionArg = goLiveGroup.addArgument("--collection")
         .metavar("STRING")
-        .help("The SolrCloud collection to merge shards into when using --golive and --zkhost");
+        .help("The SolrCloud collection to merge shards into when using --golive and --zkhost.");
       
       Argument golivethreadsArg = goLiveGroup.addArgument("--golivethreads")
         .metavar("INTEGER")
         .type(Integer.class)
         .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
         .setDefault(1000)
-        .help("Maximum number of live merges to run in parallel at one time");
+        .help("Tuning knob that indicates the maximum number of live merges to run in parallel at one time.");
       
       // trailing positional arguments
       Argument inputFilesArg = parser.addArgument("inputfiles")
@@ -417,7 +433,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .type(new PathArgumentType(fs).verifyScheme(fs.getScheme()).verifyExists().verifyCanRead())
         .nargs("*")
         .setDefault()
-        .help("HDFS URI of file or dir to index");
+        .help("HDFS URI of file or dir to index.");
           
       Namespace ns;
       try {
