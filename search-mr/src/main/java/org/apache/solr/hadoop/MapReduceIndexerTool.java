@@ -345,7 +345,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       
       Argument fairSchedulerPoolArg = parser.addArgument("--fairschedulerpool")
         .metavar("STRING")
-        .help("Tuning knob that indicates the name of the fair scheduler pool to submit jobs to. " +
+        .help("Optional tuning knob that indicates the name of the fair scheduler pool to submit jobs to. " +
               "The Fair Scheduler is a pluggable MapReduce scheduler that provides a way to share large clusters. " +
               "Fair scheduling is a method of assigning resources to jobs such that all jobs get, on average, an " +
               "equal share of resources over time. When there is a single job running, that job uses the entire " +
