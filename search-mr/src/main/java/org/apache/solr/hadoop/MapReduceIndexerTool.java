@@ -433,7 +433,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .type(new PathArgumentType(fs).verifyScheme(fs.getScheme()).verifyExists().verifyCanRead())
         .nargs("*")
         .setDefault()
-        .help("HDFS URI of file or dir to index.");
+        .help("HDFS URI of file or directory tree to index.");
           
       Namespace ns;
       try {
