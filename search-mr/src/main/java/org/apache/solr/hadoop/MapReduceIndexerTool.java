@@ -1018,7 +1018,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
   private boolean waitForCompletion(Job job, boolean isVerbose) 
       throws IOException, InterruptedException, ClassNotFoundException {
     
-    LOG.trace("Running job: " + getJobInfo(job));
+    LOG.debug("Running job: " + getJobInfo(job));
     boolean success = job.waitForCompletion(isVerbose);
     if (!success) {
       LOG.error("Job failed! " + getJobInfo(job));
