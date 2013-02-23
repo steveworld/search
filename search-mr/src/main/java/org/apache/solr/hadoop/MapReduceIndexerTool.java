@@ -506,6 +506,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     File solrHomeDir;
     String fairSchedulerPool;
     boolean isVerbose;
+    private boolean verifyGoLiveArgs = true;
   }
   // END OF INNER CLASS  
 
@@ -526,6 +527,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     if (exitCode != null) {
       return exitCode;
     }
+    opts.verifyGoLiveArgs = false; // no need to reverify if called from CLI b/c we already verified in parseArgs()
     return run(opts);
   }
   
@@ -544,7 +546,9 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     job = Job.getInstance(getConf());
     job.setJarByClass(getClass());
 
-    verifyGoLiveArgs(options, null); // reverify, in case we got called directly rather than from the CLI API
+    if (options.verifyGoLiveArgs) { 
+      verifyGoLiveArgs(options, null); // verify in case we got called directly rather than from the CLI API
+    }
     
     int mappers = new JobClient(job.getConfiguration()).getClusterStatus().getMaxMapTasks(); // MR1
     //mappers = job.getCluster().getClusterStatus().getMapSlotCapacity(); // Yarn only
