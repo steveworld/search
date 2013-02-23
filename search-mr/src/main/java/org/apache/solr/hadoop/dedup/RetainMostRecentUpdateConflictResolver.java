@@ -57,11 +57,11 @@ public class RetainMostRecentUpdateConflictResolver implements UpdateConflictRes
   
   @Override
   public Iterator<SolrInputDocument> orderUpdates(Text uniqueKey, Iterator<SolrInputDocument> collidingUpdates) {    
-    return max(collidingUpdates, getOrderByFieldName(), new SolrInputDocumentComparator.TimeStampComparator());
+    return getMaximum(collidingUpdates, getOrderByFieldName(), new SolrInputDocumentComparator.TimeStampComparator());
   }
 
   /** Returns the most recent document among the colliding updates */
-  protected Iterator<SolrInputDocument> max(Iterator<SolrInputDocument> collidingUpdates, String fieldName, Comparator child) {
+  protected Iterator<SolrInputDocument> getMaximum(Iterator<SolrInputDocument> collidingUpdates, String fieldName, Comparator child) {
     SolrInputDocumentComparator comp = new SolrInputDocumentComparator(fieldName, child);
     SolrInputDocument max = null;
     while (collidingUpdates.hasNext()) {
