@@ -51,8 +51,11 @@ final class ZooKeeperInspector {
   }
   
   public DocCollection extractDocCollection(String zkHost, String collection) {
+    if (zkHost == null) { 
+      throw new IllegalArgumentException("zkHost must not be null");
+    }
     if (collection == null) { 
-      throw new IllegalArgumentException();
+      throw new IllegalArgumentException("collection must not be null");
     }
     SolrZkClient zkClient;
     try {
