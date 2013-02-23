@@ -168,81 +168,81 @@ public class MapReduceIndexerTool extends Configured implements Tool {
             System.out.println(
               "Examples: \n\n" + 
 
-              "  # Prepare a config jar file containing org/apache/tika/mime/custom-mimetypes.xml and custom mylog4j.properties:\n" +
-              "  rm -fr myconfig; mkdir myconfig\n" + 
-              "  cp src/test/resources/log4j.properties myconfig/mylog4j.properties\n" + 
-              "  cp -r src/test/resources/org myconfig/\n" + 
-              "  jar -cMvf myconfig.jar -C myconfig .\n" + 
+              "# Prepare a config jar file containing org/apache/tika/mime/custom-mimetypes.xml and custom mylog4j.properties:\n" +
+              "rm -fr myconfig; mkdir myconfig\n" + 
+              "cp src/test/resources/log4j.properties myconfig/mylog4j.properties\n" + 
+              "cp -r src/test/resources/org myconfig/\n" + 
+              "jar -cMvf myconfig.jar -C myconfig .\n" + 
               "\n" +              
-              "  # (Re)index an Avro based Twitter tweet file:\n" +
-              "  sudo -u hdfs hadoop \\\n" + 
-              "    --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
-              "    jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
-              "    --files src/test/resources/tika-config.xml \\\n" + 
-              "    --libjars myconfig.jar \\\n" + 
-              "    -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-              "    -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-              "    --solrhomedir src/test/resources/solr/minimr \\\n" +
-              "    --outputdir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
-              "    --shards 1 \\\n" + 
-              "    hdfs:///user/$USER/test-documents/sample-statuses-20120906-141433.avro\n" +
+              "# (Re)index an Avro based Twitter tweet file:\n" +
+              "sudo -u hdfs hadoop \\\n" + 
+              "  --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
+              "  jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
+              "  --files src/test/resources/tika-config.xml \\\n" + 
+              "  --libjars myconfig.jar \\\n" + 
+              "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "  --solrhomedir src/test/resources/solr/minimr \\\n" +
+              "  --outputdir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
+              "  --shards 1 \\\n" + 
+              "  hdfs:///user/$USER/test-documents/sample-statuses-20120906-141433.avro\n" +
               "\n" +
-              "  # (Re)index all files that match all of the following conditions:\n" +
-              "  # 1) File is contained in dir tree hdfs:///user/$USER/solrloadtest/twitter/tweets\n" +
-              "  # 2) file name matches the glob pattern 'sample-statuses*.gz'\n" +
-              "  # 3) file was last modified less than 100000 minutes ago\n" +
-              "  # 4) file size is between 1 MB and 1 GB\n" +
-              "  # Also include extra library jar file containing JSON tweet Java parser:\n" +
-              "  hadoop jar target/search-mr-*-job.jar " + HdfsFindTool.class.getName() + " \\\n" + 
-              "    -find hdfs:///user/$USER/solrloadtest/twitter/tweets \\\n" + 
-              "    -type f \\\n" + 
-              "    -name 'sample-statuses*.gz' \\\n" + 
-              "    -mmin -1000000 \\\n" + 
-              "    -size -100000000c \\\n" + 
-              "    -size +1000000c \\\n" + 
-              "  | sudo -u hdfs hadoop \\\n" + 
-              "    --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" + 
-              "    jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
-              "    --files src/test/resources/tika-config.xml \\\n" + 
-              "    --libjars myconfig.jar,../search-contrib/target/search-contrib-*-SNAPSHOT.jar \\\n" + 
-              "    -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-              "    -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-              "    --solrhomedir src/test/resources/solr/minimr \\\n" + 
-              "    --outputdir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
-              "    --shards 100 \\\n" + 
-              "    --inputlist -\n" +
+              "# (Re)index all files that match all of the following conditions:\n" +
+              "# 1) File is contained in dir tree hdfs:///user/$USER/solrloadtest/twitter/tweets\n" +
+              "# 2) file name matches the glob pattern 'sample-statuses*.gz'\n" +
+              "# 3) file was last modified less than 100000 minutes ago\n" +
+              "# 4) file size is between 1 MB and 1 GB\n" +
+              "# Also include extra library jar file containing JSON tweet Java parser:\n" +
+              "hadoop jar target/search-mr-*-job.jar " + HdfsFindTool.class.getName() + " \\\n" + 
+              "  -find hdfs:///user/$USER/solrloadtest/twitter/tweets \\\n" + 
+              "  -type f \\\n" + 
+              "  -name 'sample-statuses*.gz' \\\n" + 
+              "  -mmin -1000000 \\\n" + 
+              "  -size -100000000c \\\n" + 
+              "  -size +1000000c \\\n" + 
+              "| sudo -u hdfs hadoop \\\n" + 
+              "  --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" + 
+              "  jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
+              "  --files src/test/resources/tika-config.xml \\\n" + 
+              "  --libjars myconfig.jar,../search-contrib/target/search-contrib-*-SNAPSHOT.jar \\\n" + 
+              "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "  --solrhomedir src/test/resources/solr/minimr \\\n" + 
+              "  --outputdir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
+              "  --shards 100 \\\n" + 
+              "  --inputlist -\n" +
               "\n" +
-              "  # Go live by merging resulting index shards into a live Solr cluster\n" +
-              "  # (explicitly specify Solr URLs - for a SolrCloud cluster see next example):\n" +
-              "  sudo -u hdfs hadoop \\\n" + 
-              "    --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
-              "    jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
-              "    --files src/test/resources/tika-config.xml \\\n" + 
-              "    --libjars myconfig.jar \\\n" + 
-              "    -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-              "    -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-              "    --solrhomedir src/test/resources/solr/minimr \\\n" + 
-              "    --outputdir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
-              "    --shardurl http://solr001.mycompany.com:8983/solr/collection1 \\\n" + 
-              "    --shardurl http://solr002.mycompany.com:8983/solr/collection1 \\\n" + 
-              "    --golive \\\n" + 
-              "    hdfs:///user/foo/indir\n" +  
+              "# Go live by merging resulting index shards into a live Solr cluster\n" +
+              "# (explicitly specify Solr URLs - for a SolrCloud cluster see next example):\n" +
+              "sudo -u hdfs hadoop \\\n" + 
+              "  --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
+              "  jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
+              "  --files src/test/resources/tika-config.xml \\\n" + 
+              "  --libjars myconfig.jar \\\n" + 
+              "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "  --solrhomedir src/test/resources/solr/minimr \\\n" + 
+              "  --outputdir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
+              "  --shardurl http://solr001.mycompany.com:8983/solr/collection1 \\\n" + 
+              "  --shardurl http://solr002.mycompany.com:8983/solr/collection1 \\\n" + 
+              "  --golive \\\n" + 
+              "  hdfs:///user/foo/indir\n" +  
               "\n" +
-              "  # Go live by merging resulting index shards into a live SolrCloud cluster\n" +
-              "  # (discover shards and Solr URLs through ZooKeeper):\n" +
-              "  sudo -u hdfs hadoop \\\n" + 
-              "    --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
-              "    jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
-              "    --files src/test/resources/tika-config.xml \\\n" + 
-              "    --libjars myconfig.jar \\\n" + 
-              "    -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-              "    -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-              "    --solrhomedir src/test/resources/solr/minimr \\\n" + 
-              "    --outputdir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
-              "    --zkhost zk01.mycompany.com:2181/solr \\\n" + 
-              "    --collection collection1 \\\n" + 
-              "    --golive \\\n" + 
-              "    hdfs:///user/foo/indir\n"
+              "# Go live by merging resulting index shards into a live SolrCloud cluster\n" +
+              "# (discover shards and Solr URLs through ZooKeeper):\n" +
+              "sudo -u hdfs hadoop \\\n" + 
+              "  --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
+              "  jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
+              "  --files src/test/resources/tika-config.xml \\\n" + 
+              "  --libjars myconfig.jar \\\n" + 
+              "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "  --solrhomedir src/test/resources/solr/minimr \\\n" + 
+              "  --outputdir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
+              "  --zkhost zk01.mycompany.com:2181/solr \\\n" + 
+              "  --collection collection1 \\\n" + 
+              "  --golive \\\n" + 
+              "  hdfs:///user/foo/indir\n"
             );
             throw new FoundHelpArgument(); // Trick to prevent processing of any remaining arguments
           }
