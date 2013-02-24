@@ -147,7 +147,7 @@ public class BasicMiniMRTest extends Assert {
   public void testPathParts() throws Exception { // see PathParts
     FileSystem fs = dfsCluster.getFileSystem();
     int dfsClusterPort = fs.getWorkingDirectory().toUri().getPort();
-    assert dfsClusterPort > 0;
+    assertTrue(dfsClusterPort > 0);
     JobConf jobConf = getJobConf();
     Configuration simpleConf = new Configuration();
     
