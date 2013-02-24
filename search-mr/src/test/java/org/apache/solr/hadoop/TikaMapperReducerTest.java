@@ -33,6 +33,7 @@ import org.apache.solr.hadoop.SolrOutputFormat;
 import org.apache.solr.hadoop.TikaReducerTest.MySolrReducer;
 import org.apache.solr.hadoop.TikaReducerTest.NullInputFormat;
 import org.apache.solr.hadoop.tika.TikaMapper;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -57,6 +58,7 @@ public class TikaMapperReducerTest extends MRUnitBase {
     this.count = count;
   }
 
+  @Ignore
   @Test
   public void testMapReduce() throws IOException {
     TikaMapper mapper = new TikaMapper();

@@ -985,6 +985,7 @@
     <lst name="defaults">
       <str name="lowernames">true</str>
       <str name="uprefix">ignored_</str>
+      <!--<str name="uprefix">attr_</str>-->
 
       <str name="fmap.content">text</str>
 
@@ -1006,9 +1007,20 @@
       <str name="capture">in_reply_to_status_id</str>
       <str name="capture">media_url_https</str>
       <str name="capture">expanded_url</str>
-      <str name="capture">file_uri</str>
+      
+      <!-- file metadata -->   
+      <str name="capture">file_download_url</str>
+      <str name="capture">file_scheme</str>
+      <str name="capture">file_host</str>
+      <str name="capture">file_port</str>
+      <str name="capture">file_path</str>
+      <str name="capture">file_name</str>
+      <str name="capture">file_length</str>
       <str name="capture">file_last_modified</str>
       
+      <!-- tika metadata -->   
+      <str name="content-type">content_type</str>
+
       <!-- capture link hrefs but ignore div attributes -->
       <!--
       <str name="captureAttr">true</str>

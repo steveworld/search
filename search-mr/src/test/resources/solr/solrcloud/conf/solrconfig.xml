@@ -133,6 +133,12 @@
     <!-- Maximum time to wait for a write lock (ms) for an IndexWriter. Default: 1000 -->
     <!-- <writeLockTimeout>1000</writeLockTimeout>  -->
 
+    <!-- The maximum number of simultaneous threads that may be
+         indexing documents at once in IndexWriter; if more than this
+         many threads arrive they will wait for others to finish.
+         Default in Solr/Lucene is 8. -->
+    <!-- <maxIndexingThreads>8</maxIndexingThreads>  -->
+    
     <!-- Expert: Enabling compound file will use less files for the index, 
          using fewer file descriptors on the expense of performance decrease. 
          Default in Lucene is "true". Default in Solr is "false" (since 3.6) -->
@@ -983,6 +989,7 @@
     <lst name="defaults">
       <str name="lowernames">true</str>
       <str name="uprefix">ignored_</str>
+      <!--<str name="uprefix">attr_</str>-->
 <!--
       <str name="fmap.content">text</str>
 -->
@@ -1005,8 +1012,19 @@
       <str name="capture">in_reply_to_status_id</str>
       <str name="capture">media_url_https</str>
       <str name="capture">expanded_url</str>
-      <str name="capture">file_uri</str>
+
+      <!-- file metadata -->   
+      <str name="capture">file_download_url</str>
+      <str name="capture">file_scheme</str>
+      <str name="capture">file_host</str>
+      <str name="capture">file_port</str>
+      <str name="capture">file_path</str>
+      <str name="capture">file_name</str>
+      <str name="capture">file_length</str>
       <str name="capture">file_last_modified</str>
+      
+      <!-- tika metadata -->   
+      <str name="content-type">content_type</str>      
       
       <!-- capture link hrefs but ignore div attributes -->
       <!--

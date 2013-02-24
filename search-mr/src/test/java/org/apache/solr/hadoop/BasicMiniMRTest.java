@@ -18,6 +18,7 @@
 package org.apache.solr.hadoop;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -26,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
@@ -37,9 +39,6 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.hadoop.util.JarFinder;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.solr.hadoop.SolrCounters;
-import org.apache.solr.hadoop.SolrRecordWriter;
-import org.apache.solr.hadoop.MapReduceIndexerTool;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -145,6 +144,73 @@ public class BasicMiniMRTest extends Assert {
   }
 
   @Test
+  public void testPathParts() throws Exception {
+    FileSystem fs = dfsCluster.getFileSystem();
+    int dfsClusterPort = fs.getWorkingDirectory().toUri().getPort();
+    assert dfsClusterPort > 0;
+    JobConf jobConf = getJobConf();
+    Configuration simpleConf = new Configuration();
+    
+    for (Configuration conf : Arrays.asList(jobConf, simpleConf)) {
+      for (String queryAndFragment : Arrays.asList("", "?key=value#fragment")) {
+        String downloadURL = "hdfs://localhost:12345/user/foo/bar.txt" + queryAndFragment;
+        PathParts parts = new PathParts(downloadURL, conf);
+        assertEquals(downloadURL, parts.getDownloadURL());
+        assertEquals("/user/foo/bar.txt", parts.getURIPath());
+        assertEquals("bar.txt", parts.getName());
+        assertEquals("hdfs", parts.getScheme());
+        assertEquals("localhost", parts.getHost());
+        assertEquals(12345, parts.getPort());
+        assertEquals("hdfs://localhost:12345/user/foo/bar.txt", parts.getId());
+        assertFileNotFound(parts);
+  
+        downloadURL = "hdfs://localhost/user/foo/bar.txt" + queryAndFragment;
+        parts = new PathParts(downloadURL, conf);
+        assertEquals(downloadURL, parts.getDownloadURL());
+        assertEquals("/user/foo/bar.txt", parts.getURIPath());
+        assertEquals("bar.txt", parts.getName());
+        assertEquals("hdfs", parts.getScheme());
+        assertEquals("localhost", parts.getHost());
+        assertEquals(8020, parts.getPort());
+        assertEquals("hdfs://localhost:8020/user/foo/bar.txt", parts.getId());
+        assertFileNotFound(parts);
+      }
+    }    
+
+    for (Configuration conf : Arrays.asList(jobConf)) {
+      for (String queryAndFragment : Arrays.asList("", "?key=value#fragment")) {
+        String downloadURL = "/user/foo/bar.txt" + queryAndFragment;
+        PathParts parts = new PathParts(downloadURL, conf);
+        assertEquals(downloadURL, parts.getDownloadURL());
+        assertEquals("/user/foo/bar.txt", parts.getURIPath());
+        assertEquals("bar.txt", parts.getName());
+        assertEquals("hdfs", parts.getScheme());
+        assertEquals("localhost", parts.getHost());
+        assertEquals(dfsClusterPort, parts.getPort());
+        assertEquals("hdfs://localhost:" + dfsClusterPort + "/user/foo/bar.txt", parts.getId());
+        assertFileNotFound(parts);
+      }
+    }
+    
+    try {
+      new PathParts("/user/foo/bar.txt", simpleConf);
+      fail("host/port resolution requires minimr conf, not a simple conf");
+    } catch (IllegalArgumentException e) {
+      ; // expected
+    }    
+  }
+
+  private void assertFileNotFound(PathParts parts) {
+    try {
+      parts.getFileSystem().getFileStatus(parts.getDownloadPath());
+      fail();
+    } catch (IOException e) {
+      ; // expected
+    }
+  }
+
+  @Test
+//  @Ignore
   public void mrRun() throws Exception {
     FileSystem fs = dfsCluster.getFileSystem();
     Path inDir = fs.makeQualified(new Path("/user/testing/testMapperReducer/input"));
@@ -164,7 +230,7 @@ public class BasicMiniMRTest extends Assert {
 
     assertTrue(fs.mkdirs(dataDir));
     fs.copyFromLocalFile(new Path(DOCUMENTS_DIR, inputAvroFile), dataDir);
-
+    
     JobConf jobConf = getJobConf();
     if (ENABLE_LOCAL_JOB_RUNNER) { // enable Hadoop LocalJobRunner; this enables to run in debugger and set breakpoints
       jobConf.set("mapred.job.tracker", "local");

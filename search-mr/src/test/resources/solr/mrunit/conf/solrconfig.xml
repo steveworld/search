@@ -96,7 +96,6 @@
        replication is in use, this should match the replication
        configuration.
     -->
-  <!--<dataDir>/data/3/collection1/data</dataDir>-->
   <dataDir>${solr.data.dir:}</dataDir>
  
 

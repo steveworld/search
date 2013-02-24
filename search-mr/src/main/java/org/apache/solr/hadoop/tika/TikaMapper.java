@@ -49,6 +49,7 @@ import org.apache.solr.core.PluginInfo;
 import org.apache.solr.core.SolrConfig;
 import org.apache.solr.core.SolrResourceLoader;
 import org.apache.solr.hadoop.HeartBeater;
+import org.apache.solr.hadoop.PathParts;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrMapper;
 import org.apache.solr.hadoop.dedup.RetainMostRecentUpdateConflictResolver;
@@ -73,13 +74,18 @@ import com.typesafe.config.ConfigFactory;
 public class TikaMapper extends SolrMapper<LongWritable, Text> {
 
   private SolrIndexer indexer;
-  private FileSystem fs;
   private Context context;
   private IndexSchema schema;
   private HeartBeater heartBeater;
 
-  public static final String SCHEMA_FIELD_NAME_OF_FILE_URI = "file_uri";
-  private static final String SCHEMA_FIELD_NAME_OF_FILE_LAST_MODIFIED = RetainMostRecentUpdateConflictResolver.ORDER_BY_FIELD_NAME_DEFAULT;
+  public static final String FILE_DOWNLOAD_URL_FIELD_NAME = "file_download_url";
+  public static final String FILE_SCHEME_FIELD_NAME = "file_scheme";
+  public static final String FILE_HOST_FIELD_NAME = "file_host";
+  public static final String FILE_PORT_FIELD_NAME = "file_port";
+  public static final String FILE_PATH_FIELD_NAME = "file_path";
+  public static final String FILE_NAME_FIELD_NAME = "file_name";
+  public static final String FILE_LENGTH_FIELD_NAME = "file_length";
+  public static final String FILE_LAST_MODIFIED_FIELD_NAME = RetainMostRecentUpdateConflictResolver.ORDER_BY_FIELD_NAME_DEFAULT;
 
   private static final Logger LOG = LoggerFactory.getLogger(TikaMapper.class);
   
@@ -122,7 +128,6 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       throw new IllegalStateException("Schema must not be null");
     }
     indexer.beginTransaction();
-    fs = FileSystem.get(context.getConfiguration());
     heartBeater = new HeartBeater(context);
   }
 
@@ -137,29 +142,21 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
     heartBeater.needHeartBeat();
     try {
-      String uri = value.toString();
-      Path path = new Path(uri);
-      FileStatus stats;
-      try {
-        stats = fs.getFileStatus(path);
-      } catch (FileNotFoundException e) {
-        stats = null;
+      LOG.info("Processing file {}", value);
+      PathParts parts = new PathParts(value.toString(), context.getConfiguration());
+      Map<String,String> headers = getHeaders(parts);
+      if (headers == null) {
+        return; // ignore
       }
-      if (stats == null) {
-        LOG.info("Ignoring file that somehow has been deleted since the job was submitted: {}", path);
-        return;
-      }
-      LOG.info("Processing file {}", path);
-//    uri = getFileURI(path);   
-      Map<String,String> headers = getHeaders(stats, uri);
-      FSDataInputStream in = fs.open(path);
+      long fileLength = parts.getFileStatus().getLen();
+      FSDataInputStream in = parts.getFileSystem().open(parts.getDownloadPath());
       try {
         indexer.process(new StreamEvent(in, headers));
         context.getCounter(TikaCounters.class.getName(), TikaCounters.FILES_READ.toString()).increment(1);
-        context.getCounter(TikaCounters.class.getName(), TikaCounters.FILE_BYTES_READ.toString()).increment(stats.getLen());
+        context.getCounter(TikaCounters.class.getName(), TikaCounters.FILE_BYTES_READ.toString()).increment(fileLength);
       } catch (Exception e) {
         context.getCounter(getClass().getName() + ".errors", e.getClass().getName()).increment(1);
-        LOG.error("Unable to process file " + path, e);
+        LOG.error("Unable to process file " + value, e);
       } finally {
         in.close();
       }
@@ -168,38 +165,35 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     }
   }
   
-  protected Map<String, String> getHeaders(FileStatus file, String uri) {
-    Map<String,String> headers = new HashMap<String, String>();
-    //  uri = getFileURI(path);   
-    headers.put(getSchema().getUniqueKeyField().getName(), uri); // use HDFS file path as docId if no docId is specified
-    headers.put(SCHEMA_FIELD_NAME_OF_FILE_URI, uri); // enable explicit storing of path in Solr
-    headers.put(SCHEMA_FIELD_NAME_OF_FILE_LAST_MODIFIED, String.valueOf(file.getModificationTime())); // FIXME also in SpoolDirSource
-    headers.put(Metadata.RESOURCE_NAME_KEY, file.getPath().getName()); // Tika can use the file name in guessing the right MIME type
-    // TODO: also add file length, owner, group, perms, file extension?
-    return headers;
-  }
-
-  // TODO: figure out best approach, also consider escaping issues
-  private String getFileURI(Path path) {
-    return path.toString();
+  protected Map<String, String> getHeaders(PathParts parts) {
+    String downloadURL = parts.getDownloadURL();
+    FileStatus stats;
+    try {
+      stats = parts.getFileStatus();
+    } catch (IOException e) {
+      stats = null;
+    }
+    if (stats == null) {
+      LOG.warn("Ignoring file that somehow has become unavailable since the job was submitted: {}", downloadURL);
+      return null;
+    }
     
-//    URI uri = path.toUri();
-//    String scheme =  uri.getScheme();
-//    if (scheme == null) {
-//      scheme = fs.getScheme();
-//    }
-//
-//    String authority = uri.getAuthority();
-//    if (authority == null) {
-//      authority = "";
-//    }
-//    if (true) {
-//      return scheme + "://" + authority + path.toUri().getPath();
-//    } else {    
-//      // omit URI authority because name node host may change over time. 
-//      // On the other hand this implies that only one HDFS system can be indexed.
-//      return scheme + "://" + path.toUri().getPath();
-//    }
+    Map<String,String> headers = new HashMap<String, String>();
+    headers.put(getSchema().getUniqueKeyField().getName(), parts.getId()); // use HDFS file path as docId if no docId is specified
+    headers.put(Metadata.RESOURCE_NAME_KEY, parts.getName()); // Tika can use the file name in guessing the right MIME type
+    
+    // enable indexing and storing of file meta data in Solr
+    headers.put(FILE_DOWNLOAD_URL_FIELD_NAME, parts.getDownloadURL());
+    headers.put(FILE_SCHEME_FIELD_NAME, parts.getScheme()); 
+    headers.put(FILE_HOST_FIELD_NAME, parts.getHost()); 
+    headers.put(FILE_PORT_FIELD_NAME, String.valueOf(parts.getPort())); 
+    headers.put(FILE_PATH_FIELD_NAME, parts.getURIPath()); 
+    headers.put(FILE_NAME_FIELD_NAME, parts.getName());     
+    headers.put(FILE_LAST_MODIFIED_FIELD_NAME, String.valueOf(stats.getModificationTime())); // FIXME also in SpoolDirSource
+    headers.put(FILE_LENGTH_FIELD_NAME, String.valueOf(stats.getLen())); // FIXME also in SpoolDirSource
+    
+    // TODO: also add owner, group, perms, file extension?
+    return headers;
   }
 
   @Override
