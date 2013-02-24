@@ -39,7 +39,7 @@ public class TikaMapperTest extends MRUnitBase {
     Configuration config = mapDriver.getConfiguration();
     setupHadoopConfig(config);
 
-    mapDriver.withInput(new LongWritable(0L), new Text(new File(DOCUMENTS_DIR + "/sample-statuses-20120906-141433.avro").toURI().toString()));
+    mapDriver.withInput(new LongWritable(0L), new Text("hdfs://localhost/" + DOCUMENTS_DIR + "/sample-statuses-20120906-141433.avro"));
 
     SolrInputDocument sid = new SolrInputDocument();
     sid.addField("id", "uniqueid1");

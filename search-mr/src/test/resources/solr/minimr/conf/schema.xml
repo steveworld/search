@@ -115,9 +115,19 @@
    <field name="media_url_https" type="string" indexed="false" stored="true" />
    <field name="expanded_url" type="string" indexed="false" stored="true" />
    
-   <field name="file_uri" type="string" indexed="true" stored="true" />
+   <!-- file metadata -->   
+   <field name="file_download_url" type="string" indexed="false" stored="true" />
+   <field name="file_scheme" type="string" indexed="true" stored="true" />
+   <field name="file_host" type="string" indexed="true" stored="true" />
+   <field name="file_port" type="int" indexed="true" stored="true" />
+   <field name="file_path" type="string" indexed="true" stored="true" />
+   <field name="file_name" type="string" indexed="true" stored="true" />
+   <field name="file_length" type="long" indexed="true" stored="true" />
    <field name="file_last_modified" type="long" indexed="true" stored="true" />
 
+   <!-- tika metadata -->
+   <field name="content_type" type="lowercase" indexed="true" stored="true" />
+      
    <field name="_version_" type="long" indexed="true" stored="true"/>
    <dynamicField name="ignored_*" type="ignored"/>
    
