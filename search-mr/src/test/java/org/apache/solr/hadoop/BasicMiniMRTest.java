@@ -153,42 +153,48 @@ public class BasicMiniMRTest extends Assert {
     
     for (Configuration conf : Arrays.asList(jobConf, simpleConf)) {
       for (String queryAndFragment : Arrays.asList("", "?key=value#fragment")) {
-        String downloadURL = "hdfs://localhost:12345/user/foo/bar.txt" + queryAndFragment;
-        PathParts parts = new PathParts(downloadURL, conf);
-        assertEquals(downloadURL, parts.getDownloadURL());
-        assertEquals("/user/foo/bar.txt", parts.getURIPath());
-        assertEquals("bar.txt", parts.getName());
-        assertEquals("hdfs", parts.getScheme());
-        assertEquals("localhost", parts.getHost());
-        assertEquals(12345, parts.getPort());
-        assertEquals("hdfs://localhost:12345/user/foo/bar.txt", parts.getId());
-        assertFileNotFound(parts);
-  
-        downloadURL = "hdfs://localhost/user/foo/bar.txt" + queryAndFragment;
-        parts = new PathParts(downloadURL, conf);
-        assertEquals(downloadURL, parts.getDownloadURL());
-        assertEquals("/user/foo/bar.txt", parts.getURIPath());
-        assertEquals("bar.txt", parts.getName());
-        assertEquals("hdfs", parts.getScheme());
-        assertEquals("localhost", parts.getHost());
-        assertEquals(8020, parts.getPort());
-        assertEquals("hdfs://localhost:8020/user/foo/bar.txt", parts.getId());
-        assertFileNotFound(parts);
+        for (String up : Arrays.asList("", "../")) {
+          String down = up.length() == 0 ? "foo/" : "";
+          String downloadURL = "hdfs://localhost:12345/user/foo/" + up + "bar.txt" + queryAndFragment;
+          PathParts parts = new PathParts(downloadURL, conf);
+          assertEquals(downloadURL, parts.getDownloadURL());
+          assertEquals("/user/" + down + "bar.txt", parts.getURIPath());
+          assertEquals("bar.txt", parts.getName());
+          assertEquals("hdfs", parts.getScheme());
+          assertEquals("localhost", parts.getHost());
+          assertEquals(12345, parts.getPort());
+          assertEquals("hdfs://localhost:12345/user/" + down + "bar.txt", parts.getId());
+          assertFileNotFound(parts);
+    
+          downloadURL = "hdfs://localhost/user/foo/" + up + "bar.txt" + queryAndFragment;
+          parts = new PathParts(downloadURL, conf);
+          assertEquals(downloadURL, parts.getDownloadURL());
+          assertEquals("/user/" + down + "bar.txt", parts.getURIPath());
+          assertEquals("bar.txt", parts.getName());
+          assertEquals("hdfs", parts.getScheme());
+          assertEquals("localhost", parts.getHost());
+          assertEquals(8020, parts.getPort());
+          assertEquals("hdfs://localhost:8020/user/" + down + "bar.txt", parts.getId());
+          assertFileNotFound(parts);
+        }
       }
     }    
 
     for (Configuration conf : Arrays.asList(jobConf)) {
       for (String queryAndFragment : Arrays.asList("", "?key=value#fragment")) {
-        String downloadURL = "/user/foo/bar.txt" + queryAndFragment;
-        PathParts parts = new PathParts(downloadURL, conf);
-        assertEquals(downloadURL, parts.getDownloadURL());
-        assertEquals("/user/foo/bar.txt", parts.getURIPath());
-        assertEquals("bar.txt", parts.getName());
-        assertEquals("hdfs", parts.getScheme());
-        assertEquals("localhost", parts.getHost());
-        assertEquals(dfsClusterPort, parts.getPort());
-        assertEquals("hdfs://localhost:" + dfsClusterPort + "/user/foo/bar.txt", parts.getId());
-        assertFileNotFound(parts);
+        for (String up : Arrays.asList("", "../")) {
+          String down = up.length() == 0 ? "foo/" : "";
+          String downloadURL = "/user/foo/" + up + "bar.txt" + queryAndFragment;
+          PathParts parts = new PathParts(downloadURL, conf);
+          assertEquals(downloadURL, parts.getDownloadURL());
+          assertEquals("/user/" + down + "bar.txt", parts.getURIPath());
+          assertEquals("bar.txt", parts.getName());
+          assertEquals("hdfs", parts.getScheme());
+          assertEquals("localhost", parts.getHost());
+          assertEquals(dfsClusterPort, parts.getPort());
+          assertEquals("hdfs://localhost:" + dfsClusterPort + "/user/" + down + "bar.txt", parts.getId());
+          assertFileNotFound(parts);
+        }
       }
     }
     
