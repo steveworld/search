@@ -28,6 +28,7 @@ import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.hadoop.HdfsFileFieldNames;
 
 /**
  * UpdateConflictResolver implementation that orders colliding updates ascending
@@ -40,7 +41,7 @@ public class SortingUpdateConflictResolver implements UpdateConflictResolver, Co
   private String orderByFieldName = ORDER_BY_FIELD_NAME_DEFAULT;
   
   public static final String ORDER_BY_FIELD_NAME_KEY = SortingUpdateConflictResolver.class.getName() + ".orderByFieldName";
-  public static final String ORDER_BY_FIELD_NAME_DEFAULT = "file_last_modified";
+  public static final String ORDER_BY_FIELD_NAME_DEFAULT = HdfsFileFieldNames.FILE_LAST_MODIFIED;
 
   @Override
   public void setConf(Configuration conf) {

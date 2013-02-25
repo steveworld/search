@@ -1017,6 +1017,12 @@
       <str name="capture">file_name</str>
       <str name="capture">file_length</str>
       <str name="capture">file_last_modified</str>
+      <str name="capture">file_owner</str>
+      <str name="capture">file_group</str>
+      <str name="capture">file_permissions_user</str>
+      <str name="capture">file_permissions_group</str>
+      <str name="capture">file_permissions_other</str>
+      <str name="capture">file_permissions_stickybit</str>
       
       <!-- tika metadata -->   
       <str name="content-type">content_type</str>
