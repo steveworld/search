@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.SystemUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
@@ -235,7 +234,6 @@ public class BasicMiniMRTest extends Assert {
   }
 
   @Test
-//  @Ignore
   public void mrRun() throws Exception {
     FileSystem fs = dfsCluster.getFileSystem();
     Path inDir = fs.makeQualified(new Path("/user/testing/testMapperReducer/input"));
