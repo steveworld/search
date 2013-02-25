@@ -76,6 +76,8 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   private HeartBeater heartBeater;
   private Map<String, String> explicitTikaHeaders;
 
+  public static final String TIKA_HEADER_PREFIX = TikaMapper.class.getName() + ".header.";
+  
   private static final Logger LOG = LoggerFactory.getLogger(TikaMapper.class);
   
   protected IndexSchema getSchema() {
@@ -98,10 +100,9 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     // Find headers to explicitly pass to Tika
     // Example: hadoop -D org.apache.solr.hadoop.tika.TikaMapper.header.stream.type=text/plain
     explicitTikaHeaders = new HashMap<String,String>();
-    for (Map.Entry<String,String> entry : context.getConfiguration()) {
-      String prefix = getClass().getName() + ".header.";
-      if (entry.getKey().startsWith(prefix)) {
-        explicitTikaHeaders.put(entry.getKey().substring(prefix.length()), entry.getValue());
+    for (Map.Entry<String,String> entry : context.getConfiguration()) {     
+      if (entry.getKey().startsWith(TIKA_HEADER_PREFIX)) {
+        explicitTikaHeaders.put(entry.getKey().substring(TIKA_HEADER_PREFIX.length()), entry.getValue());
       }
     }
     LOG.debug("explicitTikaHeaders: {}", explicitTikaHeaders);
