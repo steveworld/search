@@ -66,13 +66,13 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   @Test
   public void testArgsParserTypicalUse() {
     String[] args = new String[] { 
-        "--inputlist", "file:///tmp",
-        "--outputdir", "file:/tmp/foo",
-        "--solrhomedir", "/", 
+        "--input-list", "file:///tmp",
+        "--output-dir", "file:/tmp/foo",
+        "--solr-home-dir", "/", 
         "--mappers", "10", 
         "--reducers", "9", 
         "--fanout", "8", 
-        "--maxsegments", "7", 
+        "--max-segments", "7", 
         "--shards", "1",
         "--verbose", 
         "file:///home",
@@ -98,10 +98,10 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   @Test
   public void testArgsParserMultipleSpecsOfSameKind() {
     String[] args = new String[] { 
-        "--inputlist", "file:///tmp",
-        "--inputlist", "file:///",
-        "--outputdir", "file:/tmp/foo",
-        "--solrhomedir", "/", 
+        "--input-list", "file:///tmp",
+        "--input-list", "file:///",
+        "--output-dir", "file:/tmp/foo",
+        "--solr-home-dir", "/", 
         "--shards", "1",
         "file:///home",
         "file:///dev",
@@ -117,9 +117,9 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   @Test
   public void testArgsParserTypicalUseWithEqualsSign() {
     String[] args = new String[] { 
-        "--inputlist=file:///tmp",
-        "--outputdir=file:/tmp/foo",
-        "--solrhomedir=/", 
+        "--input-list=file:///tmp",
+        "--output-dir=file:/tmp/foo",
+        "--solr-home-dir=/", 
         "--mappers=10", 
         "--shards", "1",
         "--verbose", 
@@ -141,10 +141,10 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   @Test
   public void testArgsParserMultipleSpecsOfSameKindWithEqualsSign() {
     String[] args = new String[] { 
-        "--inputlist=file:///tmp",
-        "--inputlist=file:///",
-        "--outputdir=file:/tmp/foo",
-        "--solrhomedir=/", 
+        "--input-list=file:///tmp",
+        "--input-list=file:///",
+        "--output-dir=file:/tmp/foo",
+        "--solr-home-dir=/", 
         "--shards", "1",
         "file:///home",
         "file:///dev",
@@ -170,9 +170,9 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   @Test
   public void testArgsParserOk() {
     String[] args = new String[] { 
-        "--inputlist", "file:///tmp",
-        "--outputdir", "file:/tmp/foo",
-        "--solrhomedir", "/", 
+        "--input-list", "file:///tmp",
+        "--output-dir", "file:/tmp/foo",
+        "--solr-home-dir", "/", 
         "--shards", "1",
         };
     assertNull(parser.parseArgs(args, fs, opts));
@@ -183,11 +183,11 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   @Test
   public void testArgsParserUpdateConflictResolver() {
     String[] args = new String[] { 
-        "--inputlist", "file:///tmp",
-        "--outputdir", "file:/tmp/foo",
-        "--solrhomedir", "/", 
+        "--input-list", "file:///tmp",
+        "--output-dir", "file:/tmp/foo",
+        "--solr-home-dir", "/", 
         "--shards", "1",
-        "--updateconflictresolver", NoChangeUpdateConflictResolver.class.getName(),
+        "--update-conflict-resolver", NoChangeUpdateConflictResolver.class.getName(),
         };
     assertNull(parser.parseArgs(args, fs, opts));
     assertEquals(NoChangeUpdateConflictResolver.class.getName(), opts.updateConflictResolver);
@@ -198,8 +198,8 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testArgsParserUnknownArgName() {
     String[] args = new String[] { 
         "--xxxxxxxxinputlist", "file:///tmp",
-        "--outputdir", "file:/tmp/foo",
-        "--solrhomedir", "/", 
+        "--output-dir", "file:/tmp/foo",
+        "--solr-home-dir", "/", 
         };
     assertArgumentParserException(args);
   }
@@ -207,9 +207,9 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   @Test
   public void testArgsParserFileNotFound1() {
     String[] args = new String[] { 
-        "--inputlist", "file:///tmp",
-        "--outputdir", "file:/fileNotFound/foo",
-        "--solrhomedir", "/", 
+        "--input-list", "file:///tmp",
+        "--output-dir", "file:/fileNotFound/foo",
+        "--solr-home-dir", "/", 
         };
     assertArgumentParserException(args);
   }
@@ -217,9 +217,9 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   @Test
   public void testArgsParserFileNotFound2() {
     String[] args = new String[] { 
-        "--inputlist", "file:///tmp",
-        "--outputdir", "file:/tmp/foo",
-        "--solrhomedir", "/fileNotFound", 
+        "--input-list", "file:///tmp",
+        "--output-dir", "file:/tmp/foo",
+        "--solr-home-dir", "/fileNotFound", 
         };
     assertArgumentParserException(args);
   }
@@ -227,9 +227,9 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   @Test
   public void testArgsParserIntOutOfRange() {
     String[] args = new String[] { 
-        "--inputlist", "file:///tmp",
-        "--outputdir", "file:/tmp/foo",
-        "--solrhomedir", "/", 
+        "--input-list", "file:///tmp",
+        "--output-dir", "file:/tmp/foo",
+        "--solr-home-dir", "/", 
         "--mappers", "-20"
         };
     assertArgumentParserException(args);
@@ -238,9 +238,9 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   @Test
   public void testArgsParserIllegalFanout() {
     String[] args = new String[] { 
-        "--inputlist", "file:///tmp",
-        "--outputdir", "file:/tmp/foo",
-        "--solrhomedir", "/", 
+        "--input-list", "file:///tmp",
+        "--output-dir", "file:/tmp/foo",
+        "--solr-home-dir", "/", 
         "--fanout", "1" // must be >= 2
         };
     assertArgumentParserException(args);
@@ -249,11 +249,11 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   @Test
   public void testArgsShardUrlOk() {
     String[] args = new String[] { 
-        "--inputlist", "file:///tmp",
-        "--outputdir", "file:/tmp/foo",
-        "--solrhomedir", "/", 
-        "--shardurl", "http://localhost:8983/solr/collection1",
-        "--shardurl", "http://localhost:8983/solr/collection2",
+        "--input-list", "file:///tmp",
+        "--output-dir", "file:/tmp/foo",
+        "--solr-home-dir", "/", 
+        "--shard-url", "http://localhost:8983/solr/collection1",
+        "--shard-url", "http://localhost:8983/solr/collection2",
         };
     assertNull(parser.parseArgs(args, fs, opts));
     assertEquals(Arrays.asList("http://localhost:8983/solr/collection1", "http://localhost:8983/solr/collection2"), opts.shardUrls);
@@ -264,10 +264,10 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   @Test
   public void testArgsShardUrlMustHaveAParam() {
     String[] args = new String[] { 
-        "--inputlist", "file:///tmp",
-        "--outputdir", "file:/tmp/foo",
-        "--solrhomedir", "/", 
-        "--shardurl",
+        "--input-list", "file:///tmp",
+        "--output-dir", "file:/tmp/foo",
+        "--solr-home-dir", "/", 
+        "--shard-url",
         };
     assertArgumentParserException(args);
   }
@@ -275,11 +275,11 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   @Test
   public void testArgsShardUrlAndShardsAreMutuallyExclusive() {
     String[] args = new String[] { 
-        "--inputlist", "file:///tmp",
-        "--outputdir", "file:/tmp/foo",
-        "--solrhomedir", "/", 
+        "--input-list", "file:///tmp",
+        "--output-dir", "file:/tmp/foo",
+        "--solr-home-dir", "/", 
         "--shards", "1", 
-        "--shardurl", "http://localhost:8983/solr/collection1",
+        "--shard-url", "http://localhost:8983/solr/collection1",
         };
     assertArgumentParserException(args);
   }
@@ -287,10 +287,10 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   @Test
   public void testArgsShardUrlNoGoLive() {
     String[] args = new String[] { 
-        "--inputlist", "file:///tmp",
-        "--outputdir", "file:/tmp/foo",
-        "--solrhomedir", "/", 
-        "--shardurl", "http://localhost:8983/solr/collection1"
+        "--input-list", "file:///tmp",
+        "--output-dir", "file:/tmp/foo",
+        "--solr-home-dir", "/", 
+        "--shard-url", "http://localhost:8983/solr/collection1"
         };
     assertNull(parser.parseArgs(args, fs, opts));
     assertEmptySystemErrAndEmptySystemOut();
@@ -300,13 +300,13 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   @Test
   public void testArgsShardUrlsAndZkhostAreMutuallyExclusive() {
     String[] args = new String[] { 
-        "--inputlist", "file:///tmp",
-        "--outputdir", "file:/tmp/foo",
-        "--solrhomedir", "/", 
-        "--shardurl", "http://localhost:8983/solr/collection1",
-        "--shardurl", "http://localhost:8983/solr/collection1",
-        "--zkhost", "http://localhost:2185",
-        "--golive"
+        "--input-list", "file:///tmp",
+        "--output-dir", "file:/tmp/foo",
+        "--solr-home-dir", "/", 
+        "--shard-url", "http://localhost:8983/solr/collection1",
+        "--shard-url", "http://localhost:8983/solr/collection1",
+        "--zk-host", "http://localhost:2185",
+        "--go-live"
         };
     assertArgumentParserException(args);
   }
@@ -314,12 +314,12 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   @Test
   public void testArgsGoLiveAndSolrUrl() {
     String[] args = new String[] { 
-        "--inputlist", "file:///tmp",
-        "--outputdir", "file:/tmp/foo",
-        "--solrhomedir", "/", 
-        "--shardurl", "http://localhost:8983/solr/collection1",
-        "--shardurl", "http://localhost:8983/solr/collection1",
-        "--golive"
+        "--input-list", "file:///tmp",
+        "--output-dir", "file:/tmp/foo",
+        "--solr-home-dir", "/", 
+        "--shard-url", "http://localhost:8983/solr/collection1",
+        "--shard-url", "http://localhost:8983/solr/collection1",
+        "--go-live"
         };
     Integer result = parser.parseArgs(args, fs, opts);
     assertNull(result);
@@ -329,10 +329,10 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   @Test
   public void testArgsZkHostNoGoLive() {
     String[] args = new String[] { 
-        "--inputlist", "file:///tmp",
-        "--outputdir", "file:/tmp/foo",
-        "--solrhomedir", "/", 
-        "--zkhost", "http://localhost:2185",
+        "--input-list", "file:///tmp",
+        "--output-dir", "file:/tmp/foo",
+        "--solr-home-dir", "/", 
+        "--zk-host", "http://localhost:2185",
         };
     assertArgumentParserException(args);
   }
@@ -340,12 +340,11 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   @Test
   public void testArgsGoLiveZkHostNoCollection() {
     String[] args = new String[] { 
-        "--inputlist", "file:///tmp",
-        "--outputdir", "file:/tmp/foo",
-        "--solrhomedir", "/", 
-        "--zkhost", "http://localhost:2185",
-
-        "--golive"
+        "--input-list", "file:///tmp",
+        "--output-dir", "file:/tmp/foo",
+        "--solr-home-dir", "/", 
+        "--zk-host", "http://localhost:2185",
+        "--go-live"
         };
     assertArgumentParserException(args);
   }
@@ -353,10 +352,10 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   @Test
   public void testArgsGoLiveNoZkHostOrSolrUrl() {
     String[] args = new String[] { 
-        "--inputlist", "file:///tmp",
-        "--outputdir", "file:/tmp/foo",
-        "--solrhomedir", "/", 
-        "--golive"
+        "--input-list", "file:///tmp",
+        "--output-dir", "file:/tmp/foo",
+        "--solr-home-dir", "/", 
+        "--go-live"
         };
     assertArgumentParserException(args);
   }  
