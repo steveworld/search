@@ -193,7 +193,9 @@ public class BasicMiniMRTest extends Assert {
           assertEquals("hdfs", parts.getScheme());
           assertTrue("localhost".equals(parts.getHost()) || "localhost.localdomain".equals(parts.getHost()));
           assertEquals(dfsClusterPort, parts.getPort());
-          assertEquals("hdfs://localhost:" + dfsClusterPort + "/user/" + down + "bar.txt", parts.getId());
+          assertTrue(parts.getId().equals("hdfs://localhost:" + dfsClusterPort + "/user/" + down + "bar.txt")
+                  || parts.getId().equals("hdfs://localhost.localdomain:" + dfsClusterPort + "/user/" + down + "bar.txt")
+          );
           assertFileNotFound(parts);
         }
       }
