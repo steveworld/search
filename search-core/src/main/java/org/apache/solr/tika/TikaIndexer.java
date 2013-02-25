@@ -180,6 +180,7 @@ public class TikaIndexer extends SolrIndexer {
 
   @Override
   protected List<SolrInputDocument> extract(StreamEvent event) {
+    LOGGER.debug("event headers: {}", event.getHeaders());
     Parser parser = detectParser(event);
     ParseInfo info = getParseInfo();
 

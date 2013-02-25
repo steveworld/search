@@ -26,6 +26,7 @@ import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.hadoop.HdfsFileFieldNames;
 
 /**
  * UpdateConflictResolver implementation that ignores all but the most recent
@@ -38,7 +39,7 @@ public class RetainMostRecentUpdateConflictResolver implements UpdateConflictRes
   private String orderByFieldName = ORDER_BY_FIELD_NAME_DEFAULT;
   
   public static final String ORDER_BY_FIELD_NAME_KEY = RetainMostRecentUpdateConflictResolver.class.getName() + ".orderByFieldName";
-  public static final String ORDER_BY_FIELD_NAME_DEFAULT = "file_last_modified";
+  public static final String ORDER_BY_FIELD_NAME_DEFAULT = HdfsFileFieldNames.FILE_LAST_MODIFIED;
 
   @Override
   public void setConf(Configuration conf) {

@@ -17,7 +17,6 @@
 package org.apache.solr.hadoop.tika;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,8 +31,6 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -48,11 +45,11 @@ import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.PluginInfo;
 import org.apache.solr.core.SolrConfig;
 import org.apache.solr.core.SolrResourceLoader;
+import org.apache.solr.hadoop.HdfsFileFieldNames;
 import org.apache.solr.hadoop.HeartBeater;
 import org.apache.solr.hadoop.PathParts;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrMapper;
-import org.apache.solr.hadoop.dedup.RetainMostRecentUpdateConflictResolver;
 import org.apache.solr.handler.extraction.ExtractingRequestHandler;
 import org.apache.solr.request.SolrRequestHandler;
 import org.apache.solr.schema.IndexSchema;
@@ -77,15 +74,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   private Context context;
   private IndexSchema schema;
   private HeartBeater heartBeater;
-
-  public static final String FILE_DOWNLOAD_URL_FIELD_NAME = "file_download_url";
-  public static final String FILE_SCHEME_FIELD_NAME = "file_scheme";
-  public static final String FILE_HOST_FIELD_NAME = "file_host";
-  public static final String FILE_PORT_FIELD_NAME = "file_port";
-  public static final String FILE_PATH_FIELD_NAME = "file_path";
-  public static final String FILE_NAME_FIELD_NAME = "file_name";
-  public static final String FILE_LENGTH_FIELD_NAME = "file_length";
-  public static final String FILE_LAST_MODIFIED_FIELD_NAME = RetainMostRecentUpdateConflictResolver.ORDER_BY_FIELD_NAME_DEFAULT;
+  private Map<String, String> explicitTikaHeaders;
 
   private static final Logger LOG = LoggerFactory.getLogger(TikaMapper.class);
   
@@ -105,6 +94,18 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       LOG.trace("Configuration:\n{}", Joiner.on("\n").join(map.entrySet()));
     }
     this.context = context;
+    
+    // Find headers to explicitly pass to Tika
+    // Example: hadoop -D org.apache.solr.hadoop.tika.TikaMapper.header.stream.type=text/plain
+    explicitTikaHeaders = new HashMap<String,String>();
+    for (Map.Entry<String,String> entry : context.getConfiguration()) {
+      String prefix = getClass().getName() + ".header.";
+      if (entry.getKey().startsWith(prefix)) {
+        explicitTikaHeaders.put(entry.getKey().substring(prefix.length()), entry.getValue());
+      }
+    }
+    LOG.debug("explicitTikaHeaders: {}", explicitTikaHeaders);
+    
     Map<String, Object> params = new HashMap<String,Object>();
     for (Map.Entry<String,String> entry : context.getConfiguration()) {
       if (entry.getValue() != null && (entry.getKey().contains("tika") || entry.getKey().contains("Tika"))) {
@@ -148,6 +149,9 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       if (headers == null) {
         return; // ignore
       }
+      for (Map.Entry<String,String> entry : explicitTikaHeaders.entrySet()) {
+        headers.put(entry.getKey(), entry.getValue());
+      }
       long fileLength = parts.getFileStatus().getLen();
       FSDataInputStream in = parts.getFileSystem().open(parts.getDownloadPath());
       try {
@@ -183,16 +187,21 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     headers.put(Metadata.RESOURCE_NAME_KEY, parts.getName()); // Tika can use the file name in guessing the right MIME type
     
     // enable indexing and storing of file meta data in Solr
-    headers.put(FILE_DOWNLOAD_URL_FIELD_NAME, parts.getDownloadURL());
-    headers.put(FILE_SCHEME_FIELD_NAME, parts.getScheme()); 
-    headers.put(FILE_HOST_FIELD_NAME, parts.getHost()); 
-    headers.put(FILE_PORT_FIELD_NAME, String.valueOf(parts.getPort())); 
-    headers.put(FILE_PATH_FIELD_NAME, parts.getURIPath()); 
-    headers.put(FILE_NAME_FIELD_NAME, parts.getName());     
-    headers.put(FILE_LAST_MODIFIED_FIELD_NAME, String.valueOf(stats.getModificationTime())); // FIXME also in SpoolDirSource
-    headers.put(FILE_LENGTH_FIELD_NAME, String.valueOf(stats.getLen())); // FIXME also in SpoolDirSource
+    headers.put(HdfsFileFieldNames.FILE_DOWNLOAD_URL, parts.getDownloadURL());
+    headers.put(HdfsFileFieldNames.FILE_SCHEME, parts.getScheme()); 
+    headers.put(HdfsFileFieldNames.FILE_HOST, parts.getHost()); 
+    headers.put(HdfsFileFieldNames.FILE_PORT, String.valueOf(parts.getPort())); 
+    headers.put(HdfsFileFieldNames.FILE_PATH, parts.getURIPath()); 
+    headers.put(HdfsFileFieldNames.FILE_NAME, parts.getName());     
+    headers.put(HdfsFileFieldNames.FILE_LAST_MODIFIED, String.valueOf(stats.getModificationTime())); // FIXME also in SpoolDirSource
+    headers.put(HdfsFileFieldNames.FILE_LENGTH, String.valueOf(stats.getLen())); // FIXME also in SpoolDirSource
+    headers.put(HdfsFileFieldNames.FILE_OWNER, stats.getOwner());
+    headers.put(HdfsFileFieldNames.FILE_GROUP, stats.getGroup());
+    headers.put(HdfsFileFieldNames.FILE_PERMISSIONS_USER, stats.getPermission().getUserAction().SYMBOL);
+    headers.put(HdfsFileFieldNames.FILE_PERMISSIONS_GROUP, stats.getPermission().getGroupAction().SYMBOL);
+    headers.put(HdfsFileFieldNames.FILE_PERMISSIONS_OTHER, stats.getPermission().getOtherAction().SYMBOL);
+    headers.put(HdfsFileFieldNames.FILE_PERMISSIONS_STICKYBIT, String.valueOf(stats.getPermission().getStickyBit()));
     
-    // TODO: also add owner, group, perms, file extension?
     return headers;
   }
 
