@@ -184,6 +184,7 @@ public class BasicMiniMRTest extends Assert {
     for (Configuration conf : Arrays.asList(jobConf)) {
       for (String queryAndFragment : Arrays.asList("", "?key=value#fragment")) {
         for (String up : Arrays.asList("", "../")) {
+          // verify using absolute path
           String down = up.length() == 0 ? "foo/" : "";
           String downloadURL = "/user/foo/" + up + "bar.txt" + queryAndFragment;
           PathParts parts = new PathParts(downloadURL, conf);
@@ -195,6 +196,21 @@ public class BasicMiniMRTest extends Assert {
           assertEquals(dfsClusterPort, parts.getPort());
           assertTrue(parts.getId().equals("hdfs://localhost:" + dfsClusterPort + "/user/" + down + "bar.txt")
                   || parts.getId().equals("hdfs://localhost.localdomain:" + dfsClusterPort + "/user/" + down + "bar.txt")
+          );
+          assertFileNotFound(parts);          
+          
+          // verify relative path is interpreted to be relative to user's home dir and resolved to an absolute path
+          downloadURL = "xuser/foo/" + up + "bar.txt" + queryAndFragment;
+          parts = new PathParts(downloadURL, conf);
+          assertEquals(downloadURL, parts.getDownloadURL());
+          String homeDir = "/user/" + System.getProperty("user.name");
+          assertEquals(homeDir + "/xuser/" + down + "bar.txt", parts.getURIPath());
+          assertEquals("bar.txt", parts.getName());
+          assertEquals("hdfs", parts.getScheme());
+          assertTrue("localhost".equals(parts.getHost()) || "localhost.localdomain".equals(parts.getHost()));
+          assertEquals(dfsClusterPort, parts.getPort());
+          assertTrue(parts.getId().equals("hdfs://localhost:" + dfsClusterPort + homeDir + "/xuser/" + down + "bar.txt")
+                  || parts.getId().equals("hdfs://localhost.localdomain:" + dfsClusterPort + homeDir + "/xuser/" + down + "bar.txt")
           );
           assertFileNotFound(parts);
         }
