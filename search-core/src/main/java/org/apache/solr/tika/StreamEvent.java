@@ -20,7 +20,6 @@ package org.apache.solr.tika;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -30,12 +29,13 @@ public class StreamEvent {
 
   private final Map<String, String> headers;
   private final InputStream body;
-
-  public StreamEvent() {
-    this(null, new HashMap<String, String>());
-  }
+  private final Map<Class, Object> parseContext;
 
   public StreamEvent(InputStream body, Map<String, String> headers) {
+    this(body, headers, null);
+  }
+
+  public StreamEvent(InputStream body, Map<String, String> headers, Map<Class, Object> parseContext) {
     if (headers == null) {
       throw new IllegalArgumentException("Headers must not be null");      
     }
@@ -44,6 +44,7 @@ public class StreamEvent {
     }
     this.headers = headers;
     this.body = body;
+    this.parseContext = parseContext;
   }
 
   public Map<String, String> getHeaders() {
@@ -52,6 +53,10 @@ public class StreamEvent {
 
   public InputStream getBody() {
     return body;
+  }
+
+  public Map<Class, Object> getParseContext() {
+    return parseContext;
   }
 
   @Override

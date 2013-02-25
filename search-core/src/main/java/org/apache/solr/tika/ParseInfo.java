@@ -58,6 +58,11 @@ public final class ParseInfo {
     this.event = event;
     this.indexer = indexer;
     this.parseContext = new ParseContext();
+    if (event.getParseContext() != null) {
+      for (Map.Entry<Class, Object> entry : event.getParseContext().entrySet()) {
+        this.parseContext.set(entry.getKey(), entry.getValue());
+      }
+    }
     this.parseContext.set(ParseInfo.class, this);
   }
   
