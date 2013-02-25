@@ -278,11 +278,11 @@ public class BasicMiniMRTest extends Assert {
     
     String[] args = new String[] {
         "--files", RESOURCES_DIR + File.separator + TIKA_CONFIG_FILE_NAME,
-        "--solrhomedir=" + MINIMR_CONF_DIR.getAbsolutePath(),
-        "--outputdir=" + outDir.toString(),
+        "--solr-home-dir=" + MINIMR_CONF_DIR.getAbsolutePath(),
+        "--output-dir=" + outDir.toString(),
         "--shards=" + shards,
         "--verbose",
-        numRuns % 2 == 0 ? "--inputlist=" + INPATH.toString() : dataDir.toString(),
+        numRuns % 2 == 0 ? "--input-list=" + INPATH.toString() : dataDir.toString(),
         numRuns % 3 == 0 ? "--reducers=" + shards : (numRuns % 3 == 1  ? "--reducers=-1" : "--reducers=" + Math.min(8, maxReducers))
     };
     if (numRuns % 3 == 2) {

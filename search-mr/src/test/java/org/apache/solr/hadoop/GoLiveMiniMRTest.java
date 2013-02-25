@@ -219,16 +219,16 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     String[] args = new String[] {
         "--files",
         RESOURCES_DIR + "/tika-config.xml",
-        "--solrhomedir=" + MINIMR_CONF_DIR.getAbsolutePath(),
-        "--outputdir=" + outDir.toString(),
+        "--solr-home-dir=" + MINIMR_CONF_DIR.getAbsolutePath(),
+        "--output-dir=" + outDir.toString(),
         "--mappers=3",
-        ++numRuns % 2 == 0 ? "--inputlist=" + INPATH.toString() : dataDir.toString(), 
-        "--shardurl", cloudJettys.get(0).url, 
-        "--shardurl", cloudJettys.get(1).url, 
-        "--shardurl", cloudJettys.get(2).url, 
-        "--golivethreads", Integer.toString(random().nextInt(15) + 1),
+        ++numRuns % 2 == 0 ? "--input-list=" + INPATH.toString() : dataDir.toString(), 
+        "--shard-url", cloudJettys.get(0).url, 
+        "--shard-url", cloudJettys.get(1).url, 
+        "--shard-url", cloudJettys.get(2).url, 
+        "--go-live-threads", Integer.toString(random().nextInt(15) + 1),
         "--verbose",
-        "--golive"
+        "--go-live"
     };
     
     if (true) {
@@ -247,16 +247,16 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     args = new String[] {
         "--files",
         RESOURCES_DIR + "/tika-config.xml",
-        "--solrhomedir=" + MINIMR_CONF_DIR.getAbsolutePath(),
-        "--outputdir=" + outDir.toString(),
+        "--solr-home-dir=" + MINIMR_CONF_DIR.getAbsolutePath(),
+        "--output-dir=" + outDir.toString(),
         "--mappers=3",
         "--verbose",
-        "--golive",
-        ++numRuns % 2 == 0 ? "--inputlist=" + INPATH.toString() : dataDir.toString(), 
-        "--shardurl", cloudJettys.get(0).url, 
-        "--shardurl", cloudJettys.get(1).url, 
-        "--shardurl", cloudJettys.get(2).url, 
-        "--golivethreads", Integer.toString(random().nextInt(15) + 1)
+        "--go-live",
+        ++numRuns % 2 == 0 ? "--input-list=" + INPATH.toString() : dataDir.toString(), 
+        "--shard-url", cloudJettys.get(0).url, 
+        "--shard-url", cloudJettys.get(1).url, 
+        "--shard-url", cloudJettys.get(2).url, 
+        "--go-live-threads", Integer.toString(random().nextInt(15) + 1)
     };
     
     if (true) {
@@ -279,14 +279,14 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     args = new String[] {
         "--files",
         RESOURCES_DIR + "/tika-config.xml",
-        "--solrhomedir=" + MINIMR_CONF_DIR.getAbsolutePath(),
-        "--outputdir=" + outDir.toString(),
+        "--solr-home-dir=" + MINIMR_CONF_DIR.getAbsolutePath(),
+        "--output-dir=" + outDir.toString(),
         "--mappers=3",
         "--reducers=6",
         "--verbose",
-        "--golive",
-        ++numRuns % 2 == 0 ? "--inputlist=" + INPATH.toString() : dataDir.toString(), 
-        "--zkhost", zkServer.getZkAddress(), 
+        "--go-live",
+        ++numRuns % 2 == 0 ? "--input-list=" + INPATH.toString() : dataDir.toString(), 
+        "--zk-host", zkServer.getZkAddress(), 
         "--collection", "collection1"
     };
 

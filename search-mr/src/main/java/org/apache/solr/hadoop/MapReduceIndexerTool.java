@@ -156,7 +156,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
           "live customer facing Solr servers, typically a SolrCloud. " +
           "If this phase is omitted you can explicitly point each Solr server to one of the HDFS output shard directories.");
 
-      parser.addArgument("--help", "-h")
+      parser.addArgument("--help", "-help", "-h")
         .help("Show this help message and exit")
         .action(new HelpArgumentAction() {
           @Override
@@ -182,8 +182,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "  --libjars myconfig.jar \\\n" + 
               "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-              "  --solrhomedir src/test/resources/solr/minimr \\\n" +
-              "  --outputdir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
+              "  --solr-home-dir src/test/resources/solr/minimr \\\n" +
+              "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
               "  --shards 1 \\\n" + 
               "  hdfs:///user/$USER/test-documents/sample-statuses-20120906-141433.avro\n" +
               "\n" +
@@ -207,10 +207,10 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "  --libjars myconfig.jar,../search-contrib/target/search-contrib-*-SNAPSHOT.jar \\\n" + 
               "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-              "  --solrhomedir src/test/resources/solr/minimr \\\n" + 
-              "  --outputdir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
+              "  --solr-home-dir src/test/resources/solr/minimr \\\n" + 
+              "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
               "  --shards 100 \\\n" + 
-              "  --inputlist -\n" +
+              "  --input-list -\n" +
               "\n" +
               "# Go live by merging resulting index shards into a live Solr cluster\n" +
               "# (explicitly specify Solr URLs - for a SolrCloud cluster see next example):\n" +
@@ -221,11 +221,11 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "  --libjars myconfig.jar \\\n" + 
               "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-              "  --solrhomedir src/test/resources/solr/minimr \\\n" + 
-              "  --outputdir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
-              "  --shardurl http://solr001.mycompany.com:8983/solr/collection1 \\\n" + 
-              "  --shardurl http://solr002.mycompany.com:8983/solr/collection1 \\\n" + 
-              "  --golive \\\n" + 
+              "  --solr-home-dir src/test/resources/solr/minimr \\\n" + 
+              "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
+              "  --shard-url http://solr001.mycompany.com:8983/solr/collection1 \\\n" + 
+              "  --shard-url http://solr002.mycompany.com:8983/solr/collection1 \\\n" + 
+              "  --go-live \\\n" + 
               "  hdfs:///user/foo/indir\n" +  
               "\n" +
               "# Go live by merging resulting index shards into a live SolrCloud cluster\n" +
@@ -237,27 +237,27 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "  --libjars myconfig.jar \\\n" + 
               "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-              "  --solrhomedir src/test/resources/solr/minimr \\\n" + 
-              "  --outputdir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
-              "  --zkhost zk01.mycompany.com:2181/solr \\\n" + 
+              "  --solr-home-dir src/test/resources/solr/minimr \\\n" + 
+              "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
+              "  --zk-host zk01.mycompany.com:2181/solr \\\n" + 
               "  --collection collection1 \\\n" + 
-              "  --golive \\\n" + 
+              "  --go-live \\\n" + 
               "  hdfs:///user/foo/indir\n"
             );
             throw new FoundHelpArgument(); // Trick to prevent processing of any remaining arguments
           }
         });
       
-      Argument inputListArg = parser.addArgument("--inputlist")
+      Argument inputListArg = parser.addArgument("--input-list")
         .action(Arguments.append())
         .metavar("URI")
   //      .type(new PathArgumentType(fs).verifyExists().verifyCanRead())
         .type(Path.class)
         .help("Local URI or HDFS URI of a file containing a list of HDFS URIs to index, one URI per line in the file. " + 
               "If '-' is specified, URIs are read from the standard input. " + 
-              "Multiple --inputlist arguments can be specified.");
+              "Multiple --input-list arguments can be specified.");
       
-      Argument outputDirArg = parser.addArgument("--outputdir")
+      Argument outputDirArg = parser.addArgument("--output-dir")
         .metavar("HDFS_URI")
         .type(new PathArgumentType(fs) {
           @Override
@@ -274,7 +274,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .help("HDFS directory to write Solr indexes to. Inside there one output directory per shard will be generated. " +
         		  "Example: hdfs://c2202.mycompany.com/user/$USER/test");
       
-      Argument solrHomeDirArg = parser.addArgument("--solrhomedir")
+      Argument solrHomeDirArg = parser.addArgument("--solr-home-dir")
           .metavar("DIR")
           .type(new FileArgumentType().verifyIsDirectory().verifyCanRead())
           .required(true)
@@ -282,7 +282,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
           		  "conf/solrconfig.xml and optionally also lib/ dir. This directory will be uploaded to each MR task. " +
           		  "Example: src/test/resources/solr/minimr");
     
-      Argument updateConflictResolverArg = parser.addArgument("--updateconflictresolver")
+      Argument updateConflictResolverArg = parser.addArgument("--update-conflict-resolver")
       .metavar("FQCN")
       .type(String.class)
       .setDefault(RetainMostRecentUpdateConflictResolver.class.getName())
@@ -327,7 +327,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .setDefault(Integer.MAX_VALUE)
         .help(FeatureControl.SUPPRESS);
   
-      Argument maxSegmentsArg = parser.addArgument("--maxsegments")
+      Argument maxSegmentsArg = parser.addArgument("--max-segments")
         .metavar("INTEGER")
         .type(Integer.class)
         .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
@@ -343,7 +343,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
             "In a nutshell, a small maxSegments value trades indexing latency for subsequently improved query latency. " + 
             "This can be a reasonable trade-off for batch indexing systems.");
       
-      Argument fairSchedulerPoolArg = parser.addArgument("--fairschedulerpool")
+      Argument fairSchedulerPoolArg = parser.addArgument("--fair-scheduler-pool")
         .metavar("STRING")
         .help("Optional tuning knob that indicates the name of the fair scheduler pool to submit jobs to. " +
               "The Fair Scheduler is a pluggable MapReduce scheduler that provides a way to share large clusters. " +
@@ -363,29 +363,29 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       MutuallyExclusiveGroup clusterInfoGroup = parser.addMutuallyExclusiveGroup("Cluster arguments")
         .required(true)
         .description("Mutually exclusive arguments that provide information about your Solr cluster. " +
-              "If you are not using --golive, pass the --shards argument. If you are building shards for " +
-              "a Non-SolrCloud cluster, pass the --shardurl argument one or more times. If you are building " +
-              "shards for a SolrCloud cluster, pass the --zkhost argument. " +
-              "Using --golive requires either --shardurl or --zkhost.");
+              "If you are not using --go-live, pass the --shards argument. If you are building shards for " +
+              "a Non-SolrCloud cluster, pass the --shard-url argument one or more times. If you are building " +
+              "shards for a SolrCloud cluster, pass the --zk-host argument. " +
+              "Using --go-live requires either --shard-url or --zk-host.");
 
-      Argument shardUrlsArg = clusterInfoGroup.addArgument("--shardurl")
+      Argument shardUrlsArg = clusterInfoGroup.addArgument("--shard-url")
         .metavar("URL")
         .type(String.class)
         .action(Arguments.append())
-        .help("Solr URL to merge resulting shard into if using --golive. " +
+        .help("Solr URL to merge resulting shard into if using --go-live. " +
               "Example: http://solr001.mycompany.com:8983/solr/collection1. " + 
-              "Multiple --shardurl arguments can be specified, one for each desired shard. " +
-              "If you are merging shards into a SolrCloud cluster, use --zkhost instead.");
+              "Multiple --shard-url arguments can be specified, one for each desired shard. " +
+              "If you are merging shards into a SolrCloud cluster, use --zk-host instead.");
       
-      Argument zkServerAddressArg = clusterInfoGroup.addArgument("--zkhost")
+      Argument zkServerAddressArg = clusterInfoGroup.addArgument("--zk-host")
         .metavar("STRING")
         .type(String.class)
         .help("The address of a ZooKeeper instance being used by a SolrCloud cluster. "
             + "This ZooKeeper instance will be examined to determine the number of output "
-            + "shards to create as well as the Solr URLs to merge the output shards into when using the --golive option. "
+            + "shards to create as well as the Solr URLs to merge the output shards into when using the --go-live option. "
             + "Requires that you also pass the --collection to merge the shards into.\n"
             + "\n"
-            + "The --zkhost option implements the same partitioning semantics as the standard SolrCloud " 
+            + "The --zk-host option implements the same partitioning semantics as the standard SolrCloud " 
             + "Near-Real-Time (NRT) API. This enables to mix batch updates from MapReduce ingestion with "
             + "updates from standard Solr NRT ingestion on the same SolrCloud cluster, "
             + "using identical unique document keys.\n"
@@ -409,18 +409,18 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .description("Arguments for merging the shards that are built into a live Solr cluster. " +
         		         "Also see the Cluster arguments.");
 
-      Argument goLiveArg = goLiveGroup.addArgument("--golive")
+      Argument goLiveArg = goLiveGroup.addArgument("--go-live")
         .action(Arguments.storeTrue())
         .help("Allows you to optionally merge the final index shards into a live Solr cluster after they are built. " +
-              "You can pass the ZooKeeper address with --zkhost and the relevant cluster information will be auto detected. " +
-              "If you are not using a SolrCloud cluster, --shardurl arguments can be used to specify each SolrCore to merge " +
+              "You can pass the ZooKeeper address with --zk-host and the relevant cluster information will be auto detected. " +
+              "If you are not using a SolrCloud cluster, --shard-url arguments can be used to specify each SolrCore to merge " +
               "each shard into.");
 
       Argument collectionArg = goLiveGroup.addArgument("--collection")
         .metavar("STRING")
-        .help("The SolrCloud collection to merge shards into when using --golive and --zkhost.");
+        .help("The SolrCloud collection to merge shards into when using --go-live and --zk-host. Example: collection1");
       
-      Argument golivethreadsArg = goLiveGroup.addArgument("--golivethreads")
+      Argument golivethreadsArg = goLiveGroup.addArgument("--go-live-threads")
         .metavar("INTEGER")
         .type(Integer.class)
         .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
@@ -428,7 +428,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .help("Tuning knob that indicates the maximum number of live merges to run in parallel at one time.");
       
       // trailing positional arguments
-      Argument inputFilesArg = parser.addArgument("inputfiles")
+      Argument inputFilesArg = parser.addArgument("input-files")
         .metavar("HDFS_URI")
         .type(new PathArgumentType(fs).verifyScheme(fs.getScheme()).verifyExists().verifyCanRead())
         .nargs("*")
@@ -972,11 +972,11 @@ public class MapReduceIndexerTool extends Configured implements Tool {
 
   private static void verifyGoLiveArgs(Options opts, ArgumentParser parser) throws ArgumentParserException {      
     if (opts.goLive && opts.zkHost == null && opts.shardUrls == null) {
-      throw new ArgumentParserException("--golive requires that you also pass --shardurl or --zkhost", parser);
+      throw new ArgumentParserException("--go-live requires that you also pass --shard-url or --zk-host", parser);
     }
     
     if (opts.zkHost != null && opts.collection == null) {
-      throw new ArgumentParserException("--zkhost requires that you also pass --collection", parser);
+      throw new ArgumentParserException("--zk-host requires that you also pass --collection", parser);
     }
     
     if (opts.zkHost != null) {
@@ -990,13 +990,13 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       }
       assert opts.shardUrls != null;
       if (opts.shardUrls.size() == 0) {
-        throw new ArgumentParserException("--zkhost requires ZooKeeper " + opts.zkHost
+        throw new ArgumentParserException("--zk-host requires ZooKeeper " + opts.zkHost
             + " to contain at least one SolrCore for collection: " + opts.collection, parser);
       }
       LOG.debug("Using SolrCloud shard URLs: {}", opts.shardUrls);
     } else if (opts.shardUrls != null) {
       if (opts.shardUrls.size() == 0) {
-        throw new ArgumentParserException("--shardurl requires at least one URL", parser);
+        throw new ArgumentParserException("--shard-url requires at least one URL", parser);
       }
     } else if (opts.shards != null) {
       if (opts.shards <= 0) {
@@ -1004,7 +1004,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       }
     } else {
       throw new ArgumentParserException("You must specify one of the following (mutually exclusive) arguments: "
-          + "--zkhost or --shardurl or --shards", parser);
+          + "--zk-host or --shard-url or --shards", parser);
     }
 
     if (opts.shardUrls != null) {
