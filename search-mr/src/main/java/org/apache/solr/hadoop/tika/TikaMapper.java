@@ -74,7 +74,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   private Context context;
   private IndexSchema schema;
   private HeartBeater heartBeater;
-  private Map<String, String> explicitTikaHeaders;
+  private Map<String, String> commandLineTikaHeaders;
 
   public static final String TIKA_HEADER_PREFIX = TikaMapper.class.getName() + ".header.";
   
@@ -97,15 +97,15 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     }
     this.context = context;
     
-    // Find headers to explicitly pass to Tika
+    // Find command line headers to explicitly pass to Tika
     // Example: hadoop -D org.apache.solr.hadoop.tika.TikaMapper.header.stream.type=text/plain
-    explicitTikaHeaders = new HashMap<String,String>();
+    commandLineTikaHeaders = new HashMap<String,String>();
     for (Map.Entry<String,String> entry : context.getConfiguration()) {     
       if (entry.getKey().startsWith(TIKA_HEADER_PREFIX)) {
-        explicitTikaHeaders.put(entry.getKey().substring(TIKA_HEADER_PREFIX.length()), entry.getValue());
+        commandLineTikaHeaders.put(entry.getKey().substring(TIKA_HEADER_PREFIX.length()), entry.getValue());
       }
     }
-    LOG.debug("explicitTikaHeaders: {}", explicitTikaHeaders);
+    LOG.debug("explicitTikaHeaders: {}", commandLineTikaHeaders);
     
     Map<String, Object> params = new HashMap<String,Object>();
     for (Map.Entry<String,String> entry : context.getConfiguration()) {
@@ -146,17 +146,15 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     try {
       LOG.info("Processing file {}", value);
       PathParts parts = new PathParts(value.toString(), context.getConfiguration());
-      Map<String,String> headers = getHeaders(parts);
-      if (headers == null) {
+      Map<String,String> tikaHeaders = getHeaders(parts);
+      if (tikaHeaders == null) {
         return; // ignore
       }
-      for (Map.Entry<String,String> entry : explicitTikaHeaders.entrySet()) {
-        headers.put(entry.getKey(), entry.getValue());
-      }
+      tikaHeaders.putAll(commandLineTikaHeaders);
       long fileLength = parts.getFileStatus().getLen();
       FSDataInputStream in = parts.getFileSystem().open(parts.getDownloadPath());
       try {
-        indexer.process(new StreamEvent(in, headers));
+        indexer.process(new StreamEvent(in, tikaHeaders));
         context.getCounter(TikaCounters.class.getName(), TikaCounters.FILES_READ.toString()).increment(1);
         context.getCounter(TikaCounters.class.getName(), TikaCounters.FILE_BYTES_READ.toString()).increment(fileLength);
       } catch (Exception e) {
