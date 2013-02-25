@@ -57,13 +57,15 @@ public final class ParseInfo {
     }
     this.event = event;
     this.indexer = indexer;
-    this.parseContext = new ParseContext();
-    if (event.getParseContext() != null) {
-      for (Map.Entry<Class, Object> entry : event.getParseContext().entrySet()) {
-        this.parseContext.set(entry.getKey(), entry.getValue());
-      }
+    ParseContext pc = null;
+    if (event instanceof TikaStreamEvent) {
+      pc = ((TikaStreamEvent) event).getParseContext();
     }
-    this.parseContext.set(ParseInfo.class, this);
+    if (pc == null) {
+      pc = new ParseContext();
+    }
+    pc.set(ParseInfo.class, this);
+    this.parseContext = pc;
   }
   
   public static ParseInfo getParseInfo(ParseContext parseContext) {

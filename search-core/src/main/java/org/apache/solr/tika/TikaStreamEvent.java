@@ -18,40 +18,25 @@
  */
 package org.apache.solr.tika;
 
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Map;
+
+import org.apache.tika.parser.ParseContext;
 
 /**
  * Set of name-value pairs plus a payload in the form of an InputStream.
  */
-public class StreamEvent {
+public class TikaStreamEvent extends StreamEvent {
 
-  private final Map<String, String> headers;
-  private final InputStream body;
+  private final ParseContext parseContext;
 
-  public StreamEvent(InputStream body, Map<String, String> headers) {
-    if (headers == null) {
-      throw new IllegalArgumentException("Headers must not be null");      
-    }
-    if (body == null) {
-      body = new ByteArrayInputStream(new byte[0]);
-    }
-    this.headers = headers;
-    this.body = body;
+  public TikaStreamEvent(InputStream body, Map<String, String> headers, ParseContext parseContext) {
+    super(body, headers);
+    this.parseContext = parseContext;
   }
 
-  public Map<String, String> getHeaders() {
-    return headers;
-  }
-
-  public InputStream getBody() {
-    return body;
-  }
-
-  @Override
-  public String toString() {
-    return "[Event headers = " + headers + " ]";
+  public ParseContext getParseContext() {
+    return parseContext;
   }
 
 }
