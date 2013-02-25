@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.SystemUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
@@ -190,7 +191,7 @@ public class BasicMiniMRTest extends Assert {
           assertEquals("/user/" + down + "bar.txt", parts.getURIPath());
           assertEquals("bar.txt", parts.getName());
           assertEquals("hdfs", parts.getScheme());
-          assertEquals("localhost", parts.getHost());
+          assertTrue("localhost".equals(parts.getHost()) || "localhost.localdomain".equals(parts.getHost()));
           assertEquals(dfsClusterPort, parts.getPort());
           assertEquals("hdfs://localhost:" + dfsClusterPort + "/user/" + down + "bar.txt", parts.getId());
           assertFileNotFound(parts);
