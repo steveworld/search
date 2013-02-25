@@ -24,7 +24,7 @@ import java.util.Map;
 import org.apache.tika.parser.ParseContext;
 
 /**
- * Set of name-value pairs plus a payload in the form of an InputStream.
+ * StreamEvent that enables to pass an application specific {@link ParseContext} object to Tika.
  */
 public class TikaStreamEvent extends StreamEvent {
 
