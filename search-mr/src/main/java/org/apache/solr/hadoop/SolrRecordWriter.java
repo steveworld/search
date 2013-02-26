@@ -191,6 +191,10 @@ class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     descr.setCoreProperties(props);
     SolrCore core = container.create(descr);
     container.register(core, false);
+    
+    System.setProperty("solr.hdfs.blockcache.enabled", "false");
+    System.setProperty("solr.autoCommit.maxTime", "-1");
+    System.setProperty("solr.autoSoftCommit.maxTime", "-1");
     EmbeddedSolrServer solr = new EmbeddedSolrServer(container, "core1");
     return solr;
   }
