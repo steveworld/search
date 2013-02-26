@@ -51,7 +51,7 @@ public abstract class AbstractStreamingParser implements Parser {
     return supportedMediaTypes;
   }
 
-  protected void setSupportedTypes(Set<MediaType> supportedMediaTypes) {
+  public void setSupportedTypes(Set<MediaType> supportedMediaTypes) {
     this.supportedMediaTypes = supportedMediaTypes;
   }
 
