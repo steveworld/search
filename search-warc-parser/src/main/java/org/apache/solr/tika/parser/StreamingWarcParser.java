@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.http.Header;
 import org.apache.http.HttpException;
@@ -58,6 +59,8 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import com.google.common.io.CountingInputStream;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException;
 
 public class StreamingWarcParser extends AbstractStreamingParser {
 
@@ -67,6 +70,10 @@ public class StreamingWarcParser extends AbstractStreamingParser {
   private static final String DATE_META_KEY = "date";
   private static final String URL_META_KEY = "url";
   private static final String MIMETYPE_META_KEY = "mimetype";
+  // the maximum number of bytes that will be read from any individual document in the warc
+  // archive.  Any number < 0 is treated as unlimited.
+  public static final String MAX_BYTES_PER_DOC_PROPERTY = "tika.warcParser.maxBytesPerDoc";
+  private int maxBytesPerDoc = -1;
 
   /**
    * Create a WarcParser
@@ -87,10 +94,19 @@ public class StreamingWarcParser extends AbstractStreamingParser {
   protected void doParse(InputStream in, ContentHandler handler) throws IOException, SAXException {
     ParseInfo info = getParseInfo();
     info.setMultiDocumentParser(true);
+    Config config = info.getConfig();
+    if (config.hasPath(MAX_BYTES_PER_DOC_PROPERTY)) {
+      try {
+        maxBytesPerDoc = config.getInt(MAX_BYTES_PER_DOC_PROPERTY);
+      } catch (ConfigException.WrongType ce) {
+        LOGGER.error("Unable to convert value for property " + MAX_BYTES_PER_DOC_PROPERTY, ce);
+        throw ce;
+      }
+    }
     final ParseContext context = info.getParseContext();
     metadata.set(Metadata.CONTENT_TYPE, getSupportedTypes(context).iterator().next().toString());
     XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
-
+    
     String resourceName = metadata.get(metadata.RESOURCE_NAME_KEY);
     ArchiveReader ar = new UncompressedWARCReader(
       resourceName==null?"unknown warc resource":resourceName, in);
@@ -103,11 +119,9 @@ public class StreamingWarcParser extends AbstractStreamingParser {
       // extract the warc record, then extract the http response.
 
       if (warcHeader.getHeaderValue(WARCConstants.CONTENT_TYPE).equals(WARCConstants.HTTP_RESPONSE_MIMETYPE)) {
-        byte [] warcDoc = new byte[(int)(warcHeader.getLength())];
-        int length = record.read(warcDoc);
         SessionInputBufferMockup inbuffer =
-          new SessionInputBufferMockup(new ByteArrayInputStream(warcDoc),
-          length, new BasicHttpParams());
+          new SessionInputBufferMockup(record,
+          1024, new BasicHttpParams());
         DefaultResponseParser parser = new DefaultResponseParser(
           inbuffer,
           BasicLineParser.DEFAULT,
@@ -118,8 +132,7 @@ public class StreamingWarcParser extends AbstractStreamingParser {
           HttpMessage response = parser.parse();
           Header httpHeader = response.getLastHeader(HttpHeaders.CONTENT_TYPE);
           if (httpHeader != null && httpHeader.getValue().startsWith(MediaType.TEXT_HTML.toString())) {
-            SessionInputStream sessionInputStream = new SessionInputStream(inbuffer);
-            process(sessionInputStream, xhtml, warcHeader, httpHeader);
+            process(record, xhtml, warcHeader, httpHeader);
           }
         } catch (HttpException ex) {
           LOGGER.warn("Unable to parse http for document: " + ex.getMessage() + " "
@@ -133,16 +146,16 @@ public class StreamingWarcParser extends AbstractStreamingParser {
   }
 
   /** Processes the given Warc record */
-  protected void process(SessionInputStream sessionInputStream, XHTMLContentHandler handler,
+  protected void process(InputStream inputStream, XHTMLContentHandler handler,
       ArchiveRecordHeader warcHeader, Header httpHeader)
       throws IOException, SAXException, SolrServerException {
-    List<SolrInputDocument> docs = extract(sessionInputStream, handler, warcHeader, httpHeader);
+    List<SolrInputDocument> docs = extract(inputStream, handler, warcHeader, httpHeader);
     docs = transform(docs);
     load(docs);
   }
 
   /** Extracts zero or more Solr documents from the given Avro record */
-  protected List<SolrInputDocument> extract(SessionInputStream is, XHTMLContentHandler handler,
+  protected List<SolrInputDocument> extract(InputStream is, XHTMLContentHandler handler,
       ArchiveRecordHeader warcHeader, Header httpHeader)
       throws SAXException, IOException {
     SolrContentHandler solrHandler = getParseInfo().getSolrContentHandler();
@@ -157,6 +170,9 @@ public class StreamingWarcParser extends AbstractStreamingParser {
       EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(getParseInfo().getParseContext()));
 
     if (extractor.shouldParseEmbedded(entryData)) {
+      if (maxBytesPerDoc >= 0) {
+        is = new BoundedInputStream(is, maxBytesPerDoc);
+      }
       extractor.parseEmbedded(is, handler, entryData, true);
     }
     entryData.set(DATE_META_KEY, warcHeader.getDate());
@@ -218,33 +234,4 @@ public class StreamingWarcParser extends AbstractStreamingParser {
       initialize(f);
     }
   }
-
-  /**
-   * InputStream implementation with an underlying AbstractSessionInputBuffer.
-   * This is necessary to avoid doing an extra copy; the DefaultHttpResponseParser
-   * uses a SessionInputBuffer (not an InputStream), but the next-level parser
-   * needs an InputStream.
-   * FixMe: is this actually necessary?  We don't currently pass an InputStream
-   * directly into a next-level parser.
-   */
-  private static final class SessionInputStream extends InputStream {
-    
-    private AbstractSessionInputBuffer sessionInputBuffer;
-    
-    public SessionInputStream(AbstractSessionInputBuffer sessionInputBuffer) {
-      this.sessionInputBuffer = sessionInputBuffer;
-    }
-    public int available() { return sessionInputBuffer.available(); }
-    public void close() {} // do nothing
-    public void mark(int readlimit) {} // do nothing
-    public boolean markSupported() { return false; }
-    public int read() throws IOException { return sessionInputBuffer.read(); }
-    public int read(byte[] b) throws IOException { return sessionInputBuffer.read(b);}
-    public int read(byte[] b, int off, int len) throws IOException {
-      return sessionInputBuffer.read(b, off, len);
-    }
-    public void reset() {} // do nothing
-    public long skip(long n) { throw new NotImplementedException(); }
-  }
-
 }
