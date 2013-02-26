@@ -53,11 +53,13 @@ public class MediaTypeInterceptor implements Interceptor {
   private String headerName;
   private boolean preserveExisting;
   private boolean includeHeaders;
+  private boolean excludeParameters;
   private MediaTypeDetector detector;
 
   public static final String HEADER_NAME = "headerName";
   public static final String PRESERVE_EXISTING_NAME = "preserveExisting";
   public static final String INCLUDE_HEADER_NAME = "includeHeaders";
+  public static final String EXCLUDE_PARAMETERS = "excludeParameters";
   public static final String TIKA_CONFIG_LOCATION = "tika.config"; // ExtractingRequestHandler.CONFIG_LOCATION
 
   public static final String DEFAULT_EVENT_HEADER_NAME = MediaTypeDetector.DEFAULT_EVENT_HEADER_NAME;
@@ -66,6 +68,7 @@ public class MediaTypeInterceptor implements Interceptor {
     headerName = context.getString(HEADER_NAME, DEFAULT_EVENT_HEADER_NAME);
     preserveExisting = context.getBoolean(PRESERVE_EXISTING_NAME, true);
     includeHeaders = context.getBoolean(INCLUDE_HEADER_NAME, true);
+    excludeParameters = context.getBoolean(EXCLUDE_PARAMETERS, false);
 
     String tikaConfigFilePath = context.getString(TIKA_CONFIG_LOCATION);
     detector = new MediaTypeDetector(tikaConfigFilePath);
@@ -93,7 +96,7 @@ public class MediaTypeInterceptor implements Interceptor {
    */
   protected String getMediaType(Event event) {
     InputStream in = event.getBody() == null ? null : new ByteArrayInputStream(event.getBody());
-    return getDetector().getMediaType(new StreamEvent(in, event.getHeaders()), getMetadata(event));
+    return getDetector().getMediaType(new StreamEvent(in, event.getHeaders()), getMetadata(event), excludeParameters);
   }
 
   protected Metadata getMetadata(Event event) {

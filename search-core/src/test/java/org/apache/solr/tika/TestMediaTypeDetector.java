@@ -25,8 +25,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.solr.tika.MediaTypeDetector;
-import org.apache.solr.tika.StreamEvent;
 import org.apache.tika.metadata.Metadata;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -174,6 +172,13 @@ public class TestMediaTypeDetector extends Assert {
       StreamEvent event = new StreamEvent(new ByteArrayInputStream(body), headers);
       assertEquals(files[i+2], detect(event, true));
     }
+
+    // test excludeParameters flag:
+    boolean excludeParameters = true;
+    byte[] body = FileUtils.readFileToByteArray(new File(path + "/testWindows-x86-32.exe"));
+    Map headers = Collections.singletonMap(Metadata.RESOURCE_NAME_KEY, new File(path + "/testWindows-x86-32.exe").getPath());
+    StreamEvent event = new StreamEvent(new ByteArrayInputStream(body), headers);
+    assertEquals("application/x-msdownload", detect(event, true, excludeParameters));
   }
 
   private StreamEvent createEvent(byte[] bytes) {
@@ -181,8 +186,14 @@ public class TestMediaTypeDetector extends Assert {
   }
   
   private String detect(StreamEvent event, boolean includeHeaders) {
+    return detect(event, includeHeaders, false);
+  }
+
+  private String detect(StreamEvent event, boolean includeHeaders, boolean excludeParameters) {
     MediaTypeDetector detector = new MediaTypeDetector(null);
-    return detector.getMediaType(event, detector.getMetadata(event.getHeaders(),  includeHeaders));
+    String mediaType = detector.getMediaType(event, detector.getMetadata(event.getHeaders(),  includeHeaders), excludeParameters);
+    //System.out.println("mediaType="+mediaType);
+    return mediaType;
   }
 
 }
