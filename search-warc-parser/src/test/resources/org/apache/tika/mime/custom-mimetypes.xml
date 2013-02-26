@@ -15,6 +15,5 @@
     <magic priority="60">
       <match value="WARC/[0-9].[0-9]+\r\nWARC-Type: warcinfo" type="regex" offset="0"/>
     </magic>
-    <glob pattern="*.warc"/>
   </mime-type>
 </mime-info>
