@@ -164,7 +164,7 @@ public class BasicMiniMRTest extends Assert {
           assertEquals("localhost", parts.getHost());
           assertEquals(12345, parts.getPort());
           assertEquals("hdfs://localhost:12345/user/" + down + "bar.txt", parts.getId());
-          assertEquals("hdfs://localhost:12345/user/" + down + "bar.txt", parts.getDownloadURL());
+          assertEquals(parts.getId(), parts.getDownloadURL());
           assertFileNotFound(parts);
     
           uploadURL = "hdfs://localhost/user/foo/" + up + "bar.txt" + queryAndFragment;
@@ -176,7 +176,7 @@ public class BasicMiniMRTest extends Assert {
           assertEquals("localhost", parts.getHost());
           assertEquals(8020, parts.getPort());
           assertEquals("hdfs://localhost:8020/user/" + down + "bar.txt", parts.getId());
-          assertEquals("hdfs://localhost:8020/user/" + down + "bar.txt", parts.getDownloadURL());
+          assertEquals(parts.getId(), parts.getDownloadURL());
           assertFileNotFound(parts);
         }
       }
