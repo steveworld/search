@@ -74,7 +74,14 @@ public abstract class AbstractStreamingParser implements Parser {
       doParse(in, handler);
     } catch (Exception e) {
       LOGGER.error("Cannot parse", e);
-      throw new IOException(e);
+      if (e instanceof IOException) {
+        throw (IOException) e;
+      } else if (e instanceof SAXException) {
+        throw (SAXException) e;
+      } else if (e instanceof TikaException) {
+        throw (TikaException) e;
+      }
+      throw new TikaException("Cannot parse", e);
     }
   }
 

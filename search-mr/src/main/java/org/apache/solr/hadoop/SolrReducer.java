@@ -26,6 +26,9 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.hadoop.dedup.NoChangeUpdateConflictResolver;
 import org.apache.solr.hadoop.dedup.RetainMostRecentUpdateConflictResolver;
 import org.apache.solr.hadoop.dedup.UpdateConflictResolver;
+import org.apache.solr.handler.extraction.ExtractingParams;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, SolrInputDocumentWritable> {
 
@@ -33,6 +36,8 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
   private HeartBeater heartBeater;
   
   public static final String UPDATE_CONFLICT_RESOLVER = SolrReducer.class.getName() + ".updateConflictResolver";
+  
+  private static final Logger LOG = LoggerFactory.getLogger(SolrReducer.class);
   
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
@@ -55,6 +60,18 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
     try {
       values = resolve(key, values);
       super.reduce(key, values, context);
+    } catch (Exception e) {
+      LOG.error("Unable to process key " + key, e);
+      context.getCounter(getClass().getName() + ".errors", e.getClass().getName()).increment(1);
+      if (!context.getConfiguration().getBoolean(ExtractingParams.IGNORE_TIKA_EXCEPTION, true)) {
+        if (e instanceof IOException) {
+          throw (IOException) e;
+        } else if (e instanceof InterruptedException) {
+          throw (InterruptedException) e;
+        } else {
+          throw new IllegalStateException(e);
+        }
+      }
     } finally {
       heartBeater.cancelHeartBeat();
     }
