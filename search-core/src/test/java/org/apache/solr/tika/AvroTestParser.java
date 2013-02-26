@@ -19,32 +19,38 @@
 package org.apache.solr.tika;
 
 import java.util.Collections;
+import java.util.Set;
 
 import org.apache.avro.Schema;
-import org.apache.solr.tika.parser.AvroParser;
-import org.apache.tika.metadata.Metadata;
+import org.apache.solr.tika.parser.ReentrantParser;
+import org.apache.solr.tika.parser.StreamingAvroParser;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 
 /** Avro parser that uses an explicitly specified schema */
-public class AvroTestParser extends AvroParser {
+public class AvroTestParser extends ReentrantParser {
 
   private static Schema schema;
   
-  public static final String MEDIA_TYPE = "avro/indexertest+schemaless";
+  public static final MediaType MEDIA_TYPE = MediaType.parse("avro/indexertest+schemaless");
 
-  public AvroTestParser() {
-    super();
-    setSupportedTypes(Collections.singleton(MediaType.parse(MEDIA_TYPE)));
+  @Override
+  protected StreamingAvroParser createInstance() {
+    return new StreamingAvroParser() {
+      @Override
+      public Set<MediaType> getSupportedTypes(ParseContext context) {
+        return Collections.singleton(MEDIA_TYPE);
+      }
+
+      @Override
+      protected Schema getSchema(Schema oldSchema) {
+        return schema;
+      }
+    };
   }
-  
+
   public static void setSchema(Schema newSchema) {
     schema = newSchema;
-  }
-  
-  @Override
-  protected Schema getSchema(Schema oldSchema, Metadata metadata, ParseContext context) {
-    return schema;
   }
   
 }

@@ -18,24 +18,35 @@
  */
 package org.apache.solr.tika.parser;
 
-import java.util.Collections;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Set;
 
+import org.apache.tika.exception.TikaException;
+import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
+import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.Parser;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
 
 /**
- * Tab separated values parser that extracts search documents from CSV records
- * (using Apache Tika and Solr Cell) and loads them into Solr.
+ * Abstract base class for convenient implementation of reentrant Tika parsers.
  */
-public class TSVParser extends ReentrantParser {
+public abstract class ReentrantParser implements Parser {
 
-  private static final MediaType MEDIA_TYPE = MediaType.parse("text/tab-separated-values");
+  protected abstract Parser createInstance(); 
 
   @Override
-  protected DelimitedValuesParser createInstance() {
-    DelimitedValuesParser parser = new DelimitedValuesParser();
-    parser.setSeparatorChar('\t');
-    parser.setSupportedTypes(Collections.singleton(MEDIA_TYPE));    
-    return parser;
+  public Set<MediaType> getSupportedTypes(ParseContext context) {
+    return createInstance().getSupportedTypes(context);
+  }
+
+  @Override
+  public void parse(InputStream in, ContentHandler handler, Metadata metadata, ParseContext parseContext)
+      throws IOException, SAXException, TikaException {
+    
+    createInstance().parse(in, handler,  metadata,  parseContext);
   }
 
 }

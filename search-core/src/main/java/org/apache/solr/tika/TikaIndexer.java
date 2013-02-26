@@ -184,6 +184,7 @@ public class TikaIndexer extends SolrIndexer {
   }
 
   protected final ParseInfo getParseInfo() {
+    assert parseInfo != null;
     return parseInfo;
   }
 

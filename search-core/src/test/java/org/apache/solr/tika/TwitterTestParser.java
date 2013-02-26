@@ -231,7 +231,7 @@ public class TwitterTestParser extends AbstractParser {
   }
 
   private ParseInfo getParseInfo(ParseContext context) {
-    return context.get(ParseInfo.class);
+    return ParseInfo.getParseInfo(context);
   }
 
 }
