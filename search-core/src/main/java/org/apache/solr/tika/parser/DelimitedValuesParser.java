@@ -66,7 +66,7 @@ import com.googlecode.jcsv.reader.internal.DefaultCSVEntryParser;
  * <dd><code>text/csv; charset=...</code></dd>
  * </dl>
  */
-public class DelimitedValuesParser extends AbstractStreamingTikaParser {
+public class DelimitedValuesParser extends AbstractStreamingParser {
 
   private char separatorChar = ',';
   private boolean ignoreFirstLine = false;

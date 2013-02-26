@@ -40,12 +40,12 @@ import org.xml.sax.SAXException;
  * Abstract base class for convenient implementation of Tika parsers that stream
  * multiple SolrInputDocuments per input stream into Solr. Examples: CSV, Avro
  */
-public abstract class AbstractStreamingTikaParser implements Parser {
+public abstract class AbstractStreamingParser implements Parser {
 
   private Set<MediaType> supportedMediaTypes;
   private ParseInfo parseInfo;
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(AbstractStreamingTikaParser.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(AbstractStreamingParser.class);
 
   public Set<MediaType> getSupportedTypes(ParseContext context) {
     return supportedMediaTypes;

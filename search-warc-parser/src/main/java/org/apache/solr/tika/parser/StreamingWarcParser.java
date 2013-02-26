@@ -59,7 +59,7 @@ import org.xml.sax.SAXException;
 
 import com.google.common.io.CountingInputStream;
 
-public class StreamingWarcParser extends AbstractStreamingTikaParser {
+public class StreamingWarcParser extends AbstractStreamingParser {
 
   private Metadata metadata;
 
