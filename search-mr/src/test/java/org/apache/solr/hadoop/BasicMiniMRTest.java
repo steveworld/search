@@ -155,26 +155,28 @@ public class BasicMiniMRTest extends Assert {
       for (String queryAndFragment : Arrays.asList("", "?key=value#fragment")) {
         for (String up : Arrays.asList("", "../")) {
           String down = up.length() == 0 ? "foo/" : "";
-          String downloadURL = "hdfs://localhost:12345/user/foo/" + up + "bar.txt" + queryAndFragment;
-          PathParts parts = new PathParts(downloadURL, conf);
-          assertEquals(downloadURL, parts.getDownloadURL());
+          String uploadURL = "hdfs://localhost:12345/user/foo/" + up + "bar.txt" + queryAndFragment;
+          PathParts parts = new PathParts(uploadURL, conf);
+          assertEquals(uploadURL, parts.getUploadURL());
           assertEquals("/user/" + down + "bar.txt", parts.getURIPath());
           assertEquals("bar.txt", parts.getName());
           assertEquals("hdfs", parts.getScheme());
           assertEquals("localhost", parts.getHost());
           assertEquals(12345, parts.getPort());
           assertEquals("hdfs://localhost:12345/user/" + down + "bar.txt", parts.getId());
+          assertEquals("hdfs://localhost:12345/user/" + down + "bar.txt", parts.getDownloadURL());
           assertFileNotFound(parts);
     
-          downloadURL = "hdfs://localhost/user/foo/" + up + "bar.txt" + queryAndFragment;
-          parts = new PathParts(downloadURL, conf);
-          assertEquals(downloadURL, parts.getDownloadURL());
+          uploadURL = "hdfs://localhost/user/foo/" + up + "bar.txt" + queryAndFragment;
+          parts = new PathParts(uploadURL, conf);
+          assertEquals(uploadURL, parts.getUploadURL());
           assertEquals("/user/" + down + "bar.txt", parts.getURIPath());
           assertEquals("bar.txt", parts.getName());
           assertEquals("hdfs", parts.getScheme());
           assertEquals("localhost", parts.getHost());
           assertEquals(8020, parts.getPort());
           assertEquals("hdfs://localhost:8020/user/" + down + "bar.txt", parts.getId());
+          assertEquals("hdfs://localhost:8020/user/" + down + "bar.txt", parts.getDownloadURL());
           assertFileNotFound(parts);
         }
       }
@@ -185,9 +187,9 @@ public class BasicMiniMRTest extends Assert {
         for (String up : Arrays.asList("", "../")) {
           // verify using absolute path
           String down = up.length() == 0 ? "foo/" : "";
-          String downloadURL = "/user/foo/" + up + "bar.txt" + queryAndFragment;
-          PathParts parts = new PathParts(downloadURL, conf);
-          assertEquals(downloadURL, parts.getDownloadURL());
+          String uploadURL = "/user/foo/" + up + "bar.txt" + queryAndFragment;
+          PathParts parts = new PathParts(uploadURL, conf);
+          assertEquals(uploadURL, parts.getUploadURL());
           assertEquals("/user/" + down + "bar.txt", parts.getURIPath());
           assertEquals("bar.txt", parts.getName());
           assertEquals("hdfs", parts.getScheme());
@@ -199,9 +201,9 @@ public class BasicMiniMRTest extends Assert {
           assertFileNotFound(parts);          
           
           // verify relative path is interpreted to be relative to user's home dir and resolved to an absolute path
-          downloadURL = "xuser/foo/" + up + "bar.txt" + queryAndFragment;
-          parts = new PathParts(downloadURL, conf);
-          assertEquals(downloadURL, parts.getDownloadURL());
+          uploadURL = "xuser/foo/" + up + "bar.txt" + queryAndFragment;
+          parts = new PathParts(uploadURL, conf);
+          assertEquals(uploadURL, parts.getUploadURL());
           String homeDir = "/user/" + System.getProperty("user.name");
           assertEquals(homeDir + "/xuser/" + down + "bar.txt", parts.getURIPath());
           assertEquals("bar.txt", parts.getName());
@@ -226,7 +228,7 @@ public class BasicMiniMRTest extends Assert {
 
   private void assertFileNotFound(PathParts parts) {
     try {
-      parts.getFileSystem().getFileStatus(parts.getDownloadPath());
+      parts.getFileSystem().getFileStatus(parts.getUploadPath());
       fail();
     } catch (IOException e) {
       ; // expected

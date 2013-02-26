@@ -30,47 +30,47 @@ import org.apache.hadoop.hdfs.server.namenode.NameNode;
  */
 public final class PathParts {
 
-  private final String downloadURL;
+  private final String uploadURL;
   private final Configuration conf;
   private final FileSystem fs;
   private final Path normalizedPath;
   private FileStatus stats;
 
-  public PathParts(String downloadURL, Configuration conf) throws IOException {
-    if (downloadURL == null) {
-      throw new IllegalArgumentException("Path must not be null: " + downloadURL);    
+  public PathParts(String uploadURL, Configuration conf) throws IOException {
+    if (uploadURL == null) {
+      throw new IllegalArgumentException("Path must not be null: " + uploadURL);    
     }
-    this.downloadURL = downloadURL;
+    this.uploadURL = uploadURL;
     if (conf == null) {
-      throw new IllegalArgumentException("Configuration must not be null: " + downloadURL);    
+      throw new IllegalArgumentException("Configuration must not be null: " + uploadURL);    
     }
     this.conf = conf;
-    URI uri = stringToUri(downloadURL);
+    URI uri = stringToUri(uploadURL);
     this.fs = FileSystem.get(uri, conf);
     if (fs == null) {
-      throw new IllegalArgumentException("File system must not be null: " + downloadURL);    
+      throw new IllegalArgumentException("File system must not be null: " + uploadURL);    
     }
     this.normalizedPath = fs.makeQualified(new Path(uri));
     if (!normalizedPath.isAbsolute()) {
-      throw new IllegalArgumentException("Path must be absolute: " + downloadURL);    
+      throw new IllegalArgumentException("Path must be absolute: " + uploadURL);    
     }
     if (getScheme() == null) {
-      throw new IllegalArgumentException("Scheme must not be null: " + downloadURL);    
+      throw new IllegalArgumentException("Scheme must not be null: " + uploadURL);    
     }
     if (getHost() == null) {
-      throw new IllegalArgumentException("Host must not be null: " + downloadURL);    
+      throw new IllegalArgumentException("Host must not be null: " + uploadURL);    
     }
     if (getPort() < 0) {
-      throw new IllegalArgumentException("Port must not be negative: " + downloadURL);    
+      throw new IllegalArgumentException("Port must not be negative: " + uploadURL);    
     }
   }
   
-  public String getDownloadURL() {
-    return downloadURL;
+  public String getUploadURL() {
+    return uploadURL;
   }
 
-  public Path getDownloadPath() {
-    return new Path(getDownloadURL());
+  public Path getUploadPath() {
+    return new Path(getUploadURL());
   }
   
   public String getURIPath() {
@@ -104,6 +104,10 @@ public final class PathParts {
     return getScheme() + "://" + getHost() + ":" + getPort() + getURIPath();
   }
   
+  public String getDownloadURL() {
+    return getId();
+  }
+
   public Configuration getConfiguration() {
     return conf;
   }
@@ -114,7 +118,7 @@ public final class PathParts {
 
   public FileStatus getFileStatus() throws IOException {
     if (stats == null) {
-      stats = getFileSystem().getFileStatus(getDownloadPath());
+      stats = getFileSystem().getFileStatus(getUploadPath());
     }
     return stats;
   }

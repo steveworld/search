@@ -117,6 +117,7 @@
    
    <!-- file metadata -->   
    <field name="file_download_url" type="string" indexed="false" stored="true" />
+   <field name="file_upload_url" type="string" indexed="false" stored="true" />
    <field name="file_scheme" type="string" indexed="true" stored="true" />
    <field name="file_host" type="string" indexed="true" stored="true" />
    <field name="file_port" type="int" indexed="true" stored="true" />
