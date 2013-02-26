@@ -87,17 +87,25 @@ public class MediaTypeDetector {
    * 
    * @return detected media type, or <code>application/octet-stream</code>
    */
-  public String getMediaType(StreamEvent event, Metadata metadata) {
+  public String getMediaType(StreamEvent event, Metadata metadata, boolean excludeParameters) {
     if (metadata == null) {
       throw new NullPointerException();
     }
     InputStream in = event.getBody();
+    MediaType mediaType;
     try {
-      MediaType mediaType = getDetector().detect(in, metadata);
-      return mediaType.toString();
+      mediaType = getDetector().detect(in, metadata);
     } catch (IOException e) {
       throw new IndexerException(e);
     }
+    String mediaTypeStr = mediaType.toString();
+    if (excludeParameters) {
+      int i = mediaTypeStr.indexOf(';');
+      if (i >= 0) {
+        mediaTypeStr = mediaTypeStr.substring(0, i);
+      }
+    }
+    return mediaTypeStr;
   }
 
   public Metadata getMetadata(Map<String, String> eventHeaders, boolean includeHeaders) {
