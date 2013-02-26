@@ -58,7 +58,7 @@ import org.xml.sax.SAXException;
  * 
  * The schema for reading must be explicitly supplied.
  */
-public abstract class StreamingAvroParser extends AbstractStreamingTikaParser {
+public abstract class StreamingAvroParser extends AbstractStreamingParser {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(StreamingAvroParser.class);
 
