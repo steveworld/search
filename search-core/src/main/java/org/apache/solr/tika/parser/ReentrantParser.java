@@ -46,7 +46,7 @@ public abstract class ReentrantParser implements Parser {
   public void parse(InputStream in, ContentHandler handler, Metadata metadata, ParseContext parseContext)
       throws IOException, SAXException, TikaException {
     
-    createInstance().parse(in, handler,  metadata,  parseContext);
+    createInstance().parse(in, handler, metadata, parseContext);
   }
 
 }
