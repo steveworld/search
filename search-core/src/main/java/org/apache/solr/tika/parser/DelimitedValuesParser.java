@@ -25,7 +25,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
@@ -36,9 +35,6 @@ import org.apache.tika.detect.AutoDetectReader;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.CloseShieldInputStream;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
-import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +66,7 @@ import com.googlecode.jcsv.reader.internal.DefaultCSVEntryParser;
  * <dd><code>text/csv; charset=...</code></dd>
  * </dl>
  */
-public class DelimitedValuesParser extends AbstractParser {
+public class DelimitedValuesParser extends AbstractStreamingTikaParser {
 
   private char separatorChar = ',';
   private boolean ignoreFirstLine = false;
@@ -79,11 +75,9 @@ public class DelimitedValuesParser extends AbstractParser {
   private char quoteChar = '"';
   private char commentChar = '#';
   private boolean trim = true;
-  private Set<MediaType> supportedMediaTypes;
 
   private static final ServiceLoader LOADER = new ServiceLoader(DelimitedValuesParser.class.getClassLoader());
   private static final Logger LOGGER = LoggerFactory.getLogger(DelimitedValuesParser.class);
-  private static final long serialVersionUID = -6656103329236888910L;
 
   public DelimitedValuesParser() {
   }
@@ -137,37 +131,18 @@ public class DelimitedValuesParser extends AbstractParser {
   }
 
   @Override
-  public Set<MediaType> getSupportedTypes(ParseContext context) {
-    return supportedMediaTypes;
-  }
-
-  public void setSupportedTypes(Set<MediaType> supportedMediaTypes) {
-    this.supportedMediaTypes = supportedMediaTypes;
-  }
-
-  @Override
   /** Processes the given CSV file and writes XML into the given SAX handler */
-  public void parse(InputStream in, ContentHandler handler, Metadata metadata, ParseContext context)
-      throws IOException, SAXException, TikaException {
-    try {
-      parse2(in, handler, metadata, context);
-    } catch (Exception e) {
-      LOGGER.error("Cannot parse", e);
-      throw new IOException(e);
-    }
-  }
-
-  protected void parse2(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
-      throws IOException, TikaException {
-
-    getParseInfo(context).setMultiDocumentParser(true); // TODO hack alert!
+  protected void doParse(InputStream stream, ContentHandler handler) throws IOException, SAXException, TikaException {
+    ParseInfo info = getParseInfo();
+    info.setMultiDocumentParser(true);
+    Metadata metadata = info.getMetadata();
 
     // Automatically detect the character encoding
     AutoDetectReader reader = new AutoDetectReader(new CloseShieldInputStream(stream), metadata, LOADER);
     try {
-      metadata.set(Metadata.CONTENT_TYPE, supportedMediaTypes.iterator().next().toString());
+      metadata.set(Metadata.CONTENT_TYPE, getSupportedTypes(info.getParseContext()).iterator().next().toString());
       XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
-      CSVReader<String[]> csvReader = createCSVReader(reader, metadata, context);
+      CSVReader<String[]> csvReader = createCSVReader(reader);
       List<Map.Entry<String, String>> record = new ArrayList();
       String[] colNames = columnNames;
       String[] colValues;
@@ -195,7 +170,7 @@ public class DelimitedValuesParser extends AbstractParser {
           record.add(new Entry(columnName, normalize(trim(colValues[i]))));
         }
         try {
-          process(record, xhtml, metadata, context);
+          process(record, xhtml);
         } catch (SAXException e) {
           throw new IOException(e);
         } catch (SolrServerException e) {
@@ -209,10 +184,6 @@ public class DelimitedValuesParser extends AbstractParser {
     }
   }
 
-  protected ParseInfo getParseInfo(ParseContext context) {
-    return context.get(ParseInfo.class);
-  }
-
   protected String normalize(String str) {
     return str;
   }
@@ -223,26 +194,26 @@ public class DelimitedValuesParser extends AbstractParser {
 
   // TODO: consider replacing impl with http://github.com/FasterXML/jackson-dataformat-csv
   // or http://supercsv.sourceforge.net/release_notes.html
-  private CSVReader createCSVReader(AutoDetectReader reader, Metadata metadata, ParseContext context) {
+  private CSVReader createCSVReader(AutoDetectReader reader) {
     CSVStrategy strategy = new CSVStrategy(separatorChar, quoteChar, commentChar, ignoreFirstLine, true);
     return new CSVReaderBuilder(reader).strategy(strategy).entryParser(new DefaultCSVEntryParser()).build();
   }
 
   /** Processes the given record */
-  protected void process(Iterable<Map.Entry<String, String>> record, XHTMLContentHandler handler, Metadata metadata,
-      ParseContext context) throws IOException, SAXException, SolrServerException {
+  protected void process(Iterable<Map.Entry<String, String>> record, XHTMLContentHandler handler) 
+      throws IOException, SAXException, SolrServerException {
+    
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("record #{}: {}", getParseInfo(context).getRecordNumber(), record);
+      LOGGER.debug("record #{}: {}", getParseInfo().getRecordNumber(), record);
     }
-    List<SolrInputDocument> docs = extract(record, handler, metadata, context);
-    docs = transform(docs, metadata, context);
-    load(docs, metadata, context);
+    List<SolrInputDocument> docs = extract(record, handler);
+    docs = transform(docs);
+    load(docs);
   }
 
   /** Extracts zero or more Solr documents from the given record */
-  protected List<SolrInputDocument> extract(Iterable<Map.Entry<String, String>> record, XHTMLContentHandler handler, Metadata metadata,
-      ParseContext context) throws SAXException {
-    SolrContentHandler solrHandler = getParseInfo(context).getSolrContentHandler();
+  protected List<SolrInputDocument> extract(Iterable<Map.Entry<String, String>> record, XHTMLContentHandler handler) throws SAXException {
+    SolrContentHandler solrHandler = getParseInfo().getSolrContentHandler();
     handler.startDocument();
     solrHandler.startDocument(); // this is necessary because handler.startDocument() does not delegate all the way down to solrHandler
     handler.startElement("p");
@@ -260,14 +231,8 @@ public class DelimitedValuesParser extends AbstractParser {
    * Extension point to transform a list of documents in an application specific
    * way. Does nothing by default
    */
-  protected List<SolrInputDocument> transform(List<SolrInputDocument> docs, Metadata metadata, ParseContext context) {
+  protected List<SolrInputDocument> transform(List<SolrInputDocument> docs) {
     return docs;
-  }
-
-  /** Loads the given documents into Solr */
-  protected void load(List<SolrInputDocument> docs, Metadata metadata, ParseContext context) throws IOException,
-      SolrServerException {
-    getParseInfo(context).getIndexer().load(docs);
   }
 
   

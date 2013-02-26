@@ -76,7 +76,7 @@ import org.apache.solr.tika.SolrServerDocumentLoader;
 import org.apache.solr.tika.TestEmbeddedSolrServer;
 import org.apache.solr.tika.TestSolrServer;
 import org.apache.solr.tika.TikaIndexer;
-import org.apache.solr.tika.parser.AvroContainerParser.ForwardOnlySeekableInputStream;
+import org.apache.solr.tika.parser.StreamingAvroContainerParser.ForwardOnlySeekableInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.junit.After;
 import org.junit.Before;
@@ -561,7 +561,7 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
     }
   
     // TODO: clean this up - don't add AvroTestParser to released tika-config.xml
-    event = EventBuilder.withBody(bout.toByteArray(), Collections.singletonMap(ExtractingParams.STREAM_TYPE, AvroTestParser.MEDIA_TYPE));
+    event = EventBuilder.withBody(bout.toByteArray(), Collections.singletonMap(ExtractingParams.STREAM_TYPE, AvroTestParser.MEDIA_TYPE.toString()));
     AvroTestParser.setSchema(schema);
     load(event);
     assertEquals(records.length, queryResultSetSize("*:*"));    

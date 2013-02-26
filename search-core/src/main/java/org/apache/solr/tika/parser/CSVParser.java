@@ -26,11 +26,16 @@ import org.apache.tika.mime.MediaType;
  * Comma separated values parser that extracts search documents from CSV records
  * (using Apache Tika and Solr Cell) and loads them into Solr.
  */
-public class CSVParser extends DelimitedValuesParser {
+public class CSVParser extends ReentrantParser {
 
-  public CSVParser() {
-    setSeparatorChar(',');
-    setSupportedTypes(Collections.singleton(MediaType.parse("text/csv")));
+  private static final MediaType MEDIA_TYPE = MediaType.parse("text/csv");
+  
+  @Override
+  protected DelimitedValuesParser createInstance() {
+    DelimitedValuesParser parser = new DelimitedValuesParser();
+    parser.setSeparatorChar(',');
+    parser.setSupportedTypes(Collections.singleton(MEDIA_TYPE));    
+    return parser;
   }
 
 }

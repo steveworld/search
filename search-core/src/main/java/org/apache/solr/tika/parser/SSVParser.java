@@ -26,11 +26,16 @@ import org.apache.tika.mime.MediaType;
  * Space separated values parser that extracts search documents from CSV records
  * (using Apache Tika and Solr Cell) and loads them into Solr.
  */
-public class SSVParser extends DelimitedValuesParser {
+public class SSVParser extends ReentrantParser {
 
-  public SSVParser() {
-    setSeparatorChar(' ');
-    setSupportedTypes(Collections.singleton(MediaType.parse("text/space-separated-values")));
+  private static final MediaType MEDIA_TYPE = MediaType.parse("text/space-separated-values");
+
+  @Override
+  protected DelimitedValuesParser createInstance() {
+    DelimitedValuesParser parser = new DelimitedValuesParser();
+    parser.setSeparatorChar(' ');
+    parser.setSupportedTypes(Collections.singleton(MEDIA_TYPE));    
+    return parser;
   }
 
 }

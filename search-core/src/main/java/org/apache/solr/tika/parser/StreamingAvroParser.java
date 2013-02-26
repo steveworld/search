@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
@@ -46,11 +45,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.handler.extraction.SolrContentHandler;
 import org.apache.solr.tika.IndexerException;
 import org.apache.solr.tika.ParseInfo;
-import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
-import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,54 +58,29 @@ import org.xml.sax.SAXException;
  * 
  * The schema for reading must be explicitly supplied.
  */
-public abstract class AvroParser extends AbstractParser {
+public abstract class StreamingAvroParser extends AbstractStreamingTikaParser {
 
-  private Set<MediaType> supportedMediaTypes;
+  private static final Logger LOGGER = LoggerFactory.getLogger(StreamingAvroParser.class);
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(AvroParser.class);
-  private static final long serialVersionUID = -6656103329236898910L;
-
-  public AvroParser() {
-    setSupportedTypes(Collections.singleton(MediaType.parse("avro/unknown+schemaless")));
+  public StreamingAvroParser() {
   }
   
   /** Returns the Avro schema to use for reading */
-  protected abstract Schema getSchema(Schema schema, Metadata metadata, ParseContext context);
-
-  @Override
-  public Set<MediaType> getSupportedTypes(ParseContext context) {
-    return supportedMediaTypes;
-  }
-
-  public void setSupportedTypes(Set<MediaType> supportedMediaTypes) {
-    this.supportedMediaTypes = supportedMediaTypes;
-  }
-
-  @Override
-  /** Processes the given Avro file and converts records to solr documents and loads them into Solr */
-  public void parse(InputStream in, ContentHandler handler, Metadata metadata, ParseContext context)
-      throws IOException, SAXException, TikaException {
-    try {
-      parse2(in, handler, metadata, context);
-    } catch (Exception e) {
-      LOGGER.error("Cannot parse", e);
-      throw new IOException(e);
-    }
-  }
+  protected abstract Schema getSchema(Schema schema);
 
   protected boolean isJSON() {
     return false;
   }
   
-  protected void parse2(InputStream in, ContentHandler handler, Metadata metadata, ParseContext context)
-      throws IOException, SAXException {
-
-    getParseInfo(context).setMultiDocumentParser(true); // TODO hack alert!
-
-    metadata.set(Metadata.CONTENT_TYPE, getSupportedTypes(context).iterator().next().toString());
+  @Override
+  protected void doParse(InputStream in, ContentHandler handler) throws IOException, SolrServerException, SAXException {
+    ParseInfo info = getParseInfo();
+    info.setMultiDocumentParser(true);
+    Metadata metadata = info.getMetadata();
+    metadata.set(Metadata.CONTENT_TYPE, getSupportedTypes(info.getParseContext()).iterator().next().toString());
     XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
 
-    Schema schema = getSchema(null, metadata, context);
+    Schema schema = getSchema(null);
     if (schema == null) {
       throw new NullPointerException("Avro schema must not be null");
     }
@@ -127,7 +97,7 @@ public abstract class AvroParser extends AbstractParser {
       GenericContainer datum = new GenericData.Record(schema);
       while (true) {
         datum = datumReader.read(datum, decoder);
-        process(datum, xhtml, metadata, context);
+        process(datum, xhtml);
       }
     } catch (EOFException e) { 
       ; // ignore
@@ -138,25 +108,21 @@ public abstract class AvroParser extends AbstractParser {
     }
   }
 
-  protected ParseInfo getParseInfo(ParseContext context) {
-    return context.get(ParseInfo.class);
-  }
-
   /** Processes the given Avro record */
-  protected void process(GenericContainer record, XHTMLContentHandler handler, Metadata metadata, ParseContext context)
+  protected void process(GenericContainer record, XHTMLContentHandler handler)
       throws IOException, SAXException, SolrServerException {
+    
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("record #{}: {}", getParseInfo(context).getRecordNumber(), record);
+      LOGGER.debug("record #{}: {}", getParseInfo().getRecordNumber(), record);
     }
-    List<SolrInputDocument> docs = extract(record, handler, metadata, context);
-    docs = transform(docs, metadata, context);
-    load(docs, metadata, context);
+    List<SolrInputDocument> docs = extract(record, handler);
+    docs = transform(docs);
+    load(docs);
   }
 
   /** Extracts zero or more Solr documents from the given Avro record */
-  protected List<SolrInputDocument> extract(GenericContainer record, XHTMLContentHandler handler, Metadata metadata,
-      ParseContext context) throws SAXException {
-    SolrContentHandler solrHandler = getParseInfo(context).getSolrContentHandler();
+  protected List<SolrInputDocument> extract(GenericContainer record, XHTMLContentHandler handler) throws SAXException {
+    SolrContentHandler solrHandler = getParseInfo().getSolrContentHandler();
     handler.startDocument();
     solrHandler.startDocument(); // this is necessary because handler.startDocument() does not delegate all the way down to solrHandler
     handler.startElement("p");
@@ -173,14 +139,8 @@ public abstract class AvroParser extends AbstractParser {
    * Extension point to transform a list of documents in an application specific
    * way. Does nothing by default
    */
-  protected List<SolrInputDocument> transform(List<SolrInputDocument> docs, Metadata metadata, ParseContext context) {
+  protected List<SolrInputDocument> transform(List<SolrInputDocument> docs) {
     return docs;
-  }
-
-  /** Loads the given documents into Solr */
-  protected void load(List<SolrInputDocument> docs, Metadata metadata, ParseContext context) throws IOException,
-      SolrServerException {
-    getParseInfo(context).getIndexer().load(docs);
   }
 
   /**
