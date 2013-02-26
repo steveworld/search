@@ -1016,6 +1016,7 @@
       
       <!-- file metadata -->   
       <str name="capture">file_download_url</str>
+      <str name="capture">file_upload_url</str>
       <str name="capture">file_scheme</str>
       <str name="capture">file_host</str>
       <str name="capture">file_port</str>

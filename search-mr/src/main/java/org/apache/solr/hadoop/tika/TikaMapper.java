@@ -152,7 +152,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       }
       tikaHeaders.putAll(commandLineTikaHeaders);
       long fileLength = parts.getFileStatus().getLen();
-      FSDataInputStream in = parts.getFileSystem().open(parts.getDownloadPath());
+      FSDataInputStream in = parts.getFileSystem().open(parts.getUploadPath());
       try {
         indexer.process(new StreamEvent(in, tikaHeaders));
         context.getCounter(TikaCounters.class.getName(), TikaCounters.FILES_READ.toString()).increment(1);
@@ -169,7 +169,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   }
   
   protected Map<String, String> getHeaders(PathParts parts) {
-    String downloadURL = parts.getDownloadURL();
+    String downloadURL = parts.getUploadURL();
     FileStatus stats;
     try {
       stats = parts.getFileStatus();
@@ -186,6 +186,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     headers.put(Metadata.RESOURCE_NAME_KEY, parts.getName()); // Tika can use the file name in guessing the right MIME type
     
     // enable indexing and storing of file meta data in Solr
+    headers.put(HdfsFileFieldNames.FILE_UPLOAD_URL, parts.getUploadURL());
     headers.put(HdfsFileFieldNames.FILE_DOWNLOAD_URL, parts.getDownloadURL());
     headers.put(HdfsFileFieldNames.FILE_SCHEME, parts.getScheme()); 
     headers.put(HdfsFileFieldNames.FILE_HOST, parts.getHost()); 

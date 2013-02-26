@@ -22,6 +22,7 @@ package org.apache.solr.hadoop;
  */
 public interface HdfsFileFieldNames {
 
+  public static final String FILE_UPLOAD_URL = "file_upload_url";
   public static final String FILE_DOWNLOAD_URL = "file_download_url";
   public static final String FILE_SCHEME = "file_scheme";
   public static final String FILE_HOST = "file_host";
