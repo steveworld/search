@@ -114,14 +114,6 @@ public class SolrSink extends AbstractSink implements Configurable {
     return maxBatchDurationMillis;
   }
 
-  /**
-   * Returns whether or not we shall log exceptions during cleanup attempts that
-   * probably happened as a result of a prior exception; Override to customize.
-   */
-  protected boolean isLoggingSubsequentExceptions() {
-    return false;
-  }
-
   @Override
   public synchronized void start() {
     LOGGER.info("Starting Solr sink {} ...", this);
@@ -189,37 +181,19 @@ public class SolrSink extends AbstractSink implements Configurable {
       return numEventsTaken == 0 ? Status.BACKOFF : Status.READY;
     } catch (Throwable t) {
       // Ooops - need to rollback and perhaps back off
-      try {
-        LOGGER.error("Solr Sink " + getName() + ": Unable to process event from channel " + myChannel.getName()
+      LOGGER.error("Solr Sink " + getName() + ": Unable to process event from channel " + myChannel.getName()
             + ". Exception follows.", t);
-      } catch (Throwable t1) {
-        ; // ignore logging error
+      try {
+        if (!isSolrTransactionCommitted) {
+          indexer.rollback();
+        }
+      } catch (Throwable t2) {
+        ; // ignore
       } finally {
         try {
-          if (!isSolrTransactionCommitted) {
-            indexer.rollback();
-          }
-        } catch (Throwable t2) {
-          try {
-            if (isLoggingSubsequentExceptions()) { // log and ignore
-              LOGGER.warn("Cannot rollback solr transaction, and there was an exception prior to this exception: ", t2);
-            }
-          } catch (Throwable t3) {
-            ; // ignore logging error
-          }
-        } finally {
-          try {
-            txn.rollback();
-          } catch (Throwable t4) {
-            try {
-              if (isLoggingSubsequentExceptions()) { // log and ignore
-                LOGGER.warn("Cannot rollback flume transaction, and there was an exception prior to this exception: ",
-                    t4);
-              }
-            } catch (Throwable t5) {
-              ; // ignore logging error
-            }
-          }
+          txn.rollback();
+        } catch (Throwable t4) {
+          ; // ignore
         }
       }
 

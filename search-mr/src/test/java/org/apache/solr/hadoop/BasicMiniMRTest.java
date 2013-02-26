@@ -39,6 +39,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.hadoop.util.JarFinder;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.solr.handler.extraction.ExtractingParams;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -266,6 +267,7 @@ public class BasicMiniMRTest extends Assert {
     jobConf.setMaxMapAttempts(1);
     jobConf.setMaxReduceAttempts(1);
     jobConf.setJar(SEARCH_ARCHIVES_JAR);
+    jobConf.setBoolean(ExtractingParams.IGNORE_TIKA_EXCEPTION, false);
     
     int shards = 2;
     int maxReducers = Integer.MAX_VALUE;

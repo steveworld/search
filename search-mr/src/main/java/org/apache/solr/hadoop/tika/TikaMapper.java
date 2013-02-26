@@ -50,6 +50,7 @@ import org.apache.solr.hadoop.HeartBeater;
 import org.apache.solr.hadoop.PathParts;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrMapper;
+import org.apache.solr.handler.extraction.ExtractingParams;
 import org.apache.solr.handler.extraction.ExtractingRequestHandler;
 import org.apache.solr.request.SolrRequestHandler;
 import org.apache.solr.schema.IndexSchema;
@@ -145,23 +146,35 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     heartBeater.needHeartBeat();
     try {
       LOG.info("Processing file {}", value);
-      PathParts parts = new PathParts(value.toString(), context.getConfiguration());
-      Map<String,String> tikaHeaders = getHeaders(parts);
-      if (tikaHeaders == null) {
-        return; // ignore
-      }
-      tikaHeaders.putAll(commandLineTikaHeaders);
-      long fileLength = parts.getFileStatus().getLen();
-      FSDataInputStream in = parts.getFileSystem().open(parts.getUploadPath());
+      FSDataInputStream in = null;
       try {
+        PathParts parts = new PathParts(value.toString(), context.getConfiguration());
+        Map<String,String> tikaHeaders = getHeaders(parts);
+        if (tikaHeaders == null) {
+          return; // ignore
+        }
+        tikaHeaders.putAll(commandLineTikaHeaders);
+        long fileLength = parts.getFileStatus().getLen();
+        in = parts.getFileSystem().open(parts.getUploadPath());
         indexer.process(new StreamEvent(in, tikaHeaders));
         context.getCounter(TikaCounters.class.getName(), TikaCounters.FILES_READ.toString()).increment(1);
         context.getCounter(TikaCounters.class.getName(), TikaCounters.FILE_BYTES_READ.toString()).increment(fileLength);
       } catch (Exception e) {
-        context.getCounter(getClass().getName() + ".errors", e.getClass().getName()).increment(1);
         LOG.error("Unable to process file " + value, e);
+        context.getCounter(getClass().getName() + ".errors", e.getClass().getName()).increment(1);
+        if (!context.getConfiguration().getBoolean(ExtractingParams.IGNORE_TIKA_EXCEPTION, true)) {
+          if (e instanceof IOException) {
+            throw (IOException) e;
+          } else if (e instanceof InterruptedException) {
+            throw (InterruptedException) e;
+          } else {
+            throw new IllegalStateException(e);
+          }
+        }
       } finally {
-        in.close();
+        if (in != null) {
+          in.close();
+        }
       }
     } finally {
       heartBeater.cancelHeartBeat();

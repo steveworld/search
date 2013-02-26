@@ -42,6 +42,7 @@ import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.cloud.AbstractFullDistribZkTestBase;
 import org.apache.solr.common.cloud.SolrZkClient;
+import org.apache.solr.handler.extraction.ExtractingParams;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -210,7 +211,8 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     jobConf.setMaxMapAttempts(1);
     jobConf.setMaxReduceAttempts(1);
     jobConf.setJar(SEARCH_ARCHIVES_JAR);
-    
+    jobConf.setBoolean(ExtractingParams.IGNORE_TIKA_EXCEPTION, false);
+
     MapReduceIndexerTool tool;
     int res;
     QueryResponse results;
