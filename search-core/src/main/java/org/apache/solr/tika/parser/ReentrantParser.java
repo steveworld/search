@@ -35,6 +35,7 @@ import org.xml.sax.SAXException;
  */
 public abstract class ReentrantParser implements Parser {
 
+  /** Creates and returns a new parser instance to which we can delegate all calls */
   protected abstract Parser createInstance(); 
 
   @Override
