@@ -115,7 +115,7 @@ public class SolrSink extends AbstractSink implements Configurable {
       Map<String, SolrCollection> solrCollections = new SolrInspector().createSolrCollections(config);
       try {
         Constructor ctor = Class.forName(indexerClass).getConstructor(Map.class, Config.class);
-        indexer = (SolrIndexer) ctor.newInstance(solrCollections, config, getName());
+        indexer = (SolrIndexer) ctor.newInstance(solrCollections, config);
       } catch (Exception e) {
         throw new ConfigurationException(e);
       }
