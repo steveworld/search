@@ -227,6 +227,7 @@ public class TikaIndexer extends SolrIndexer {
       // so the correct parser will be invoked (i.e. not the built-in gzip parser).
       // We leave ParseInfo.metdata untouched so it contains the correct, original resourceName.
       metadata = inputStreamMetadata.metadata;
+      
       try {
         addPasswordHandler(resourceName);
         parser.parse(inputStream, parsingHandler, metadata, getParseInfo().getParseContext());
@@ -348,9 +349,6 @@ public class TikaIndexer extends SolrIndexer {
   }
   
   /**
-   * @return a clone of metadata
-   */
-  /**
    * @return an input stream to use, which will be a GZIPInputStream in the case
    * where the input stream is over gzipped data.
    */
@@ -389,6 +387,9 @@ public class TikaIndexer extends SolrIndexer {
     return new InputStreamMetadata(inputStream, metadata);
   }
 
+  /**
+   * @return a clone of metadata
+   */
   private Metadata cloneMetadata(Metadata metadata) {
     Metadata clone = new Metadata();
     for (String name : metadata.names()) {
