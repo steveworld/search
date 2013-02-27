@@ -95,6 +95,8 @@ public class BasicMiniMRTest extends Assert {
 //    for (InetAddress i : InetAddress.getAllByName(InetAddress.getLocalHost().getHostName())) {
 //      sb.append(",").append(i.getCanonicalHostName());
 //    }
+    
+    System.setProperty("solr.hdfs.blockcache.enabled", "false");
 
     JobConf conf = new JobConf();
     conf.set("dfs.block.access.token.enable", "false");
@@ -120,6 +122,7 @@ public class BasicMiniMRTest extends Assert {
 
   @AfterClass
   public static void teardownClass() throws Exception {
+    System.clearProperty("solr.hdfs.blockcache.enabled");
     if (mrCluster != null) {
       mrCluster.shutdown();
       mrCluster = null;

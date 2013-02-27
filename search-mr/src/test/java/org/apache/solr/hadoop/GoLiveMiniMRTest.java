@@ -114,6 +114,8 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     int taskTrackers = 2;
     int dataNodes = 2;
     
+    System.setProperty("solr.hdfs.blockcache.enabled", "false");
+    
     JobConf conf = new JobConf();
     conf.set("dfs.block.access.token.enable", "false");
     conf.set("dfs.permissions", "true");
@@ -166,6 +168,7 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
   
   @AfterClass
   public static void teardownClass() throws Exception {
+    System.clearProperty("solr.hdfs.blockcache.enabled");
     if (mrCluster != null) {
       mrCluster.shutdown();
       mrCluster = null;
