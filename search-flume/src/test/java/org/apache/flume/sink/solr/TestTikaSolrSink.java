@@ -72,6 +72,7 @@ import org.apache.solr.tika.AvroTestParser;
 import org.apache.solr.tika.DocumentLoader;
 import org.apache.solr.tika.SafeConcurrentUpdateSolrServer;
 import org.apache.solr.tika.SolrCollection;
+import org.apache.solr.tika.SolrInspector;
 import org.apache.solr.tika.SolrServerDocumentLoader;
 import org.apache.solr.tika.TestEmbeddedSolrServer;
 import org.apache.solr.tika.TestSolrServer;
@@ -84,6 +85,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 
 public class TestTikaSolrSink extends SolrJettyTestBase {
 
@@ -118,7 +122,7 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
     super.setUp();
     final Map<String, String> context = new HashMap();
     context.put(TikaIndexer.TIKA_CONFIG_LOCATION, RESOURCES_DIR + "/tika-config.xml");
-    context.put(TikaIndexer.SOLR_COLLECTION_LIST + ".testcoll." + TikaIndexer.SOLR_CLIENT_HOME, RESOURCES_DIR + "/solr/collection1");
+    context.put(SolrInspector.SOLR_COLLECTION_LIST + ".testcoll." + SolrInspector.SOLR_CLIENT_HOME, RESOURCES_DIR + "/solr/collection1");
     
     final SolrServer solrServer;
     if (EXTERNAL_SOLR_SERVER_URL != null) {
@@ -145,13 +149,10 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
         super(indexer);
       }
     }
-    sink = new MySolrSink(new TikaIndexer() {
-        @Override
-        protected List<DocumentLoader> createTestSolrServers() {
-          return Collections.singletonList((DocumentLoader) new SolrServerDocumentLoader(solrServer));
-        }
-      }
-    );
+    
+    List<DocumentLoader> testServers = Collections.singletonList((DocumentLoader) new SolrServerDocumentLoader(solrServer));
+    Config config = ConfigFactory.parseMap(context);
+    sink = new MySolrSink(new TikaIndexer(new SolrInspector().createSolrCollections(config, testServers), config));
     sink.setName(sink.getClass().getName() + SEQ_NUM.getAndIncrement());
     sink.configure(new Context(context));
     sink.setChannel(channel);

@@ -85,6 +85,10 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     return schema;
   }
 
+  protected Context getContext() {
+    return context;
+  }
+
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
     super.setup(context);
@@ -121,9 +125,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
 //      throw new IllegalStateException("Missing tika.config parameter"); // for debugging      
     }
     Config config = ConfigFactory.parseMap(params);
-    indexer = createSolrIndexer(context);
-    indexer.configure(config);
-    indexer.start();
+    indexer = createSolrIndexer(config);
     for (SolrCollection collection : indexer.getSolrCollections().values()) {
       schema = collection.getSchema();
     }
@@ -134,8 +136,62 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     heartBeater = new HeartBeater(context);
   }
 
-  protected SolrIndexer createSolrIndexer(Context context) {
-    return new MyTikaIndexer();
+  protected SolrIndexer createSolrIndexer(Config config) {
+    SolrCollection collection = new SolrCollection("default", new MyDocumentLoader());
+    try {
+      SolrResourceLoader loader = new SolrResourceLoader(getSolrHomeDir().toString());
+      SolrConfig solrConfig = new SolrConfig(loader, "solrconfig.xml", null);
+      IndexSchema mySchema = new IndexSchema(solrConfig, null, null);
+
+      SolrParams params = new MapSolrParams(new HashMap<String,String>());
+      Collection<String> dateFormats = DateUtil.DEFAULT_DATE_FORMATS;
+      for (PluginInfo pluginInfo : solrConfig.getPluginInfos(SolrRequestHandler.class.getName())) {
+        if ("/update/extract".equals(pluginInfo.name)) {
+          NamedList initArgs = pluginInfo.initArgs;
+
+          // Copied from StandardRequestHandler
+          if (initArgs != null) {
+            Object o = initArgs.get("defaults");
+            if (o != null && o instanceof NamedList) {
+              SolrParams defaults = SolrParams.toSolrParams((NamedList) o);
+              params = defaults;
+            }
+            o = initArgs.get("appends");
+            if (o != null && o instanceof NamedList) {
+              SolrParams appends = SolrParams.toSolrParams((NamedList) o);
+            }
+            o = initArgs.get("invariants");
+            if (o != null && o instanceof NamedList) {
+              SolrParams invariants = SolrParams.toSolrParams((NamedList) o);
+            }
+
+            NamedList configDateFormats = (NamedList) initArgs.get(ExtractingRequestHandler.DATE_FORMATS);
+            if (configDateFormats != null && configDateFormats.size() > 0) {
+              dateFormats = new HashSet<String>();
+              Iterator<Map.Entry> it = configDateFormats.iterator();
+              while (it.hasNext()) {
+                String format = (String) it.next().getValue();
+                LOG.info("Adding Date Format: {}", format);
+                dateFormats.add(format);
+              }
+            }
+          }
+          break; // found it
+        }
+      }
+      collection.setSchema(mySchema);
+      collection.setSolrParams(params);
+      collection.setDateFormats(dateFormats);
+
+    } catch (SAXException e) {
+      throw new ConfigurationException(e);
+    } catch (IOException e) {
+      throw new ConfigurationException(e);
+    } catch (ParserConfigurationException e) {
+      throw new ConfigurationException(e);
+    }
+
+    return new TikaIndexer(Collections.singletonMap(collection.getName(), collection), config);
   }
 
   /**
@@ -227,138 +283,75 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     indexer.stop();
   }
 
-  private class MyTikaIndexer extends TikaIndexer {
-    
-    private IndexSchema mySchema;
-    
-    // FIXME don't copy this code from flume solr sink
+  
+  ///////////////////////////////////////////////////////////////////////////////
+  // Nested classes:
+  ///////////////////////////////////////////////////////////////////////////////
+  private final class MyDocumentLoader implements DocumentLoader {
+
     @Override
-    protected Map<String, SolrCollection> createSolrCollections() {
-      SolrCollection collection = new SolrCollection("default", new MyDocumentLoader());
-      try {
-        SolrResourceLoader loader = new SolrResourceLoader(solrHomeDir.toString());
-        // TODO allow config to be configured by job?
-        SolrConfig solrConfig = new SolrConfig(loader, "solrconfig.xml", null);
-        mySchema = new IndexSchema(solrConfig, null, null);
-
-        SolrParams params = new MapSolrParams(new HashMap<String,String>());
-        Collection<String> dateFormats = DateUtil.DEFAULT_DATE_FORMATS;
-        for (PluginInfo pluginInfo : solrConfig.getPluginInfos(SolrRequestHandler.class.getName())) {
-          if ("/update/extract".equals(pluginInfo.name)) {
-            NamedList initArgs = pluginInfo.initArgs;
-
-            // Copied from StandardRequestHandler
-            if (initArgs != null) {
-              Object o = initArgs.get("defaults");
-              if (o != null && o instanceof NamedList) {
-                SolrParams defaults = SolrParams.toSolrParams((NamedList) o);
-                params = defaults;
-              }
-              o = initArgs.get("appends");
-              if (o != null && o instanceof NamedList) {
-                SolrParams appends = SolrParams.toSolrParams((NamedList) o);
-              }
-              o = initArgs.get("invariants");
-              if (o != null && o instanceof NamedList) {
-                SolrParams invariants = SolrParams.toSolrParams((NamedList) o);
-              }
-
-              NamedList configDateFormats = (NamedList) initArgs.get(ExtractingRequestHandler.DATE_FORMATS);
-              if (configDateFormats != null && configDateFormats.size() > 0) {
-                dateFormats = new HashSet<String>();
-                Iterator<Map.Entry> it = configDateFormats.iterator();
-                while (it.hasNext()) {
-                  String format = (String) it.next().getValue();
-                  LOG.info("Adding Date Format: {}", format);
-                  dateFormats.add(format);
-                }
-              }
-            }
-            break; // found it
-          }
-        }
-        collection.setSchema(mySchema);
-        collection.setSolrParams(params);
-        collection.setDateFormats(dateFormats);
-
-      } catch (SAXException e) {
-        throw new ConfigurationException(e);
-      } catch (IOException e) {
-        throw new ConfigurationException(e);
-      } catch (ParserConfigurationException e) {
-        throw new ConfigurationException(e);
-      }
-
-      return Collections.singletonMap(collection.getName(), collection);
+    public void beginTransaction() {
     }
 
-    private class MyDocumentLoader implements DocumentLoader {
-
-      @Override
-      public void beginTransaction() {
-      }
-
-      @Override
-      public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
-        for (SolrInputDocument doc : docs) {
-          String uniqueKeyFieldName = mySchema.getUniqueKeyField().getName();
-          String id = doc.getFieldValue(uniqueKeyFieldName).toString();
-          try {
-            context.write(new Text(id), new SolrInputDocumentWritable(doc));
-          } catch (InterruptedException e) {
-            throw new IOException("Interrupted while writing " + doc, e);
-          }
-
-          if (LOG.isDebugEnabled()) {
-            long numParserOutputBytes = 0;
-            for (SolrInputField field : doc.values()) {
-              numParserOutputBytes += sizeOf(field.getValue());
-            }
-            context.getCounter(TikaCounters.class.getName(), TikaCounters.PARSER_OUTPUT_BYTES.toString()).increment(numParserOutputBytes);
-          }
+    @Override
+    public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
+      for (SolrInputDocument doc : docs) {
+        String uniqueKeyFieldName = getSchema().getUniqueKeyField().getName();
+        String id = doc.getFieldValue(uniqueKeyFieldName).toString();
+        try {
+          context.write(new Text(id), new SolrInputDocumentWritable(doc));
+        } catch (InterruptedException e) {
+          throw new IOException("Interrupted while writing " + doc, e);
         }
-        context.getCounter(TikaCounters.class.getName(), TikaCounters.DOCS_READ.toString()).increment(docs.size());
-      }
 
-      // just an approximation
-      private long sizeOf(Object value) {
-        if (value instanceof CharSequence) {
-          return ((CharSequence) value).length();
-        } else if (value instanceof Integer) {
-          return 4;
-        } else if (value instanceof Long) {
-          return 8;
-        } else if (value instanceof Collection) {
-          long size = 0;
-          for (Object val : (Collection) value) {
-            size += sizeOf(val);
+        if (LOG.isDebugEnabled()) {
+          long numParserOutputBytes = 0;
+          for (SolrInputField field : doc.values()) {
+            numParserOutputBytes += sizeOf(field.getValue());
           }
-          return size;      
-        } else {
-          return String.valueOf(value).length();
+          context.getCounter(TikaCounters.class.getName(), TikaCounters.PARSER_OUTPUT_BYTES.toString()).increment(numParserOutputBytes);
         }
       }
-
-      @Override
-      public void commitTransaction() {
-      }
-
-      @Override
-      public UpdateResponse rollback() throws SolrServerException, IOException {
-        return new UpdateResponse();
-      }
-
-      @Override
-      public void shutdown() {
-      }
-
-      @Override
-      public SolrPingResponse ping() throws SolrServerException, IOException {
-        return new SolrPingResponse();
-      }
-      
+      context.getCounter(TikaCounters.class.getName(), TikaCounters.DOCS_READ.toString()).increment(docs.size());
     }
 
+    // just an approximation
+    private long sizeOf(Object value) {
+      if (value instanceof CharSequence) {
+        return ((CharSequence) value).length();
+      } else if (value instanceof Integer) {
+        return 4;
+      } else if (value instanceof Long) {
+        return 8;
+      } else if (value instanceof Collection) {
+        long size = 0;
+        for (Object val : (Collection) value) {
+          size += sizeOf(val);
+        }
+        return size;      
+      } else {
+        return String.valueOf(value).length();
+      }
+    }
+
+    @Override
+    public void commitTransaction() {
+    }
+
+    @Override
+    public UpdateResponse rollback() throws SolrServerException, IOException {
+      return new UpdateResponse();
+    }
+
+    @Override
+    public void shutdown() {
+    }
+
+    @Override
+    public SolrPingResponse ping() throws SolrServerException, IOException {
+      return new SolrPingResponse();
+    }
+    
   }
 
 }

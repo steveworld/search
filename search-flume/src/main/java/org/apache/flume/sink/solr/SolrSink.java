@@ -20,6 +20,8 @@ package org.apache.flume.sink.solr;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.lang.reflect.Constructor;
+import java.util.Map;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
@@ -31,7 +33,9 @@ import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.AbstractSink;
+import org.apache.solr.tika.SolrCollection;
 import org.apache.solr.tika.SolrIndexer;
+import org.apache.solr.tika.SolrInspector;
 import org.apache.solr.tika.StreamEvent;
 import org.apache.solr.tika.TikaIndexer;
 import org.slf4j.Logger;
@@ -49,6 +53,7 @@ public class SolrSink extends AbstractSink implements Configurable {
 
   private int maxBatchSize = 1000;
   private long maxBatchDurationMillis = 10 * 1000;
+  private String indexerClass;
   private SolrIndexer indexer;
   private Context context;
   private SinkCounter sinkCounter; // TODO: replace with metrics.codahale.com
@@ -77,20 +82,7 @@ public class SolrSink extends AbstractSink implements Configurable {
     this.context = context;
     maxBatchSize = context.getInteger(BATCH_SIZE, maxBatchSize);
     maxBatchDurationMillis = context.getLong(BATCH_DURATION_MILLIS, maxBatchDurationMillis);
-    
-    if (indexer == null) {
-      String clazz = context.getString(INDEXER_CLASS, TikaIndexer.class.getName());
-      try {
-        indexer = (SolrIndexer) Class.forName(clazz).newInstance();
-      } catch (Exception e) {
-        throw new ConfigurationException(e);
-      }
-    }    
-    indexer.setName(getName());
-//    Config config = ConfigFactory.load();    
-    Config config = ConfigFactory.parseMap(context.getParameters());
-    indexer.configure(config);
-    
+    indexerClass = context.getString(INDEXER_CLASS, TikaIndexer.class.getName());    
     if (sinkCounter == null) {
       sinkCounter = new SinkCounter(getName());
     }
@@ -118,7 +110,16 @@ public class SolrSink extends AbstractSink implements Configurable {
   public synchronized void start() {
     LOGGER.info("Starting Solr sink {} ...", this);
     sinkCounter.start();
-    indexer.start();
+    if (indexer == null) {
+      Config config = ConfigFactory.parseMap(context.getParameters());
+      Map<String, SolrCollection> solrCollections = new SolrInspector().createSolrCollections(config);
+      try {
+        Constructor ctor = Class.forName(indexerClass).getConstructor(Map.class, Config.class);
+        indexer = (SolrIndexer) ctor.newInstance(solrCollections, config, getName());
+      } catch (Exception e) {
+        throw new ConfigurationException(e);
+      }
+    }    
     super.start();
     LOGGER.info("Solr sink {} started.", getName());
   }
@@ -208,7 +209,7 @@ public class SolrSink extends AbstractSink implements Configurable {
       txn.close();
     }
   }
-
+  
   @Override
   public String toString() {
     int i = getClass().getName().lastIndexOf('.') + 1;

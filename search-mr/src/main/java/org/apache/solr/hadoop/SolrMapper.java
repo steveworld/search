@@ -23,11 +23,16 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
 public class SolrMapper<KEYIN, VALUEIN> extends Mapper<KEYIN, VALUEIN, Text, SolrInputDocumentWritable> {
-  protected Path solrHomeDir;
+  
+  private Path solrHomeDir;
 
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
     super.setup(context);
     solrHomeDir = SolrRecordWriter.findSolrConfig(context.getConfiguration());
+  }
+  
+  protected Path getSolrHomeDir() {
+    return solrHomeDir;
   }
 }
