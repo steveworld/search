@@ -156,59 +156,6 @@ public class TikaIndexer extends SolrIndexer {
     return parseInfo;
   }
 
-  /**
-   * @return a clone of metadata
-   */
-  private Metadata cloneMetadata(Metadata metadata) {
-    Metadata clone = new Metadata();
-    for (String name : metadata.names()) {
-      String [] str = metadata.getValues(name);
-      for (int i = 0; i < str.length; ++i) {
-        clone.add(name, str[i]);
-      }
-    }
-    return clone;
-  }
-
-  /**
-   * @return an input stream to use, which will be a GZIPInputStream in the case
-   * where the input stream is over gzipped data.
-   */
-  private InputStreamMetadata detectGZIPInputStream(InputStream inputStream, Metadata metadata) {
-    if (useAutoGUNZIP) {
-      String resourceName = metadata.get(Metadata.RESOURCE_NAME_KEY);
-      if (resourceName != null && resourceName.endsWith(".gz")) {
-        int magicPrefixSize = 2;
-        PushbackInputStream pbis = new PushbackInputStream(inputStream, magicPrefixSize);
-        try {
-          byte [] readMagicPrefix = new byte[magicPrefixSize];
-          int totalBytesRead = 0;
-          int read;
-          while (totalBytesRead != magicPrefixSize && (read = pbis.read(readMagicPrefix, totalBytesRead, magicPrefixSize - totalBytesRead )) != -1) {
-            totalBytesRead += read;
-          }
-          if (totalBytesRead > 0) pbis.unread( readMagicPrefix, 0, totalBytesRead );
-          if (totalBytesRead == magicPrefixSize) {
-            // Check if stream has GZIP_MAGIC prefix
-            if ((readMagicPrefix[0] == (byte) GZIPInputStream.GZIP_MAGIC)
-              && (readMagicPrefix[1] == (byte) (GZIPInputStream.GZIP_MAGIC >> 8))) {
-              Metadata entryData = cloneMetadata(metadata);
-              // Remove the .gz extension
-              String newName =
-                resourceName.substring(0, resourceName.length() - ".gz".length());
-              entryData.set(Metadata.RESOURCE_NAME_KEY, newName);
-              return new InputStreamMetadata(new GZIPInputStream(pbis), entryData);
-            }
-          }
-        } catch (IOException ioe) {
-          LOGGER.info("Unable to read from stream to determine if gzip input stream.", ioe);
-        }
-        return new InputStreamMetadata(pbis, metadata);
-      }
-    }
-    return new InputStreamMetadata(inputStream, metadata);
-  }
-
   @Override
   protected List<SolrInputDocument> extract(StreamEvent event) {
     LOGGER.debug("event headers: {}", event.getHeaders());
@@ -400,6 +347,59 @@ public class TikaIndexer extends SolrIndexer {
     }
   }
   
+  /**
+   * @return a clone of metadata
+   */
+  /**
+   * @return an input stream to use, which will be a GZIPInputStream in the case
+   * where the input stream is over gzipped data.
+   */
+  private InputStreamMetadata detectGZIPInputStream(InputStream inputStream, Metadata metadata) {
+    if (useAutoGUNZIP) {
+      String resourceName = metadata.get(Metadata.RESOURCE_NAME_KEY);
+      if (resourceName != null && resourceName.endsWith(".gz")) {
+        int magicPrefixSize = 2;
+        PushbackInputStream pbis = new PushbackInputStream(inputStream, magicPrefixSize);
+        try {
+          byte [] readMagicPrefix = new byte[magicPrefixSize];
+          int totalBytesRead = 0;
+          int read;
+          while (totalBytesRead != magicPrefixSize && (read = pbis.read(readMagicPrefix, totalBytesRead, magicPrefixSize - totalBytesRead )) != -1) {
+            totalBytesRead += read;
+          }
+          if (totalBytesRead > 0) pbis.unread( readMagicPrefix, 0, totalBytesRead );
+          if (totalBytesRead == magicPrefixSize) {
+            // Check if stream has GZIP_MAGIC prefix
+            if ((readMagicPrefix[0] == (byte) GZIPInputStream.GZIP_MAGIC)
+              && (readMagicPrefix[1] == (byte) (GZIPInputStream.GZIP_MAGIC >> 8))) {
+              Metadata entryData = cloneMetadata(metadata);
+              // Remove the .gz extension
+              String newName =
+                resourceName.substring(0, resourceName.length() - ".gz".length());
+              entryData.set(Metadata.RESOURCE_NAME_KEY, newName);
+              return new InputStreamMetadata(new GZIPInputStream(pbis), entryData);
+            }
+          }
+        } catch (IOException ioe) {
+          LOGGER.info("Unable to read from stream to determine if gzip input stream.", ioe);
+        }
+        return new InputStreamMetadata(pbis, metadata);
+      }
+    }
+    return new InputStreamMetadata(inputStream, metadata);
+  }
+
+  private Metadata cloneMetadata(Metadata metadata) {
+    Metadata clone = new Metadata();
+    for (String name : metadata.names()) {
+      String [] str = metadata.getValues(name);
+      for (int i = 0; i < str.length; ++i) {
+        clone.add(name, str[i]);
+      }
+    }
+    return clone;
+  }
+
   
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
