@@ -238,7 +238,6 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   }
   
   protected Map<String, String> getHeaders(PathParts parts) {
-    String downloadURL = parts.getUploadURL();
     FileStatus stats;
     try {
       stats = parts.getFileStatus();
@@ -246,7 +245,8 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       stats = null;
     }
     if (stats == null) {
-      LOG.warn("Ignoring file that somehow has become unavailable since the job was submitted: {}", downloadURL);
+      LOG.warn("Ignoring file that somehow has become unavailable since the job was submitted: {}",
+          parts.getUploadURL());
       return null;
     }
     
