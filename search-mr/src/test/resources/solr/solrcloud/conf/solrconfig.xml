@@ -379,7 +379,6 @@
     <updateLog>
       <str name="dir">${solr.ulog.dir:}</str>
     </updateLog>
-   
 
   </updateHandler>
   
@@ -1015,7 +1014,7 @@
       <str name="capture">in_reply_to_status_id</str>
       <str name="capture">media_url_https</str>
       <str name="capture">expanded_url</str>
-
+      
       <!-- file metadata -->   
       <str name="capture">file_download_url</str>
       <str name="capture">file_upload_url</str>
@@ -1026,9 +1025,15 @@
       <str name="capture">file_name</str>
       <str name="capture">file_length</str>
       <str name="capture">file_last_modified</str>
+      <str name="capture">file_owner</str>
+      <str name="capture">file_group</str>
+      <str name="capture">file_permissions_user</str>
+      <str name="capture">file_permissions_group</str>
+      <str name="capture">file_permissions_other</str>
+      <str name="capture">file_permissions_stickybit</str>
       
       <!-- tika metadata -->   
-      <str name="content-type">content_type</str>      
+      <str name="content-type">content_type</str>
       
       <!-- capture link hrefs but ignore div attributes -->
       <!--

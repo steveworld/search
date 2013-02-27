@@ -378,7 +378,7 @@
 
     <updateLog>
       <str name="dir">${solr.ulog.dir:}</str>
-    </updateLog>  
+    </updateLog>
 
   </updateHandler>
   
