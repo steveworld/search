@@ -60,6 +60,7 @@ public abstract class AbstractStreamingParser implements Parser {
     return parseInfo;
   }
 
+  /** Loads the given documents into Solr */
   protected void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
     parseInfo.getIndexer().load(docs);
   }
