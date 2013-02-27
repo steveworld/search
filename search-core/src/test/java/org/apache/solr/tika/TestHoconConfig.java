@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.apache.solr.tika.TikaIndexer;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -82,20 +81,20 @@ public class TestHoconConfig extends Assert {
 	public void testParseMap() { // test access based on path
     final Map<String, String> map = new HashMap();
     map.put(TikaIndexer.TIKA_CONFIG_LOCATION, "src/test/resources/tika-config.xml");
-    map.put(TikaIndexer.SOLR_COLLECTION_LIST + ".testcoll." + TikaIndexer.SOLR_CLIENT_HOME, "target/test-classes/solr/collection1");
+    map.put(SolrInspector.SOLR_COLLECTION_LIST + ".testcoll." + SolrInspector.SOLR_CLIENT_HOME, "target/test-classes/solr/collection1");
 //    Config config = ConfigValueFactory.fromMap(new Context(map).getParameters()).toConfig();
     Config config = ConfigFactory.parseMap(map);
 	  String filePath = config.getString(TikaIndexer.TIKA_CONFIG_LOCATION);
 	  assertEquals(map.get(TikaIndexer.TIKA_CONFIG_LOCATION), filePath);
-    Config subConfig = config.getConfig(TikaIndexer.SOLR_COLLECTION_LIST).getConfig("testcoll");
-    assertEquals("target/test-classes/solr/collection1", subConfig.getString(TikaIndexer.SOLR_CLIENT_HOME));
+    Config subConfig = config.getConfig(SolrInspector.SOLR_COLLECTION_LIST).getConfig("testcoll");
+    assertEquals("target/test-classes/solr/collection1", subConfig.getString(SolrInspector.SOLR_CLIENT_HOME));
 	}
   
   @Test
   public void testFromMap() { // test access based on key
     final Map<String, String> map = new HashMap();
     map.put(TikaIndexer.TIKA_CONFIG_LOCATION, "src/test/resources/tika-config.xml");
-    String key = TikaIndexer.SOLR_COLLECTION_LIST + ".testcoll." + TikaIndexer.SOLR_CLIENT_HOME;
+    String key = SolrInspector.SOLR_COLLECTION_LIST + ".testcoll." + SolrInspector.SOLR_CLIENT_HOME;
     map.put(key, "target/test-classes/solr/collection1");
     ConfigObject config = ConfigValueFactory.fromMap(map);
     String filePath = config.get(TikaIndexer.TIKA_CONFIG_LOCATION).unwrapped().toString();

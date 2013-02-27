@@ -58,13 +58,6 @@ import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.handler.extraction.ExtractingParams;
-import org.apache.solr.tika.DocumentLoader;
-import org.apache.solr.tika.SafeConcurrentUpdateSolrServer;
-import org.apache.solr.tika.SolrCollection;
-import org.apache.solr.tika.SolrIndexer;
-import org.apache.solr.tika.SolrServerDocumentLoader;
-import org.apache.solr.tika.StreamEvent;
-import org.apache.solr.tika.TikaIndexer;
 import org.apache.solr.tika.parser.StreamingAvroContainerParser.ForwardOnlySeekableInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.junit.After;
@@ -74,6 +67,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
 public class TestTikaIndexer extends SolrJettyTestBase {
@@ -108,7 +102,7 @@ public class TestTikaIndexer extends SolrJettyTestBase {
     super.setUp();
     final Map<String, String> context = new HashMap();
     context.put(TikaIndexer.TIKA_CONFIG_LOCATION, RESOURCES_DIR + "/tika-config.xml");
-    context.put(TikaIndexer.SOLR_COLLECTION_LIST + ".testcoll." + TikaIndexer.SOLR_CLIENT_HOME, RESOURCES_DIR + "/solr/collection1");
+    context.put(SolrInspector.SOLR_COLLECTION_LIST + ".testcoll." + SolrInspector.SOLR_CLIENT_HOME, RESOURCES_DIR + "/solr/collection1");
     
     final SolrServer solrServer;
     if (EXTERNAL_SOLR_SERVER_URL != null) {
@@ -123,15 +117,9 @@ public class TestTikaIndexer extends SolrJettyTestBase {
       }
     }
 
-    indexer = new TikaIndexer() {
-      @Override
-      protected List<DocumentLoader> createTestSolrServers() {
-        return Collections.singletonList((DocumentLoader) new SolrServerDocumentLoader(solrServer));
-      }
-    };
-    indexer.setName(indexer.getClass().getName() + SEQ_NUM.getAndIncrement());
-    indexer.configure(ConfigFactory.parseMap(context));
-    indexer.start();
+    List<DocumentLoader> testServers = Collections.singletonList((DocumentLoader) new SolrServerDocumentLoader(solrServer));
+    Config config = ConfigFactory.parseMap(context);
+    indexer = new TikaIndexer(new SolrInspector().createSolrCollections(config, testServers), config);
     
     deleteAllDocuments();
   }

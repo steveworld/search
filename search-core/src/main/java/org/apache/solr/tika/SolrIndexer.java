@@ -29,7 +29,6 @@ import java.util.TreeMap;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.common.SolrInputDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,30 +42,29 @@ import com.typesafe.config.Config;
  */
 public class SolrIndexer {
 
-  private String name;
-  private Config config;
+  private final Config config;
   private Map<String, SolrCollection> solrCollections; // proxies to remote solr
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SolrIndexer.class);
 
-  public SolrIndexer() {
-  }
-  
-  public void configure(Config config) {
+  public SolrIndexer(Map<String, SolrCollection> solrCollections, Config config) {
+    if (solrCollections == null) {
+      throw new IllegalArgumentException("solrCollections must not be null");
+    }
+    if (config == null) {
+      throw new IllegalArgumentException("Config must not be null");
+    }
     this.config = config;
+    this.solrCollections = Collections.unmodifiableMap(new LinkedHashMap(solrCollections));
+    for (SolrCollection collection : getSolrCollections().values()) {
+      LOGGER.info("Number of solr schema fields: {}", collection.getSchema().getFields().size());
+      LOGGER.info("Solr schema: \n{}", Joiner.on("\n").join(new TreeMap(collection.getSchema().getFields()).values()));
+    }
   }
   
   /** Returns the configuration settings */
   protected Config getConfig() {
       return config;
-  }
-
-  public String getName() {
-    return name;
-  }
-  
-  public synchronized void setName(String name) {
-    this.name = name;
   }
 
   /**
@@ -77,35 +75,11 @@ public class SolrIndexer {
     return solrCollections;
   }
 
-  /**
-   * Creates the Solr collection proxies to which this indexer can route Solr
-   * documents; override to customize
-   */
-  protected Map<String, SolrCollection> createSolrCollections() {
-    String solrServerUrl = "http://127.0.0.1:8983/solr/collection1";
-    return Collections.singletonMap(solrServerUrl, new SolrCollection(solrServerUrl, new SolrServerDocumentLoader(
-        new HttpSolrServer(solrServerUrl))));
-  }
-
-  public synchronized void start() {
-    LOGGER.info("Starting indexer {} ...", this);
-    if (solrCollections == null) {
-      solrCollections = Collections.unmodifiableMap(new LinkedHashMap(createSolrCollections()));
-    }
-    LOGGER.info("Indexer {} started.", getName());
-    for (SolrCollection collection : getSolrCollections().values()) {
-      LOGGER.info("Number of solr schema fields: {}", collection.getSchema().getFields().size());
-      LOGGER.info("Solr schema: \n{}", Joiner.on("\n").join(new TreeMap(collection.getSchema().getFields()).values()));
-    }
-  }
-
   public synchronized void stop() {
-    LOGGER.info("Indexer {} stopping...", getName());
     try {
       for (SolrCollection collection : getSolrCollections().values()) {
         collection.getDocumentLoader().shutdown();
       }
-      LOGGER.info("Indexer {} stopped.", getName());
     } finally {
       solrCollections = null;
     }
@@ -194,13 +168,6 @@ public class SolrIndexer {
     for (SolrCollection collection : getSolrCollections().values()) {
       collection.getDocumentLoader().rollback();
     }
-  }
-
-  @Override
-  public String toString() {
-    int i = getClass().getName().lastIndexOf('.') + 1;
-    String shortClassName = getClass().getName().substring(i);
-    return getName() + " (" + shortClassName + ")";
   }
 
 }

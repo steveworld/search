@@ -16,7 +16,6 @@
  */
 package org.apache.solr.hadoop;
 
-import java.io.File;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
@@ -25,7 +24,6 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mrunit.mapreduce.MapDriver;
 import org.apache.hadoop.mrunit.types.Pair;
 import org.apache.solr.common.SolrInputDocument;
-import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.tika.TikaMapper;
 import org.junit.Test;
 
