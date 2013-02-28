@@ -218,7 +218,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       } catch (Exception e) {
         LOG.error("Unable to process file " + value, e);
         context.getCounter(getClass().getName() + ".errors", e.getClass().getName()).increment(1);
-        if (!context.getConfiguration().getBoolean(ExtractingParams.IGNORE_TIKA_EXCEPTION, true)) {
+        if (!context.getConfiguration().getBoolean(ExtractingParams.IGNORE_TIKA_EXCEPTION, false)) {
           if (e instanceof IOException) {
             throw (IOException) e;
           } else if (e instanceof InterruptedException) {
