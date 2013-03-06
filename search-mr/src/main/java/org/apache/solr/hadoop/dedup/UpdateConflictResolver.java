@@ -67,6 +67,7 @@ public interface UpdateConflictResolver {
    *          implementations.
    * @return the order in which the updates shall be applied to Solr
    */
-  Iterator<SolrInputDocument> orderUpdates(Text uniqueKey, Iterator<SolrInputDocument> collidingUpdates, Context context);
+  Iterator<SolrInputDocument> orderUpdates(
+      Text uniqueKey, Iterator<SolrInputDocument> collidingUpdates, Context context);
   
 }

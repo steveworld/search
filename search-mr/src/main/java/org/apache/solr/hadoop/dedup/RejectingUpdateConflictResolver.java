@@ -32,15 +32,15 @@ import org.apache.solr.common.SolrInputDocument;
 public final class RejectingUpdateConflictResolver implements UpdateConflictResolver {
 
   @Override
-  public Iterator<SolrInputDocument> orderUpdates(Text uniqueKey, Iterator<SolrInputDocument> collidingUpdates, Context context) {    
+  public Iterator<SolrInputDocument> orderUpdates(Text key, Iterator<SolrInputDocument> updates, Context ctx) {    
     SolrInputDocument firstUpdate = null;
-    while (collidingUpdates.hasNext()) {
+    while (updates.hasNext()) {
       if (firstUpdate == null) {
-        firstUpdate = collidingUpdates.next();
+        firstUpdate = updates.next();
         assert firstUpdate != null;
       } else {
         throw new IllegalArgumentException("Update conflict! Documents with the same unique key are forbidden: "
-            + uniqueKey);
+            + key);
       }
     }
     assert firstUpdate != null;

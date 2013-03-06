@@ -31,8 +31,8 @@ import org.apache.solr.common.SolrInputDocument;
 public final class NoChangeUpdateConflictResolver implements UpdateConflictResolver {
 
   @Override
-  public Iterator<SolrInputDocument> orderUpdates(Text uniqueKey, Iterator<SolrInputDocument> collidingUpdates, Context context) {    
-    return collidingUpdates;
+  public Iterator<SolrInputDocument> orderUpdates(Text key, Iterator<SolrInputDocument> updates, Context ctx) {    
+    return updates;
   }
 
 }

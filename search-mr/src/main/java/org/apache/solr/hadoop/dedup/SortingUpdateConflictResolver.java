@@ -41,7 +41,9 @@ public class SortingUpdateConflictResolver implements UpdateConflictResolver, Co
   private Configuration conf;
   private String orderByFieldName = ORDER_BY_FIELD_NAME_DEFAULT;
   
-  public static final String ORDER_BY_FIELD_NAME_KEY = SortingUpdateConflictResolver.class.getName() + ".orderByFieldName";
+  public static final String ORDER_BY_FIELD_NAME_KEY = 
+      SortingUpdateConflictResolver.class.getName() + ".orderByFieldName";
+  
   public static final String ORDER_BY_FIELD_NAME_DEFAULT = HdfsFileFieldNames.FILE_LAST_MODIFIED;
 
   @Override
@@ -60,15 +62,15 @@ public class SortingUpdateConflictResolver implements UpdateConflictResolver, Co
   }
   
   @Override
-  public Iterator<SolrInputDocument> orderUpdates(Text uniqueKey, Iterator<SolrInputDocument> collidingUpdates, Context context) {    
-    return sort(collidingUpdates, getOrderByFieldName(), new SolrInputDocumentComparator.TimeStampComparator());
+  public Iterator<SolrInputDocument> orderUpdates(Text key, Iterator<SolrInputDocument> updates, Context ctx) {    
+    return sort(updates, getOrderByFieldName(), new SolrInputDocumentComparator.TimeStampComparator());
   }
 
-  protected Iterator<SolrInputDocument> sort(Iterator<SolrInputDocument> collidingUpdates, String fieldName, Comparator child) {
+  protected Iterator<SolrInputDocument> sort(Iterator<SolrInputDocument> updates, String fieldName, Comparator child) {
     // TODO: use an external merge sort in the pathological case where there are a huge amount of collisions
     List<SolrInputDocument> sortedUpdates = new ArrayList(1); 
-    while (collidingUpdates.hasNext()) {
-      sortedUpdates.add(collidingUpdates.next());
+    while (updates.hasNext()) {
+      sortedUpdates.add(updates.next());
     }
     if (sortedUpdates.size() > 1) { // conflicts are rare
       Collections.sort(sortedUpdates, new SolrInputDocumentComparator(fieldName, child));
