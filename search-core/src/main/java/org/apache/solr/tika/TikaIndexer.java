@@ -74,7 +74,7 @@ public class TikaIndexer extends SolrIndexer {
 
   private final TikaConfig tikaConfig;
   private final AutoDetectParser autoDetectParser;
-  private final Map<MediaType, Parser> tikaConfigParsers; 
+  private final Map<MediaType, Parser> mediaTypeToParserMap; 
   private ParseInfo parseInfo;
 
   private final String idPrefix; // for load testing only; enables adding same document many times with a different unique key
@@ -127,7 +127,7 @@ public class TikaIndexer extends SolrIndexer {
     autoDetectParser = new AutoDetectParser(tikaConfig);
     CompositeParser tikaConfigParser = (CompositeParser) getTikaConfig().getParser();
 //  DefaultParser tikaConfigParser = new DefaultParser(getTikaConfig().getMediaTypeRegistry());
-    tikaConfigParsers = tikaConfigParser.getParsers();
+    mediaTypeToParserMap = tikaConfigParser.getParsers();
 
     String tmpIdPrefix = null;
     Random tmpRandomIdPrefx = null;
@@ -150,7 +150,7 @@ public class TikaIndexer extends SolrIndexer {
 
   @Override
   public void process(StreamEvent event) throws IOException, SolrServerException {
-    parseInfo = new ParseInfo(event, this); // ParseInfo is more practical than ParseContext
+    parseInfo = new ParseInfo(event, this, mediaTypeToParserMap); // ParseInfo is more practical than ParseContext
     try {
       super.process(event);
     } finally {
@@ -276,9 +276,9 @@ public class TikaIndexer extends SolrIndexer {
     if (streamMediaType != null) {
       // Cache? Parsers are lightweight to construct and thread-safe, so I'm told
       MediaType mt = MediaType.parse(streamMediaType.trim().toLowerCase(Locale.ROOT));
-      parser = tikaConfigParsers.get(mt);
+      parser = mediaTypeToParserMap.get(mt);
       if (parser == null && mt.hasParameters()) {
-        parser = tikaConfigParsers.get(mt.getBaseType());
+        parser = mediaTypeToParserMap.get(mt.getBaseType());
       }
       if (parser == null) {
         throw new IndexerException("Stream media type of " + streamMediaType
