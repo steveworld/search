@@ -40,7 +40,9 @@ public class RetainMostRecentUpdateConflictResolver implements UpdateConflictRes
   private Configuration conf;
   private String orderByFieldName = ORDER_BY_FIELD_NAME_DEFAULT;
   
-  public static final String ORDER_BY_FIELD_NAME_KEY = RetainMostRecentUpdateConflictResolver.class.getName() + ".orderByFieldName";
+  public static final String ORDER_BY_FIELD_NAME_KEY = 
+      RetainMostRecentUpdateConflictResolver.class.getName() + ".orderByFieldName";
+  
   public static final String ORDER_BY_FIELD_NAME_DEFAULT = HdfsFileFieldNames.FILE_LAST_MODIFIED;
 
   private static final String COUNTER_GROUP = Utils.getShortClassName(RetainMostRecentUpdateConflictResolver.class);
@@ -62,17 +64,19 @@ public class RetainMostRecentUpdateConflictResolver implements UpdateConflictRes
   }
   
   @Override
-  public Iterator<SolrInputDocument> orderUpdates(Text uniqueKey, Iterator<SolrInputDocument> collidingUpdates, Context context) {    
-    return getMaximum(collidingUpdates, getOrderByFieldName(), new SolrInputDocumentComparator.TimeStampComparator(), context);
+  public Iterator<SolrInputDocument> orderUpdates(Text key, Iterator<SolrInputDocument> updates, Context ctx) {    
+    return getMaximum(updates, getOrderByFieldName(), new SolrInputDocumentComparator.TimeStampComparator(), ctx);
   }
 
   /** Returns the most recent document among the colliding updates */
-  protected Iterator<SolrInputDocument> getMaximum(Iterator<SolrInputDocument> collidingUpdates, String fieldName, Comparator child, Context context) {
+  protected Iterator<SolrInputDocument> getMaximum(Iterator<SolrInputDocument> updates, String fieldName,
+      Comparator child, Context context) {
+    
     SolrInputDocumentComparator comp = new SolrInputDocumentComparator(fieldName, child);
     SolrInputDocument max = null;
     long numDocs = 0;
-    while (collidingUpdates.hasNext()) {
-      SolrInputDocument next = collidingUpdates.next(); 
+    while (updates.hasNext()) {
+      SolrInputDocument next = updates.next(); 
       assert next != null;
       if (max == null) {
         max = next;
