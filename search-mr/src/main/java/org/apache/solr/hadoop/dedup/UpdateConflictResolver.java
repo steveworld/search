@@ -22,6 +22,8 @@ import java.util.Iterator;
 
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.solr.common.SolrInputDocument;
 
 /**
@@ -60,8 +62,11 @@ public interface UpdateConflictResolver {
    * @param collidingUpdates
    *          all updates in the MapReduce job that have a key equal to
    *          {@code uniqueKey} mentioned above. The input order is unspecified.
+   * @param context
+   *          The <code>Context</code> passed from the {@link Reducer}
+   *          implementations.
    * @return the order in which the updates shall be applied to Solr
    */
-  Iterator<SolrInputDocument> orderUpdates(Text uniqueKey, Iterator<SolrInputDocument> collidingUpdates);
+  Iterator<SolrInputDocument> orderUpdates(Text uniqueKey, Iterator<SolrInputDocument> collidingUpdates, Context context);
   
 }

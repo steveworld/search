@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.Iterator;
 
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.solr.common.SolrInputDocument;
 
 /**
@@ -31,7 +32,7 @@ import org.apache.solr.common.SolrInputDocument;
 public final class RejectingUpdateConflictResolver implements UpdateConflictResolver {
 
   @Override
-  public Iterator<SolrInputDocument> orderUpdates(Text uniqueKey, Iterator<SolrInputDocument> collidingUpdates) {    
+  public Iterator<SolrInputDocument> orderUpdates(Text uniqueKey, Iterator<SolrInputDocument> collidingUpdates, Context context) {    
     SolrInputDocument firstUpdate = null;
     while (collidingUpdates.hasNext()) {
       if (firstUpdate == null) {
