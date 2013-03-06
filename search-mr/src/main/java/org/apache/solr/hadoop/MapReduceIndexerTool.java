@@ -597,7 +597,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     
     LOG.info("Randomizing list of {} input files to spread indexing load more evenly among mappers", numFiles);
     long startTime = System.currentTimeMillis();      
-    if (numFiles < job.getConfiguration().getInt(MAIN_MEMORY_RANDOMIZATION_THRESHOLD, 100 * 1000)) {
+    if (numFiles < job.getConfiguration().getInt(MAIN_MEMORY_RANDOMIZATION_THRESHOLD, 100001)) {
       // If there are few input files reduce latency by directly running main memory randomization 
       // instead of launching a high latency MapReduce job
       randomizeFewInputFiles(fs, outputStep2Dir, fullInputList);
