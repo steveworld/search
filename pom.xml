@@ -133,6 +133,7 @@
           <encoding>UTF-8</encoding>
           <showDeprecation>true</showDeprecation>
           <showWarnings>true</showWarnings>
+          <!--<compilerArgument>-Xlint:unchecked</compilerArgument>-->
         </configuration>
       </plugin>
 

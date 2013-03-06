@@ -24,7 +24,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.solr.handler.extraction.SolrContentHandler;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.Parser;
 
 import com.typesafe.config.Config;
 
@@ -39,6 +41,7 @@ public final class ParseInfo {
   private final StreamEvent event;
   private final SolrIndexer indexer;
   private final ParseContext parseContext;
+  private final Map<MediaType, Parser> mediaTypeToParserMap;
   private String id;
   private SolrCollection solrCollection;
   private SolrContentHandler solrContentHandler;
@@ -48,15 +51,19 @@ public final class ParseInfo {
   private Throwable throwable;
   private final Map<String, Object> params = new HashMap();
 
-  public ParseInfo(StreamEvent event, SolrIndexer indexer) {
+  public ParseInfo(StreamEvent event, SolrIndexer indexer, Map<MediaType, Parser> mediaTypeToParserMap) {
     if (event == null) {
       throw new IllegalArgumentException("Event must not be null");
     }
     if (indexer == null) {
       throw new IllegalArgumentException("Indexer must not be null");
     }
+    if (mediaTypeToParserMap == null) {
+      throw new IllegalArgumentException("mediaTypeMap must not be null");
+    }
     this.event = event;
     this.indexer = indexer;
+    this.mediaTypeToParserMap = mediaTypeToParserMap;
     ParseContext pc = null;
     if (event instanceof TikaStreamEvent) {
       pc = ((TikaStreamEvent) event).getParseContext();
@@ -88,6 +95,10 @@ public final class ParseInfo {
     return parseContext;
   }
 
+  public Map<MediaType, Parser> getMediaTypeToParserMap() {
+    return mediaTypeToParserMap;
+  }
+  
   public Config getConfig() {
     return indexer.getConfig();
   }
