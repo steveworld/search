@@ -66,7 +66,6 @@ public class SolrInspector {
   public static final String SOLR_SERVER_QUEUE_LENGTH = "solr.server.queueLength";
   public static final String SOLR_SERVER_NUM_THREADS = "solr.server.numThreads";
   public static final String SOLR_HOME_PROPERTY_NAME = "solr.solr.home";
-  public static final String ID_PREFIX = "TikaIndexer.idPrefix"; // for load testing only
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SolrInspector.class);
   
