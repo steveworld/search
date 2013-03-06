@@ -72,13 +72,14 @@ import com.typesafe.config.Config;
  */
 public class TikaIndexer extends SolrIndexer {
 
-  private TikaConfig tikaConfig;
-  private AutoDetectParser autoDetectParser;
+  private final TikaConfig tikaConfig;
+  private final AutoDetectParser autoDetectParser;
+  private final Map<MediaType, Parser> tikaConfigParsers; 
   private ParseInfo parseInfo;
 
-  private String idPrefix; // for load testing only; enables adding same document many times with a different unique key
-  private Random randomIdPrefix; // for load testing only; enables adding same document many times with a different unique key
-  private boolean useAutoGUNZIP = false;
+  private final String idPrefix; // for load testing only; enables adding same document many times with a different unique key
+  private final Random randomIdPrefix; // for load testing only; enables adding same document many times with a different unique key
+  private final boolean useAutoGUNZIP;
 
   private static final XPathParser PARSER = new XPathParser("xhtml", XHTMLContentHandler.XHTML);
 
@@ -124,17 +125,23 @@ public class TikaIndexer extends SolrIndexer {
       }
     }
     autoDetectParser = new AutoDetectParser(tikaConfig);
-        
+    CompositeParser tikaConfigParser = (CompositeParser) getTikaConfig().getParser();
+//  DefaultParser tikaConfigParser = new DefaultParser(getTikaConfig().getMediaTypeRegistry());
+    tikaConfigParsers = tikaConfigParser.getParsers();
+
+    String tmpIdPrefix = null;
+    Random tmpRandomIdPrefx = null;
     if (config.hasPath(ID_PREFIX)) { // for load testing only
-      idPrefix = config.getString(ID_PREFIX);
+      tmpIdPrefix = config.getString(ID_PREFIX);
     }
-    if ("random".equals(idPrefix)) { // for load testing only
-      randomIdPrefix = new Random(new SecureRandom().nextLong());    
-      idPrefix = null;
+    if ("random".equals(tmpIdPrefix)) { // for load testing only
+      tmpRandomIdPrefx = new Random(new SecureRandom().nextLong());    
+      tmpIdPrefix = null;
     }
-    if (config.hasPath(TIKA_AUTO_GUNZIP)) {
-      useAutoGUNZIP = "true".equals(config.getString(TIKA_AUTO_GUNZIP));
-    }
+    idPrefix = tmpIdPrefix;
+    randomIdPrefix = tmpRandomIdPrefx;
+    
+    useAutoGUNZIP = config.hasPath(TIKA_AUTO_GUNZIP) && "true".equals(config.getString(TIKA_AUTO_GUNZIP));
   }
   
   protected TikaConfig getTikaConfig() {
@@ -269,9 +276,10 @@ public class TikaIndexer extends SolrIndexer {
     if (streamMediaType != null) {
       // Cache? Parsers are lightweight to construct and thread-safe, so I'm told
       MediaType mt = MediaType.parse(streamMediaType.trim().toLowerCase(Locale.ROOT));
-      CompositeParser tikaConfigParser = (CompositeParser) getTikaConfig().getParser();
-//      DefaultParser tikaConfigParser = new DefaultParser(getTikaConfig().getMediaTypeRegistry());
-      parser = tikaConfigParser.getParsers().get(mt);
+      parser = tikaConfigParsers.get(mt);
+      if (parser == null && mt.hasParameters()) {
+        parser = tikaConfigParsers.get(mt.getBaseType());
+      }
       if (parser == null) {
         throw new IndexerException("Stream media type of " + streamMediaType
             + " didn't match any known parsers. Please supply a better " + ExtractingParams.STREAM_TYPE + " parameter.");
