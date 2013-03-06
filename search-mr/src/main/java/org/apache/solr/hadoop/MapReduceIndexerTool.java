@@ -253,8 +253,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .metavar("URI")
   //      .type(new PathArgumentType(fs).verifyExists().verifyCanRead())
         .type(Path.class)
-        .help("Local URI or HDFS URI of a file containing a list of HDFS URIs to index, one URI per line in the file. " + 
-              "If '-' is specified, URIs are read from the standard input. " + 
+        .help("Local URI or HDFS URI of an UTF-8 encoded file containing a list of HDFS URIs to index, " +
+              "one URI per line in the file. If '-' is specified, URIs are read from the standard input. " + 
               "Multiple --input-list arguments can be specified.");
       
       Argument outputDirArg = parser.addArgument("--output-dir")
@@ -269,7 +269,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
             }
             return path;
           }
-        }.verifyScheme(fs.getScheme()).verifyIsAbsolute().verifyCanWriteParent())
+        }.verifyIsAbsolute().verifyCanWriteParent())
         .required(true)
         .help("HDFS directory to write Solr indexes to. Inside there one output directory per shard will be generated. " +
         		  "Example: hdfs://c2202.mycompany.com/user/$USER/test");
@@ -430,7 +430,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       // trailing positional arguments
       Argument inputFilesArg = parser.addArgument("input-files")
         .metavar("HDFS_URI")
-        .type(new PathArgumentType(fs).verifyScheme(fs.getScheme()).verifyExists().verifyCanRead())
+        .type(new PathArgumentType(fs).verifyExists().verifyCanRead())
         .nargs("*")
         .setDefault()
         .help("HDFS URI of file or directory tree to index.");
