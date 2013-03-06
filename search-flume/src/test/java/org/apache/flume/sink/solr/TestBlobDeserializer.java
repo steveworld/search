@@ -20,19 +20,18 @@ package org.apache.flume.sink.solr;
 import java.io.IOException;
 import java.util.List;
 
-import junit.framework.Assert;
-
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.serialization.EventDeserializer;
 import org.apache.flume.serialization.EventDeserializerFactory;
 import org.apache.flume.serialization.ResettableInputStream;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.base.Charsets;
 
-public class TestBlobDeserializer {
+public class TestBlobDeserializer extends Assert {
 
   private String mini;
 
@@ -74,7 +73,7 @@ public class TestBlobDeserializer {
     List<Event> events;
 
     events = des.readEvents(10); // try to read more than we should have
-    Assert.assertEquals(1, events.size());
+    assertEquals(1, events.size());
     assertEventBodyEquals(mini, events.get(0));
 
     des.mark();
@@ -94,12 +93,12 @@ public class TestBlobDeserializer {
     assertEventBodyEquals("abcdefghij", des.readEvent());
     assertEventBodyEquals("klmnopqrst", des.readEvent());
     assertEventBodyEquals("uvwxyz\n", des.readEvent());
-    Assert.assertNull(des.readEvent());
+    assertNull(des.readEvent());
   }
 
   private void assertEventBodyEquals(String expected, Event event) {
     String bodyStr = new String(event.getBody(), Charsets.UTF_8);
-    Assert.assertEquals(expected, bodyStr);
+    assertEquals(expected, bodyStr);
   }
 
   private void validateMiniParse(EventDeserializer des) throws IOException {
@@ -107,15 +106,15 @@ public class TestBlobDeserializer {
 
     des.mark();
     evt = des.readEvent();
-    Assert.assertEquals(new String(evt.getBody()), mini);
+    assertEquals(new String(evt.getBody()), mini);
     des.reset(); // reset!
 
     evt = des.readEvent();
-    Assert.assertEquals("data should be repeated, " +
+    assertEquals("data should be repeated, " +
         "because we reset() the stream", new String(evt.getBody()), mini);
 
     evt = des.readEvent();
-    Assert.assertNull("Event should be null because there are no lines " +
+    assertNull("Event should be null because there are no lines " +
         "left to read", evt);
 
     des.mark();

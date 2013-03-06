@@ -21,14 +21,13 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
-import junit.framework.Assert;
-
 import org.apache.flume.Event;
 import org.apache.flume.source.http.HTTPSourceHandler;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TestBlobHandler {
+public class TestBlobHandler extends Assert {
 
   private HTTPSourceHandler handler;
 
@@ -42,10 +41,10 @@ public class TestBlobHandler {
     byte[] json = "foo".getBytes("UTF-8");
     HttpServletRequest req = new FlumeHttpServletRequestWrapper(json);
     List<Event> deserialized = handler.getEvents(req);
-    Assert.assertEquals(1,  deserialized.size());
+    assertEquals(1,  deserialized.size());
     Event e = deserialized.get(0);
-    Assert.assertEquals(0, e.getHeaders().size());
-    Assert.assertEquals("foo", new String(e.getBody(),"UTF-8"));
+    assertEquals(0, e.getHeaders().size());
+    assertEquals("foo", new String(e.getBody(),"UTF-8"));
   }
 
   @Test
@@ -53,10 +52,10 @@ public class TestBlobHandler {
     byte[] json = "".getBytes("UTF-8");
     HttpServletRequest req = new FlumeHttpServletRequestWrapper(json);
     List<Event> deserialized = handler.getEvents(req);
-    Assert.assertEquals(1,  deserialized.size());
+    assertEquals(1,  deserialized.size());
     Event e = deserialized.get(0);
-    Assert.assertEquals(0, e.getHeaders().size());
-    Assert.assertEquals("", new String(e.getBody(),"UTF-8"));
+    assertEquals(0, e.getHeaders().size());
+    assertEquals("", new String(e.getBody(),"UTF-8"));
   }
 
 }
