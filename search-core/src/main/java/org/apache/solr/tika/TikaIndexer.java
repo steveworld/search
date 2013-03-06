@@ -274,11 +274,10 @@ public class TikaIndexer extends SolrIndexer {
     Parser parser = autoDetectParser;
     String streamMediaType = event.getHeaders().get(ExtractingParams.STREAM_TYPE);
     if (streamMediaType != null) {
-      // Cache? Parsers are lightweight to construct and thread-safe, so I'm told
-      MediaType mt = MediaType.parse(streamMediaType.trim().toLowerCase(Locale.ROOT));
-      parser = mediaTypeToParserMap.get(mt);
-      if (parser == null && mt.hasParameters()) {
-        parser = mediaTypeToParserMap.get(mt.getBaseType());
+      MediaType mediaType = MediaType.parse(streamMediaType.trim().toLowerCase(Locale.ROOT));
+      parser = mediaTypeToParserMap.get(mediaType);
+      if (parser == null && mediaType.hasParameters()) {
+        parser = mediaTypeToParserMap.get(mediaType.getBaseType());
       }
       if (parser == null) {
         throw new IndexerException("Stream media type of " + streamMediaType
