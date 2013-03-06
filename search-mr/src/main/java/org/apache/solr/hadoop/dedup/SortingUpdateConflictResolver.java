@@ -27,6 +27,7 @@ import java.util.List;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.hadoop.HdfsFileFieldNames;
 
@@ -59,7 +60,7 @@ public class SortingUpdateConflictResolver implements UpdateConflictResolver, Co
   }
   
   @Override
-  public Iterator<SolrInputDocument> orderUpdates(Text uniqueKey, Iterator<SolrInputDocument> collidingUpdates) {    
+  public Iterator<SolrInputDocument> orderUpdates(Text uniqueKey, Iterator<SolrInputDocument> collidingUpdates, Context context) {    
     return sort(collidingUpdates, getOrderByFieldName(), new SolrInputDocumentComparator.TimeStampComparator());
   }
 

@@ -25,8 +25,10 @@ import java.util.Iterator;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.hadoop.HdfsFileFieldNames;
+import org.apache.solr.hadoop.Utils;
 
 /**
  * UpdateConflictResolver implementation that ignores all but the most recent
@@ -41,6 +43,9 @@ public class RetainMostRecentUpdateConflictResolver implements UpdateConflictRes
   public static final String ORDER_BY_FIELD_NAME_KEY = RetainMostRecentUpdateConflictResolver.class.getName() + ".orderByFieldName";
   public static final String ORDER_BY_FIELD_NAME_DEFAULT = HdfsFileFieldNames.FILE_LAST_MODIFIED;
 
+  private static final String COUNTER_GROUP = Utils.getShortClassName(RetainMostRecentUpdateConflictResolver.class);
+  private static final String COUNTER_NAME = "Number of ignored duplicates";
+  
   @Override
   public void setConf(Configuration conf) {
     this.conf = conf;
@@ -57,14 +62,15 @@ public class RetainMostRecentUpdateConflictResolver implements UpdateConflictRes
   }
   
   @Override
-  public Iterator<SolrInputDocument> orderUpdates(Text uniqueKey, Iterator<SolrInputDocument> collidingUpdates) {    
-    return getMaximum(collidingUpdates, getOrderByFieldName(), new SolrInputDocumentComparator.TimeStampComparator());
+  public Iterator<SolrInputDocument> orderUpdates(Text uniqueKey, Iterator<SolrInputDocument> collidingUpdates, Context context) {    
+    return getMaximum(collidingUpdates, getOrderByFieldName(), new SolrInputDocumentComparator.TimeStampComparator(), context);
   }
 
   /** Returns the most recent document among the colliding updates */
-  protected Iterator<SolrInputDocument> getMaximum(Iterator<SolrInputDocument> collidingUpdates, String fieldName, Comparator child) {
+  protected Iterator<SolrInputDocument> getMaximum(Iterator<SolrInputDocument> collidingUpdates, String fieldName, Comparator child, Context context) {
     SolrInputDocumentComparator comp = new SolrInputDocumentComparator(fieldName, child);
     SolrInputDocument max = null;
+    long numDocs = 0;
     while (collidingUpdates.hasNext()) {
       SolrInputDocument next = collidingUpdates.next(); 
       assert next != null;
@@ -72,9 +78,13 @@ public class RetainMostRecentUpdateConflictResolver implements UpdateConflictRes
         max = next;
       } else if (comp.compare(next, max) > 0) {
         max = next;
-      }
+      } 
+      numDocs++;
     }
     assert max != null;
+    if (numDocs > 1) {
+      context.getCounter(COUNTER_GROUP, COUNTER_NAME).increment(numDocs - 1);
+    }
     return Collections.singletonList(max).iterator();
   }
     

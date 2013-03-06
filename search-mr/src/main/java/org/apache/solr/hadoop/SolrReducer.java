@@ -30,6 +30,15 @@ import org.apache.solr.handler.extraction.ExtractingParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This class loads the mapper's SolrInputDocuments into one EmbeddedSolrServer
+ * per reducer. Each such reducer and Solr server can be seen as a (micro)
+ * shard. The Solr servers store their data in HDFS.
+ * 
+ * More specifically, this class consumes a list of <docId, SolrInputDocument>
+ * pairs, sorted by docId, and sends them to an embedded Solr server to generate
+ * a Solr index shard from the documents.
+ */
 public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, SolrInputDocumentWritable> {
 
   private UpdateConflictResolver resolver;
@@ -58,7 +67,7 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
   protected void reduce(Text key, Iterable<SolrInputDocumentWritable> values, Context context) throws IOException, InterruptedException {
     heartBeater.needHeartBeat();
     try {
-      values = resolve(key, values);
+      values = resolve(key, values, context);
       super.reduce(key, values, context);
     } catch (Exception e) {
       LOG.error("Unable to process key " + key, e);
@@ -77,14 +86,16 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
     }
   }
 
-  private Iterable<SolrInputDocumentWritable> resolve(final Text key, final Iterable<SolrInputDocumentWritable> values) {
+  private Iterable<SolrInputDocumentWritable> resolve(
+      final Text key, final Iterable<SolrInputDocumentWritable> values, final Context context) {
+    
     if (resolver instanceof NoChangeUpdateConflictResolver) {
       return values; // fast path
     }
     return new Iterable<SolrInputDocumentWritable>() {
       @Override
       public Iterator<SolrInputDocumentWritable> iterator() {
-        return new WrapIterator(resolver.orderUpdates(key, new UnwrapIterator(values.iterator())));
+        return new WrapIterator(resolver.orderUpdates(key, new UnwrapIterator(values.iterator()), context));
       }
     };
   }
