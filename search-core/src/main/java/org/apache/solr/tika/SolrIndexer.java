@@ -43,8 +43,16 @@ import com.typesafe.config.Config;
 public class SolrIndexer {
 
   private final Config config;
-  private Map<String, SolrCollection> solrCollections; // proxies to remote solr
+  private Map<String, SolrCollection> solrCollections; // proxies to remote solr  
+  private final boolean ignoreLoads; // for load testing only
 
+  /**
+   * If true this boolean configuration parameter simulates an infinitely fast
+   * pipe into Solr for load testing. This can be used to easily isolate
+   * performance metrics of the extraction and transform phase.
+   */
+  private static final String IGNORE_LOADS = SolrIndexer.class.getName() + ".ignoreLoads";
+  
   private static final Logger LOGGER = LoggerFactory.getLogger(SolrIndexer.class);
 
   public SolrIndexer(Map<String, SolrCollection> solrCollections, Config config) {
@@ -56,6 +64,7 @@ public class SolrIndexer {
     }
     this.config = config;
     this.solrCollections = Collections.unmodifiableMap(new LinkedHashMap(solrCollections));
+    this.ignoreLoads = config.hasPath(IGNORE_LOADS) && config.getBoolean(IGNORE_LOADS);
     for (SolrCollection collection : getSolrCollections().values()) {
       LOGGER.info("Number of solr schema fields: {}", collection.getSchema().getFields().size());
       LOGGER.info("Solr schema: \n{}", Joiner.on("\n").join(new TreeMap(collection.getSchema().getFields()).values()));
@@ -131,7 +140,9 @@ public class SolrIndexer {
 
   /** Loads the given documents into the specified Solr collection */
   public void load(List<SolrInputDocument> docs, String collectionName) throws IOException, SolrServerException {
-    getSolrCollections().get(collectionName).getDocumentLoader().load(docs);
+    if (!ignoreLoads) {
+      getSolrCollections().get(collectionName).getDocumentLoader().load(docs);
+    }
   }
 
   /** Begins a solr transaction */
