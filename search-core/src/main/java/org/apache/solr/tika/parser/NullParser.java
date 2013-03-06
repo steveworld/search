@@ -30,7 +30,7 @@ import org.apache.tika.parser.ParseContext;
  * attempting to parse the given document stream. For example, this can be used
  * to just index the file metadata without indexing the content.
  */
-public class NullParser extends EmptyParser {
+public final class NullParser extends EmptyParser {
 
   private static final MediaType MEDIA_TYPE = MediaType.parse("application/null-tika-parser");
 
