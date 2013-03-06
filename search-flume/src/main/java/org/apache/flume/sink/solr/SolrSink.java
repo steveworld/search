@@ -51,8 +51,8 @@ import com.typesafe.config.ConfigFactory;
  */
 public class SolrSink extends AbstractSink implements Configurable {
 
-  private int maxBatchSize = 1000;
-  private long maxBatchDurationMillis = 10 * 1000;
+  private int maxBatchSize = 100;
+  private long maxBatchDurationMillis = 1000;
   private String indexerClass;
   private SolrIndexer indexer;
   private Context context;
