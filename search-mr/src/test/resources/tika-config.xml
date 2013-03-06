@@ -53,6 +53,7 @@ If multiple parsers support the same MIME type, the parser is chosen that is clo
     <parser class="org.apache.tika.parser.chm.ChmParser"/>
     
     <!--<parser class="org.apache.solr.tika.TwitterTestParser"/>--> 
+    <parser class="org.apache.solr.tika.parser.NullParser"/> 
     <parser class="org.apache.solr.tika.parser.SSVParser"/> 
     <parser class="org.apache.solr.tika.parser.TSVParser"/> 
     <parser class="org.apache.solr.tika.parser.CSVParser"/> 
@@ -64,5 +65,4 @@ If multiple parsers support the same MIME type, the parser is chosen that is clo
     </parser>
     -->
   </parsers> 
-  <!--<mimeTypeRepository resource="org/apache/tika/mime/custom-mimetypes.xml"-->
 </properties>
