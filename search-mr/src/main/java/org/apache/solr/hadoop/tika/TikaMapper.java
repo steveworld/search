@@ -69,6 +69,15 @@ import com.google.common.base.Joiner;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
+/**
+ * This class takes the input files, extracts the relevant content, transforms
+ * it and hands SolrInputDocuments to a set of reducers.
+ * 
+ * More specifically, it consumes a list of <offset, hdfsFilePath> input pairs.
+ * For each such pair extracts a set of zero or more SolrInputDocuments and
+ * sends them to a downstream Reducer. The key for the reducer is the unique id
+ * of the SolrInputDocument.
+ */
 public class TikaMapper extends SolrMapper<LongWritable, Text> {
 
   private SolrIndexer indexer;
