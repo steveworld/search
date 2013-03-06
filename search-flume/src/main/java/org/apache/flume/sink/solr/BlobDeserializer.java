@@ -51,7 +51,7 @@ public class BlobDeserializer implements EventDeserializer {
   private volatile boolean isOpen;
 
   public static final String MAX_BLOB_LENGTH_KEY = "maxBlobLength";
-  public static final int MAX_BLOB_LENGTH_DEFAULT = 64 * 1024 * 1024;
+  public static final int MAX_BLOB_LENGTH_DEFAULT = 100 * 1000 * 1000;
 
   private static final int DEFAULT_BUFFER_SIZE = 1024 * 8;
   private static final Logger LOGGER = LoggerFactory.getLogger(BlobDeserializer.class);
