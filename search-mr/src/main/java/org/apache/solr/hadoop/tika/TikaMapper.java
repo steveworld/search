@@ -16,8 +16,10 @@
  */
 package org.apache.solr.hadoop.tika;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,7 +31,6 @@ import java.util.TreeMap;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -76,7 +77,7 @@ import com.typesafe.config.ConfigFactory;
  * More specifically, it consumes a list of <offset, hdfsFilePath> input pairs.
  * For each such pair extracts a set of zero or more SolrInputDocuments and
  * sends them to a downstream Reducer. The key for the reducer is the unique id
- * of the SolrInputDocument.
+ * of the SolrInputDocument specified in Solr schema.xml.
  */
 public class TikaMapper extends SolrMapper<LongWritable, Text> {
 
@@ -85,8 +86,19 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   private IndexSchema schema;
   private HeartBeater heartBeater;
   private Map<String, String> commandLineTikaHeaders;
+  private boolean disableFileOpen;
 
+  /**
+   * Headers, including MIME types, can also explicitly be passed by force from the CLI to Tika, e.g:
+   * hadoop ... -D org.apache.solr.hadoop.tika.TikaMapper.header.stream.type=application/null-tika-parser
+   */
   public static final String TIKA_HEADER_PREFIX = TikaMapper.class.getName() + ".header.";
+  
+  /**
+   * Flag to disable reading of file contents if indexing just file metadata is sufficient. 
+   * This improves performance and/or confidentiality.
+   */
+  public static final String DISABLE_FILE_OPEN = TikaMapper.class.getName() + ".disableFileOpen";
   
   private static final Logger LOG = LoggerFactory.getLogger(TikaMapper.class);
   
@@ -101,6 +113,8 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
     super.setup(context);
+    this.context = context;
+    
     if (LOG.isTraceEnabled()) {
       LOG.trace("CWD is {}", new File(".").getCanonicalPath());
       TreeMap map = new TreeMap();
@@ -109,17 +123,17 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       }
       LOG.trace("Configuration:\n{}", Joiner.on("\n").join(map.entrySet()));
     }
-    this.context = context;
     
-    // Find command line headers to explicitly pass to Tika
-    // Example: hadoop -D org.apache.solr.hadoop.tika.TikaMapper.header.stream.type=text/plain
+    disableFileOpen = context.getConfiguration().getBoolean(DISABLE_FILE_OPEN, false);
+    LOG.debug("disableFileOpen: {}", disableFileOpen);
+    
     commandLineTikaHeaders = new HashMap<String,String>();
     for (Map.Entry<String,String> entry : context.getConfiguration()) {     
       if (entry.getKey().startsWith(TIKA_HEADER_PREFIX)) {
         commandLineTikaHeaders.put(entry.getKey().substring(TIKA_HEADER_PREFIX.length()), entry.getValue());
       }
     }
-    LOG.debug("explicitTikaHeaders: {}", commandLineTikaHeaders);
+    LOG.debug("Headers, including MIME types, passed by force from the CLI to Tika: {}", commandLineTikaHeaders);
     
     Map<String, Object> params = new HashMap<String,Object>();
     for (Map.Entry<String,String> entry : context.getConfiguration()) {
@@ -211,7 +225,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     heartBeater.needHeartBeat();
     try {
       LOG.info("Processing file {}", value);
-      FSDataInputStream in = null;
+      InputStream in = null;
       try {
         PathParts parts = new PathParts(value.toString(), context.getConfiguration());
         Map<String,String> tikaHeaders = getHeaders(parts);
@@ -220,7 +234,11 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
         }
         tikaHeaders.putAll(commandLineTikaHeaders);
         long fileLength = parts.getFileStatus().getLen();
-        in = parts.getFileSystem().open(parts.getUploadPath());
+        if (disableFileOpen) {
+          in = new ByteArrayInputStream(new byte[0]);
+        } else {
+          in = parts.getFileSystem().open(parts.getUploadPath());
+        }
         indexer.process(new StreamEvent(in, tikaHeaders));
         context.getCounter(TikaCounters.class.getName(), TikaCounters.FILES_READ.toString()).increment(1);
         context.getCounter(TikaCounters.class.getName(), TikaCounters.FILE_BYTES_READ.toString()).increment(fileLength);
@@ -271,8 +289,8 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     headers.put(HdfsFileFieldNames.FILE_PORT, String.valueOf(parts.getPort())); 
     headers.put(HdfsFileFieldNames.FILE_PATH, parts.getURIPath()); 
     headers.put(HdfsFileFieldNames.FILE_NAME, parts.getName());     
-    headers.put(HdfsFileFieldNames.FILE_LAST_MODIFIED, String.valueOf(stats.getModificationTime())); // FIXME also in SpoolDirSource
-    headers.put(HdfsFileFieldNames.FILE_LENGTH, String.valueOf(stats.getLen())); // FIXME also in SpoolDirSource
+    headers.put(HdfsFileFieldNames.FILE_LAST_MODIFIED, String.valueOf(stats.getModificationTime())); // FIXME also add in SpoolDirectorySource
+    headers.put(HdfsFileFieldNames.FILE_LENGTH, String.valueOf(stats.getLen())); // FIXME also add in SpoolDirectorySource
     headers.put(HdfsFileFieldNames.FILE_OWNER, stats.getOwner());
     headers.put(HdfsFileFieldNames.FILE_GROUP, stats.getGroup());
     headers.put(HdfsFileFieldNames.FILE_PERMISSIONS_USER, stats.getPermission().getUserAction().SYMBOL);
