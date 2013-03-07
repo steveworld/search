@@ -32,7 +32,7 @@ import org.apache.tika.parser.ParseContext;
  */
 public final class NullParser extends EmptyParser {
 
-  private static final MediaType MEDIA_TYPE = MediaType.parse("application/null-tika-parser");
+  public static final MediaType MEDIA_TYPE = MediaType.parse("application/null-tika-parser");
 
   @Override
   public Set<MediaType> getSupportedTypes(ParseContext context) {

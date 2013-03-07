@@ -69,7 +69,9 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.solr.hadoop.dedup.RetainMostRecentUpdateConflictResolver;
 import org.apache.solr.hadoop.tika.TikaMapper;
+import org.apache.solr.handler.extraction.ExtractingParams;
 import org.apache.solr.tika.TikaIndexer;
+import org.apache.solr.tika.parser.NullParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,18 +130,23 @@ public class MapReduceIndexerTool extends Configured implements Tool {
           "indexing load more evenly among the mappers of the subsequent phase." +  
           "\n\n" +
           "2) Mapper phase: This (parallel) phase takes the input files, extracts the relevant content, transforms it " +
-          "and hands SolrInputDocuments to a set of reducers. The ETL functionality is flexible and " +
+          "and hands SolrInputDocuments to a set of reducers. " +
+          "The ETL functionality is flexible and " +
           "customizable. Parsers for a set of standard data formats such as Avro, CSV, Text, HTML, XML, " +
           "PDF, Word, Excel, etc. are provided out of the box, and additional custom parsers for additional " +
-          "file or data formats can be added as Apache Tika plugins. Any kind of data can be detected and indexed - " +
-          "a file is an InputStream of any format and parsers for any data format and any custom ETL logic " +
-          "can be registered.\n" +
+          "file or data formats can be added as Apache Tika plugins. " +
+          "This is done by implementing a simple Java interface that consumes a file in the form of an InputStream " +
+          "plus some headers plus contextual metadata, and generates as output zero or more SolrInputDocuments. " + 
+          "Any kind of data format can be indexed and any Solr documents for any kind of Solr schema can be generated, " +
+          "and any custom ETL logic can be registered and executed.\n" +
           "Input files are mapped to MIME types via the standard Tika configuration mechanism, i.e. by passing on the " +
           "classpath the config files org/apache/tika/mime/tika-mimetypes.xml (which already ships embedded in " +
           "tika-core.jar - see " +
           "http://github.com/apache/tika/blob/trunk/tika-core/src/main/resources/org/apache/tika/mime/tika-mimetypes.xml) " +
           "and optionally also the config file org/apache/tika/mime/custom-mimetypes.xml, which extends and overrides " +
           "the settings in tika-mimetypes.xml with custom directives.\n" +
+          "Headers, including MIME types, can also explicitly be passed by force from the CLI to Tika, for example: " +
+          "hadoop ... -D " + TikaMapper.TIKA_HEADER_PREFIX + ExtractingParams.STREAM_TYPE + "=" + NullParser.MEDIA_TYPE + "\n" +
           "Next, MIME types are mapped to Tika parsers (Java classes) via the standard Tika configuration mechanism, " +
           "i.e. by passing the config file tika-config.xml. This config file lists which Java parser classes are " +
           "invoked for which MIME types." +
@@ -154,7 +161,12 @@ public class MapReduceIndexerTool extends Configured implements Tool {
           "\n\n" +
           "5) Go-live phase: This optional (parallel) phase merges the output shards of the previous phase into a set of " +
           "live customer facing Solr servers, typically a SolrCloud. " +
-          "If this phase is omitted you can explicitly point each Solr server to one of the HDFS output shard directories.");
+          "If this phase is omitted you can explicitly point each Solr server to one of the HDFS output shard directories." +
+          "\n\n" +
+          "Fault Tolerance: Mapper and reducer task attempts are retried on failure per the standard MapReduce semantics. " +
+          "On program startup all data in the --output-dir is deleted if that output directory already exists. " +
+          "If the whole job fails you can retry simply by rerunning the program again using the same arguments." 
+          );
 
       parser.addArgument("--help", "-help", "-h")
         .help("Show this help message and exit")
