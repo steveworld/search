@@ -29,6 +29,8 @@ import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.hadoop.HdfsFileFieldNames;
 import org.apache.solr.hadoop.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * UpdateConflictResolver implementation that ignores all but the most recent
@@ -45,8 +47,11 @@ public class RetainMostRecentUpdateConflictResolver implements UpdateConflictRes
   
   public static final String ORDER_BY_FIELD_NAME_DEFAULT = HdfsFileFieldNames.FILE_LAST_MODIFIED;
 
-  private static final String COUNTER_GROUP = Utils.getShortClassName(RetainMostRecentUpdateConflictResolver.class);
-  private static final String COUNTER_NAME = "Number of ignored duplicates";
+  public static final String COUNTER_GROUP = Utils.getShortClassName(RetainMostRecentUpdateConflictResolver.class);
+  public static final String DUPLICATES_COUNTER_NAME = "Number of documents ignored as duplicates";
+  public static final String OUTDATED_COUNTER_NAME =   "Number of documents ignored as outdated";
+  
+  private static final Logger LOG = LoggerFactory.getLogger(RetainMostRecentUpdateConflictResolver.class);
   
   @Override
   public void setConf(Configuration conf) {
@@ -74,20 +79,35 @@ public class RetainMostRecentUpdateConflictResolver implements UpdateConflictRes
     
     SolrInputDocumentComparator comp = new SolrInputDocumentComparator(fieldName, child);
     SolrInputDocument max = null;
-    long numDocs = 0;
+    long numDupes = 0;
+    long numOutdated = 0;
     while (updates.hasNext()) {
       SolrInputDocument next = updates.next(); 
       assert next != null;
       if (max == null) {
         max = next;
-      } else if (comp.compare(next, max) > 0) {
-        max = next;
-      } 
-      numDocs++;
+      } else {
+        int c = comp.compare(next, max);
+        if (c == 0) {
+          LOG.debug("Ignoring document version because it is a duplicate: {}", next);
+          numDupes++;
+        } else if (c > 0) {
+          LOG.debug("Ignoring document version because it is outdated: {}", max);
+          max = next;
+          numOutdated++;
+        } else {
+          LOG.debug("Ignoring document version because it is outdated: {}", next);        
+          numOutdated++;
+        }
+      }
     }
+    
     assert max != null;
-    if (numDocs > 1) {
-      context.getCounter(COUNTER_GROUP, COUNTER_NAME).increment(numDocs - 1);
+    if (numDupes > 0) {
+      context.getCounter(COUNTER_GROUP, DUPLICATES_COUNTER_NAME).increment(numDupes);
+    }
+    if (numOutdated > 0) {
+      context.getCounter(COUNTER_GROUP, OUTDATED_COUNTER_NAME).increment(numOutdated);
     }
     return Collections.singletonList(max).iterator();
   }
