@@ -253,7 +253,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .metavar("URI")
   //      .type(new PathArgumentType(fs).verifyExists().verifyCanRead())
         .type(Path.class)
-        .help("Local URI or HDFS URI of an UTF-8 encoded file containing a list of HDFS URIs to index, " +
+        .help("Local URI or HDFS URI of a UTF-8 encoded file containing a list of HDFS URIs to index, " +
               "one URI per line in the file. If '-' is specified, URIs are read from the standard input. " + 
               "Multiple --input-list arguments can be specified.");
       
@@ -269,7 +269,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
             }
             return path;
           }
-        }.verifyIsAbsolute().verifyCanWriteParent())
+        }.verifyHasScheme().verifyIsAbsolute().verifyCanWriteParent())
         .required(true)
         .help("HDFS directory to write Solr indexes to. Inside there one output directory per shard will be generated. " +
         		  "Example: hdfs://c2202.mycompany.com/user/$USER/test");
@@ -380,8 +380,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       Argument zkServerAddressArg = clusterInfoGroup.addArgument("--zk-host")
         .metavar("STRING")
         .type(String.class)
-        .help("The address of a ZooKeeper instance being used by a SolrCloud cluster. "
-            + "This ZooKeeper instance will be examined to determine the number of output "
+        .help("The address of a ZooKeeper ensemble being used by a SolrCloud cluster. "
+            + "This ZooKeeper ensemble will be examined to determine the number of output "
             + "shards to create as well as the Solr URLs to merge the output shards into when using the --go-live option. "
             + "Requires that you also pass the --collection to merge the shards into.\n"
             + "\n"
@@ -430,7 +430,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       // trailing positional arguments
       Argument inputFilesArg = parser.addArgument("input-files")
         .metavar("HDFS_URI")
-        .type(new PathArgumentType(fs).verifyExists().verifyCanRead())
+        .type(new PathArgumentType(fs).verifyHasScheme().verifyExists().verifyCanRead())
         .nargs("*")
         .setDefault()
         .help("HDFS URI of file or directory tree to index.");
