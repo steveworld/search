@@ -45,6 +45,7 @@ public class PathArgumentType implements ArgumentType<Path> {
   private boolean verifyCanWriteParent = false;
   private boolean verifyCanExecute = false;
   private boolean verifyIsAbsolute = false;
+  private boolean verifyHasScheme = false;
   private String verifyScheme = null;
 
   public PathArgumentType(FileSystem fs) {
@@ -101,6 +102,11 @@ public class PathArgumentType implements ArgumentType<Path> {
     return this;
   }
   
+  public PathArgumentType verifyHasScheme() {
+    verifyHasScheme = true;
+    return this;
+  }
+  
   public PathArgumentType verifyScheme(String scheme) {
     verifyScheme = scheme;
     return this;
@@ -110,6 +116,9 @@ public class PathArgumentType implements ArgumentType<Path> {
   public Path convert(ArgumentParser parser, Argument arg, String value) throws ArgumentParserException {
     Path file = new Path(value);
     try {
+      if (verifyHasScheme && !isSystemIn(file)) {
+        verifyHasScheme(parser, file);
+      }        
       if (verifyScheme != null && !isSystemIn(file)) {
         verifyScheme(parser, file);
       }        
@@ -204,6 +213,12 @@ public class PathArgumentType implements ArgumentType<Path> {
     }
   }    
   
+  private void verifyHasScheme(ArgumentParser parser, Path file) throws ArgumentParserException {
+    if (file.toUri().getScheme() == null) {
+      throw new ArgumentParserException("URI scheme is missing in path: " + file, parser);
+    }
+  }
+
   private void verifyScheme(ArgumentParser parser, Path file) throws ArgumentParserException {
     if (!verifyScheme.equals(file.toUri().getScheme())) {
       throw new ArgumentParserException("Scheme of path: " + file + " must be: " + verifyScheme, parser);
