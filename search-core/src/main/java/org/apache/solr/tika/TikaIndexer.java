@@ -28,6 +28,7 @@ import java.io.PushbackInputStream;
 import java.io.StringWriter;
 import java.security.SecureRandom;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -127,7 +128,7 @@ public class TikaIndexer extends SolrIndexer {
     autoDetectParser = new AutoDetectParser(tikaConfig);
     CompositeParser tikaConfigParser = (CompositeParser) getTikaConfig().getParser();
 //  DefaultParser tikaConfigParser = new DefaultParser(getTikaConfig().getMediaTypeRegistry());
-    mediaTypeToParserMap = tikaConfigParser.getParsers();
+    mediaTypeToParserMap = Collections.unmodifiableMap(new HashMap(tikaConfigParser.getParsers()));
 
     String tmpIdPrefix = null;
     Random tmpRandomIdPrefx = null;
