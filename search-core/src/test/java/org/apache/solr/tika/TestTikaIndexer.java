@@ -117,19 +117,18 @@ public class TestTikaIndexer extends SolrJettyTestBase {
       }
     }
 
-    List<DocumentLoader> testServers = Collections.singletonList((DocumentLoader) new SolrServerDocumentLoader(solrServer));
+    DocumentLoader testServer = new SolrServerDocumentLoader(solrServer);
     Config config = ConfigFactory.parseMap(context);
-    indexer = new TikaIndexer(new SolrInspector().createSolrCollections(config, testServers), config);
+    indexer = new TikaIndexer(new SolrInspector().createSolrCollection(config, testServer), config);
     
     deleteAllDocuments();
   }
   
   private void deleteAllDocuments() throws SolrServerException, IOException {
-    for (SolrCollection collection : indexer.getSolrCollections().values()) {
-      SolrServer s = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer();
-      s.deleteByQuery("*:*"); // delete everything!
-      s.commit();
-    }
+    SolrCollection collection = indexer.getSolrCollection();
+    SolrServer s = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer();
+    s.deleteByQuery("*:*"); // delete everything!
+    s.commit();
   }
 
   @After
@@ -529,19 +528,16 @@ public class TestTikaIndexer extends SolrJettyTestBase {
   }
 
   private void commit() throws SolrServerException, IOException {
-    for (SolrCollection collection : indexer.getSolrCollections().values()) {
-      ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().commit(false, true, true);
-    }
+    SolrCollection collection = indexer.getSolrCollection();
+    ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().commit(false, true, true);
   }
   
   private int queryResultSetSize(String query) throws SolrServerException, IOException {
     commit();
-    int size = 0;
-    for (SolrCollection collection : indexer.getSolrCollections().values()) {
-      QueryResponse rsp = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().query(new SolrQuery(query).setRows(Integer.MAX_VALUE));
-      LOGGER.debug("rsp: {}", rsp);
-      size += rsp.getResults().size();
-    }
+    SolrCollection collection = indexer.getSolrCollection();
+    QueryResponse rsp = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().query(new SolrQuery(query).setRows(Integer.MAX_VALUE));
+    LOGGER.debug("rsp: {}", rsp);
+    int size = rsp.getResults().size();
     return size;
   }
   

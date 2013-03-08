@@ -150,9 +150,9 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
       }
     }
     
-    List<DocumentLoader> testServers = Collections.singletonList((DocumentLoader) new SolrServerDocumentLoader(solrServer));
+    DocumentLoader testServer = new SolrServerDocumentLoader(solrServer);
     Config config = ConfigFactory.parseMap(context);
-    sink = new MySolrSink(new TikaIndexer(new SolrInspector().createSolrCollections(config, testServers), config));
+    sink = new MySolrSink(new TikaIndexer(new SolrInspector().createSolrCollection(config, testServer), config));
     sink.setName(sink.getClass().getName() + SEQ_NUM.getAndIncrement());
     sink.configure(new Context(context));
     sink.setChannel(channel);
@@ -172,11 +172,10 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
   }
   
   private void deleteAllDocuments() throws SolrServerException, IOException {
-    for (SolrCollection collection : sink.getIndexer().getSolrCollections().values()) {
-      SolrServer s = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer();
-      s.deleteByQuery("*:*"); // delete everything!
-      s.commit();
-    }
+    SolrCollection collection = sink.getIndexer().getSolrCollection();
+    SolrServer s = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer();
+    s.deleteByQuery("*:*"); // delete everything!
+    s.commit();
   }
 
   @After
@@ -573,19 +572,16 @@ public class TestTikaSolrSink extends SolrJettyTestBase {
   }
 
   private void commit() throws SolrServerException, IOException {
-    for (SolrCollection collection : sink.getIndexer().getSolrCollections().values()) {
-      ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().commit(false, true, true);
-    }
+    SolrCollection collection = sink.getIndexer().getSolrCollection();
+    ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().commit(false, true, true);
   }
   
   private int queryResultSetSize(String query) throws SolrServerException, IOException {
     commit();
-    int size = 0;
-    for (SolrCollection collection : sink.getIndexer().getSolrCollections().values()) {
-      QueryResponse rsp = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().query(new SolrQuery(query).setRows(Integer.MAX_VALUE));
-      LOGGER.debug("rsp: {}", rsp);
-      size += rsp.getResults().size();
-    }
+    SolrCollection collection = sink.getIndexer().getSolrCollection();
+    QueryResponse rsp = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().query(new SolrQuery(query).setRows(Integer.MAX_VALUE));
+    LOGGER.debug("rsp: {}", rsp);
+    int size = rsp.getResults().size();
     return size;
   }
   

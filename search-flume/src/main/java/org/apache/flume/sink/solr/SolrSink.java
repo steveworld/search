@@ -21,7 +21,6 @@ package org.apache.flume.sink.solr;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
-import java.util.Map;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
@@ -112,10 +111,10 @@ public class SolrSink extends AbstractSink implements Configurable {
     sinkCounter.start();
     if (indexer == null) {
       Config config = ConfigFactory.parseMap(context.getParameters());
-      Map<String, SolrCollection> solrCollections = new SolrInspector().createSolrCollections(config);
+      SolrCollection solrCollection = new SolrInspector().createSolrCollection(config);
       try {
-        Constructor ctor = Class.forName(indexerClass).getConstructor(Map.class, Config.class);
-        indexer = (SolrIndexer) ctor.newInstance(solrCollections, config);
+        Constructor ctor = Class.forName(indexerClass).getConstructor(SolrCollection.class, Config.class);
+        indexer = (SolrIndexer) ctor.newInstance(solrCollection, config);
       } catch (Exception e) {
         throw new ConfigurationException(e);
       }
