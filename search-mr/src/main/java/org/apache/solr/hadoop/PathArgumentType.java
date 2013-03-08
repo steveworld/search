@@ -25,6 +25,7 @@ import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.ArgumentType;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsAction;
@@ -34,7 +35,8 @@ import org.apache.hadoop.fs.permission.FsAction;
  */
 public class PathArgumentType implements ArgumentType<Path> {
   
-  private final FileSystem fs;
+  private final Configuration conf;
+  private FileSystem fs;
   private boolean acceptSystemIn = false;
   private boolean verifyExists = false;
   private boolean verifyNotExists = false;
@@ -48,8 +50,8 @@ public class PathArgumentType implements ArgumentType<Path> {
   private boolean verifyHasScheme = false;
   private String verifyScheme = null;
 
-  public PathArgumentType(FileSystem fs) {
-    this.fs = fs;
+  public PathArgumentType(Configuration conf) {
+    this.conf = conf;
   }
   
   public PathArgumentType acceptSystemIn() {
@@ -116,6 +118,7 @@ public class PathArgumentType implements ArgumentType<Path> {
   public Path convert(ArgumentParser parser, Argument arg, String value) throws ArgumentParserException {
     Path file = new Path(value);
     try {
+      fs = file.getFileSystem(conf);
       if (verifyHasScheme && !isSystemIn(file)) {
         verifyHasScheme(parser, file);
       }        
