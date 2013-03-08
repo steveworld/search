@@ -21,9 +21,7 @@ package org.apache.solr.tika;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
@@ -43,7 +41,7 @@ import com.typesafe.config.Config;
 public class SolrIndexer {
 
   private final Config config;
-  private Map<String, SolrCollection> solrCollections; // proxies to remote solr  
+  private SolrCollection solrCollection; // proxy to remote solr  
   private final boolean ignoreLoads; // for load testing only
 
   /**
@@ -55,20 +53,18 @@ public class SolrIndexer {
   
   private static final Logger LOGGER = LoggerFactory.getLogger(SolrIndexer.class);
 
-  public SolrIndexer(Map<String, SolrCollection> solrCollections, Config config) {
-    if (solrCollections == null) {
-      throw new IllegalArgumentException("solrCollections must not be null");
+  public SolrIndexer(SolrCollection solrCollection, Config config) {
+    if (solrCollection == null) {
+      throw new IllegalArgumentException("solrCollection must not be null");
     }
     if (config == null) {
       throw new IllegalArgumentException("Config must not be null");
     }
     this.config = config;
-    this.solrCollections = Collections.unmodifiableMap(new LinkedHashMap(solrCollections));
+    this.solrCollection = solrCollection;
     this.ignoreLoads = config.hasPath(IGNORE_LOADS) && config.getBoolean(IGNORE_LOADS);
-    for (SolrCollection collection : getSolrCollections().values()) {
-      LOGGER.info("Number of solr schema fields: {}", collection.getSchema().getFields().size());
-      LOGGER.info("Solr schema: \n{}", Joiner.on("\n").join(new TreeMap(collection.getSchema().getFields()).values()));
-    }
+    LOGGER.info("Number of solr schema fields: {}", solrCollection.getSchema().getFields().size());
+    LOGGER.info("Solr schema: \n{}", Joiner.on("\n").join(new TreeMap(solrCollection.getSchema().getFields()).values()));
   }
   
   /** Returns the configuration settings */
@@ -77,20 +73,18 @@ public class SolrIndexer {
   }
 
   /**
-   * Returns the Solr collection proxies to which this indexer can route Solr
+   * Returns the Solr collection proxy to which this indexer can route Solr
    * documents
    */
-  public final Map<String, SolrCollection> getSolrCollections() {
-    return solrCollections;
+  public final SolrCollection getSolrCollection() {
+    return solrCollection;
   }
 
   public synchronized void stop() {
     try {
-      for (SolrCollection collection : getSolrCollections().values()) {
-        collection.getDocumentLoader().shutdown();
-      }
+      solrCollection.getDocumentLoader().shutdown();
     } finally {
-      solrCollections = null;
+      solrCollection = null;
     }
   }
 
@@ -133,23 +127,14 @@ public class SolrIndexer {
 
   /** Loads the given documents into Solr */
   public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
-    for (String collectionName : getSolrCollections().keySet()) {
-      load(docs, collectionName);
-    }
-  }
-
-  /** Loads the given documents into the specified Solr collection */
-  public void load(List<SolrInputDocument> docs, String collectionName) throws IOException, SolrServerException {
     if (!ignoreLoads) {
-      getSolrCollections().get(collectionName).getDocumentLoader().load(docs);
+      solrCollection.getDocumentLoader().load(docs);
     }
   }
 
   /** Begins a solr transaction */
   public void beginTransaction() {
-    for (SolrCollection collection : getSolrCollections().values()) {
-      collection.getDocumentLoader().beginTransaction();
-    }
+    solrCollection.getDocumentLoader().beginTransaction();
   }
 
   /**
@@ -159,9 +144,7 @@ public class SolrIndexer {
    * correspondingly.
    */
   public void commitTransaction() {
-    for (SolrCollection collection : getSolrCollections().values()) {
-      collection.getDocumentLoader().commitTransaction();
-    }
+    solrCollection.getDocumentLoader().commitTransaction();
   }
 
   /**
@@ -176,9 +159,7 @@ public class SolrIndexer {
    *           If there is a low-level I/O error.
    */
   public void rollback() throws SolrServerException, IOException {
-    for (SolrCollection collection : getSolrCollections().values()) {
-      collection.getDocumentLoader().rollback();
-    }
+    solrCollection.getDocumentLoader().rollback();
   }
 
 }

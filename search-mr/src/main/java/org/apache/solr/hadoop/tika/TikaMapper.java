@@ -149,9 +149,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     }
     Config config = ConfigFactory.parseMap(params);
     indexer = createSolrIndexer(config);
-    for (SolrCollection collection : indexer.getSolrCollections().values()) {
-      schema = collection.getSchema();
-    }
+    schema = indexer.getSolrCollection().getSchema();
     if (schema == null) {
       throw new IllegalStateException("Schema must not be null");
     }
@@ -214,7 +212,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       throw new ConfigurationException(e);
     }
 
-    return new TikaIndexer(Collections.singletonMap(collection.getName(), collection), config);
+    return new TikaIndexer(collection, config);
   }
 
   /**

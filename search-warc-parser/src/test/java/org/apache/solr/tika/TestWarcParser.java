@@ -23,7 +23,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -94,19 +93,18 @@ public class TestWarcParser extends SolrJettyTestBase {
       }
     }
 
-    List<DocumentLoader> testServers = Collections.singletonList((DocumentLoader) new SolrServerDocumentLoader(solrServer));
+    DocumentLoader testServer = new SolrServerDocumentLoader(solrServer);
     Config config = ConfigFactory.parseMap(context);
-    indexer = new TikaIndexer(new SolrInspector().createSolrCollections(config, testServers), config);
+    indexer = new TikaIndexer(new SolrInspector().createSolrCollection(config, testServer), config);
     
     deleteAllDocuments();
   }
   
   private void deleteAllDocuments() throws SolrServerException, IOException {
-    for (SolrCollection collection : indexer.getSolrCollections().values()) {
-      SolrServer s = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer();
-      s.deleteByQuery("*:*"); // delete everything!
-      s.commit();
-    }
+    SolrCollection collection = indexer.getSolrCollection();
+    SolrServer s = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer();
+    s.deleteByQuery("*:*"); // delete everything!
+    s.commit();
   }
 
   @After
@@ -213,7 +211,7 @@ public class TestWarcParser extends SolrJettyTestBase {
   }
 
   private void testDocumentContent(HashMap<String, ExpectedResult> expectedResultMap) throws Exception {
-    SolrCollection collection = indexer.getSolrCollections().values().iterator().next();
+    SolrCollection collection = indexer.getSolrCollection();
     QueryResponse rsp = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().query(new SolrQuery("*:*").setRows(Integer.MAX_VALUE));
     // Check that every expected field/values shows up in the actual query
     for (Entry<String, ExpectedResult> current : expectedResultMap.entrySet()) {
@@ -283,18 +281,15 @@ public class TestWarcParser extends SolrJettyTestBase {
   }
 
   private void commit() throws SolrServerException, IOException {
-    for (SolrCollection collection : indexer.getSolrCollections().values()) {
-      ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().commit(false, true, true);
-    }
+    SolrCollection collection = indexer.getSolrCollection();
+    ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().commit(false, true, true);
   }
   
   private int queryResultSetSize(String query) throws SolrServerException, IOException {
     commit();
-    int size = 0;
-    for (SolrCollection collection : indexer.getSolrCollections().values()) {
-      QueryResponse rsp = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().query(new SolrQuery(query).setRows(Integer.MAX_VALUE));
-      size += rsp.getResults().size();
-    }
+    SolrCollection collection = indexer.getSolrCollection();
+    QueryResponse rsp = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().query(new SolrQuery(query).setRows(Integer.MAX_VALUE));
+    int size = rsp.getResults().size();
     return size;
   }
 

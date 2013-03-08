@@ -93,8 +93,8 @@ public class TikaIndexer extends SolrIndexer {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TikaIndexer.class);
 
-  public TikaIndexer(Map<String, SolrCollection> solrCollections, Config config) {
-    super(solrCollections, config);
+  public TikaIndexer(SolrCollection solrCollection, Config config) {
+    super(solrCollection, config);
     
     String tikaConfigFilePath = null;
     if (config.hasPath(TIKA_CONFIG_LOCATION)) {
@@ -194,13 +194,12 @@ public class TikaIndexer extends SolrIndexer {
       metadata.add(Metadata.CONTENT_ENCODING, charset);
     }
 
-    info.setSolrCollection(detectSolrCollection(event, parser));
     InputStream inputStream = null;
     try {
       inputStream = TikaInputStream.get(event.getBody());
 
       for (Entry<String, String> entry : event.getHeaders().entrySet()) {
-        if (entry.getKey().equals(info.getSolrCollection().getSchema().getUniqueKeyField().getName())) {
+        if (entry.getKey().equals(getSolrCollection().getSchema().getUniqueKeyField().getName())) {
           info.setId(entry.getValue()); // TODO: hack alert!
         } else {
           metadata.set(entry.getKey(), entry.getValue());
@@ -216,7 +215,7 @@ public class TikaIndexer extends SolrIndexer {
         parsingHandler = new TeeContentHandler(parsingHandler, serializer);
       }
 
-      String xpathExpr = info.getSolrCollection().getSolrParams().get(ExtractingParams.XPATH_EXPRESSION);
+      String xpathExpr = getSolrCollection().getSolrParams().get(ExtractingParams.XPATH_EXPRESSION);
       // String xpathExpr =
       // "/xhtml:html/xhtml:body/xhtml:div/descendant:node()";
       if (xpathExpr != null) {
@@ -240,7 +239,7 @@ public class TikaIndexer extends SolrIndexer {
         addPasswordHandler(resourceName);
         parser.parse(inputStream, parsingHandler, metadata, getParseInfo().getParseContext());
       } catch (Exception e) {
-        boolean ignoreTikaException = info.getSolrCollection().getSolrParams()
+        boolean ignoreTikaException = getSolrCollection().getSolrParams()
             .getBool(ExtractingParams.IGNORE_TIKA_EXCEPTION, false);
         if (ignoreTikaException) {
           LOGGER.warn(new StringBuilder("Cannot parse - skipping extracting text due to ").append(e.getLocalizedMessage())
@@ -288,18 +287,9 @@ public class TikaIndexer extends SolrIndexer {
     return parser;
   }
 
-  protected SolrCollection detectSolrCollection(StreamEvent event, Parser parser) {
-    return getSolrCollections().values().iterator().next();
-  }
-
   @Override
   public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
-    load(docs, getParseInfo().getSolrCollection().getName());
-  }
-
-  @Override
-  public void load(List<SolrInputDocument> docs, String collectionName) throws IOException, SolrServerException {
-    SolrCollection coll = getSolrCollections().get(collectionName);
+    SolrCollection coll = getSolrCollection();
     assert coll != null;
     AtomicLong numRecords = getParseInfo().getRecordNumber();
     for (SolrInputDocument doc : docs) {
@@ -328,18 +318,18 @@ public class TikaIndexer extends SolrIndexer {
 
       LOGGER.debug("record #{} loading doc: {}", num, doc);
     }
-    super.load(docs, collectionName);
+    super.load(docs);
   }
 
   protected SolrContentHandler createSolrContentHandler() {
     ParseInfo info = getParseInfo();
-    SolrCollection coll = info.getSolrCollection();
+    SolrCollection coll = getSolrCollection();
     return new TrimSolrContentHandler(info.getMetadata(), coll.getSolrParams(), coll.getSchema(), coll.getDateFormats());
   }
 
   protected void addPasswordHandler(String resourceName) throws FileNotFoundException {
     RegexRulesPasswordProvider epp = new RegexRulesPasswordProvider();
-    String pwMapFile = getParseInfo().getSolrCollection().getSolrParams().get(ExtractingParams.PASSWORD_MAP_FILE);
+    String pwMapFile = getSolrCollection().getSolrParams().get(ExtractingParams.PASSWORD_MAP_FILE);
     if (pwMapFile != null && pwMapFile.length() > 0) {
       InputStream is = new BufferedInputStream(new FileInputStream(pwMapFile)); // getResourceLoader().openResource(pwMapFile);
       if (is != null) {
@@ -348,7 +338,7 @@ public class TikaIndexer extends SolrIndexer {
       }
     }
     getParseInfo().getParseContext().set(PasswordProvider.class, epp);
-    String resourcePassword = getParseInfo().getSolrCollection().getSolrParams()
+    String resourcePassword = getSolrCollection().getSolrParams()
         .get(ExtractingParams.RESOURCE_PASSWORD);
     if (resourcePassword != null) {
       epp.setExplicitPassword(resourcePassword);

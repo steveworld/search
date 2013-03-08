@@ -43,7 +43,6 @@ public final class ParseInfo {
   private final ParseContext parseContext;
   private final Map<MediaType, Parser> mediaTypeToParserMap;
   private String id;
-  private SolrCollection solrCollection;
   private SolrContentHandler solrContentHandler;
   private final Metadata metadata = new Metadata();
   private final AtomicLong recordNumber = new AtomicLong();
@@ -109,14 +108,6 @@ public final class ParseInfo {
 
   public void setId(String id) {
     this.id = id;
-  }
-
-  public SolrCollection getSolrCollection() {
-    return solrCollection;
-  }
-
-  public void setSolrCollection(SolrCollection solrCollection) {
-    this.solrCollection = solrCollection;
   }
 
   public SolrContentHandler getSolrContentHandler() {
