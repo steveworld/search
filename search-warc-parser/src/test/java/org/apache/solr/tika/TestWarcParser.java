@@ -43,6 +43,7 @@ import org.apache.tika.metadata.Metadata;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -165,6 +166,7 @@ public class TestWarcParser extends SolrJettyTestBase {
    * return the expected content and fields.
    */
   @Test
+  @Ignore
   public void testWARCFileContent() throws Exception {
     String path = RESOURCES_DIR + "/test-documents";
     String testFilePrefix = "sample_html";
@@ -196,6 +198,7 @@ public class TestWarcParser extends SolrJettyTestBase {
    * return the expected content and fields.
    */
   @Test
+  @Ignore
   public void testWARCFileMultiDocContent() throws Exception {
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
