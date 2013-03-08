@@ -25,7 +25,6 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.solr.hadoop.dedup.NoChangeUpdateConflictResolver;
 import org.apache.solr.hadoop.dedup.RetainMostRecentUpdateConflictResolver;
@@ -36,7 +35,7 @@ import org.junit.Test;
 
 public class MapReduceIndexerToolArgumentParserTest extends Assert {
   
-  private FileSystem fs; 
+  private Configuration conf; 
   private MapReduceIndexerTool.MyArgumentParser parser;
   private MapReduceIndexerTool.Options opts;
   private PrintStream oldSystemOut;
@@ -46,7 +45,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   
   @Before
   public void setUp() throws IOException {
-    fs = FileSystem.get(new Configuration());
+    conf = new Configuration();
     parser = new MapReduceIndexerTool.MyArgumentParser();
     opts = new MapReduceIndexerTool.Options();
     oldSystemOut = System.out;
@@ -78,7 +77,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         "file:///home",
         "file:///dev",
         };
-    Integer res = parser.parseArgs(args, fs, opts);
+    Integer res = parser.parseArgs(args, conf, opts);
     assertNull(res != null ? res.toString() : "", res);
     assertEquals(Collections.singletonList(new Path("file:///tmp")), opts.inputLists);
     assertEquals(new Path("file:/tmp/foo"), opts.outputDir);
@@ -106,7 +105,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         "file:///home",
         "file:///dev",
         };
-    assertNull(parser.parseArgs(args, fs, opts));
+    assertNull(parser.parseArgs(args, conf, opts));
     assertEquals(Arrays.asList(new Path("file:///tmp"), new Path("file:///")), opts.inputLists);
     assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), opts.inputFiles);
     assertEquals(new Path("file:/tmp/foo"), opts.outputDir);
@@ -126,7 +125,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         "file:///home",
         "file:///dev",
         };
-    assertNull(parser.parseArgs(args, fs, opts));
+    assertNull(parser.parseArgs(args, conf, opts));
     assertEquals(Collections.singletonList(new Path("file:///tmp")), opts.inputLists);
     assertEquals(new Path("file:/tmp/foo"), opts.outputDir);
     assertEquals(new File("/"), opts.solrHomeDir);
@@ -149,7 +148,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         "file:///home",
         "file:///dev",
         };
-    assertNull(parser.parseArgs(args, fs, opts));
+    assertNull(parser.parseArgs(args, conf, opts));
     assertEquals(Arrays.asList(new Path("file:///tmp"), new Path("file:///")), opts.inputLists);
     assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), opts.inputFiles);
     assertEquals(new Path("file:/tmp/foo"), opts.outputDir);
@@ -160,7 +159,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   @Test
   public void testArgsParserHelp() throws UnsupportedEncodingException  {
     String[] args = new String[] { "--help" };
-    assertEquals(new Integer(0), parser.parseArgs(args, fs, opts));
+    assertEquals(new Integer(0), parser.parseArgs(args, conf, opts));
     String helpText = new String(bout.toByteArray(), "UTF-8");
     assertTrue(helpText.contains("MapReduce batch job driver that creates "));
     assertTrue(helpText.contains("bin/hadoop command"));
@@ -175,7 +174,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         "--solr-home-dir", "/", 
         "--shards", "1",
         };
-    assertNull(parser.parseArgs(args, fs, opts));
+    assertNull(parser.parseArgs(args, conf, opts));
     assertEquals(new Integer(1), opts.shards);
     assertEmptySystemErrAndEmptySystemOut();
   }
@@ -189,7 +188,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         "--shards", "1",
         "--update-conflict-resolver", NoChangeUpdateConflictResolver.class.getName(),
         };
-    assertNull(parser.parseArgs(args, fs, opts));
+    assertNull(parser.parseArgs(args, conf, opts));
     assertEquals(NoChangeUpdateConflictResolver.class.getName(), opts.updateConflictResolver);
     assertEmptySystemErrAndEmptySystemOut();
   }
@@ -255,7 +254,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         "--shard-url", "http://localhost:8983/solr/collection1",
         "--shard-url", "http://localhost:8983/solr/collection2",
         };
-    assertNull(parser.parseArgs(args, fs, opts));
+    assertNull(parser.parseArgs(args, conf, opts));
     assertEquals(Arrays.asList("http://localhost:8983/solr/collection1", "http://localhost:8983/solr/collection2"), opts.shardUrls);
     assertEquals(new Integer(2), opts.shards);
     assertEmptySystemErrAndEmptySystemOut();
@@ -292,7 +291,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         "--solr-home-dir", "/", 
         "--shard-url", "http://localhost:8983/solr/collection1"
         };
-    assertNull(parser.parseArgs(args, fs, opts));
+    assertNull(parser.parseArgs(args, conf, opts));
     assertEmptySystemErrAndEmptySystemOut();
     assertEquals(new Integer(1), opts.shards);
   }
@@ -321,7 +320,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         "--shard-url", "http://localhost:8983/solr/collection1",
         "--go-live"
         };
-    Integer result = parser.parseArgs(args, fs, opts);
+    Integer result = parser.parseArgs(args, conf, opts);
     assertNull(result);
     assertEmptySystemErrAndEmptySystemOut();
   }
@@ -366,7 +365,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   }
   
   private void assertArgumentParserException(String[] args) {
-    assertEquals("should have returned fail code", new Integer(1), parser.parseArgs(args, fs, opts));
+    assertEquals("should have returned fail code", new Integer(1), parser.parseArgs(args, conf, opts));
     assertEquals("no sys out expected", 0, bout.toByteArray().length);
     String usageText;
     try {

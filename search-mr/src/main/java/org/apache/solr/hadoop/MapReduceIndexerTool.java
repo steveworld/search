@@ -108,9 +108,9 @@ public class MapReduceIndexerTool extends Configured implements Tool {
      *         non-null indicates the caller shall exit the program with the
      *         given exit status code.
      */
-    public Integer parseArgs(String[] args, FileSystem fs, Options opts) {
+    public Integer parseArgs(String[] args, Configuration conf, Options opts) {
       assert args != null;
-      assert fs != null;
+      assert conf != null;
       assert opts != null;
 
       if (args.length == 0) {
@@ -271,7 +271,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       
       Argument outputDirArg = parser.addArgument("--output-dir")
         .metavar("HDFS_URI")
-        .type(new PathArgumentType(fs) {
+        .type(new PathArgumentType(conf) {
           @Override
           public Path convert(ArgumentParser parser, Argument arg, String value) throws ArgumentParserException {
             Path path = super.convert(parser, arg, value);
@@ -442,7 +442,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       // trailing positional arguments
       Argument inputFilesArg = parser.addArgument("input-files")
         .metavar("HDFS_URI")
-        .type(new PathArgumentType(fs).verifyHasScheme().verifyExists().verifyCanRead())
+        .type(new PathArgumentType(conf).verifyHasScheme().verifyExists().verifyCanRead())
         .nargs("*")
         .setDefault()
         .help("HDFS URI of file or directory tree to index.");
@@ -533,9 +533,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
 
   @Override
   public int run(String[] args) throws Exception {
-    FileSystem fs = FileSystem.get(getConf());
     Options opts = new Options();
-    Integer exitCode = new MyArgumentParser().parseArgs(args, fs, opts);
+    Integer exitCode = new MyArgumentParser().parseArgs(args, getConf(), opts);
     if (exitCode != null) {
       return exitCode;
     }
