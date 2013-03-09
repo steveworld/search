@@ -60,9 +60,14 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.handler.extraction.ExtractingParams;
 import org.apache.solr.tika.parser.StreamingAvroContainerParser.ForwardOnlySeekableInputStream;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.Parser;
+import org.apache.tika.parser.txt.TXTParser;
+import org.apache.tika.sax.ToTextContentHandler;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -267,7 +272,23 @@ public class TestTikaIndexer extends SolrJettyTestBase {
     LOGGER.trace("indexer: ", indexer);
   }
 
-//  @Test
+  @Test
+  @Ignore
+  public void testMicroBench() throws Exception {
+    Parser parser = new TXTParser();
+//    Parser parser = new HtmlParser();
+    byte[] bytes = "<html><body>hello world</body></html>".getBytes("UTF-8");
+    int iters = 50000;
+    long start = System.currentTimeMillis();
+    for (int i = 0; i < iters; i++) {
+      parser.parse(new ByteArrayInputStream(bytes), new ToTextContentHandler(), new Metadata(), new ParseContext());
+    }
+    float secs = (System.currentTimeMillis() - start) / 1000.0f;
+    System.out.println("Took " + secs + " secs. Iters/sec: " + (iters/secs));    
+  }
+  
+  @Test
+  @Ignore
   public void benchmarkDocumentTypes() throws Exception {
     int iters = 200;
     
