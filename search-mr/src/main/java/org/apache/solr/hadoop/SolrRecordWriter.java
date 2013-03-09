@@ -135,7 +135,7 @@ class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
       heartBeater.needHeartBeat();
 
       Path solrHomeDir = SolrRecordWriter.findSolrConfig(conf);
-      FileSystem fs = FileSystem.get(conf);
+      FileSystem fs = outputShardDir.getFileSystem(conf);
       EmbeddedSolrServer solr = createEmbeddedSolrServer(solrHomeDir, fs, outputShardDir);
       batchWriter = new BatchWriter(solr, batchSize,
           context.getTaskAttemptID().getTaskID(),
