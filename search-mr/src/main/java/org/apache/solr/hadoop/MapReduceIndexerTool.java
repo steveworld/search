@@ -830,7 +830,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         } else if (inputList.isAbsoluteAndSchemeAuthorityNull()) {
           in = new BufferedInputStream(new FileInputStream(inputList.toString()));
         } else {
-          in = fs.open(inputList);
+          in = inputList.getFileSystem(conf).open(inputList);
         }
         try {
           BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
