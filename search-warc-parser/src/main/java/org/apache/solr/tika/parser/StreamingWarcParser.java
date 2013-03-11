@@ -25,6 +25,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.commons.lang.NotImplementedException;
@@ -76,7 +78,10 @@ public class StreamingWarcParser extends AbstractStreamingParser {
   // archive.  Any number < 0 is treated as unlimited.
   public static final String MAX_BYTES_PER_DOC_PROPERTY = "tika.warcParser.maxBytesPerDoc";
   private int maxBytesPerDoc = -1;
-
+  // the types of mimetypes to parse.  matches are based on java.util.regex.Parser
+  public static final String MIMETYPES_TO_PARSE_PROPERTY = "tika.warcParser.mimeTypes";
+  private Pattern mimeTypesToParse = Pattern.compile("text/html");
+  
   /**
    * Create a WarcParser
    */
@@ -92,11 +97,7 @@ public class StreamingWarcParser extends AbstractStreamingParser {
     super.parse(in, handler, metadata, parseContext);
   }
 
-  @Override
-  protected void doParse(InputStream in, ContentHandler handler) throws IOException, SAXException, TikaException {
-    ParseInfo info = getParseInfo();
-    info.setMultiDocumentParser(true);
-    Config config = info.getConfig();
+  protected void setConfigParams(Config config) {
     if (config.hasPath(MAX_BYTES_PER_DOC_PROPERTY)) {
       try {
         maxBytesPerDoc = config.getInt(MAX_BYTES_PER_DOC_PROPERTY);
@@ -105,6 +106,27 @@ public class StreamingWarcParser extends AbstractStreamingParser {
         throw ce;
       }
     }
+    if (config.hasPath(MIMETYPES_TO_PARSE_PROPERTY)) {
+      try {
+        String prop = config.getString(MIMETYPES_TO_PARSE_PROPERTY);
+        mimeTypesToParse = Pattern.compile(prop);
+      } catch (ConfigException.WrongType ce) {
+        LOGGER.error("Unable to convert value for property " + MIMETYPES_TO_PARSE_PROPERTY , ce);
+        throw ce;
+      } catch (PatternSyntaxException pse) {
+        LOGGER.error("Unable to parse syntax for property " + MIMETYPES_TO_PARSE_PROPERTY, pse);
+        throw pse;
+      }
+    }
+  }
+  
+  @Override
+  protected void doParse(InputStream in, ContentHandler handler) throws IOException, SAXException, TikaException {
+    ParseInfo info = getParseInfo();
+    info.setMultiDocumentParser(true);
+    Config config = info.getConfig();
+    setConfigParams(config);
+
     final ParseContext context = info.getParseContext();
     metadata.set(Metadata.CONTENT_TYPE, getSupportedTypes(context).iterator().next().toString());
     XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
@@ -133,8 +155,11 @@ public class StreamingWarcParser extends AbstractStreamingParser {
         try {
           HttpMessage response = parser.parse();
           Header httpHeader = response.getLastHeader(HttpHeaders.CONTENT_TYPE);
-          if (httpHeader != null && httpHeader.getValue().startsWith(MediaType.TEXT_HTML.toString())) {
-            process(record, xhtml, warcHeader, httpHeader);
+          if (httpHeader != null) {
+            MediaType mimeType = MediaType.parse(httpHeader.getValue());
+            if (mimeTypesToParse.matcher(mimeType.getBaseType().toString()).matches()) {
+              process(record, xhtml, warcHeader, httpHeader);
+            }
           }
         } catch (HttpException ex) {
           LOGGER.warn("Unable to parse http for document: " + ex.getMessage() + " "

@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
@@ -50,9 +49,7 @@ import org.apache.avro.util.Utf8;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
-import org.apache.solr.SolrJettyTestBase;
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
@@ -64,89 +61,27 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.txt.TXTParser;
 import org.apache.tika.sax.ToTextContentHandler;
-import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-
-public class TestTikaIndexer extends SolrJettyTestBase {
-
-  private SolrIndexer indexer;
-
-  private static final boolean TEST_WITH_EMBEDDED_SOLR_SERVER = false;
-  private static final String EXTERNAL_SOLR_SERVER_URL = System.getProperty("externalSolrServer");
-//private static final String EXTERNAL_SOLR_SERVER_URL = "http://127.0.0.1:8983/solr";
-  private static final String RESOURCES_DIR = "target/test-classes";
-//private static final String RESOURCES_DIR = "src/test/resources";
-  private static final AtomicInteger SEQ_NUM = new AtomicInteger();
-  private static final Logger LOGGER = LoggerFactory.getLogger(TestTikaIndexer.class);
-
-  @BeforeClass
-  public static void beforeClass() throws Exception {
-    initCore(
-        RESOURCES_DIR + "/solr/collection1/conf/solrconfig.xml", 
-        RESOURCES_DIR + "/solr/collection1/conf/schema.xml",
-        RESOURCES_DIR + "/solr"
-        );
-//    createJetty(
-//        new File(RESOURCES_DIR + "/solr").getAbsolutePath(),
-//        null, //RESOURCES_DIR + "/solr/collection1/conf/solrconfig.xml",
-//        null
-//        );
-  }
+public class TestTikaIndexer extends TikaIndexerTestBase {
+  private Map<String,Integer> expectedRecords = new HashMap();
 
   @Before
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    final Map<String, String> context = new HashMap();
-    context.put(TikaIndexer.TIKA_CONFIG_LOCATION, RESOURCES_DIR + "/tika-config.xml");
-    context.put(SolrInspector.SOLR_COLLECTION_LIST + ".testcoll." + SolrInspector.SOLR_CLIENT_HOME, RESOURCES_DIR + "/solr/collection1");
-    
-    final SolrServer solrServer;
-    if (EXTERNAL_SOLR_SERVER_URL != null) {
-      //solrServer = new ConcurrentUpdateSolrServer(EXTERNAL_SOLR_SERVER_URL, 2, 2);
-      solrServer = new SafeConcurrentUpdateSolrServer(EXTERNAL_SOLR_SERVER_URL, 2, 2);
-      //solrServer = new HttpSolrServer(EXTERNAL_SOLR_SERVER_URL);
-    } else {
-      if (TEST_WITH_EMBEDDED_SOLR_SERVER) {
-        solrServer = new TestEmbeddedSolrServer(h.getCoreContainer(), "");
-      } else {
-        solrServer = new TestSolrServer(getSolrServer());
-      }
-    }
-
-    DocumentLoader testServer = new SolrServerDocumentLoader(solrServer);
-    Config config = ConfigFactory.parseMap(context);
-    indexer = new TikaIndexer(new SolrInspector().createSolrCollection(config, testServer), config);
-    
-    deleteAllDocuments();
-  }
-  
-  private void deleteAllDocuments() throws SolrServerException, IOException {
-    SolrCollection collection = indexer.getSolrCollection();
-    SolrServer s = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer();
-    s.deleteByQuery("*:*"); // delete everything!
-    s.commit();
-  }
-
-  @After
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      if (indexer != null) {
-        indexer.stop();
-        indexer = null;
-      }
-    } finally {
-      super.tearDown();
-    }
+    String path = RESOURCES_DIR + "/test-documents";
+    expectedRecords.put(path + "/sample-statuses-20120906-141433.avro", 2);
+    expectedRecords.put(path + "/sample-statuses-20120906-141433", 2);
+    expectedRecords.put(path + "/sample-statuses-20120906-141433.gz", 2);
+    expectedRecords.put(path + "/sample-statuses-20120906-141433.bz2", 2);
+    expectedRecords.put(path + "/cars.csv", 5);
+    expectedRecords.put(path + "/cars.csv.gz", 5);
+    expectedRecords.put(path + "/cars.tar.gz", 4);
+    expectedRecords.put(path + "/cars.tsv", 5);
+    expectedRecords.put(path + "/cars.ssv", 5);
   }
 
   @Test
@@ -170,7 +105,7 @@ public class TestTikaIndexer extends SolrJettyTestBase {
         path + "/sample-statuses-20120906-141433.gz",
         path + "/sample-statuses-20120906-141433.bz2",
     };
-    testDocumentTypesInternal(files);
+    testDocumentTypesInternal(files, expectedRecords);
   }
 
   @Test
@@ -229,47 +164,7 @@ public class TestTikaIndexer extends SolrJettyTestBase {
         path + "/testWINMAIL.dat", 
         path + "/testWMF.wmf", 
     };   
-    testDocumentTypesInternal(files);
-  }
-
-  private void testDocumentTypesInternal(String[] files) throws Exception {
-    int numDocs = 0;
-    long startTime = System.currentTimeMillis();
-    
-    assertEquals(numDocs, queryResultSetSize("*:*"));      
-//  assertQ(req("*:*"), "//*[@numFound='0']");
-    for (int i = 0; i < 1; i++) {
-      String path = RESOURCES_DIR + "/test-documents";
-      Map<String,Integer> numRecords = new HashMap();
-      numRecords.put(path + "/sample-statuses-20120906-141433.avro", 2);
-      numRecords.put(path + "/sample-statuses-20120906-141433", 2);
-      numRecords.put(path + "/sample-statuses-20120906-141433.gz", 2);
-      numRecords.put(path + "/sample-statuses-20120906-141433.bz2", 2);
-      numRecords.put(path + "/cars.csv", 5);
-      numRecords.put(path + "/cars.csv.gz", 5);
-      numRecords.put(path + "/cars.tar.gz", 4);
-      numRecords.put(path + "/cars.tsv", 5);
-      numRecords.put(path + "/cars.ssv", 5);
-      
-      for (String file : files) {
-        File f = new File(file);
-        byte[] body = FileUtils.readFileToByteArray(f);
-        StreamEvent event = new StreamEvent(new ByteArrayInputStream(body), new HashMap());
-        event.getHeaders().put(Metadata.RESOURCE_NAME_KEY, f.getName());
-        load(event);
-        Integer count = numRecords.get(file);
-        if (count != null) {
-          numDocs += count;
-        } else {
-          numDocs++;
-        }
-        assertEquals(numDocs, queryResultSetSize("*:*"));
-      }
-      LOGGER.trace("iter: {}", i);
-    }
-    LOGGER.trace("all done with put at {}", System.currentTimeMillis() - startTime);
-    assertEquals(numDocs, queryResultSetSize("*:*"));
-    LOGGER.trace("indexer: ", indexer);
+    testDocumentTypesInternal(files, expectedRecords);
   }
 
   @Test
@@ -540,26 +435,6 @@ public class TestTikaIndexer extends SolrJettyTestBase {
     AvroTestParser.setSchema(schema);
     load(event);
     assertEquals(records.length, queryResultSetSize("*:*"));    
-  }
-  
-  private void load(StreamEvent event) throws IOException, SolrServerException {
-    event = new StreamEvent(event.getBody(), new HashMap(event.getHeaders()));
-    event.getHeaders().put("id", "" + SEQ_NUM.getAndIncrement());
-    indexer.process(event);
-  }
-
-  private void commit() throws SolrServerException, IOException {
-    SolrCollection collection = indexer.getSolrCollection();
-    ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().commit(false, true, true);
-  }
-  
-  private int queryResultSetSize(String query) throws SolrServerException, IOException {
-    commit();
-    SolrCollection collection = indexer.getSolrCollection();
-    QueryResponse rsp = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().query(new SolrQuery(query).setRows(Integer.MAX_VALUE));
-    LOGGER.debug("rsp: {}", rsp);
-    int size = rsp.getResults().size();
-    return size;
   }
   
   private static Utf8 str(String str) {
