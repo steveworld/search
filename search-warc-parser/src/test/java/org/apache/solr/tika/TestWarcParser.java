@@ -19,7 +19,6 @@
  */
 package org.apache.solr.tika;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -29,97 +28,37 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.solr.SolrJettyTestBase;
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServer;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
-import org.apache.tika.metadata.Metadata;
-import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 
-public class TestWarcParser extends SolrJettyTestBase {
-
-  private SolrIndexer indexer;
-
-  private static final boolean TEST_WITH_EMBEDDED_SOLR_SERVER = false;
-  private static final String EXTERNAL_SOLR_SERVER_URL = System.getProperty("externalSolrServer");
-  private static final String RESOURCES_DIR = "target/test-classes";
-  private static final AtomicInteger SEQ_NUM = new AtomicInteger();
-  private static final Logger LOGGER = LoggerFactory.getLogger(TestTikaIndexer.class);
+public class TestWarcParser extends TikaIndexerTestBase {
   private static final String sampleWarcFile = "/IAH-20080430204825-00000-blackbook.warc.gz";
+  private Map<String,Integer> expectedRecords = new HashMap();
 
-  @BeforeClass
-  public static void beforeClass() throws Exception {
-    initCore(
-        RESOURCES_DIR + "/solr/collection1/conf/solrconfig.xml",
-        RESOURCES_DIR + "/solr/collection1/conf/schema.xml",
-        RESOURCES_DIR + "/solr"
-        );
+  @Override
+  protected Map<String, String> getContext() {
+    final Map<String, String> context = super.getContext();
+    // tell the TikaIndexer to pass a  GZIPInputStream to tika.  This is temporary until CDH-10671 is addressed.
+    context.put("tika.autoGUNZIP", "true");
+    return context;
   }
 
   @Before
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    final Map<String, String> context = new HashMap();
-    context.put(TikaIndexer.TIKA_CONFIG_LOCATION, RESOURCES_DIR + "/tika-config.xml");
-    context.put(SolrInspector.SOLR_COLLECTION_LIST + ".testcoll." + SolrInspector.SOLR_CLIENT_HOME, RESOURCES_DIR + "/solr/collection1");
-    // tell the TikaIndexer to pass a  GZIPInputStream to tika.  This is temporary until CDH-10671 is addressed.
-    context.put("tika.autoGUNZIP", "true");
-    
-    final SolrServer solrServer;
-    if (EXTERNAL_SOLR_SERVER_URL != null) {
-      solrServer = new SafeConcurrentUpdateSolrServer(EXTERNAL_SOLR_SERVER_URL, 2, 2);
-    } else {
-      if (TEST_WITH_EMBEDDED_SOLR_SERVER) {
-        solrServer = new TestEmbeddedSolrServer(h.getCoreContainer(), "");
-      } else {
-        solrServer = new TestSolrServer(getSolrServer());
-      }
-    }
-
-    DocumentLoader testServer = new SolrServerDocumentLoader(solrServer);
-    Config config = ConfigFactory.parseMap(context);
-    indexer = new TikaIndexer(new SolrInspector().createSolrCollection(config, testServer), config);
-    
-    deleteAllDocuments();
-  }
-  
-  private void deleteAllDocuments() throws SolrServerException, IOException {
-    SolrCollection collection = indexer.getSolrCollection();
-    SolrServer s = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer();
-    s.deleteByQuery("*:*"); // delete everything!
-    s.commit();
+    String path = RESOURCES_DIR + "/test-documents";
+    expectedRecords.put(path + sampleWarcFile, 140);
   }
 
-  @After
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      if (indexer != null) {
-        indexer.stop();
-        indexer = null;
-      }
-    } finally {
-      super.tearDown();
-    }
-  }
-  
   /**
    * Returns a HashMap of expectedKey -> expectedValue.
    * File format is required to alternate lines of keys and values.
@@ -173,7 +112,7 @@ public class TestWarcParser extends SolrJettyTestBase {
     String[] files = new String[] {
       path + "/" + testFile
     };
-    testDocumentTypesInternal(files);
+    testDocumentTypesInternal(files, expectedRecords);
     HashMap<String, ExpectedResult> expectedResultMap = getExpectedOutput(path + "/" + expectedFile);
     testDocumentContent(expectedResultMap);
   }
@@ -188,7 +127,7 @@ public class TestWarcParser extends SolrJettyTestBase {
     String[] files = new String[] {
       path + sampleWarcFile
     };
-    testDocumentTypesInternal(files);
+    testDocumentTypesInternal(files, expectedRecords);
   }
 
   /**
@@ -202,7 +141,7 @@ public class TestWarcParser extends SolrJettyTestBase {
     String[] files = new String[] {
       path + sampleWarcFile
     };
-    testDocumentTypesInternal(files);
+    testDocumentTypesInternal(files, expectedRecords);
     String testFileSuffix = ".warc.gz";
     String expectedFileSuffix = ".gold";
     String expectedFile = sampleWarcFile.substring(0, sampleWarcFile.length() - testFileSuffix.length()) + expectedFileSuffix;
@@ -241,56 +180,6 @@ public class TestWarcParser extends SolrJettyTestBase {
         assert(foundField); // didn't find expected field/value in query
       }
     }
-  }
-
-  private void testDocumentTypesInternal(String[] files) throws Exception {
-    int numDocs = 0;
-    long startTime = System.currentTimeMillis();
-    
-    assertEquals(numDocs, queryResultSetSize("*:*"));
-    for (int i = 0; i < 1; i++) {
-      String path = RESOURCES_DIR + "/test-documents";
-      Map<String,Integer> numRecords = new HashMap();
-      numRecords.put(path + sampleWarcFile, 140);
-      
-      for (String file : files) {
-        File f = new File(file);
-        byte[] body = FileUtils.readFileToByteArray(f);
-        StreamEvent event = new StreamEvent(new ByteArrayInputStream(body), new HashMap());
-        event.getHeaders().put(Metadata.RESOURCE_NAME_KEY, f.getName());
-        load(event);
-        Integer count = numRecords.get(file);
-        if (count != null) {
-          numDocs += count;
-        } else {
-          numDocs++;
-        }
-        assertEquals(numDocs, queryResultSetSize("*:*"));
-      }
-      LOGGER.trace("iter: {}", i);
-    }
-    LOGGER.trace("all done with put at {}", System.currentTimeMillis() - startTime);
-    assertEquals(numDocs, queryResultSetSize("*:*"));
-    LOGGER.trace("indexer: ", indexer);
-  }
-
-  private void load(StreamEvent event) throws IOException, SolrServerException {
-    event = new StreamEvent(event.getBody(), new HashMap(event.getHeaders()));
-    event.getHeaders().put("id", "" + SEQ_NUM.getAndIncrement());
-    indexer.process(event);
-  }
-
-  private void commit() throws SolrServerException, IOException {
-    SolrCollection collection = indexer.getSolrCollection();
-    ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().commit(false, true, true);
-  }
-  
-  private int queryResultSetSize(String query) throws SolrServerException, IOException {
-    commit();
-    SolrCollection collection = indexer.getSolrCollection();
-    QueryResponse rsp = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().query(new SolrQuery(query).setRows(Integer.MAX_VALUE));
-    int size = rsp.getResults().size();
-    return size;
   }
 
   /**
