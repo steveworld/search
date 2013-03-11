@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.commons.lang.NotImplementedException;
@@ -47,6 +48,7 @@ import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.archive.io.ArchiveReader;
 import org.archive.io.ArchiveRecord;
@@ -91,7 +93,7 @@ public class StreamingWarcParser extends AbstractStreamingParser {
   }
 
   @Override
-  protected void doParse(InputStream in, ContentHandler handler) throws IOException, SAXException {
+  protected void doParse(InputStream in, ContentHandler handler) throws IOException, SAXException, TikaException {
     ParseInfo info = getParseInfo();
     info.setMultiDocumentParser(true);
     Config config = info.getConfig();
@@ -148,33 +150,45 @@ public class StreamingWarcParser extends AbstractStreamingParser {
   /** Processes the given Warc record */
   protected void process(InputStream inputStream, XHTMLContentHandler handler,
       ArchiveRecordHeader warcHeader, Header httpHeader)
-      throws IOException, SAXException, SolrServerException {
+      throws IOException, SAXException, SolrServerException, TikaException {
     List<SolrInputDocument> docs = extract(inputStream, handler, warcHeader, httpHeader);
     docs = transform(docs);
     load(docs);
   }
 
+  protected Parser getParser(String mimeType) {
+    MediaType mediaType = MediaType.parse(mimeType);
+    Map<MediaType, Parser> parsers = getParseInfo().getMediaTypeToParserMap();
+    Parser parser = null;
+
+    parser = parsers.get(mediaType);
+    if (parser == null && mediaType.hasParameters()) {
+      parser = parsers.get(mediaType.getBaseType());
+    }
+    return parser;
+  }
+
   /** Extracts zero or more Solr documents from the given Avro record */
   protected List<SolrInputDocument> extract(InputStream is, XHTMLContentHandler handler,
       ArchiveRecordHeader warcHeader, Header httpHeader)
-      throws SAXException, IOException {
+      throws SAXException, IOException, TikaException {
     SolrContentHandler solrHandler = getParseInfo().getSolrContentHandler();
     handler.startDocument();
     solrHandler.startDocument(); // this is necessary because handler.startDocument() does not delegate all the way down to solrHandler
 
     Metadata entryData = new Metadata();
     entryData.set(metadata.RESOURCE_NAME_KEY, metadata.get(metadata.RESOURCE_NAME_KEY));
-    
-    // Use the delegate parser to parse the contained document
-    EmbeddedDocumentExtractor extractor = getParseInfo().getParseContext().get(
-      EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(getParseInfo().getParseContext()));
 
-    if (extractor.shouldParseEmbedded(entryData)) {
-      if (maxBytesPerDoc >= 0) {
-        is = new BoundedInputStream(is, maxBytesPerDoc);
-      }
-      extractor.parseEmbedded(is, handler, entryData, true);
+    Parser parser = getParser(httpHeader.getValue());
+    if (parser == null) {
+      throw new TikaException("Unable to find parser for mimetype " + httpHeader.getValue());
     }
+
+    if (maxBytesPerDoc >= 0) {
+      is = new BoundedInputStream(is, maxBytesPerDoc);
+    }
+    parser.parse(is, handler, entryData, getParseInfo().getParseContext());
+
     entryData.set(DATE_META_KEY, warcHeader.getDate());
     entryData.set(URL_META_KEY, warcHeader.getUrl());
     entryData.set(MIMETYPE_META_KEY, httpHeader.getValue());
