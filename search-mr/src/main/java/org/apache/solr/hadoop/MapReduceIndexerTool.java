@@ -552,6 +552,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     
     // switch off a false warning about allegedly not implementing Tool
     // also see http://hadoop.6.n7.nabble.com/GenericOptionsParser-warning-td8103.html
+    // also see https://issues.apache.org/jira/browse/HADOOP-8183
     getConf().setBoolean("mapred.used.genericoptionsparser", true); 
 
     job = Job.getInstance(getConf());
