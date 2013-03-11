@@ -340,7 +340,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .help(FeatureControl.SUPPRESS);
   
       Argument maxSegmentsArg = parser.addArgument("--max-segments")
-        .metavar("INTEGER")
+        .metavar("INTEGER")  
         .type(Integer.class)
         .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
         .setDefault(1)
