@@ -20,12 +20,12 @@
   <parent>
     <groupId>com.cloudera.search</groupId>
     <artifactId>search-parent</artifactId>
-    <version>0.1.0-cdh4.2.0-SNAPSHOT</version>
+    <version>0.1.1-cdh4.2.0-SNAPSHOT</version>
   </parent>
 
   <groupId>com.cloudera.search</groupId>
   <artifactId>search-mr</artifactId>
-  <version>0.1.0-cdh4.2.0-SNAPSHOT</version>
+  <version>0.1.1-cdh4.2.0-SNAPSHOT</version>
   <name>Search Solr MapReduce Indexer</name>
 
   <!-- FIXME: we shouldn't be depending on ASF snapshots -->
@@ -105,7 +105,7 @@
     <dependency>
       <groupId>com.cloudera.search</groupId>
       <artifactId>search-core</artifactId>
-      <version>0.1.0-cdh4.2.0-SNAPSHOT</version>
+      <version>0.1.1-cdh4.2.0-SNAPSHOT</version>
     </dependency>
 
     <dependency> <!-- see http://argparse4j.sourceforge.net -->
