@@ -103,7 +103,6 @@ public class TestWarcParser extends TikaIndexerTestBase {
    * return the expected content and fields.
    */
   @Test
-  @Ignore
   public void testWARCFileContent() throws Exception {
     String path = RESOURCES_DIR + "/test-documents";
     String testFilePrefix = "sample_html";
@@ -135,7 +134,6 @@ public class TestWarcParser extends TikaIndexerTestBase {
    * return the expected content and fields.
    */
   @Test
-  @Ignore
   public void testWARCFileMultiDocContent() throws Exception {
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
