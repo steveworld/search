@@ -16,16 +16,15 @@
  */
 package org.apache.solr.hadoop;
 
-import static org.junit.Assert.assertNotNull;
-
 import java.io.File;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.solr.tika.TikaIndexer;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 
-public class MRUnitBase {
+public class MRUnitBase extends Assert {
   
   protected static final String RESOURCES_DIR = "target/test-classes";
   protected static final String DOCUMENTS_DIR = RESOURCES_DIR + "/test-documents";
