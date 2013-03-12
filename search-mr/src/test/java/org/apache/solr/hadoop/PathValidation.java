@@ -16,19 +16,20 @@
  */
 package org.apache.solr.hadoop;
 
-import static org.junit.Assert.assertEquals;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.fs.Path;
 import org.junit.Test;
 
 public class PathValidation extends MRUnitBase {
+  
   @Test
   public void testPath() {
-    Path path = new Path("hdfs://c2202.halxg.cloudera.com:8020/user/foo/bar.txt");
+    Path path = new Path("hdfs://c2202.mycompany.com:8020/user/foo/bar.txt");
     assertEquals("/user/foo/bar.txt", path.toUri().getPath());
     assertEquals("bar.txt", path.getName());
     assertEquals("hdfs", path.toUri().getScheme());
-    assertEquals("c2202.halxg.cloudera.com:8020", path.toUri().getAuthority());
+    assertEquals("c2202.mycompany.com:8020", path.toUri().getAuthority());
     
     path = new Path("/user/foo/bar.txt");
     assertEquals("/user/foo/bar.txt", path.toUri().getPath());
@@ -37,6 +38,14 @@ public class PathValidation extends MRUnitBase {
     assertEquals(null, path.toUri().getAuthority());
     
     assertEquals("-", new Path("-").toString());
+  }
+  
+  @Test
+  public void testRegex() {
+    Pattern regex = Pattern.compile("text/plain|text/html");
+    assertTrue(regex.matcher("text/plain").matches());    
+    assertTrue(regex.matcher("text/html").matches());    
+    assertFalse(regex.matcher("xxtext/html").matches());    
   }
   
 }
