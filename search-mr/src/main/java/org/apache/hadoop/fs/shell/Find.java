@@ -93,7 +93,7 @@ public class Find extends FsCommand {
   private CommandFactory commandFactory = null;
   
   /** sets the command factory for later use */
-  public void setCommandFactory(CommandFactory factory) { // FIXME whoschek FsShell should call this
+  public void setCommandFactory(CommandFactory factory) { // FIXME FsShell should call this
     this.commandFactory = factory;
   }
   

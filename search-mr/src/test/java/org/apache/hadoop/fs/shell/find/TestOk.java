@@ -208,7 +208,7 @@ public class TestOk extends TestExpression {
     verifyNoMoreInteractions(err);
   }
   
-//  @Test // FIXME whoschek
+//  @Test // FIXME 
   public void xapplyRespondNo() throws IOException {
     in = new ByteArrayInputStream("yes\n".getBytes());
     options.setIn(in);
