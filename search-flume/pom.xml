@@ -55,13 +55,13 @@
     <dependency>
       <groupId>com.cloudera.search</groupId>
       <artifactId>search-core</artifactId>
-      <version>${cdh.search.version}</version>
+      <version>${project.parent.version}</version>
     </dependency>
 
     <dependency>
       <groupId>com.cloudera.search</groupId>
       <artifactId>search-core</artifactId>
-      <version>${cdh.search.version}</version>
+      <version>${project.parent.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
