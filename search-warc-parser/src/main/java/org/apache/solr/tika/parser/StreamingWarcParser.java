@@ -37,6 +37,7 @@ import org.apache.http.HttpMessage;
 import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.impl.conn.DefaultResponseParser;
 import org.apache.http.impl.io.AbstractSessionInputBuffer;
+import org.apache.http.impl.io.IdentityInputStream;
 import org.apache.http.message.BasicLineParser;
 import org.apache.http.mockup.SessionInputBufferMockup;
 import org.apache.http.params.BasicHttpParams;
@@ -119,7 +120,7 @@ public class StreamingWarcParser extends AbstractStreamingParser {
       }
     }
   }
-  
+
   @Override
   protected void doParse(InputStream in, ContentHandler handler) throws IOException, SAXException, TikaException {
     ParseInfo info = getParseInfo();
@@ -158,7 +159,9 @@ public class StreamingWarcParser extends AbstractStreamingParser {
           if (httpHeader != null) {
             MediaType mimeType = MediaType.parse(httpHeader.getValue());
             if (mimeTypesToParse.matcher(mimeType.getBaseType().toString()).matches()) {
-              process(record, xhtml, warcHeader, httpHeader);
+              // convert SessionInputBuffer to an InputStream for the Tika parsers
+              IdentityInputStream is = new IdentityInputStream(inbuffer);
+              process(is, xhtml, warcHeader, httpHeader);
             }
           }
         } catch (HttpException ex) {
