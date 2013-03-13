@@ -538,5 +538,5 @@ Example: Find all files that match all of the following conditions
 * file size is between 1 MB and 1 GB
 
 <pre>
-$ hadoop jar /usr/lib/solr/contrib/mr/search-mr-*-job.jar org.apache.solr.hadoop.HdfsFindTool -find hdfs:///user/$USER/solrloadtest/twitter/tweets -type f -name 'sample-statuses*.gz' -mmin -1440 -size -1000000000c -size +1000000c
+$ hadoop jar target/search-mr-*-job.jar org.apache.solr.hadoop.HdfsFindTool -find hdfs:///user/$USER/solrloadtest/twitter/tweets -type f -name 'sample-statuses*.gz' -mmin -1440 -size -1000000000c -size +1000000c
 </pre>
