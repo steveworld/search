@@ -20,8 +20,8 @@ In addition, below we assume a working MapReduce cluster, for example as install
 
 # Configuration
 
-* optionally edit mimetype -> Java parser class mapping in [src/test/resources/tika-config.xml](src/test/resources/tika-config.xml)
-* optionally edit file -> mimetype mapping in [src/test/resources/org/apache/tika/mime/custom-mimetypes.xml](src/test/resources/org/apache/tika/mime/custom-mimetypes.xml)
+* optionally edit mimetype -> Java parser class mapping in [src/test/resources/tika-config.xml](search-mr/src/test/resources/tika-config.xml)
+* optionally edit file -> mimetype mapping in [src/test/resources/org/apache/tika/mime/custom-mimetypes.xml](search-mr/src/test/resources/org/apache/tika/mime/custom-mimetypes.xml)
 ** this file extends and overrides the mappings in the tika-mimetypes.xml file contained in tika-core.jar - [online version](http://github.com/apache/tika/blob/trunk/tika-core/src/main/resources/org/apache/tika/mime/tika-mimetypes.xml)
 * optionally edit log levels in src/test/resources/log4j.properties
 
