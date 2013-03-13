@@ -24,7 +24,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PushbackInputStream;
 import java.io.StringWriter;
 import java.security.SecureRandom;
 import java.util.Collections;
@@ -35,7 +34,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.zip.GZIPInputStream;
 
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
@@ -62,6 +60,9 @@ import org.apache.tika.sax.xpath.XPathParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
+import org.apache.commons.compress.compressors.CompressorInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipUtils;
 
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
@@ -80,16 +81,16 @@ public class TikaIndexer extends SolrIndexer {
 
   private final String idPrefix; // for load testing only; enables adding same document many times with a different unique key
   private final Random randomIdPrefix; // for load testing only; enables adding same document many times with a different unique key
-  private final boolean useAutoGUNZIP;
+  private final boolean decompressConcatenated;
 
   private static final XPathParser PARSER = new XPathParser("xhtml", XHTMLContentHandler.XHTML);
 
   public static final String TIKA_CONFIG_LOCATION = ExtractingRequestHandler.CONFIG_LOCATION;
   public static final String ID_PREFIX = TikaIndexer.class.getName() + ".idPrefix"; // for load testing only
   
-  // pass a GZIPInputStream to tika (if detected as GZIP File).  This is temporary,
-  // and thus visibility is private, until CDH-10671 is addressed.
-  private static final String TIKA_AUTO_GUNZIP = "tika.autoGUNZIP";
+  // By default, tika will not decompress multimember streams.  If this is set, attempt to decompress
+  // multimember streams.  This is temporary and thus visibility is private, until CDH-10671 is addressed.
+  private static final String TIKA_DECOMPRESS_CONCATENATED = "tika.decompressConcatenated";
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TikaIndexer.class);
 
@@ -142,7 +143,7 @@ public class TikaIndexer extends SolrIndexer {
     idPrefix = tmpIdPrefix;
     randomIdPrefix = tmpRandomIdPrefx;
     
-    useAutoGUNZIP = config.hasPath(TIKA_AUTO_GUNZIP) && "true".equals(config.getString(TIKA_AUTO_GUNZIP));
+    decompressConcatenated = config.hasPath(TIKA_DECOMPRESS_CONCATENATED) && "true".equals(config.getString(TIKA_DECOMPRESS_CONCATENATED));
   }
   
   protected TikaConfig getTikaConfig() {
@@ -227,7 +228,7 @@ public class TikaIndexer extends SolrIndexer {
 
       // Standard tika parsers occasionally have trouble with gzip data.
       // To avoid this issue, pass a GZIPInputStream if appropriate.
-      InputStreamMetadata inputStreamMetadata = detectGZIPInputStream(inputStream,  metadata);
+      InputStreamMetadata  inputStreamMetadata = detectCompressInputStream(inputStream,  metadata);
       inputStream = inputStreamMetadata.inputStream;
       // It is possible the inputStreamMetadata.metadata has a modified RESOURCE_NAME from
       // the original metadata due to how we handle GZIPInputStreams.  Pass this to tika
@@ -347,39 +348,22 @@ public class TikaIndexer extends SolrIndexer {
   }
   
   /**
-   * @return an input stream to use, which will be a GZIPInputStream in the case
-   * where the input stream is over gzipped data.
+   * @return an input stream/metadata tuple to use. If appropriate, stream will be capable of
+   * decompressing concatenated compressed files.
    */
-  private InputStreamMetadata detectGZIPInputStream(InputStream inputStream, Metadata metadata) {
-    if (useAutoGUNZIP) {
+  private InputStreamMetadata detectCompressInputStream(InputStream inputStream, Metadata metadata) {
+    if (decompressConcatenated) {
       String resourceName = metadata.get(Metadata.RESOURCE_NAME_KEY);
-      if (resourceName != null && resourceName.endsWith(".gz")) {
-        int magicPrefixSize = 2;
-        PushbackInputStream pbis = new PushbackInputStream(inputStream, magicPrefixSize);
+      if (resourceName != null && GzipUtils.isCompressedFilename(resourceName)) {
         try {
-          byte [] readMagicPrefix = new byte[magicPrefixSize];
-          int totalBytesRead = 0;
-          int read;
-          while (totalBytesRead != magicPrefixSize && (read = pbis.read(readMagicPrefix, totalBytesRead, magicPrefixSize - totalBytesRead )) != -1) {
-            totalBytesRead += read;
-          }
-          if (totalBytesRead > 0) pbis.unread( readMagicPrefix, 0, totalBytesRead );
-          if (totalBytesRead == magicPrefixSize) {
-            // Check if stream has GZIP_MAGIC prefix
-            if ((readMagicPrefix[0] == (byte) GZIPInputStream.GZIP_MAGIC)
-              && (readMagicPrefix[1] == (byte) (GZIPInputStream.GZIP_MAGIC >> 8))) {
-              Metadata entryData = cloneMetadata(metadata);
-              // Remove the .gz extension
-              String newName =
-                resourceName.substring(0, resourceName.length() - ".gz".length());
-              entryData.set(Metadata.RESOURCE_NAME_KEY, newName);
-              return new InputStreamMetadata(new GZIPInputStream(pbis), entryData);
-            }
-          }
+          CompressorInputStream cis = new GzipCompressorInputStream(inputStream, true);
+          Metadata entryData = cloneMetadata(metadata);
+          String newName = GzipUtils.getUncompressedFilename(resourceName);
+          entryData.set(Metadata.RESOURCE_NAME_KEY, newName);
+          return new InputStreamMetadata(cis, entryData);
         } catch (IOException ioe) {
-          LOGGER.info("Unable to read from stream to determine if gzip input stream.", ioe);
+          LOGGER.warn("Unable to create compressed input stream able to read concantenated stream", ioe);
         }
-        return new InputStreamMetadata(pbis, metadata);
       }
     }
     return new InputStreamMetadata(inputStream, metadata);
