@@ -38,7 +38,7 @@ public class TestWarcParserRegex extends TikaIndexerTestBase {
   protected Map<String, String> getContext() {
     final Map<String, String> context = super.getContext();
     // tell the TikaIndexer to pass a  GZIPInputStream to tika.  This is temporary until CDH-10671 is addressed.
-    context.put("tika.autoGUNZIP", "true");
+    context.put("tika.decompressConcatenated", "true");
     String regex = "text/html|text/plain";
     context.put(StreamingWarcParser.MIMETYPES_TO_PARSE_PROPERTY, regex);
     return context;
