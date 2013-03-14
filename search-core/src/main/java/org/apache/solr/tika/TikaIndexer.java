@@ -25,7 +25,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.security.SecureRandom;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -37,11 +40,13 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.ContentStreamBase;
 import org.apache.solr.handler.extraction.ExtractingParams;
 import org.apache.solr.handler.extraction.ExtractingRequestHandler;
 import org.apache.solr.handler.extraction.RegexRulesPasswordProvider;
 import org.apache.solr.handler.extraction.SolrContentHandler;
+import org.apache.solr.schema.IndexSchema;
 import org.apache.solr.schema.SchemaField;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.exception.TikaException;
@@ -92,7 +97,21 @@ public class TikaIndexer extends SolrIndexer {
   // multimember streams.  This is temporary and thus visibility is private, until CDH-10671 is addressed.
   private static final String TIKA_DECOMPRESS_CONCATENATED = "tika.decompressConcatenated";
 
+  // pass a GZIPInputStream to tika (if detected as GZIP File).  This is temporary,
+  // and thus visibility is private, until CDH-10671 is addressed.
+  private static final String TIKA_AUTO_GUNZIP = "tika.autoGUNZIP";
+  private static final String CONTENT_HANDLER_PROPERTY = "tika.solrContentHandler.class";
+  private final Constructor<? extends SolrContentHandler> contentHandlerConstructor;
   private static final Logger LOGGER = LoggerFactory.getLogger(TikaIndexer.class);
+
+  private Constructor getSolrContentHandlerConstructor(Class<? extends SolrContentHandler> handlerClass) {
+    try {
+      return handlerClass.getConstructor(Metadata.class, SolrParams.class, IndexSchema.class, Collection.class);
+    } catch (NoSuchMethodException nsme) {
+      throw new ConfigurationException("Unable to find valid constructor of type "
+        + handlerClass.getName() + " for creating SolrContentHandler", nsme);
+    }
+  }
 
   public TikaIndexer(SolrCollection solrCollection, Config config) {
     super(solrCollection, config);
@@ -104,6 +123,19 @@ public class TikaIndexer extends SolrIndexer {
       if (!file.exists()) {
         throw new ConfigurationException("File not found: " + file + " absolutePath: " + file.getAbsolutePath());
       }
+    }
+    if (config.hasPath(CONTENT_HANDLER_PROPERTY)) {
+      String handlerStr = config.getString(CONTENT_HANDLER_PROPERTY);
+      Class<? extends SolrContentHandler> handlerClass;
+      try {
+        handlerClass = (Class<? extends SolrContentHandler>)Class.forName(handlerStr);
+      } catch (ClassNotFoundException cnfe) {
+        throw new ConfigurationException("Could not find class " + handlerStr + " to use for " + CONTENT_HANDLER_PROPERTY, cnfe);
+      }
+      contentHandlerConstructor = getSolrContentHandlerConstructor(handlerClass);
+    }
+    else {
+      contentHandlerConstructor = getSolrContentHandlerConstructor(TrimSolrContentHandler.class);
     }
     String oldProperty = null;
     if (tikaConfigFilePath != null) {
@@ -325,7 +357,12 @@ public class TikaIndexer extends SolrIndexer {
   protected SolrContentHandler createSolrContentHandler() {
     ParseInfo info = getParseInfo();
     SolrCollection coll = getSolrCollection();
-    return new TrimSolrContentHandler(info.getMetadata(), coll.getSolrParams(), coll.getSchema(), coll.getDateFormats());
+    try {
+      return contentHandlerConstructor.newInstance(info.getMetadata(), coll.getSolrParams(), coll.getSchema(), coll.getDateFormats());
+    } catch (Exception ex) {
+      throw new ConfigurationException("Unexpected exception when trying to create SolrContentHandler of type "
+        + contentHandlerConstructor.getName(), ex);
+    }
   }
 
   protected void addPasswordHandler(String resourceName) throws FileNotFoundException {
