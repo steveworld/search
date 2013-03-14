@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.security.SecureRandom;
 import java.util.Collection;
 import java.util.Collections;
@@ -83,10 +82,11 @@ public class TikaIndexer extends SolrIndexer {
   private final AutoDetectParser autoDetectParser;
   private final Map<MediaType, Parser> mediaTypeToParserMap; 
   private ParseInfo parseInfo;
+  private final boolean decompressConcatenated;
+  private final Constructor<? extends SolrContentHandler> contentHandlerConstructor;
 
   private final String idPrefix; // for load testing only; enables adding same document many times with a different unique key
   private final Random randomIdPrefix; // for load testing only; enables adding same document many times with a different unique key
-  private final boolean decompressConcatenated;
 
   private static final XPathParser PARSER = new XPathParser("xhtml", XHTMLContentHandler.XHTML);
 
@@ -97,21 +97,9 @@ public class TikaIndexer extends SolrIndexer {
   // multimember streams.  This is temporary and thus visibility is private, until CDH-10671 is addressed.
   private static final String TIKA_DECOMPRESS_CONCATENATED = "tika.decompressConcatenated";
 
-  // pass a GZIPInputStream to tika (if detected as GZIP File).  This is temporary,
-  // and thus visibility is private, until CDH-10671 is addressed.
-  private static final String TIKA_AUTO_GUNZIP = "tika.autoGUNZIP";
   private static final String CONTENT_HANDLER_PROPERTY = "tika.solrContentHandler.class";
-  private final Constructor<? extends SolrContentHandler> contentHandlerConstructor;
+  
   private static final Logger LOGGER = LoggerFactory.getLogger(TikaIndexer.class);
-
-  private Constructor getSolrContentHandlerConstructor(Class<? extends SolrContentHandler> handlerClass) {
-    try {
-      return handlerClass.getConstructor(Metadata.class, SolrParams.class, IndexSchema.class, Collection.class);
-    } catch (NoSuchMethodException nsme) {
-      throw new ConfigurationException("Unable to find valid constructor of type "
-        + handlerClass.getName() + " for creating SolrContentHandler", nsme);
-    }
-  }
 
   public TikaIndexer(SolrCollection solrCollection, Config config) {
     super(solrCollection, config);
@@ -133,8 +121,7 @@ public class TikaIndexer extends SolrIndexer {
         throw new ConfigurationException("Could not find class " + handlerStr + " to use for " + CONTENT_HANDLER_PROPERTY, cnfe);
       }
       contentHandlerConstructor = getSolrContentHandlerConstructor(handlerClass);
-    }
-    else {
+    } else {
       contentHandlerConstructor = getSolrContentHandlerConstructor(TrimSolrContentHandler.class);
     }
     String oldProperty = null;
@@ -352,6 +339,15 @@ public class TikaIndexer extends SolrIndexer {
       LOGGER.debug("record #{} loading doc: {}", num, doc);
     }
     super.load(docs);
+  }
+
+  private Constructor getSolrContentHandlerConstructor(Class<? extends SolrContentHandler> handlerClass) {
+    try {
+      return handlerClass.getConstructor(Metadata.class, SolrParams.class, IndexSchema.class, Collection.class);
+    } catch (NoSuchMethodException nsme) {
+      throw new ConfigurationException("Unable to find valid constructor of type "
+        + handlerClass.getName() + " for creating SolrContentHandler", nsme);
+    }
   }
 
   protected SolrContentHandler createSolrContentHandler() {
