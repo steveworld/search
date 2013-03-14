@@ -138,12 +138,20 @@ public class StreamingWarcParser extends AbstractStreamingParser {
 
     Iterator<ArchiveRecord> it = ar.iterator();
     while (it.hasNext()) {
-      ArchiveRecord record = it.next();
+      ArchiveRecord record = null;
+      try {
+        record = it.next();
+      } catch (Exception e) {
+        LOGGER.error("Unable to process resource: " + resourceName, e);
+        return;
+      }
       ArchiveRecordHeader warcHeader = record.getHeader();
-      // html files are stored in the warc as an http response.  So, we need to
-      // extract the warc record, then extract the http response.
+      // actual files to be parsed (e.g. html) are stored in the warc as an http response.
+      // So, we need to extract the warc record, then extract the http response.
+      Object contentTypeVal = warcHeader.getHeaderValue(WARCConstants.CONTENT_TYPE);
+      if (contentTypeVal == null) continue;
 
-      if (warcHeader.getHeaderValue(WARCConstants.CONTENT_TYPE).equals(WARCConstants.HTTP_RESPONSE_MIMETYPE)) {
+      if (WARCConstants.HTTP_RESPONSE_MIMETYPE.equals(contentTypeVal)) {
         SessionInputBufferMockup inbuffer =
           new SessionInputBufferMockup(record,
           1024, new BasicHttpParams());
@@ -164,12 +172,9 @@ public class StreamingWarcParser extends AbstractStreamingParser {
               process(is, xhtml, warcHeader, httpHeader);
             }
           }
-        } catch (HttpException ex) {
-          LOGGER.warn("Unable to parse http for document: " + ex.getMessage() + " "
-            + warcHeader.getRecordIdentifier() + " " + warcHeader.getUrl());
-        } catch (SolrServerException e) {
-          throw new IOException("Got SolrServerException while processing document: "
-            + warcHeader.getRecordIdentifier() + " " + warcHeader.getUrl(), e);
+        } catch (Exception ex) {
+          LOGGER.warn("Exception processing document: " + warcHeader.getRecordIdentifier()
+            + " " + warcHeader.getUrl(), ex);
         }
       }
     }
@@ -241,8 +246,10 @@ public class StreamingWarcParser extends AbstractStreamingParser {
         }
       }
       else {
-        LOGGER.warn("Not setting metadata for: " + name +
-          " because already set to: " + parseInfoMetadata.get(name));
+        if (name != metadata.RESOURCE_NAME_KEY) {
+          LOGGER.info("Not setting metadata for: " + name +
+            " because already set to: " + parseInfoMetadata.get(name));
+        }
       }
     }
 
