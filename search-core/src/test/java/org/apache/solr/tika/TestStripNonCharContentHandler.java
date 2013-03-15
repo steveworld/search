@@ -18,8 +18,6 @@
  */
 package org.apache.solr.tika;
 
-import static org.junit.Assert.assertTrue;
-
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.tika.metadata.Metadata;
 import org.junit.Test;
