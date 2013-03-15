@@ -19,6 +19,7 @@
 package org.apache.solr.tika;
 
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.handler.extraction.SolrContentHandler;
 import org.apache.tika.metadata.Metadata;
 import org.junit.Test;
 
@@ -51,8 +52,10 @@ public class TestStripNonCharContentHandler extends TikaIndexerTestBase {
     // load illegal char string into a metadata field and generate a new document,
     // which will cause the ContentHandler to be invoked.
     metadata.set(fieldName, getFoobarWithNonChars());
-    StripNonCharContentHandler contentHandler =
-      new StripNonCharContentHandler(metadata, coll.getSolrParams(), coll.getSchema(), coll.getDateFormats());
+    StripNonCharContentHandlerFactory contentHandlerFactory =
+      new StripNonCharContentHandlerFactory(coll.getDateFormats());
+    SolrContentHandler contentHandler =
+      contentHandlerFactory.createSolrContentHandler(metadata, coll.getSolrParams(), coll.getSchema());
     SolrInputDocument doc = contentHandler.newDocument();
     String foobar = doc.getFieldValue(fieldName).toString();
     assertTrue("foobar".equals(foobar));

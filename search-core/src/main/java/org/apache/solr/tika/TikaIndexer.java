@@ -45,6 +45,7 @@ import org.apache.solr.handler.extraction.ExtractingParams;
 import org.apache.solr.handler.extraction.ExtractingRequestHandler;
 import org.apache.solr.handler.extraction.RegexRulesPasswordProvider;
 import org.apache.solr.handler.extraction.SolrContentHandler;
+import org.apache.solr.handler.extraction.SolrContentHandlerFactory;
 import org.apache.solr.schema.IndexSchema;
 import org.apache.solr.schema.SchemaField;
 import org.apache.tika.config.TikaConfig;
@@ -83,7 +84,6 @@ public class TikaIndexer extends SolrIndexer {
   private final Map<MediaType, Parser> mediaTypeToParserMap; 
   private ParseInfo parseInfo;
   private final boolean decompressConcatenated;
-  private final Constructor<? extends SolrContentHandler> contentHandlerConstructor;
 
   private final String idPrefix; // for load testing only; enables adding same document many times with a different unique key
   private final Random randomIdPrefix; // for load testing only; enables adding same document many times with a different unique key
@@ -97,9 +97,25 @@ public class TikaIndexer extends SolrIndexer {
   // multimember streams.  This is temporary and thus visibility is private, until CDH-10671 is addressed.
   private static final String TIKA_DECOMPRESS_CONCATENATED = "tika.decompressConcatenated";
 
-  private static final String CONTENT_HANDLER_PROPERTY = "tika.solrContentHandler.class";
-  
+  // pass a GZIPInputStream to tika (if detected as GZIP File).  This is temporary,
+  // and thus visibility is private, until CDH-10671 is addressed.
+  private static final String TIKA_AUTO_GUNZIP = "tika.autoGUNZIP";
+  private static final String CONTENT_HANDLER_FACTORY_PROPERTY = "tika.solrContentHandlerFactory.class";
+  private final SolrContentHandlerFactory solrContentHandlerFactory;
   private static final Logger LOGGER = LoggerFactory.getLogger(TikaIndexer.class);
+
+  private SolrContentHandlerFactory getSolrContentHandlerFactory(
+      Class<? extends SolrContentHandlerFactory> factoryClass, SolrCollection solrCollection) {
+    try {
+      return factoryClass.getConstructor(Collection.class).newInstance(solrCollection.getDateFormats());
+    } catch (NoSuchMethodException nsme) {
+      throw new ConfigurationException("Unable to find valid constructor of type "
+        + factoryClass.getName() + " for creating SolrContentHandler", nsme);
+    } catch (Exception e) {
+      throw new ConfigurationException("Unexpected exception when trying to create SolrContentHandlerFactory of type "
+        + factoryClass.getName(), e);
+    }
+  }
 
   public TikaIndexer(SolrCollection solrCollection, Config config) {
     super(solrCollection, config);
@@ -112,17 +128,19 @@ public class TikaIndexer extends SolrIndexer {
         throw new ConfigurationException("File not found: " + file + " absolutePath: " + file.getAbsolutePath());
       }
     }
-    if (config.hasPath(CONTENT_HANDLER_PROPERTY)) {
-      String handlerStr = config.getString(CONTENT_HANDLER_PROPERTY);
-      Class<? extends SolrContentHandler> handlerClass;
+    if (config.hasPath(CONTENT_HANDLER_FACTORY_PROPERTY)) {
+      String handlerStr = config.getString(CONTENT_HANDLER_FACTORY_PROPERTY);
+      Class<? extends SolrContentHandlerFactory> factoryClass;
       try {
-        handlerClass = (Class<? extends SolrContentHandler>)Class.forName(handlerStr);
+        factoryClass = (Class<? extends SolrContentHandlerFactory>)Class.forName(handlerStr);
       } catch (ClassNotFoundException cnfe) {
-        throw new ConfigurationException("Could not find class " + handlerStr + " to use for " + CONTENT_HANDLER_PROPERTY, cnfe);
+        throw new ConfigurationException("Could not find class "
+          + handlerStr + " to use for " + CONTENT_HANDLER_FACTORY_PROPERTY, cnfe);
       }
-      contentHandlerConstructor = getSolrContentHandlerConstructor(handlerClass);
-    } else {
-      contentHandlerConstructor = getSolrContentHandlerConstructor(TrimSolrContentHandler.class);
+      solrContentHandlerFactory = getSolrContentHandlerFactory(factoryClass, solrCollection);
+    }
+    else {
+      solrContentHandlerFactory = getSolrContentHandlerFactory(TrimSolrContentHandlerFactory.class, solrCollection);
     }
     String oldProperty = null;
     if (tikaConfigFilePath != null) {
@@ -353,12 +371,8 @@ public class TikaIndexer extends SolrIndexer {
   protected SolrContentHandler createSolrContentHandler() {
     ParseInfo info = getParseInfo();
     SolrCollection coll = getSolrCollection();
-    try {
-      return contentHandlerConstructor.newInstance(info.getMetadata(), coll.getSolrParams(), coll.getSchema(), coll.getDateFormats());
-    } catch (Exception ex) {
-      throw new ConfigurationException("Unexpected exception when trying to create SolrContentHandler of type "
-        + contentHandlerConstructor.getName(), ex);
-    }
+    return solrContentHandlerFactory.createSolrContentHandler(
+      info.getMetadata(), coll.getSolrParams(), coll.getSchema());
   }
 
   protected void addPasswordHandler(String resourceName) throws FileNotFoundException {
