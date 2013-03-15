@@ -45,7 +45,7 @@ public class StripNonCharContentHandler extends SolrContentHandler {
    * This is borrowed from Apache Nutch.
    */
   private static String stripNonCharCodepoints(String input) {
-    StringBuilder retval = new StringBuilder(input.length());
+    StringBuilder stripped = null;
     char ch;
     for (int i = 0; i < input.length(); i++) {
       ch = input.charAt(i);
@@ -55,10 +55,13 @@ public class StripNonCharContentHandler extends SolrContentHandler {
         ch % 0x10000 != 0xfffe && // 0xfffe - 0x10fffe range
         (ch <= 0xfdd0 || ch >= 0xfdef) && // 0xfdd0 - 0xfdef
         (ch > 0x1F || ch == 0x9 || ch == 0xa || ch == 0xd)) {
-        retval.append(ch);
+        if (stripped == null) {
+          stripped = new StringBuilder(input.length());
+        }
+        stripped.append(ch);
       }
     }
-    return retval.toString();
+    return stripped == null ? input : stripped.toString();
   }
 
   @Override
