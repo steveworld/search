@@ -20,6 +20,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import org.apache.commons.lang.SystemUtils;
+import org.apache.lucene.LucenePackage;
+import org.apache.solr.core.SolrCore;
 import org.junit.Test;
 
 /** Print some info about the environment in which the unit tests are running */
@@ -30,5 +32,10 @@ public class PrintEnvironmentTest {
     System.out.println("Running test suite with java version: " + SystemUtils.JAVA_VERSION + " "
         + SystemUtils.JAVA_VM_NAME + " on " + SystemUtils.OS_NAME + " " + SystemUtils.OS_VERSION + "/"
         + SystemUtils.OS_ARCH + " on host: " + InetAddress.getLocalHost().getHostName());
+    
+    Package p = SolrCore.class.getPackage();
+    System.out.println("Running test suite with solr-spec-version: " + p.getSpecificationVersion() + ", solr-impl-version: " + p.getImplementationVersion());
+    p = LucenePackage.class.getPackage();
+    System.out.println("Running test suite with lucene-spec-version: " + p.getSpecificationVersion() + ", lucene-impl-version: " + p.getImplementationVersion());
   }
 }
