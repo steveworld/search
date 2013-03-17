@@ -18,10 +18,7 @@
  */
 package org.apache.solr.tika;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -37,13 +34,15 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.commons.compress.compressors.CompressorInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.ContentStreamBase;
 import org.apache.solr.handler.extraction.ExtractingParams;
 import org.apache.solr.handler.extraction.ExtractingRequestHandler;
-import org.apache.solr.handler.extraction.RegexRulesPasswordProvider;
 import org.apache.solr.handler.extraction.SolrContentHandler;
 import org.apache.solr.handler.extraction.SolrContentHandlerFactory;
 import org.apache.solr.schema.IndexSchema;
@@ -56,7 +55,6 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.CompositeParser;
 import org.apache.tika.parser.Parser;
-import org.apache.tika.parser.PasswordProvider;
 import org.apache.tika.sax.TeeContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.apache.tika.sax.xpath.Matcher;
@@ -65,9 +63,6 @@ import org.apache.tika.sax.xpath.XPathParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
-import org.apache.commons.compress.compressors.CompressorInputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
-import org.apache.commons.compress.compressors.gzip.GzipUtils;
 
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
@@ -274,7 +269,6 @@ public class TikaIndexer extends SolrIndexer {
       metadata = inputStreamMetadata.metadata;
       
       try {
-        addPasswordHandler(resourceName);
         parser.parse(inputStream, parsingHandler, metadata, getParseInfo().getParseContext());
       } catch (Exception e) {
         boolean ignoreTikaException = getSolrCollection().getSolrParams()
@@ -373,25 +367,6 @@ public class TikaIndexer extends SolrIndexer {
     SolrCollection coll = getSolrCollection();
     return solrContentHandlerFactory.createSolrContentHandler(
       info.getMetadata(), coll.getSolrParams(), coll.getSchema());
-  }
-
-  protected void addPasswordHandler(String resourceName) throws FileNotFoundException {
-    RegexRulesPasswordProvider epp = new RegexRulesPasswordProvider();
-    String pwMapFile = getSolrCollection().getSolrParams().get(ExtractingParams.PASSWORD_MAP_FILE);
-    if (pwMapFile != null && pwMapFile.length() > 0) {
-      InputStream is = new BufferedInputStream(new FileInputStream(pwMapFile)); // getResourceLoader().openResource(pwMapFile);
-      if (is != null) {
-        LOGGER.debug("Password file supplied: {}", pwMapFile);
-        epp.parse(is);
-      }
-    }
-    getParseInfo().getParseContext().set(PasswordProvider.class, epp);
-    String resourcePassword = getSolrCollection().getSolrParams()
-        .get(ExtractingParams.RESOURCE_PASSWORD);
-    if (resourcePassword != null) {
-      epp.setExplicitPassword(resourcePassword);
-      LOGGER.debug("Literal password supplied for file {}", resourceName);
-    }
   }
   
   /**
