@@ -25,7 +25,6 @@ import org.apache.solr.handler.extraction.SolrContentHandler;
 import org.apache.solr.handler.extraction.SolrContentHandlerFactory;
 import org.apache.solr.schema.IndexSchema;
 import org.apache.solr.schema.SchemaField;
-import org.apache.solr.tika.TrimSolrContentHandlerFactory.TrimSolrContentHandler;
 import org.apache.tika.metadata.Metadata;
 
 /**
@@ -38,15 +37,16 @@ public class StripNonCharContentHandlerFactory extends SolrContentHandlerFactory
     super(dateFormats);
   }
 
+  @Override
   public SolrContentHandler createSolrContentHandler(Metadata metadata, SolrParams params, IndexSchema schema) {
     return new StripNonCharContentHandler(metadata, params, schema, dateFormats);
   }
 
-  public static class StripNonCharContentHandler extends SolrContentHandler {
 
-    public StripNonCharContentHandler(Metadata metadata, SolrParams params, IndexSchema schema) {
-      super(metadata, params, schema);
-    }
+  ///////////////////////////////////////////////////////////////////////////////
+  // Nested classes:
+  ///////////////////////////////////////////////////////////////////////////////
+  private static final class StripNonCharContentHandler extends SolrContentHandler {
 
     public StripNonCharContentHandler(Metadata metadata, SolrParams params, IndexSchema schema, Collection<String> dateFormats) {
       super(metadata, params, schema, dateFormats);
@@ -57,7 +57,7 @@ public class StripNonCharContentHandlerFactory extends SolrContentHandlerFactory
      * This is borrowed from Apache Nutch.
      */
     private static String stripNonCharCodepoints(String input) {
-      StringBuilder stripped = null;
+      StringBuilder stripped = new StringBuilder(input.length());
       char ch;
       for (int i = 0; i < input.length(); i++) {
         ch = input.charAt(i);
@@ -67,13 +67,10 @@ public class StripNonCharContentHandlerFactory extends SolrContentHandlerFactory
           ch % 0x10000 != 0xfffe && // 0xfffe - 0x10fffe range
           (ch <= 0xfdd0 || ch >= 0xfdef) && // 0xfdd0 - 0xfdef
           (ch > 0x1F || ch == 0x9 || ch == 0xa || ch == 0xd)) {
-          if (stripped == null) {
-            stripped = new StringBuilder(input.length());
-          }
           stripped.append(ch);
         }
       }
-      return stripped == null ? input : stripped.toString();
+      return stripped.toString();
     }
 
     @Override
