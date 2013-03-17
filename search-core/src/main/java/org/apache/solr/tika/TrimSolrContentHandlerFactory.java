@@ -37,15 +37,17 @@ public class TrimSolrContentHandlerFactory extends SolrContentHandlerFactory {
     super(dateFormats);
   }
 
+  @Override
   public SolrContentHandler createSolrContentHandler(Metadata metadata, SolrParams params, IndexSchema schema) {
     return new TrimSolrContentHandler(metadata, params, schema, dateFormats);
   }
 
-  public static class TrimSolrContentHandler extends SolrContentHandler {
-    public TrimSolrContentHandler(Metadata metadata, SolrParams params, IndexSchema schema) {
-      super(metadata, params, schema);
-    }
-
+  
+  ///////////////////////////////////////////////////////////////////////////////
+  // Nested classes:
+  ///////////////////////////////////////////////////////////////////////////////
+  private static final class TrimSolrContentHandler extends SolrContentHandler {
+    
     public TrimSolrContentHandler(Metadata metadata, SolrParams params, IndexSchema schema, Collection<String> dateFormats) {
       super(metadata, params, schema, dateFormats);
     }
