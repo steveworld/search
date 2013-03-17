@@ -104,20 +104,6 @@ public class TikaIndexer extends SolrIndexer {
         throw new ConfigurationException("File not found: " + file + " absolutePath: " + file.getAbsolutePath());
       }
     }
-    if (config.hasPath(CONTENT_HANDLER_FACTORY_PROPERTY)) {
-      String handlerStr = config.getString(CONTENT_HANDLER_FACTORY_PROPERTY);
-      Class<? extends SolrContentHandlerFactory> factoryClass;
-      try {
-        factoryClass = (Class<? extends SolrContentHandlerFactory>)Class.forName(handlerStr);
-      } catch (ClassNotFoundException cnfe) {
-        throw new ConfigurationException("Could not find class "
-          + handlerStr + " to use for " + CONTENT_HANDLER_FACTORY_PROPERTY, cnfe);
-      }
-      solrContentHandlerFactory = getSolrContentHandlerFactory(factoryClass, solrCollection);
-    }
-    else {
-      solrContentHandlerFactory = getSolrContentHandlerFactory(TrimSolrContentHandlerFactory.class, solrCollection);
-    }
     String oldProperty = null;
     if (tikaConfigFilePath != null) {
       // see TikaConfig() no-arg constructor impl
@@ -144,6 +130,21 @@ public class TikaIndexer extends SolrIndexer {
 //  DefaultParser tikaConfigParser = new DefaultParser(getTikaConfig().getMediaTypeRegistry());
     mediaTypeToParserMap = Collections.unmodifiableMap(new HashMap(tikaConfigParser.getParsers()));
 
+    if (config.hasPath(CONTENT_HANDLER_FACTORY_PROPERTY)) {
+      String handlerStr = config.getString(CONTENT_HANDLER_FACTORY_PROPERTY);
+      Class<? extends SolrContentHandlerFactory> factoryClass;
+      try {
+        factoryClass = (Class<? extends SolrContentHandlerFactory>)Class.forName(handlerStr);
+      } catch (ClassNotFoundException cnfe) {
+        throw new ConfigurationException("Could not find class "
+          + handlerStr + " to use for " + CONTENT_HANDLER_FACTORY_PROPERTY, cnfe);
+      }
+      solrContentHandlerFactory = getSolrContentHandlerFactory(factoryClass, solrCollection);
+    }
+    else {
+      solrContentHandlerFactory = getSolrContentHandlerFactory(TrimSolrContentHandlerFactory.class, solrCollection);
+    }
+    
     String tmpIdPrefix = null;
     Random tmpRandomIdPrefx = null;
     if (config.hasPath(ID_PREFIX)) { // for load testing only
@@ -369,7 +370,7 @@ public class TikaIndexer extends SolrIndexer {
           entryData.set(Metadata.RESOURCE_NAME_KEY, newName);
           return new InputStreamMetadata(cis, entryData);
         } catch (IOException ioe) {
-          LOGGER.warn("Unable to create compressed input stream able to read concantenated stream", ioe);
+          LOGGER.warn("Unable to create compressed input stream able to read concatenated stream", ioe);
         }
       }
     }
