@@ -125,7 +125,7 @@ public class TikaIndexer extends SolrIndexer {
         }
       }
     }
-    autoDetectParser = new AutoDetectParser(tikaConfig);
+    autoDetectParser = new AutoDetectParser(getTikaConfig());
     CompositeParser tikaConfigParser = (CompositeParser) getTikaConfig().getParser();
 //  DefaultParser tikaConfigParser = new DefaultParser(getTikaConfig().getMediaTypeRegistry());
     mediaTypeToParserMap = Collections.unmodifiableMap(new HashMap(tikaConfigParser.getParsers()));
@@ -140,8 +140,7 @@ public class TikaIndexer extends SolrIndexer {
           + handlerStr + " to use for " + CONTENT_HANDLER_FACTORY_PROPERTY, cnfe);
       }
       solrContentHandlerFactory = getSolrContentHandlerFactory(factoryClass, solrCollection);
-    }
-    else {
+    } else {
       solrContentHandlerFactory = getSolrContentHandlerFactory(TrimSolrContentHandlerFactory.class, solrCollection);
     }
     
@@ -335,7 +334,7 @@ public class TikaIndexer extends SolrIndexer {
     super.load(docs);
   }
 
-  protected SolrContentHandler createSolrContentHandler() {
+  private SolrContentHandler createSolrContentHandler() {
     ParseInfo info = getParseInfo();
     SolrCollection coll = getSolrCollection();
     return solrContentHandlerFactory.createSolrContentHandler(
