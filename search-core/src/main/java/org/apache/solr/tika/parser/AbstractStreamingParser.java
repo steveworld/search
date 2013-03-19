@@ -26,6 +26,7 @@ import java.util.Set;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.tika.ParseInfo;
+import org.apache.solr.tika.RecoverableSolrException;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
@@ -73,16 +74,24 @@ public abstract class AbstractStreamingParser implements Parser {
     parseInfo = ParseInfo.getParseInfo(parseContext);
     try {
       doParse(in, handler);
-    } catch (Exception e) {
-      LOGGER.error("Cannot parse", e);
-      if (e instanceof IOException) {
-        throw (IOException) e;
-      } else if (e instanceof SAXException) {
-        throw (SAXException) e;
-      } else if (e instanceof TikaException) {
-        throw (TikaException) e;
+    } catch (Throwable t) {
+      parseInfo.setThrowable(t);
+      LOGGER.error("Cannot parse", t);
+      if (t instanceof IOException) {
+        throw (IOException) t;
+      } else if (t instanceof SAXException) {
+        throw (SAXException) t;
+      } else if (t instanceof TikaException) {
+        throw (TikaException) t;
+      } else if (t instanceof SolrServerException) {
+        throw new RecoverableSolrException((SolrServerException)t);
+      } else if (t instanceof RuntimeException) {
+        throw (RuntimeException) t;
+      } else if (t instanceof Error) {
+        throw (Error) t;
+      } else {
+        throw new TikaException("Cannot parse", t);
       }
-      throw new TikaException("Cannot parse", e);
     }
   }
 

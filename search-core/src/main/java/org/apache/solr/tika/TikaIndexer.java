@@ -60,6 +60,7 @@ import org.apache.tika.sax.xpath.XPathParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
 
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
@@ -164,29 +165,52 @@ public class TikaIndexer extends SolrIndexer {
   }
 
   @Override
-  public void process(StreamEvent event) throws IOException, SolrServerException {
+  public void process(StreamEvent event) throws IOException, SolrServerException, SAXException, TikaException {
     parseInfo = new ParseInfo(event, this, mediaTypeToParserMap); // ParseInfo is more practical than ParseContext
     try {
       super.process(event);
+      Throwable t = parseInfo.getThrowable();
+      if (t != null) {
+        throw t; // rethrow
+      }
+    } catch (Error e) {
+      throw e; // never ignore errors
+    } catch (Throwable t) {
+      if (isProductionMode() && (!RecoverableSolrException.isRecoverable(t) || isIgnoringRecoverableExceptions())) {
+        LOGGER.warn(new StringBuilder("Cannot parse - skipping extracting text due to ").append(t.getLocalizedMessage())
+            .append(". metadata=").append(parseInfo.getMetadata()).toString());
+      } else if (t instanceof IOException) {
+        throw (IOException) t;
+      } else if (t instanceof SolrServerException) {
+        throw (SolrServerException) t;
+      } else if (t instanceof SAXException) {
+        throw (SAXException) t;
+      } else if (t instanceof TikaException) {
+        throw (TikaException) t;
+      } else if (t instanceof RuntimeException) {
+        throw (RuntimeException) t;
+      } else {
+        throw new IndexerException(t);
+      }
     } finally {
       parseInfo = null;
     }
   }
-
+  
   protected final ParseInfo getParseInfo() {
     assert parseInfo != null;
     return parseInfo;
   }
 
   @Override
-  protected List<SolrInputDocument> extract(StreamEvent event) {
+  protected List<SolrInputDocument> extract(StreamEvent event) throws IOException, SolrServerException, SAXException, TikaException {
     LOGGER.debug("event headers: {}", event.getHeaders());
     Parser parser = detectParser(event);
     ParseInfo info = getParseInfo();
 
     // necessary for gzipped files or tar files, etc! copied from TikaCLI
     info.getParseContext().set(Parser.class, parser);
-
+    
     Metadata metadata = info.getMetadata();
 
     // If you specify the resource name (the filename, roughly) with this
@@ -249,24 +273,11 @@ public class TikaIndexer extends SolrIndexer {
       // We leave ParseInfo.metdata untouched so it contains the correct, original resourceName.
       metadata = inputStreamMetadata.metadata;
       
-      try {
-        parser.parse(inputStream, parsingHandler, metadata, getParseInfo().getParseContext());
-      } catch (Exception e) {
-        boolean ignoreTikaException = getSolrCollection().getSolrParams()
-            .getBool(ExtractingParams.IGNORE_TIKA_EXCEPTION, false);
-        if (ignoreTikaException) {
-          LOGGER.warn(new StringBuilder("Cannot parse - skipping extracting text due to ").append(e.getLocalizedMessage())
-              .append(". metadata=").append(metadata.toString()).toString());
-//          LOGGER.warn("Cannot parse", e);
-        } else {
-          throw new IndexerException(e);
-        }
-      }
-
+      parser.parse(inputStream, parsingHandler, metadata, getParseInfo().getParseContext());
       LOGGER.trace("debug XML doc: {}", debugWriter);
 
       if (info.isMultiDocumentParser()) {
-        return Collections.EMPTY_LIST;
+        return Collections.EMPTY_LIST; // loads were already handled by multidoc parser
       }
 
       SolrInputDocument doc = handler.newDocument();

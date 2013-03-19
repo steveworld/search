@@ -30,6 +30,7 @@ import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.NamedList;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -40,6 +41,7 @@ import org.junit.Test;
  *
  * @since solr 1.3
  */
+@Ignore
 public class TestSolrExample extends SolrJettyTestBase
 {
   private static final String RESOURCES_DIR = "target/test-classes";

@@ -31,7 +31,6 @@ import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.io.DatumReader;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.tika.IndexerException;
 import org.apache.solr.tika.ParseInfo;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.sax.XHTMLContentHandler;
@@ -51,7 +50,7 @@ public class StreamingAvroContainerParser extends StreamingAvroParser {
   }
   
   @Override
-  protected void doParse(InputStream in, ContentHandler handler) throws IOException, SAXException {
+  protected void doParse(InputStream in, ContentHandler handler) throws IOException, SAXException, SolrServerException {
     ParseInfo info = getParseInfo();
     info.setMultiDocumentParser(true);
     Metadata metadata = info.getMetadata();
@@ -71,8 +70,6 @@ public class StreamingAvroContainerParser extends StreamingAvroParser {
         datum = reader.next(datum);
         process(datum, xhtml);
       }
-    } catch (SolrServerException e) {
-      throw new IndexerException(e);
     } finally {
       if (reader != null) {
         reader.close();

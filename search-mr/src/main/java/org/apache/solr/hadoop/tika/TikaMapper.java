@@ -50,12 +50,12 @@ import org.apache.solr.hadoop.HeartBeater;
 import org.apache.solr.hadoop.PathParts;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrMapper;
-import org.apache.solr.handler.extraction.ExtractingParams;
 import org.apache.solr.handler.extraction.ExtractingRequestHandler;
 import org.apache.solr.request.SolrRequestHandler;
 import org.apache.solr.schema.IndexSchema;
 import org.apache.solr.tika.ConfigurationException;
 import org.apache.solr.tika.DocumentLoader;
+import org.apache.solr.tika.RecoverableSolrException;
 import org.apache.solr.tika.SolrCollection;
 import org.apache.solr.tika.SolrIndexer;
 import org.apache.solr.tika.StreamEvent;
@@ -86,6 +86,8 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   private HeartBeater heartBeater;
   private Map<String, String> commandLineTikaHeaders;
   private boolean disableFileOpen;
+  private boolean isProductionMode = false;
+  private boolean isIgnoringRecoverableExceptions = false;
 
   /**
    * Headers, including MIME types, can also explicitly be passed by force from the CLI to Tika, e.g:
@@ -146,6 +148,10 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
 //    } else {
 //      throw new IllegalStateException("Missing tika.config parameter"); // for debugging      
     }
+    isProductionMode = context.getConfiguration().getBoolean(SolrIndexer.PRODUCTION_MODE, isProductionMode);
+    params.put(SolrIndexer.PRODUCTION_MODE, isProductionMode);
+    isIgnoringRecoverableExceptions = context.getConfiguration().getBoolean(SolrIndexer.IGNORE_RECOVERABLE_EXCEPTIONS, isIgnoringRecoverableExceptions);
+    params.put(SolrIndexer.IGNORE_RECOVERABLE_EXCEPTIONS, isIgnoringRecoverableExceptions);
     Config config = ConfigFactory.parseMap(params);
     indexer = createSolrIndexer(config);
     schema = indexer.getSolrCollection().getSchema();
@@ -242,14 +248,10 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       } catch (Exception e) {
         LOG.error("Unable to process file " + value, e);
         context.getCounter(getClass().getName() + ".errors", e.getClass().getName()).increment(1);
-        if (!context.getConfiguration().getBoolean(ExtractingParams.IGNORE_TIKA_EXCEPTION, false)) {
-          if (e instanceof IOException) {
-            throw (IOException) e;
-          } else if (e instanceof InterruptedException) {
-            throw (InterruptedException) e;
-          } else {
-            throw new IllegalStateException(e);
-          }
+        if (isProductionMode && (!RecoverableSolrException.isRecoverable(e) || isIgnoringRecoverableExceptions)) {
+          ; // ignore
+        } else {
+          throw new IllegalArgumentException(e);          
         }
       } finally {
         if (in != null) {
@@ -303,7 +305,11 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   protected void cleanup(Context context) throws IOException, InterruptedException {
     heartBeater.close();
     super.cleanup(context);
-    indexer.commitTransaction();
+    try {
+      indexer.commitTransaction();
+    } catch (SolrServerException e) {
+      throw new IOException(e);
+    }
     indexer.stop();
   }
 

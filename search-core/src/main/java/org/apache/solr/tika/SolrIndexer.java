@@ -28,8 +28,10 @@ import java.util.TreeMap;
 import org.apache.commons.io.IOUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.tika.exception.TikaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 
 import com.google.common.base.Joiner;
 import com.typesafe.config.Config;
@@ -43,6 +45,9 @@ public class SolrIndexer {
   private final Config config;
   private SolrCollection solrCollection; // proxy to remote solr  
   private final boolean ignoreLoads; // for load testing only
+
+  public static final String PRODUCTION_MODE = SolrIndexer.class.getName() + ".isProductionMode"; // ExtractingParams.IGNORE_TIKA_EXCEPTION;
+  public static final String IGNORE_RECOVERABLE_EXCEPTIONS = SolrIndexer.class.getName() + ".ignoreRecoverableExceptions";
 
   /**
    * If true this boolean configuration parameter simulates an infinitely fast
@@ -67,11 +72,6 @@ public class SolrIndexer {
     LOGGER.info("Solr schema: \n{}", Joiner.on("\n").join(new TreeMap(solrCollection.getSchema().getFields()).values()));
   }
   
-  /** Returns the configuration settings */
-  protected Config getConfig() {
-      return config;
-  }
-
   /**
    * Returns the Solr collection proxy to which this indexer can route Solr
    * documents
@@ -89,7 +89,7 @@ public class SolrIndexer {
   }
 
   /** Extracts, transforms and loads the given event into Solr */
-  public void process(StreamEvent event) throws IOException, SolrServerException {
+  public void process(StreamEvent event) throws IOException, SolrServerException, SAXException, TikaException {
     List<SolrInputDocument> docs = extract(event);
     docs = transform(docs);
     load(docs);
@@ -98,7 +98,8 @@ public class SolrIndexer {
   /**
    * Extracts the given event and maps it into zero or more Solr documents
    */
-  protected List<SolrInputDocument> extract(StreamEvent event) {
+  @SuppressWarnings("unused")
+  protected List<SolrInputDocument> extract(StreamEvent event) throws IOException, SolrServerException, SAXException, TikaException {
     SolrInputDocument doc = new SolrInputDocument();
     for (Entry<String, String> entry : event.getHeaders().entrySet()) {
       doc.setField(entry.getKey(), entry.getValue());
@@ -143,7 +144,7 @@ public class SolrIndexer {
    * caller should then commit or rollback the outer (flume) transaction
    * correspondingly.
    */
-  public void commitTransaction() {
+  public void commitTransaction() throws SolrServerException, IOException {
     solrCollection.getDocumentLoader().commitTransaction();
   }
 
@@ -160,6 +161,27 @@ public class SolrIndexer {
    */
   public void rollback() throws SolrServerException, IOException {
     solrCollection.getDocumentLoader().rollback();
+  }
+
+  /** Returns the configuration settings */
+  protected Config getConfig() {
+      return config;
+  }
+  
+  protected boolean isProductionMode() {
+    boolean isProductionMode = false;
+    if (getConfig().hasPath(PRODUCTION_MODE)) { 
+      isProductionMode = getConfig().getBoolean(PRODUCTION_MODE);
+    }
+    return isProductionMode;
+  }
+
+  protected boolean isIgnoringRecoverableExceptions() {
+    boolean ignoreRecoverableExceptions = false;
+    if (getConfig().hasPath(IGNORE_RECOVERABLE_EXCEPTIONS)) { 
+      ignoreRecoverableExceptions = getConfig().getBoolean(IGNORE_RECOVERABLE_EXCEPTIONS);
+    }
+    return ignoreRecoverableExceptions;
   }
 
 }

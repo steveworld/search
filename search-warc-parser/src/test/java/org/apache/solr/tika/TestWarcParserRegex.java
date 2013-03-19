@@ -63,7 +63,7 @@ public class TestWarcParserRegex extends TikaIndexerTestBase {
     };
     Map<String,Integer> expectedRecords = new HashMap();
     expectedRecords.put(path + sampleWarcFile, expectedCount);
-    testDocumentTypesInternal(files, expectedRecords, solrIndexer);
+    testDocumentTypesInternal(files, expectedRecords, solrIndexer, false);
     tearDown(solrIndexer);
   }
 
@@ -87,6 +87,6 @@ public class TestWarcParserRegex extends TikaIndexerTestBase {
     Map<String,Integer> expectedRecords = new HashMap();
     expectedRecords.put(path + sampleWarcFile, expectedHTMLDocCount + expectedPlainTextDocCount);
     deleteAllDocuments();
-    testDocumentTypesInternal(files, expectedRecords);
+    testDocumentTypesInternal(files, expectedRecords, indexer, false);
   }
 }
