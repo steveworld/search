@@ -67,6 +67,15 @@ public class SolrIndexer {
    * 
    * By default the IGNORE_RECOVERABLE_EXCEPTIONS flag is false. This flag
    * should only be enabled if all other options have been exhausted.
+   * 
+   * Example MapReduce Usage:
+   * 
+   * hadoop ... -D org.apache.solr.tika.SolrIndexer.isProductionMode=true -D org.apache.solr.tika.SolrIndexer.ignoreRecoverableExceptions=true
+   * 
+   * Example Flume Usage in flume.conf:
+   * 
+   * agent.sinks.solrSink.org.apache.solr.tika.SolrIndexer.isProductionMode = true
+   * agent.sinks.solrSink.org.apache.solr.tika.SolrIndexer.ignoreRecoverableExceptions = true
    */
   public static final String PRODUCTION_MODE = SolrIndexer.class.getName() + ".isProductionMode"; // ExtractingParams.IGNORE_TIKA_EXCEPTION;
   public static final String IGNORE_RECOVERABLE_EXCEPTIONS = SolrIndexer.class.getName() + ".ignoreRecoverableExceptions";
