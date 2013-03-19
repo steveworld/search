@@ -35,6 +35,7 @@ import org.xml.sax.SAXException;
 
 import com.google.common.base.Joiner;
 import com.typesafe.config.Config;
+import com.yammer.metrics.core.MetricsRegistry;
 
 /**
  * Indexer that extracts search documents from events, transforms them and
@@ -45,6 +46,7 @@ public class SolrIndexer {
   private final Config config;
   private SolrCollection solrCollection; // proxy to remote solr  
   private final boolean ignoreLoads; // for load testing only
+  private final MetricsRegistry metricsRegistry;
 
   /**
    * Some exceptions tend to be transient, in which case the task can be
@@ -89,16 +91,20 @@ public class SolrIndexer {
   
   private static final Logger LOGGER = LoggerFactory.getLogger(SolrIndexer.class);
 
-  public SolrIndexer(SolrCollection solrCollection, Config config) {
+  public SolrIndexer(SolrCollection solrCollection, Config config, MetricsRegistry metricsRegistry) {
     if (solrCollection == null) {
       throw new IllegalArgumentException("solrCollection must not be null");
     }
     if (config == null) {
       throw new IllegalArgumentException("Config must not be null");
     }
+    if (metricsRegistry == null) {
+      throw new IllegalArgumentException("metricsRegistry must not be null");
+    }
     this.config = config;
     this.solrCollection = solrCollection;
     this.ignoreLoads = config.hasPath(IGNORE_LOADS) && config.getBoolean(IGNORE_LOADS);
+    this.metricsRegistry = metricsRegistry;
     LOGGER.info("Number of solr schema fields: {}", solrCollection.getSchema().getFields().size());
     LOGGER.info("Solr schema: \n{}", Joiner.on("\n").join(new TreeMap(solrCollection.getSchema().getFields()).values()));
   }
@@ -215,4 +221,10 @@ public class SolrIndexer {
     return ignoreRecoverableExceptions;
   }
 
+  /**
+   * Get the MetricsRegistry
+   */
+  public MetricsRegistry getMetricsRegistry() {
+    return metricsRegistry;
+  }
 }

@@ -46,6 +46,7 @@ import org.xml.sax.SAXException;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.yammer.metrics.core.MetricsRegistry;
 
 /**
  * Base type for TikaIndexer tests.
@@ -111,7 +112,7 @@ public class TikaIndexerTestBase extends SolrTestCaseJ4 {
     int batchSize = SEQ_NUM2.incrementAndGet() % 2 == 0 ? SolrInspector.DEFAULT_SOLR_SERVER_BATCH_SIZE : 1;
     DocumentLoader testServer = new SolrServerDocumentLoader(solrServer, batchSize);
     Config config = ConfigFactory.parseMap(context);
-    indexer = new TikaIndexer(new SolrInspector().createSolrCollection(config, testServer), config) {
+    indexer = new TikaIndexer(new SolrInspector().createSolrCollection(config, testServer), config, new MetricsRegistry()) {
       @Override
       public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
         for (SolrInputDocument doc : docs) {

@@ -27,6 +27,7 @@ import org.junit.Test;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.yammer.metrics.core.MetricsRegistry;
 
 /**
  * Test for regex doc-type based matching of the WarcParser
@@ -50,7 +51,7 @@ public class TestWarcParserRegex extends TikaIndexerTestBase {
     Config config = ConfigFactory.parseMap(context);
    
     SolrIndexer solrIndexer =
-      new TikaIndexer(new SolrInspector().createSolrCollection(config, indexer.getSolrCollection().getDocumentLoader()), config);
+      new TikaIndexer(new SolrInspector().createSolrCollection(config, indexer.getSolrCollection().getDocumentLoader()), config, new MetricsRegistry());
     deleteAllDocuments(solrIndexer);
     return solrIndexer;
   }
