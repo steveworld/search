@@ -132,6 +132,9 @@
           <argLine>-Dtests.locale=en_us</argLine>
           <!--<forkMode>always</forkMode>-->
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
+          <systemPropertyVariables>
+            <solr.expected.version>${solr.expected.version}</solr.expected.version>
+          </systemPropertyVariables>          
         </configuration>
       </plugin>
 
