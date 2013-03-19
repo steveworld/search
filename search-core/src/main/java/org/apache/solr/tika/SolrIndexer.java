@@ -46,6 +46,26 @@ public class SolrIndexer {
   private SolrCollection solrCollection; // proxy to remote solr  
   private final boolean ignoreLoads; // for load testing only
 
+  /**
+   * Some exceptions tend to be transient, in which case the task can be
+   * retried. Example: network connection errors, timeouts, etc. These are
+   * called recoverable exceptions.
+   * 
+   * In contrast, the task associated with an unrecoverable exceptions can never
+   * succeed on retry. Example: Unknown Solr schema field.
+   * 
+   * In production mode we log and ignore unrecoverable exceptions except if the
+   * IGNORE_RECOVERABLE_EXCEPTIONS flag is true.
+   * 
+   * In non-production mode (aka test mode) we throw exceptions up the call
+   * chain in order to fail fast and provide better debugging diagnostics to the
+   * user.
+   * 
+   * The default is non-production mode (aka test mode).
+   * 
+   * By default the IGNORE_RECOVERABLE_EXCEPTIONS flag is false. This flag
+   * should only be enabled if all other options have been exhausted.
+   */
   public static final String PRODUCTION_MODE = SolrIndexer.class.getName() + ".isProductionMode"; // ExtractingParams.IGNORE_TIKA_EXCEPTION;
   public static final String IGNORE_RECOVERABLE_EXCEPTIONS = SolrIndexer.class.getName() + ".ignoreRecoverableExceptions";
 

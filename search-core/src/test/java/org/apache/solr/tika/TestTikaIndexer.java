@@ -555,7 +555,6 @@ public class TestTikaIndexer extends TikaIndexerTestBase {
   }
   
   @Test
-  // FIXME: throw away b/c of unknown field (schema error is unrecoverable)
   public void testParseExceptionInsideEmbeddedJPGParserInProductionMode() throws Exception {
     setProductionMode(true);
     ParseContext parseContext = new ParseContext();
