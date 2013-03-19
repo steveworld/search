@@ -22,21 +22,27 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.solr.SolrJettyTestBase;
+import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrInputDocument;
+import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -44,13 +50,16 @@ import com.typesafe.config.ConfigFactory;
 /**
  * Base type for TikaIndexer tests.
  */
-public class TikaIndexerTestBase extends SolrJettyTestBase {
+public class TikaIndexerTestBase extends SolrTestCaseJ4 {
 
   protected SolrIndexer indexer;
+  protected boolean injectUnknownSolrField = false; // to force exceptions
+  protected boolean injectSolrServerException = false; // force SolrServerException
+  protected boolean isProductionMode = false;
 
-  protected static final boolean TEST_WITH_EMBEDDED_SOLR_SERVER = false;
+  protected static final boolean TEST_WITH_EMBEDDED_SOLR_SERVER = true;
   protected static final String EXTERNAL_SOLR_SERVER_URL = System.getProperty("externalSolrServer");
-//private static final String EXTERNAL_SOLR_SERVER_URL = "http://127.0.0.1:8983/solr";
+//  protected static final String EXTERNAL_SOLR_SERVER_URL = "http://127.0.0.1:8983/solr";
   protected static final String RESOURCES_DIR = "target/test-classes";
 //private static final String RESOURCES_DIR = "src/test/resources";
   protected static final AtomicInteger SEQ_NUM = new AtomicInteger();
@@ -86,19 +95,45 @@ public class TikaIndexerTestBase extends SolrJettyTestBase {
     final SolrServer solrServer;
     if (EXTERNAL_SOLR_SERVER_URL != null) {
       //solrServer = new ConcurrentUpdateSolrServer(EXTERNAL_SOLR_SERVER_URL, 2, 2);
-      solrServer = new SafeConcurrentUpdateSolrServer(EXTERNAL_SOLR_SERVER_URL, 2, 2);
-      //solrServer = new HttpSolrServer(EXTERNAL_SOLR_SERVER_URL);
+      //solrServer = new SafeConcurrentUpdateSolrServer(EXTERNAL_SOLR_SERVER_URL, 2, 2);
+      solrServer = new HttpSolrServer(EXTERNAL_SOLR_SERVER_URL);
+      ((HttpSolrServer)solrServer).setParser(new XMLResponseParser());
     } else {
       if (TEST_WITH_EMBEDDED_SOLR_SERVER) {
         solrServer = new TestEmbeddedSolrServer(h.getCoreContainer(), "");
       } else {
-        solrServer = new TestSolrServer(getSolrServer());
+        throw new RuntimeException("Not yet implemented");
+        //solrServer = new TestSolrServer(getSolrServer());
       }
     }
 
     DocumentLoader testServer = new SolrServerDocumentLoader(solrServer);
     Config config = ConfigFactory.parseMap(context);
-    indexer = new TikaIndexer(new SolrInspector().createSolrCollection(config, testServer), config);
+    indexer = new TikaIndexer(new SolrInspector().createSolrCollection(config, testServer), config) {
+      @Override
+      public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
+        for (SolrInputDocument doc : docs) {
+          if (injectUnknownSolrField) {
+            doc.setField("unknown_bar_field", "baz");
+          }
+          if (injectSolrServerException) {
+            throw new SolrServerException("Injected SolrServerException");
+          }
+        }
+        super.load(docs);
+      }
+      
+      @Override
+      protected Config getConfig() {
+        Map<String, String> context = getContext();
+        if (isProductionMode) {
+          context.put(SolrIndexer.PRODUCTION_MODE, "true");
+        }
+        Config config = ConfigFactory.parseMap(context);
+        return config;
+      }
+
+    };
     
     deleteAllDocuments();
   }
@@ -131,8 +166,10 @@ public class TikaIndexerTestBase extends SolrJettyTestBase {
     tearDown(indexer);
   }
 
-  protected void testDocumentTypesInternal(String[] files, Map<String,Integer> expectedRecords, SolrIndexer solrIndexer)
+  protected void testDocumentTypesInternal(String[] files, Map<String,Integer> expectedRecords, SolrIndexer solrIndexer, boolean isProductionMode)
   throws Exception {
+    deleteAllDocuments(solrIndexer);
+    setProductionMode(isProductionMode);
     int numDocs = 0;
     long startTime = System.currentTimeMillis();
     
@@ -145,12 +182,25 @@ public class TikaIndexerTestBase extends SolrJettyTestBase {
         byte[] body = FileUtils.readFileToByteArray(f);
         StreamEvent event = new StreamEvent(new ByteArrayInputStream(body), new HashMap());
         event.getHeaders().put(Metadata.RESOURCE_NAME_KEY, f.getName());
-        load(event, solrIndexer);
-        Integer count = expectedRecords.get(file);
-        if (count != null) {
-          numDocs += count;
+        
+        if (isProductionMode || !injectUnknownSolrField) {
+          load(event, solrIndexer); // must not throw exception
         } else {
-          numDocs++;
+          try {
+            load(event, solrIndexer); // must throw exception
+            fail();
+          } catch (Exception e) {
+            ; // expected
+          }          
+        }
+        
+        if (!injectUnknownSolrField) {
+          Integer count = expectedRecords.get(file);
+          if (count != null) {
+            numDocs += count;
+          } else {
+            numDocs++;
+          }
         }
         assertEquals(numDocs, queryResultSetSize("*:*", solrIndexer));
       }
@@ -161,18 +211,40 @@ public class TikaIndexerTestBase extends SolrJettyTestBase {
     LOGGER.trace("indexer: ", solrIndexer);
   }
 
-  protected void testDocumentTypesInternal(String[] files, Map<String,Integer> expectedRecords)
-  throws Exception {
-    testDocumentTypesInternal(files, expectedRecords, indexer);
+  protected void testDocumentTypesInternal(String[] files, Map<String,Integer> expectedRecords) throws Exception {
+    boolean beforeProd = isProductionMode;
+    try {    
+      testDocumentTypesInternal(files, expectedRecords, indexer, false);
+      testDocumentTypesInternal(files, expectedRecords, indexer, true);
+      
+      boolean before = injectUnknownSolrField;
+      injectUnknownSolrField = true;
+      try {
+        testDocumentTypesInternal(files, expectedRecords, indexer, false);
+        testDocumentTypesInternal(files, expectedRecords, indexer, true);
+      } finally {
+        injectUnknownSolrField = before;
+      }      
+      
+      testDocumentTypesInternal(files, expectedRecords, indexer, false);
+    } finally {
+      isProductionMode = beforeProd;
+    }
   }
 
-  protected void load(StreamEvent event, SolrIndexer solrIndexer) throws IOException, SolrServerException {
-    event = new StreamEvent(event.getBody(), new HashMap(event.getHeaders()));
+  protected void load(StreamEvent event, SolrIndexer solrIndexer) throws IOException, SolrServerException, SAXException, TikaException {
+    if (event instanceof TikaStreamEvent) {
+      event = new TikaStreamEvent(event.getBody(), new HashMap(event.getHeaders()), ((TikaStreamEvent)event).getParseContext());
+    } else {      
+      event = new StreamEvent(event.getBody(), new HashMap(event.getHeaders()));
+    }
     event.getHeaders().put("id", "" + SEQ_NUM.getAndIncrement());
+    solrIndexer.beginTransaction();
     solrIndexer.process(event);
+    solrIndexer.commitTransaction();
   }
 
-  protected void load(StreamEvent event) throws IOException, SolrServerException {
+  protected void load(StreamEvent event) throws IOException, SolrServerException, SAXException, TikaException {
     load(event, indexer);
   }
 
@@ -193,4 +265,9 @@ public class TikaIndexerTestBase extends SolrJettyTestBase {
   protected int queryResultSetSize(String query) throws SolrServerException, IOException {
     return queryResultSetSize(query, indexer);
   }
+  
+  protected void setProductionMode(boolean isProduction) {
+    this.isProductionMode = isProduction;
+  }
+  
 }

@@ -20,8 +20,11 @@ package org.apache.solr.tika;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.zip.GZIPOutputStream;
 
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
@@ -47,6 +51,7 @@ import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -56,6 +61,8 @@ import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.handler.extraction.ExtractingParams;
 import org.apache.solr.tika.parser.StreamingAvroContainerParser.ForwardOnlySeekableInputStream;
+import org.apache.tika.exception.TikaException;
+import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
@@ -64,8 +71,12 @@ import org.apache.tika.sax.ToTextContentHandler;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.xml.sax.SAXException;
+
+import com.drew.imaging.jpeg.JpegProcessingException;
 
 public class TestTikaIndexer extends TikaIndexerTestBase {
+  
   private Map<String,Integer> expectedRecords = new HashMap();
 
   @Before
@@ -236,7 +247,7 @@ public class TestTikaIndexer extends TikaIndexerTestBase {
   }
 
   @Test
-  public void testAvroStringDocuments() throws IOException, SolrServerException {
+  public void testAvroStringDocuments() throws IOException, SolrServerException, SAXException, TikaException {
     Schema docSchema = Schema.createRecord("Doc", "adoc", null, false);
     List<Field> docFields = new ArrayList<Field>();   
     Schema itemListSchema = Schema.create(Type.STRING);
@@ -256,7 +267,7 @@ public class TestTikaIndexer extends TikaIndexerTestBase {
   }
 
   @Test
-  public void testAvroArrayUnionDocument() throws IOException, SolrServerException {
+  public void testAvroArrayUnionDocument() throws IOException, SolrServerException, SAXException, TikaException {
     Schema documentSchema = Schema.createRecord("Doc", "adoc", null, false);
     List<Field> docFields = new ArrayList<Field>();   
     Schema intArraySchema = Schema.createArray(Schema.create(Type.INT));
@@ -288,7 +299,7 @@ public class TestTikaIndexer extends TikaIndexerTestBase {
   }
   
   @Test
-  public void testAvroComplexDocuments() throws IOException, SolrServerException {
+  public void testAvroComplexDocuments() throws IOException, SolrServerException, SAXException, TikaException {
     Schema documentSchema = Schema.createRecord("Document", "adoc", null, false);
     List<Field> docFields = new ArrayList<Field>();
     docFields.add(new Field("docId", Schema.create(Type.INT), null, null));
@@ -383,8 +394,7 @@ public class TestTikaIndexer extends TikaIndexerTestBase {
     ingestAndVerifyAvro(documentSchema, document0, document1);
   }
 
-  private void ingestAndVerifyAvro(Schema schema, Record... records) throws IOException, SolrServerException {
-    
+  private void ingestAndVerifyAvro(Schema schema, Record... records) throws IOException, SolrServerException, SAXException, TikaException {
     deleteAllDocuments();
     
     GenericDatumWriter datum = new GenericDatumWriter(schema);
@@ -422,7 +432,7 @@ public class TestTikaIndexer extends TikaIndexerTestBase {
       datumWriter.write(record, encoder);
     }
     encoder.flush();
-    
+
     Decoder decoder = DecoderFactory.get().binaryDecoder(new ByteArrayInputStream(bout.toByteArray()), null);
     DatumReader<Record> datumReader = new GenericDatumReader<Record>(schema);
     for (int i = 0; i < records.length; i++) {
@@ -436,10 +446,193 @@ public class TestTikaIndexer extends TikaIndexerTestBase {
     load(event);
     assertEquals(records.length, queryResultSetSize("*:*"));    
   }
+
+  @Test
+  public void testParseExceptionInsideNonEmbeddedDataFormat() throws Exception {
+    StreamEvent event = new StreamEvent(new ByteArrayInputStream(getAvroMagicBytes(false)), new HashMap());
+    try {
+      load(event);
+      fail();
+    } catch (TikaException e) { // Tika's CompositeParser.parse() wraps EOFException inside a TikaException
+      assertTrue(e.getCause() instanceof EOFException); // avro expects data following the magic bytes header
+    }
+  }
+  
+  @Test
+  /** In production mode we log the exception and continue instead of failing */
+  public void testParseExceptionInsideNonEmbeddedDataFormatInProductionMode() throws Exception {
+    setProductionMode(true);
+    StreamEvent event = new StreamEvent(new ByteArrayInputStream(getAvroMagicBytes(false)), new HashMap());
+    load(event);
+  }
+  
+  @Test
+  public void testParseExceptionInsideEmbeddedDataFormat() throws Exception {
+    StreamEvent event = new StreamEvent(new ByteArrayInputStream(getAvroMagicBytes(true)), new HashMap());
+    try {
+      load(event);
+      fail();
+    } catch (EOFException e) { // avro expects data following the magic bytes header
+      ;
+    }
+  }
+  
+  @Test
+  /** In production mode we log the exception and continue instead of failing */
+  public void testParseExceptionInsideEmbeddedDataFormatInProductionMode() throws Exception {
+    setProductionMode(true);
+    StreamEvent event = new StreamEvent(new ByteArrayInputStream(getAvroMagicBytes(true)), new HashMap());
+    load(event);
+  }
+  
+  private byte[] getAvroMagicBytes(boolean isGzip) throws IOException {
+    // generate the 4 leading magic bytes that identify a file as an avro container file
+    byte[] bytes = "Obj".getBytes("ASCII");
+    byte[] magic = new byte[bytes.length + 1];
+    System.arraycopy(bytes, 0, magic, 0, bytes.length);
+    magic[3] = (byte) 1;
+    
+    ByteArrayOutputStream bout = new ByteArrayOutputStream();
+    OutputStream out = isGzip ? new GZIPOutputStream(bout) : bout;
+    out.write(magic);
+    out.flush();
+    out.close();
+    return bout.toByteArray();
+  }
+  
+  @Test
+  public void testParseExceptionInsideNonEmbeddedJPGParser() throws Exception {
+    StreamEvent event = new StreamEvent(new ByteArrayInputStream(getJPGMagicBytes(false)), new HashMap());
+    try {
+      load(event);
+      fail();
+    } catch (TikaException e) { // Tika's CompositeParser.parse() wraps JpegProcessingException inside a TikaException
+      assertTrue(ExceptionUtils.getRootCause(e) instanceof JpegProcessingException); // JPG expects data following the magic bytes header
+      assertTrue(e.getCause() instanceof JpegProcessingException); // JPG expects data following the magic bytes header
+    }
+  }
+  
+  @Test
+  public void testParseExceptionInsideNonEmbeddedJPGParserInProductionMode() throws Exception {
+    setProductionMode(true);
+    StreamEvent event = new StreamEvent(new ByteArrayInputStream(getJPGMagicBytes(false)), new HashMap());
+    load(event);
+  }
+  
+  @Test
+  public void testParseExceptionInsideStrictEmbeddedJPGParser() throws Exception {
+    ParseContext parseContext = new ParseContext();
+    parseContext.set(EmbeddedDocumentExtractor.class, new StrictParsingEmbeddedDocumentExtractor(parseContext));
+    StreamEvent event = new TikaStreamEvent(new ByteArrayInputStream(getJPGMagicBytes(true)), new HashMap(), parseContext);
+    try {
+      load(event);
+      fail();
+    } catch (TikaException e) { // Tika's CompositeParser.parse() wraps JpegProcessingException inside a TikaException
+      assertTrue(ExceptionUtils.getRootCause(e) instanceof JpegProcessingException); // JPG expects data following the magic bytes header
+      assertTrue(e.getCause().getCause().getCause() instanceof JpegProcessingException); // JPG expects data following the magic bytes header
+    }
+  }
+  
+  @Test
+  public void testParseExceptionInsideStrictEmbeddedJPGParserInProductionMode() throws Exception {
+    setProductionMode(true);
+    ParseContext parseContext = new ParseContext();
+    StreamEvent event = new TikaStreamEvent(new ByteArrayInputStream(getJPGMagicBytes(true)), new HashMap(), parseContext);
+    load(event);
+  }
+  
+  @Test
+  public void testParseExceptionInsideEmbeddedJPGParser() throws Exception {
+    ParseContext parseContext = new ParseContext();
+    parseContext.set(EmbeddedDocumentExtractor.class, new StrictParsingEmbeddedDocumentExtractor(parseContext));
+    StreamEvent event = new TikaStreamEvent(new ByteArrayInputStream(getJPGMagicBytes(true)), new HashMap(), parseContext);
+    try {
+      load(event);
+      fail();
+    } catch (TikaException e) { // JPG expects data following the magic bytes header
+      assertTrue(ExceptionUtils.getRootCause(e) instanceof JpegProcessingException);      
+    }
+  }
+  
+  @Test
+  // FIXME: throw away b/c of unknown field (schema error is unrecoverable)
+  public void testParseExceptionInsideEmbeddedJPGParserInProductionMode() throws Exception {
+    setProductionMode(true);
+    ParseContext parseContext = new ParseContext();
+    StreamEvent event = new TikaStreamEvent(new ByteArrayInputStream(getJPGMagicBytes(true)), new HashMap(), parseContext);
+    load(event);
+  }
+  
+  private byte[] getJPGMagicBytes(boolean isGzip) throws IOException {
+    // generate the leading magic bytes that identify a file as a JPG file
+    byte[] magic = new byte[] { (byte)-1, (byte)-40, (byte)-1, (byte)-32, (byte) 0, (byte) 16};
+    ByteArrayOutputStream bout = new ByteArrayOutputStream();
+    OutputStream out = isGzip ? new GZIPOutputStream(bout) : bout;
+    out.write(magic);
+    out.flush();
+    out.close();
+    return bout.toByteArray();
+  }
+
+  @Test
+  public void testUnknownSolrFieldExceptionInsideNonEmbeddedDataFormat() throws Exception {
+    Map header = Collections.singletonMap("unknown_field", "foo");
+    StreamEvent event = new StreamEvent(new ByteArrayInputStream(getAvroMagicBytes(false)), header);
+    try {
+      load(event);
+      fail();
+    } catch (TikaException e) { // Tika's CompositeParser.parse() wraps EOFException inside a TikaException
+      assertTrue(e.getCause() instanceof EOFException); // avro expects data following the magic bytes header
+    }
+  }
+  
+  @Test
+  public void testUnknownSolrFieldExceptionInsideNonEmbeddedDataFormatInProductionMode() throws Exception {
+    setProductionMode(true);
+    Map header = Collections.singletonMap("unknown_field", "foo");
+    StreamEvent event = new StreamEvent(new ByteArrayInputStream(getAvroMagicBytes(false)), header);
+    load(event);
+  }
+  
+  @Test
+  public void testInjectSolrServerExceptionInsideNonEmbeddedDataFormatInProductionMode() throws Exception {
+    setProductionMode(true);
+    Map header = Collections.EMPTY_MAP;
+    String filePath = RESOURCES_DIR + "/test-documents" + "/sample-statuses-20120906-141433.avro";
+    StreamEvent event = new StreamEvent(new FileInputStream(filePath), header);
+    boolean before = injectSolrServerException;
+    injectSolrServerException = true;
+    try {
+      load(event);
+      fail();
+    } catch (TikaException e) {
+      assertTrue(RecoverableSolrException.isRecoverable(e));
+    } finally {
+      injectSolrServerException = before; // reset
+    }
+  }
+  
+  @Test
+  public void testInjectSolrServerExceptionInsideEmbeddedDataFormatInProductionMode() throws Exception {
+    setProductionMode(true);
+    Map header = Collections.EMPTY_MAP;    
+    String filePath = RESOURCES_DIR + "/test-documents" + "/sample-statuses-20120906-141433.gz";
+    StreamEvent event = new StreamEvent(new FileInputStream(filePath), header);
+    boolean before = injectSolrServerException;
+    injectSolrServerException = true;
+    try {
+      load(event);
+      fail();
+    } catch (SolrServerException e) {
+      ; 
+    } finally {
+      injectSolrServerException = before; // rest
+    }
+  }
   
   private static Utf8 str(String str) {
     return new Utf8(str);
-  }  
+  }
 
   // @Test
   private void testQuery() throws Exception {

@@ -18,7 +18,6 @@
  */
 package org.apache.solr.tika.parser;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -29,14 +28,11 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import org.apache.commons.io.input.BoundedInputStream;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.http.Header;
-import org.apache.http.HttpException;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpMessage;
 import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.impl.conn.DefaultResponseParser;
-import org.apache.http.impl.io.AbstractSessionInputBuffer;
 import org.apache.http.impl.io.IdentityInputStream;
 import org.apache.http.message.BasicLineParser;
 import org.apache.http.mockup.SessionInputBufferMockup;
@@ -46,8 +42,6 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.handler.extraction.SolrContentHandler;
 import org.apache.solr.tika.ParseInfo;
 import org.apache.tika.exception.TikaException;
-import org.apache.tika.extractor.EmbeddedDocumentExtractor;
-import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;

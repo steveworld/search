@@ -88,7 +88,7 @@ public class SolrSink extends AbstractSink implements Configurable {
   }
 
   /** Returns the Flume configuration settings */
-  protected Context getContext() {
+  protected final Context getContext() {
     return context;
   }
 
@@ -155,9 +155,9 @@ public class SolrSink extends AbstractSink implements Configurable {
           break;
         }
         numEventsTaken++;
-        LOGGER.debug("solr event: {}", event);
-        InputStream in = new ByteArrayInputStream(event.getBody());
-        indexer.process(new StreamEvent(in, event.getHeaders()));
+        LOGGER.debug("solr event: {}", event);      
+        StreamEvent streamEvent = createStreamEvent(event);
+        indexer.process(streamEvent);
         if (System.currentTimeMillis() >= batchEndTime) {
           break;
         }
@@ -180,7 +180,7 @@ public class SolrSink extends AbstractSink implements Configurable {
       txn.commit();
       return numEventsTaken == 0 ? Status.BACKOFF : Status.READY;
     } catch (Throwable t) {
-      // Ooops - need to rollback and perhaps back off
+      // Ooops - need to rollback and back off
       LOGGER.error("Solr Sink " + getName() + ": Unable to process event from channel " + myChannel.getName()
             + ". Exception follows.", t);
       try {
@@ -202,11 +202,16 @@ public class SolrSink extends AbstractSink implements Configurable {
       } else if (t instanceof ChannelException) {
         return Status.BACKOFF;
       } else {
-        throw new EventDeliveryException("Failed to send events", t); // rethrow
+        throw new EventDeliveryException("Failed to send events", t); // rethrow and backoff
       }
     } finally {
       txn.close();
     }
+  }
+  
+  protected StreamEvent createStreamEvent(Event event) {
+    InputStream in = new ByteArrayInputStream(event.getBody());
+    return new StreamEvent(in, event.getHeaders());
   }
   
   @Override

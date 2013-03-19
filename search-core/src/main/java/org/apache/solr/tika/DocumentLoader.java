@@ -43,8 +43,11 @@ public interface DocumentLoader {
    * or negative ack (i.e. exception). Depending on the outcome the caller
    * should then commit or rollback the current flume transaction
    * correspondingly.
+   * 
+   * @throws IOException
+   *           If there is a low-level I/O error.
    */
-  public void commitTransaction();
+  public void commitTransaction() throws SolrServerException, IOException;
 
   /**
    * Performs a rollback of all non-committed documents pending.

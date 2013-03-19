@@ -101,8 +101,6 @@ public abstract class StreamingAvroParser extends AbstractStreamingParser {
       }
     } catch (EOFException e) { 
       ; // ignore
-    } catch (SolrServerException e) {
-      throw new IndexerException(e);
     } finally {
       in.close();
     }

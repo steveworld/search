@@ -111,7 +111,7 @@ public class TestWarcParser extends TikaIndexerTestBase {
     String[] files = new String[] {
       path + "/" + testFile
     };
-    testDocumentTypesInternal(files, expectedRecords);
+    testDocumentTypesInternal(files, expectedRecords, indexer, false);
     HashMap<String, ExpectedResult> expectedResultMap = getExpectedOutput(path + "/" + expectedFile);
     testDocumentContent(expectedResultMap);
   }
@@ -126,7 +126,7 @@ public class TestWarcParser extends TikaIndexerTestBase {
     String[] files = new String[] {
       path + sampleWarcFile
     };
-    testDocumentTypesInternal(files, expectedRecords);
+    testDocumentTypesInternal(files, expectedRecords, indexer, false);
   }
 
   /**
@@ -139,7 +139,7 @@ public class TestWarcParser extends TikaIndexerTestBase {
     String[] files = new String[] {
       path + sampleWarcFile
     };
-    testDocumentTypesInternal(files, expectedRecords);
+    testDocumentTypesInternal(files, expectedRecords, indexer, false);
     String testFileSuffix = ".warc.gz";
     String expectedFileSuffix = ".gold";
     String expectedFile = sampleWarcFile.substring(0, sampleWarcFile.length() - testFileSuffix.length()) + expectedFileSuffix;

@@ -26,7 +26,8 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.hadoop.dedup.NoChangeUpdateConflictResolver;
 import org.apache.solr.hadoop.dedup.RetainMostRecentUpdateConflictResolver;
 import org.apache.solr.hadoop.dedup.UpdateConflictResolver;
-import org.apache.solr.handler.extraction.ExtractingParams;
+import org.apache.solr.tika.RecoverableSolrException;
+import org.apache.solr.tika.SolrIndexer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +44,8 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
 
   private UpdateConflictResolver resolver;
   private HeartBeater heartBeater;
+  private boolean isProductionMode = false;
+  private boolean isIgnoringRecoverableExceptions = false;
   
   public static final String UPDATE_CONFLICT_RESOLVER = SolrReducer.class.getName() + ".updateConflictResolver";
   
@@ -61,6 +64,8 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
      * implements org.apache.hadoop.conf.Configurable
      */
 
+    this.isProductionMode = context.getConfiguration().getBoolean(SolrIndexer.PRODUCTION_MODE, isProductionMode);
+    this.isIgnoringRecoverableExceptions = context.getConfiguration().getBoolean(SolrIndexer.IGNORE_RECOVERABLE_EXCEPTIONS, isIgnoringRecoverableExceptions);
     this.heartBeater = new HeartBeater(context);
   }
   
@@ -72,14 +77,10 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
     } catch (Exception e) {
       LOG.error("Unable to process key " + key, e);
       context.getCounter(getClass().getName() + ".errors", e.getClass().getName()).increment(1);
-      if (!context.getConfiguration().getBoolean(ExtractingParams.IGNORE_TIKA_EXCEPTION, false)) {
-        if (e instanceof IOException) {
-          throw (IOException) e;
-        } else if (e instanceof InterruptedException) {
-          throw (InterruptedException) e;
-        } else {
-          throw new IllegalStateException(e);
-        }
+      if (isProductionMode && (!RecoverableSolrException.isRecoverable(e) || isIgnoringRecoverableExceptions)) {
+        ; // ignore
+      } else {
+        throw new IllegalArgumentException(e);          
       }
     } finally {
       heartBeater.cancelHeartBeat();
