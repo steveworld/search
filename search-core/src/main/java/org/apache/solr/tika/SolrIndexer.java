@@ -51,17 +51,19 @@ public class SolrIndexer {
    * retried. Example: network connection errors, timeouts, etc. These are
    * called recoverable exceptions.
    * 
-   * In contrast, the task associated with an unrecoverable exceptions can never
+   * In contrast, the task associated with an unrecoverable exception can never
    * succeed on retry. Example: Unknown Solr schema field.
    * 
-   * In production mode we log and ignore unrecoverable exceptions except if the
-   * IGNORE_RECOVERABLE_EXCEPTIONS flag is true.
+   * In production mode we log and ignore unrecoverable exceptions.
    * 
    * In non-production mode (aka test mode) we throw exceptions up the call
    * chain in order to fail fast and provide better debugging diagnostics to the
    * user.
    * 
    * The default is non-production mode (aka test mode).
+   * 
+   * In production mode we also log and ignore recoverable exceptions if the
+   * IGNORE_RECOVERABLE_EXCEPTIONS flag is true.
    * 
    * By default the IGNORE_RECOVERABLE_EXCEPTIONS flag is false. This flag
    * should only be enabled if all other options have been exhausted.
