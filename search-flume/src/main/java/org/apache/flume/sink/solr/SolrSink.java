@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 //import org.apache.flume.annotations.InterfaceStability;
+import com.yammer.metrics.core.MetricsRegistry;
 
 /**
  * Flume sink that extracts search documents from Apache Flume events,
@@ -113,8 +114,8 @@ public class SolrSink extends AbstractSink implements Configurable {
       Config config = ConfigFactory.parseMap(context.getParameters());
       SolrCollection solrCollection = new SolrInspector().createSolrCollection(config);
       try {
-        Constructor ctor = Class.forName(indexerClass).getConstructor(SolrCollection.class, Config.class);
-        indexer = (SolrIndexer) ctor.newInstance(solrCollection, config);
+        Constructor ctor = Class.forName(indexerClass).getConstructor(SolrCollection.class, Config.class, MetricsRegistry.class);
+        indexer = (SolrIndexer) ctor.newInstance(solrCollection, config, new MetricsRegistry());
       } catch (Exception e) {
         throw new ConfigurationException(e);
       }

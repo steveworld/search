@@ -32,12 +32,16 @@ import java.util.Map.Entry;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
+import org.apache.solr.tika.parser.WarcParserCounter;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
+import com.yammer.metrics.core.Counter;
+import com.yammer.metrics.core.MetricName;
+import com.yammer.metrics.core.MetricsRegistry;
 
 public class TestWarcParser extends TikaIndexerTestBase {
   private static final String sampleWarcFile = "/IAH-20080430204825-00000-blackbook.warc.gz";
@@ -116,6 +120,18 @@ public class TestWarcParser extends TikaIndexerTestBase {
     testDocumentContent(expectedResultMap);
   }
 
+  private void checkCounters() {
+    MetricName docExceptionsName =
+      new MetricName(WarcParserCounter.class, WarcParserCounter.DOC_EXCEPTIONS.toString());
+    Counter docExceptions = (Counter)indexer.getMetricsRegistry().allMetrics().get(docExceptionsName);
+    assertTrue(docExceptions.count() == 0);
+
+    MetricName resourceExceptionsName =
+      new MetricName(WarcParserCounter.class, WarcParserCounter.RESOURCE_EXCEPTIONS.toString());
+    Counter resourceExceptions = (Counter)indexer.getMetricsRegistry().allMetrics().get(resourceExceptionsName);
+    assertTrue(resourceExceptions.count() == 0);
+  }
+
   /**
    * Test that a multi document warc file is parsed
    * into the correct number of documents.
@@ -127,6 +143,7 @@ public class TestWarcParser extends TikaIndexerTestBase {
       path + sampleWarcFile
     };
     testDocumentTypesInternal(files, expectedRecords, indexer, false);
+    checkCounters();
   }
 
   /**

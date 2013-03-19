@@ -68,6 +68,10 @@ import org.xml.sax.SAXException;
 import com.google.common.base.Joiner;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.yammer.metrics.core.Counter;
+import com.yammer.metrics.core.Metric;
+import com.yammer.metrics.core.MetricName;
+import com.yammer.metrics.core.MetricsRegistry;
 
 /**
  * This class takes the input files, extracts the relevant content, transforms
@@ -217,9 +221,23 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       throw new ConfigurationException(e);
     }
 
-    return new TikaIndexer(collection, config);
+    return new TikaIndexer(collection, config, new MetricsRegistry());
   }
 
+  private void addMetricsToMRCounters(MetricsRegistry metricsRegistry, Context context) {
+    for (Map.Entry<MetricName, Metric> entry : metricsRegistry.allMetrics().entrySet()) {
+      // only add counter metrics
+      try {
+        Counter c = (Counter)entry.getValue();
+        MetricName metricName = entry.getKey();
+        context.getCounter(metricName.getGroup() + "." + metricName.getType(),
+          metricName.getName()).increment(c.count());
+      } catch (ClassCastException ce) {
+        // expected if not a Counter
+      }
+    }
+  }
+  
   /**
    * Extract content from the path specified in the value. Key is useless.
    */
@@ -304,6 +322,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   @Override
   protected void cleanup(Context context) throws IOException, InterruptedException {
     heartBeater.close();
+    addMetricsToMRCounters(indexer.getMetricsRegistry(), context);
     super.cleanup(context);
     try {
       indexer.commitTransaction();

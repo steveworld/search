@@ -60,6 +60,10 @@ import org.xml.sax.SAXException;
 import com.google.common.io.CountingInputStream;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigException;
+import com.yammer.metrics.core.Counter;
+import com.yammer.metrics.core.Metric;
+import com.yammer.metrics.core.MetricName;
+import com.yammer.metrics.core.MetricsRegistry;
 
 public class StreamingWarcParser extends AbstractStreamingParser {
 
@@ -115,12 +119,35 @@ public class StreamingWarcParser extends AbstractStreamingParser {
     }
   }
 
+  protected void createMetrics() {
+    ParseInfo info = getParseInfo();
+    MetricsRegistry metricsRegistry = info.getMetricsRegistry();
+    for (WarcParserCounter counter : WarcParserCounter.values()) {
+      MetricName metricName = new MetricName(WarcParserCounter.class, counter.toString());
+      Metric m = metricsRegistry.allMetrics().get(metricName);
+      if (m == null) {
+        metricsRegistry.newCounter(metricName);
+      }
+    }
+  }
+
+  protected void incrementCounter(WarcParserCounter counter, long amount) {
+    ParseInfo info = getParseInfo();
+    MetricsRegistry metricsRegistry = info.getMetricsRegistry();
+    Metric m = metricsRegistry.allMetrics().get(new MetricName(WarcParserCounter.class, counter.toString()));
+    if (m != null) {
+      Counter c = (Counter)m;
+      c.inc(amount);
+    }
+  }
+
   @Override
   protected void doParse(InputStream in, ContentHandler handler) throws IOException, SAXException, TikaException {
     ParseInfo info = getParseInfo();
     info.setMultiDocumentParser(true);
     Config config = info.getConfig();
     setConfigParams(config);
+    createMetrics();
 
     final ParseContext context = info.getParseContext();
     metadata.set(Metadata.CONTENT_TYPE, getSupportedTypes(context).iterator().next().toString());
@@ -137,6 +164,7 @@ public class StreamingWarcParser extends AbstractStreamingParser {
         record = it.next();
       } catch (Exception e) {
         LOGGER.error("Unable to process resource: " + resourceName, e);
+        incrementCounter(WarcParserCounter.RESOURCE_EXCEPTIONS, 1);
         return;
       }
       ArchiveRecordHeader warcHeader = record.getHeader();
@@ -157,18 +185,19 @@ public class StreamingWarcParser extends AbstractStreamingParser {
 
         try {
           HttpMessage response = parser.parse();
-          Header httpHeader = response.getLastHeader(HttpHeaders.CONTENT_TYPE);
-          if (httpHeader != null) {
-            MediaType mimeType = MediaType.parse(httpHeader.getValue());
-            if (mimeTypesToParse.matcher(mimeType.getBaseType().toString()).matches()) {
+          Header contentTypeHeader = response.getLastHeader(HttpHeaders.CONTENT_TYPE);
+          if (contentTypeHeader != null) {
+            MediaType mimeType = MediaType.parse(contentTypeHeader.getValue());
+            if (mimeType != null && mimeTypesToParse.matcher(mimeType.getBaseType().toString()).matches()) {
               // convert SessionInputBuffer to an InputStream for the Tika parsers
               IdentityInputStream is = new IdentityInputStream(inbuffer);
-              process(is, xhtml, warcHeader, httpHeader);
+              process(is, xhtml, warcHeader, contentTypeHeader);
             }
           }
         } catch (Exception ex) {
           LOGGER.warn("Exception processing document: " + warcHeader.getRecordIdentifier()
             + " " + warcHeader.getUrl(), ex);
+          incrementCounter(WarcParserCounter.DOC_EXCEPTIONS, 1);
         }
       }
     }
@@ -176,9 +205,10 @@ public class StreamingWarcParser extends AbstractStreamingParser {
 
   /** Processes the given Warc record */
   protected void process(InputStream inputStream, XHTMLContentHandler handler,
-      ArchiveRecordHeader warcHeader, Header httpHeader)
+      ArchiveRecordHeader warcHeader, Header contentTypeHeader)
       throws IOException, SAXException, SolrServerException, TikaException {
-    List<SolrInputDocument> docs = extract(inputStream, handler, warcHeader, httpHeader);
+    List<SolrInputDocument> docs =
+      extract(inputStream, handler, warcHeader, contentTypeHeader);
     docs = transform(docs);
     load(docs);
   }
@@ -197,7 +227,7 @@ public class StreamingWarcParser extends AbstractStreamingParser {
 
   /** Extracts zero or more Solr documents from the given Avro record */
   protected List<SolrInputDocument> extract(InputStream is, XHTMLContentHandler handler,
-      ArchiveRecordHeader warcHeader, Header httpHeader)
+      ArchiveRecordHeader warcHeader, Header contentTypeHeader)
       throws SAXException, IOException, TikaException {
     SolrContentHandler solrHandler = getParseInfo().getSolrContentHandler();
     handler.startDocument();
@@ -206,9 +236,9 @@ public class StreamingWarcParser extends AbstractStreamingParser {
     Metadata entryData = new Metadata();
     entryData.set(metadata.RESOURCE_NAME_KEY, metadata.get(metadata.RESOURCE_NAME_KEY));
 
-    Parser parser = getParser(httpHeader.getValue());
+    Parser parser = getParser(contentTypeHeader.getValue());
     if (parser == null) {
-      throw new TikaException("Unable to find parser for mimetype " + httpHeader.getValue());
+      throw new TikaException("Unable to find parser for mimetype " + contentTypeHeader.getValue());
     }
 
     if (maxBytesPerDoc >= 0) {
@@ -218,7 +248,7 @@ public class StreamingWarcParser extends AbstractStreamingParser {
 
     entryData.set(DATE_META_KEY, warcHeader.getDate());
     entryData.set(URL_META_KEY, warcHeader.getUrl());
-    entryData.set(MIMETYPE_META_KEY, httpHeader.getValue());
+    entryData.set(MIMETYPE_META_KEY, contentTypeHeader.getValue());
 
     // Add the metadata added by the embedded parser into the
     // ParseInfo's metadata.  This is to guarantee that the

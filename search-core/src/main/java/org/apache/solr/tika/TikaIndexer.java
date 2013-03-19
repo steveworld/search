@@ -65,6 +65,7 @@ import org.xml.sax.SAXException;
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 import com.typesafe.config.Config;
+import com.yammer.metrics.core.MetricsRegistry;
 
 /**
  * Indexer that extracts search documents from events (using Apache Tika and
@@ -94,8 +95,8 @@ public class TikaIndexer extends SolrIndexer {
   private static final String CONTENT_HANDLER_FACTORY_PROPERTY = "tika.solrContentHandlerFactory.class";
   private static final Logger LOGGER = LoggerFactory.getLogger(TikaIndexer.class);
 
-  public TikaIndexer(SolrCollection solrCollection, Config config) {
-    super(solrCollection, config);
+  public TikaIndexer(SolrCollection solrCollection, Config config, MetricsRegistry metricsRegistry) {
+    super(solrCollection, config, metricsRegistry);
     
     String tikaConfigFilePath = null;
     if (config.hasPath(TIKA_CONFIG_LOCATION)) {
@@ -166,7 +167,7 @@ public class TikaIndexer extends SolrIndexer {
 
   @Override
   public void process(StreamEvent event) throws IOException, SolrServerException, SAXException, TikaException {
-    parseInfo = new ParseInfo(event, this, mediaTypeToParserMap); // ParseInfo is more practical than ParseContext
+    parseInfo = new ParseInfo(event, this, mediaTypeToParserMap, getMetricsRegistry()); // ParseInfo is more practical than ParseContext
     try {
       super.process(event);
       Throwable t = parseInfo.getThrowable();

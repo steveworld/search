@@ -89,6 +89,7 @@ import org.slf4j.LoggerFactory;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.yammer.metrics.core.MetricsRegistry;
 
 public class TestTikaSolrSink extends SolrTestCaseJ4 {
 
@@ -156,7 +157,7 @@ public class TestTikaSolrSink extends SolrTestCaseJ4 {
     int batchSize = SEQ_NUM2.incrementAndGet() % 2 == 0 ? SolrInspector.DEFAULT_SOLR_SERVER_BATCH_SIZE : 1;
     DocumentLoader testServer = new SolrServerDocumentLoader(solrServer, batchSize);
     Config config = ConfigFactory.parseMap(context);
-    sink = new MySolrSink(new TikaIndexer(new SolrInspector().createSolrCollection(config, testServer), config));
+    sink = new MySolrSink(new TikaIndexer(new SolrInspector().createSolrCollection(config, testServer), config, new MetricsRegistry()));
     sink.setName(sink.getClass().getName() + SEQ_NUM.getAndIncrement());
     sink.configure(new Context(context));
     sink.setChannel(channel);

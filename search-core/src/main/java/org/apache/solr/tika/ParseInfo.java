@@ -29,6 +29,7 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 
 import com.typesafe.config.Config;
+import com.yammer.metrics.core.MetricsRegistry;
 
 /**
  * Conduit for passing state between parser and sink components in cases where
@@ -49,8 +50,9 @@ public final class ParseInfo {
   private boolean isMultiDocumentParser = false;
   private Throwable throwable;
   private final Map<String, Object> params = new HashMap();
+  private final MetricsRegistry metricsRegistry;
 
-  public ParseInfo(StreamEvent event, SolrIndexer indexer, Map<MediaType, Parser> mediaTypeToParserMap) {
+  public ParseInfo(StreamEvent event, SolrIndexer indexer, Map<MediaType, Parser> mediaTypeToParserMap, MetricsRegistry metricsRegistry) {
     if (event == null) {
       throw new IllegalArgumentException("Event must not be null");
     }
@@ -63,6 +65,7 @@ public final class ParseInfo {
     this.event = event;
     this.indexer = indexer;
     this.mediaTypeToParserMap = mediaTypeToParserMap;
+    this.metricsRegistry = metricsRegistry;
     ParseContext pc = null;
     if (event instanceof TikaStreamEvent) {
       pc = ((TikaStreamEvent) event).getParseContext();
@@ -97,7 +100,11 @@ public final class ParseInfo {
   public Map<MediaType, Parser> getMediaTypeToParserMap() {
     return mediaTypeToParserMap;
   }
-  
+
+  public MetricsRegistry getMetricsRegistry() {
+    return metricsRegistry;
+  }
+
   public Config getConfig() {
     return indexer.getConfig();
   }
