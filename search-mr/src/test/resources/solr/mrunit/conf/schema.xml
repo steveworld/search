@@ -70,6 +70,15 @@
        <types> fieldType section
      indexed: true if this field should be indexed (searchable or sortable)
      stored: true if this field should be retrievable
+     docValues: true if this field should have doc values. Doc values are
+       useful for faceting, grouping, sorting and function queries. Although not
+       required, doc values will make the index faster to load, more
+       NRT-friendly and more memory-efficient. They however come with some
+       limitations: they are currently only supported by StrField, UUIDField
+       and all Trie*Fields, and depending on the field type, they might
+       require the field to be single-valued, be required or have a default
+       value (check the documentation of the field type you're interested in
+       for more information)
      multiValued: true if this field may contain multiple values per document
      omitNorms: (expert) set to true to omit the norms associated with
        this field (this disables length normalization and index-time
@@ -114,7 +123,7 @@
    <field name="in_reply_to_status_id" type="long" indexed="true" stored="true" multiValued="true"/>
    <field name="media_url_https" type="string" indexed="false" stored="true" />
    <field name="expanded_url" type="string" indexed="false" stored="true" />
-   
+
    <!-- file metadata -->   
    <field name="file_download_url" type="string" indexed="false" stored="true" />
    <field name="file_upload_url" type="string" indexed="false" stored="true" />
@@ -123,12 +132,18 @@
    <field name="file_port" type="int" indexed="true" stored="true" />
    <field name="file_path" type="string" indexed="true" stored="true" />
    <field name="file_name" type="string" indexed="true" stored="true" />
-   <field name="file_length" type="long" indexed="true" stored="true" />
+   <field name="file_length" type="tlong" indexed="true" stored="true" />
    <field name="file_last_modified" type="tlong" indexed="true" stored="true" />
+   <field name="file_owner" type="string" indexed="true" stored="true" />
+   <field name="file_group" type="string" indexed="true" stored="true" />
+   <field name="file_permissions_user" type="string" indexed="true" stored="true" />
+   <field name="file_permissions_group" type="string" indexed="true" stored="true" />
+   <field name="file_permissions_other" type="string" indexed="true" stored="true" />
+   <field name="file_permissions_stickybit" type="boolean" indexed="true" stored="true" />
 
    <!-- tika metadata -->
    <field name="content_type" type="lowercase" indexed="true" stored="true" />
-      
+
    <field name="_version_" type="long" indexed="true" stored="true"/>
    <dynamicField name="ignored_*" type="ignored"/>
    
@@ -169,7 +184,10 @@
        standard package such as org.apache.solr.analysis
     -->
 
-    <!-- The StrField type is not analyzed, but indexed/stored verbatim. -->
+    <!-- The StrField type is not analyzed, but indexed/stored verbatim.
+       It supports doc values but in that case the field needs to be
+       single-valued and either required or have a default value.
+      -->
     <fieldType name="string" class="solr.StrField" sortMissingLast="true" />
 
     <!-- boolean type: "true" or "false" -->
@@ -193,6 +211,9 @@
 
     <!--
       Default numeric field types. For faster range queries, consider the tint/tfloat/tlong/tdouble types.
+
+      These fields support doc values, but they require the field to be
+      single-valued and either be required or have a default value.
     -->
     <fieldType name="int" class="solr.TrieIntField" precisionStep="0" positionIncrementGap="0"/>
     <fieldType name="float" class="solr.TrieFloatField" precisionStep="0" positionIncrementGap="0"/>
@@ -489,16 +510,14 @@
         />
       </analyzer>
     </fieldType>
-
-    <!--    
+    
     <fieldtype name="phonetic" stored="false" indexed="true" class="solr.TextField" >
       <analyzer>
         <tokenizer class="solr.StandardTokenizerFactory"/>
         <filter class="solr.DoubleMetaphoneFilterFactory" inject="false"/>
       </analyzer>
     </fieldtype>
-    -->
-    
+
     <fieldtype name="payloads" stored="false" indexed="true" class="solr.TextField" >
       <analyzer>
         <tokenizer class="solr.WhitespaceTokenizerFactory"/>
@@ -570,11 +589,12 @@
     <!-- A specialized field for geospatial search. If indexed, this fieldType must not be multivalued. -->
     <fieldType name="location" class="solr.LatLonType" subFieldSuffix="_coordinate"/>
 
-   <!--
-    A Geohash is a compact representation of a latitude longitude pair in a single field.
-    See http://wiki.apache.org/solr/SpatialSearch
-   -->
-    <fieldtype name="geohash" class="solr.GeoHashField"/>
+    <!-- An alternative geospatial field type new to Solr 4.  It supports multiValued and polygon shapes.
+      For more information about this and other Spatial fields new to Solr 4, see:
+      http://wiki.apache.org/solr/SolrAdaptersForLuceneSpatial4
+    -->
+    <fieldType name="location_rpt" class="solr.SpatialRecursivePrefixTreeFieldType"
+        geo="true" distErrPct="0.025" maxDistErr="0.000009" units="degrees" />
 
    <!-- Money/currency field type. See http://wiki.apache.org/solr/MoneyFieldType
         Parameters:
@@ -582,7 +602,7 @@
           precisionStep:   Specifies the precisionStep for the TrieLong field used for the amount
           providerClass:   Lets you plug in other exchange provider backend:
                            solr.FileExchangeRateProvider is the default and takes one parameter:
-                             currencyConfig: name of an xml file holding exhange rates
+                             currencyConfig: name of an xml file holding exchange rates
                            solr.OpenExchangeRatesOrgProvider uses rates from openexchangerates.org:
                              ratesFileLocation: URL or path to rates JSON file (default latest.json on the web)
                              refreshInterval: Number of minutes between each rates fetch (default: 1440, min: 60)
