@@ -19,6 +19,7 @@
 package org.apache.solr.tika;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.solr.client.solrj.SolrServer;
@@ -37,21 +38,27 @@ import org.slf4j.LoggerFactory;
 public class SolrServerDocumentLoader implements DocumentLoader {
 
   private final SolrServer server; // proxy to local or remote solr server
-  private long numLoadedDocs = 0; // number of documents loaded in the current
-                                  // transaction
+  private long numLoadedDocs = 0; // number of documents loaded in the current transaction
+  private final int batchSize;
+  private final List<SolrInputDocument> batch = new ArrayList();
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SolrServerDocumentLoader.class);
 
-  public SolrServerDocumentLoader(SolrServer server) {
+  public SolrServerDocumentLoader(SolrServer server, int batchSize) {
     if (server == null) {
-      throw new IllegalArgumentException();
+      throw new IllegalArgumentException("solr server must not be null");
     }
     this.server = server;
+    if (batchSize <= 0) {
+      throw new IllegalArgumentException("batchSize must be a positive number: " + batchSize);      
+    }
+    this.batchSize = batchSize;
   }
   
   @Override
   public void beginTransaction() {
     LOGGER.trace("beginTransaction");
+    batch.clear();
     numLoadedDocs = 0;
     if (server instanceof SafeConcurrentUpdateSolrServer) {
       ((SafeConcurrentUpdateSolrServer) server).clearException();
@@ -60,21 +67,34 @@ public class SolrServerDocumentLoader implements DocumentLoader {
 
   @Override
   public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
-    LOGGER.trace("load docs: {}", docs);
     if (docs.size() > 0) {
-      numLoadedDocs += docs.size();
-      UpdateResponse rsp = server.add(docs);
+      LOGGER.trace("load docs: {}", docs);
+      for (SolrInputDocument doc : docs) {
+        batch.add(doc);
+        if (batch.size() >= batchSize) {
+          loadBatch();
+        }
+      }
     }
   }
 
   @Override
-  public void commitTransaction() {
+  public void commitTransaction() throws SolrServerException, IOException {
     LOGGER.trace("commitTransaction");
+    if (batch.size() > 0) {
+      loadBatch();
+    }
     if (numLoadedDocs > 0) {
       if (server instanceof ConcurrentUpdateSolrServer) {
         ((ConcurrentUpdateSolrServer) server).blockUntilFinished();
       }
     }
+  }
+
+  private void loadBatch() throws SolrServerException, IOException {
+    numLoadedDocs += batch.size();
+    UpdateResponse rsp = server.add(batch);
+    batch.clear();
   }
 
   @Override

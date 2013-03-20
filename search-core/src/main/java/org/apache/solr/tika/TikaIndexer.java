@@ -196,6 +196,25 @@ public class TikaIndexer extends SolrIndexer {
       parseInfo = null;
     }
   }
+
+  @Override
+  public void commitTransaction() throws SolrServerException, IOException {
+    try {
+      super.commitTransaction();
+    } catch (Exception t) {
+      if (isProductionMode() && (!RecoverableSolrException.isRecoverable(t) || isIgnoringRecoverableExceptions())) {
+        LOGGER.warn("Cannot commit transaction");
+      } else if (t instanceof IOException) {
+        throw (IOException) t;
+      } else if (t instanceof SolrServerException) {
+        throw (SolrServerException) t;
+      } else if (t instanceof RuntimeException) {
+        throw (RuntimeException) t;
+      } else {
+        throw new IndexerException(t);
+      }
+    }
+  }
   
   protected final ParseInfo getParseInfo() {
     assert parseInfo != null;

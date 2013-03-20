@@ -61,10 +61,13 @@ public class SolrInspector {
   public static final String SOLR_CLIENT_HOME = "solr.home";
   public static final String ZK_HOST = "zkHost";
   public static final String SOLR_SERVER_URL = "solr.server.url";
+  public static final String SOLR_SERVER_BATCH_SIZE = "solr.server.batchSize";
   public static final String SOLR_SERVER_QUEUE_LENGTH = "solr.server.queueLength";
   public static final String SOLR_SERVER_NUM_THREADS = "solr.server.numThreads";
   public static final String SOLR_HOME_PROPERTY_NAME = "solr.solr.home";
 
+  public static final int DEFAULT_SOLR_SERVER_BATCH_SIZE = 100;
+  
   private static final Logger LOGGER = LoggerFactory.getLogger(SolrInspector.class);
   
   public SolrCollection createSolrCollection(Config context) {
@@ -98,6 +101,7 @@ public class SolrInspector {
     SolrParams params = new MapSolrParams(new HashMap());
     String zkHost = null;
     String solrServerUrl = "http://127.0.0.1:8983/solr/" + collectionName;
+    int solrServerBatchSize = DEFAULT_SOLR_SERVER_BATCH_SIZE;
     int solrServerNumThreads = 2;
     int solrServerQueueLength = solrServerNumThreads;
     Collection<String> dateFormats = DateUtil.DEFAULT_DATE_FORMATS;
@@ -112,6 +116,8 @@ public class SolrInspector {
       } else if (entry.getKey().equals(collectionName + "." + SOLR_SERVER_URL)) {
         solrServerUrl = entry.getValue().unwrapped().toString();
         assert solrServerUrl != null;
+      } else if (entry.getKey().equals(collectionName + "." + SOLR_SERVER_BATCH_SIZE)) {
+        solrServerBatchSize = Integer.parseInt(entry.getValue().unwrapped().toString());
       }
     }
 
@@ -204,7 +210,7 @@ public class SolrInspector {
         CloudSolrServer cloudSolrServer = new CloudSolrServer(zkHost);
         cloudSolrServer.setDefaultCollection(collectionName);
         cloudSolrServer.connect();
-        solrCollection = new SolrCollection(collectionName, new SolrServerDocumentLoader(cloudSolrServer));
+        solrCollection = new SolrCollection(collectionName, new SolrServerDocumentLoader(cloudSolrServer, solrServerBatchSize));
       } catch (MalformedURLException e) {
         throw new ConfigurationException(e);
       }
@@ -214,7 +220,7 @@ public class SolrInspector {
       // solrServerQueueLength, solrServerNumThreads);
       SolrServer server = new SafeConcurrentUpdateSolrServer(solrServerUrl, solrServerQueueLength,
           solrServerNumThreads);
-      solrCollection = new SolrCollection(collectionName, new SolrServerDocumentLoader(server));
+      solrCollection = new SolrCollection(collectionName, new SolrServerDocumentLoader(server, solrServerBatchSize));
       // server.setParser(new XMLResponseParser()); // binary parser is used
       // by default
     }
