@@ -101,6 +101,7 @@ public class TestTikaSolrSink extends SolrTestCaseJ4 {
   private static final String RESOURCES_DIR = "target/test-classes";
 //private static final String RESOURCES_DIR = "src/test/resources";
   private static final AtomicInteger SEQ_NUM = new AtomicInteger();
+  private static final AtomicInteger SEQ_NUM2 = new AtomicInteger();
   private static final Logger LOGGER = LoggerFactory.getLogger(TestTikaSolrSink.class);
 
   @BeforeClass
@@ -152,7 +153,8 @@ public class TestTikaSolrSink extends SolrTestCaseJ4 {
       }
     }
     
-    DocumentLoader testServer = new SolrServerDocumentLoader(solrServer);
+    int batchSize = SEQ_NUM2.incrementAndGet() % 2 == 0 ? SolrInspector.DEFAULT_SOLR_SERVER_BATCH_SIZE : 1;
+    DocumentLoader testServer = new SolrServerDocumentLoader(solrServer, batchSize);
     Config config = ConfigFactory.parseMap(context);
     sink = new MySolrSink(new TikaIndexer(new SolrInspector().createSolrCollection(config, testServer), config));
     sink.setName(sink.getClass().getName() + SEQ_NUM.getAndIncrement());

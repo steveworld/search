@@ -97,7 +97,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   
   /**
    * Flag to disable reading of file contents if indexing just file metadata is sufficient. 
-   * This improves performance and/or confidentiality.
+   * This improves performance and confidentiality.
    */
   public static final String DISABLE_FILE_OPEN = TikaMapper.class.getName() + ".disableFileOpen";
   
