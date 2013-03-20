@@ -220,6 +220,38 @@ public class SolrIndexer {
     }
     return ignoreRecoverableExceptions;
   }
+  
+  protected boolean isRecoverableException(Throwable t) {
+    return RecoverableSolrException.isRecoverable(t);
+  }
+
+  protected void handleException(Throwable t, StreamEvent event) throws IOException, SolrServerException, SAXException, TikaException {
+    if (t instanceof Error) {
+      throw (Error) t; // never ignore errors
+    }
+    if (isProductionMode()) {
+      if (!isRecoverableException(t)) {
+        LOGGER.warn("Ignoring unrecoverable exception in production mode for event: " + event, t);
+        return;
+      } else if (isIgnoringRecoverableExceptions()) {
+        LOGGER.warn("Ignoring recoverable exception in production mode for event: " + event, t);
+        return;
+      }
+    }
+    if (t instanceof IOException) {
+      throw (IOException) t;
+    } else if (t instanceof SolrServerException) {
+      throw (SolrServerException) t;
+    } else if (t instanceof SAXException) {
+      throw (SAXException) t;
+    } else if (t instanceof TikaException) {
+      throw (TikaException) t;
+    } else if (t instanceof RuntimeException) {
+      throw (RuntimeException) t;
+    } else {
+      throw new IndexerException(t);
+    }
+  }
 
   /**
    * Get the MetricsRegistry

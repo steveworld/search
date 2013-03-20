@@ -93,8 +93,11 @@ public class SolrServerDocumentLoader implements DocumentLoader {
 
   private void loadBatch() throws SolrServerException, IOException {
     numLoadedDocs += batch.size();
-    UpdateResponse rsp = server.add(batch);
-    batch.clear();
+    try {
+      UpdateResponse rsp = server.add(batch);
+    } finally {
+      batch.clear();
+    }
   }
 
   @Override

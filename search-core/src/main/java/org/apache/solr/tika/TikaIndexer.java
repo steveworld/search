@@ -177,27 +177,12 @@ public class TikaIndexer extends SolrIndexer {
     } catch (Error e) {
       throw e; // never ignore errors
     } catch (Throwable t) {
-      if (isProductionMode() && (!RecoverableSolrException.isRecoverable(t) || isIgnoringRecoverableExceptions())) {
-        LOGGER.warn(new StringBuilder("Cannot parse - skipping extracting text due to ").append(t.getLocalizedMessage())
-            .append(". metadata=").append(parseInfo.getMetadata()).toString());
-      } else if (t instanceof IOException) {
-        throw (IOException) t;
-      } else if (t instanceof SolrServerException) {
-        throw (SolrServerException) t;
-      } else if (t instanceof SAXException) {
-        throw (SAXException) t;
-      } else if (t instanceof TikaException) {
-        throw (TikaException) t;
-      } else if (t instanceof RuntimeException) {
-        throw (RuntimeException) t;
-      } else {
-        throw new IndexerException(t);
-      }
+      handleException(t, event);
     } finally {
       parseInfo = null;
     }
   }
-
+  
   @Override
   public void commitTransaction() throws SolrServerException, IOException {
     try {
