@@ -224,20 +224,6 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     return new TikaIndexer(collection, config, new MetricsRegistry());
   }
 
-  private void addMetricsToMRCounters(MetricsRegistry metricsRegistry, Context context) {
-    for (Map.Entry<MetricName, Metric> entry : metricsRegistry.allMetrics().entrySet()) {
-      // only add counter metrics
-      try {
-        Counter c = (Counter)entry.getValue();
-        MetricName metricName = entry.getKey();
-        context.getCounter(metricName.getGroup() + "." + metricName.getType(),
-          metricName.getName()).increment(c.count());
-      } catch (ClassCastException ce) {
-        // expected if not a Counter
-      }
-    }
-  }
-  
   /**
    * Extract content from the path specified in the value. Key is useless.
    */
@@ -332,6 +318,17 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     indexer.stop();
   }
 
+  private void addMetricsToMRCounters(MetricsRegistry metricsRegistry, Context context) {
+    for (Map.Entry<MetricName, Metric> entry : metricsRegistry.allMetrics().entrySet()) {
+      // only add counter metrics
+      if (entry.getValue() instanceof Counter) {
+        Counter c = (Counter)entry.getValue();
+        MetricName metricName = entry.getKey();
+        context.getCounter(metricName.getGroup() + "." + metricName.getType(),
+          metricName.getName()).increment(c.count());
+      }
+    }
+  }
   
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
