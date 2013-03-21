@@ -38,8 +38,8 @@ import com.typesafe.config.Config;
 import com.yammer.metrics.core.MetricsRegistry;
 
 /**
- * Indexer that extracts search documents from events, transforms them and
- * loads them into Apache Solr.
+ * Indexer that extracts search documents from events, transforms them and loads them into Apache
+ * Solr.
  */
 public class SolrIndexer {
 
@@ -49,43 +49,50 @@ public class SolrIndexer {
   private final MetricsRegistry metricsRegistry;
 
   /**
-   * Some exceptions tend to be transient, in which case the task can be
-   * retried. Example: network connection errors, timeouts, etc. These are
-   * called recoverable exceptions.
+   * Some exceptions tend to be transient, in which case the corresponding task can be retried.
+   * Example: network connection errors, timeouts, etc. These are called recoverable exceptions.
    * 
-   * In contrast, the task associated with an unrecoverable exception can never
-   * succeed on retry. Example: Unknown Solr schema field.
+   * In contrast, the task associated with an unrecoverable exception cannot succeed on retry.
+   * Examples: Corrupt or malformed parser input data. Parser bugs. Unknown Solr schema field.
    * 
-   * In production mode we log and ignore unrecoverable exceptions.
+   * In production mode (configuration parameter isProductionMode=true) we log and ignore
+   * unrecoverable exceptions. This enables mission critical large scale online production systems
+   * to make progress despite some issues.
    * 
-   * In non-production mode (aka test mode) we throw exceptions up the call
-   * chain in order to fail fast and provide better debugging diagnostics to the
-   * user.
+   * In non-production mode (aka test mode, configuration parameter isProductionMode=false) we throw
+   * exceptions up the call chain in order to fail fast and provide better debugging diagnostics to
+   * the user.
    * 
    * The default is non-production mode (aka test mode).
    * 
-   * In production mode we also log and ignore recoverable exceptions if the
-   * IGNORE_RECOVERABLE_EXCEPTIONS flag is true.
+   * It is not inconceivable that there might be a bug where an unrecoverable exception is
+   * misclassified as recoverable. Nonetheless, in production we need a way to avoid retrying that
+   * event forever, and we need to ensure we can make progress. Thus, in production mode we also log
+   * and ignore recoverable exceptions if the configuration parameter
+   * ignoreRecoverableExceptions=true. By default we have ignoreRecoverableExceptions=false. This
+   * flag should only be enabled if a misclassification bug has been identified. Please report such
+   * a bug to Cloudera.
    * 
-   * By default the IGNORE_RECOVERABLE_EXCEPTIONS flag is false. This flag
-   * should only be enabled if all other options have been exhausted.
+   * In case we do throw an exception up per the rules described above, the caller can catch the
+   * exception and decide to retry the task if he sees fit.
    * 
    * Example MapReduce Usage:
    * 
-   * hadoop ... -D org.apache.solr.tika.SolrIndexer.isProductionMode=true -D org.apache.solr.tika.SolrIndexer.ignoreRecoverableExceptions=true
+   * hadoop ... -D org.apache.solr.tika.SolrIndexer.isProductionMode=true -D
+   * org.apache.solr.tika.SolrIndexer.ignoreRecoverableExceptions=true
    * 
    * Example Flume Usage in flume.conf:
    * 
    * agent.sinks.solrSink.org.apache.solr.tika.SolrIndexer.isProductionMode = true
-   * agent.sinks.solrSink.org.apache.solr.tika.SolrIndexer.ignoreRecoverableExceptions = true
+   * agent.sinks.solrSink.org.apache.solr.tika.SolrIndexer. ignoreRecoverableExceptions = true
    */
   public static final String PRODUCTION_MODE = SolrIndexer.class.getName() + ".isProductionMode"; // ExtractingParams.IGNORE_TIKA_EXCEPTION;
   public static final String IGNORE_RECOVERABLE_EXCEPTIONS = SolrIndexer.class.getName() + ".ignoreRecoverableExceptions";
 
   /**
-   * If true this boolean configuration parameter simulates an infinitely fast
-   * pipe into Solr for load testing. This can be used to easily isolate
-   * performance metrics of the extraction and transform phase.
+   * If true this boolean configuration parameter simulates an infinitely fast pipe into Solr for
+   * load testing. This can be used to easily isolate performance metrics of the extraction and
+   * transform phase.
    */
   private static final String IGNORE_LOADS = SolrIndexer.class.getName() + ".ignoreLoads";
   
@@ -110,8 +117,7 @@ public class SolrIndexer {
   }
   
   /**
-   * Returns the Solr collection proxy to which this indexer can route Solr
-   * documents
+   * Returns the Solr collection proxy to which this indexer can route Solr documents
    */
   public final SolrCollection getSolrCollection() {
     return solrCollection;
@@ -156,8 +162,8 @@ public class SolrIndexer {
   }
 
   /**
-   * Extension point to transform a list of documents in an application specific
-   * way. Does nothing by default
+   * Extension point to transform a list of documents in an application specific way. Does nothing
+   * by default
    */
   protected List<SolrInputDocument> transform(List<SolrInputDocument> docs) {
     return docs;
@@ -176,10 +182,9 @@ public class SolrIndexer {
   }
 
   /**
-   * Sends any outstanding documents to solr and waits for a positive or
-   * negative ack (i.e. exception) from solr. Depending on the outcome the
-   * caller should then commit or rollback the outer (flume) transaction
-   * correspondingly.
+   * Sends any outstanding documents to solr and waits for a positive or negative ack (i.e.
+   * exception) from solr. Depending on the outcome the caller should then commit or rollback the
+   * outer (flume) transaction correspondingly.
    */
   public void commitTransaction() throws SolrServerException, IOException {
     solrCollection.getDocumentLoader().commitTransaction();
@@ -188,10 +193,9 @@ public class SolrIndexer {
   /**
    * Performs a rollback of all non-committed documents pending.
    * <p>
-   * Note that this is not a true rollback as in databases. Content you have
-   * previously added may have already been committed due to autoCommit, buffer
-   * full, other client performing a commit etc. So this is only a best-effort
-   * rollback, not a rollback in a strict 2PC protocol.
+   * Note that this is not a true rollback as in databases. Content you have previously added may
+   * have already been committed due to autoCommit, buffer full, other client performing a commit
+   * etc. So this is only a best-effort rollback, not a rollback in a strict 2PC protocol.
    * 
    * @throws IOException
    *           If there is a low-level I/O error.
