@@ -174,8 +174,6 @@ public class TikaIndexer extends SolrIndexer {
       if (t != null) {
         throw t; // rethrow
       }
-    } catch (Error e) {
-      throw e; // never ignore errors
     } catch (Throwable t) {
       handleException(t, event);
     } finally {
