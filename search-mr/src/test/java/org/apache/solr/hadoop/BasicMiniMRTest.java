@@ -56,7 +56,7 @@ public class BasicMiniMRTest extends Assert {
   private static final String RESOURCES_DIR = "target/test-classes";
   private static final String DOCUMENTS_DIR = RESOURCES_DIR + "/test-documents";
   private static final File MINIMR_CONF_DIR = new File(RESOURCES_DIR + "/solr/minimr");
-  private static final String TIKA_CONFIG_FILE_NAME = "tika-config.xml";
+  private static final String TIKA_CONFIG_FILE_NAME = MapReduceIndexerTool.TIKA_CONFIG_FILE_NAME;
   
   private static final String SEARCH_ARCHIVES_JAR = JarFinder.getJar(MapReduceIndexerTool.class);
 
