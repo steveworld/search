@@ -113,17 +113,17 @@ public class SolrInspector {
       } else if (entry.getKey().equals(collectionName + "." + ZK_HOST)) {
         zkHost = entry.getValue().unwrapped().toString();
         assert zkHost != null;
+        LOGGER.debug("zkHost: {}", zkHost);
       } else if (entry.getKey().equals(collectionName + "." + SOLR_SERVER_URL)) {
         solrServerUrl = entry.getValue().unwrapped().toString();
         assert solrServerUrl != null;
+        LOGGER.debug("solrServerUrl: {}", solrServerUrl);
       } else if (entry.getKey().equals(collectionName + "." + SOLR_SERVER_BATCH_SIZE)) {
         solrServerBatchSize = Integer.parseInt(entry.getValue().unwrapped().toString());
       }
     }
 
     LOGGER.debug("solrHome: {}", solrHome);
-    LOGGER.debug("zkHost: {}", zkHost);
-    LOGGER.debug("solrServerUrl: {}", solrServerUrl);
 
     String oldSolrHome = null;
     if (solrHome != null) {
