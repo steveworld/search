@@ -132,7 +132,7 @@ public class DelimitedValuesParser extends AbstractStreamingParser {
 
   @Override
   /** Processes the given CSV file and writes XML into the given SAX handler */
-  protected void doParse(InputStream stream, ContentHandler handler) throws IOException, SAXException, TikaException {
+  protected void doParse(InputStream stream, ContentHandler handler) throws IOException, SAXException, TikaException, SolrServerException {
     ParseInfo info = getParseInfo();
     info.setMultiDocumentParser(true);
     Metadata metadata = info.getMetadata();
@@ -169,13 +169,7 @@ public class DelimitedValuesParser extends AbstractStreamingParser {
           String columnName = i < colNames.length ? colNames[i] : "col" + i; // TODO: optimize malloc
           record.add(new Entry(columnName, normalize(trim(colValues[i]))));
         }
-        try {
-          process(record, xhtml);
-        } catch (SAXException e) {
-          throw new IOException(e);
-        } catch (SolrServerException e) {
-          throw new IOException(e);
-        }
+        process(record, xhtml);
         recNum++;
       }
       csvReader.close();
@@ -263,6 +257,11 @@ public class DelimitedValuesParser extends AbstractStreamingParser {
     @Override
     public V setValue(V value) {
       throw new UnsupportedOperationException();
+    }
+    
+    @Override
+    public String toString() {
+      return getKey() + "=" + getValue();
     }
   }
 
