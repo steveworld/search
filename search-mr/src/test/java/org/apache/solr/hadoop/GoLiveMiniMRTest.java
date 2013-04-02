@@ -67,7 +67,8 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
   private static final String RESOURCES_DIR = "target/test-classes";
   private static final String DOCUMENTS_DIR = RESOURCES_DIR + "/test-documents";
   private static final File MINIMR_CONF_DIR = new File(RESOURCES_DIR + "/solr/minimr");
-  
+  private static final String TIKA_CONFIG_FILE_NAME = MapReduceIndexerTool.TIKA_CONFIG_FILE_NAME;
+
   private static final String SEARCH_ARCHIVES_JAR = JarFinder.getJar(MapReduceIndexerTool.class);
   
   private static MiniDFSCluster dfsCluster = null;
@@ -222,8 +223,7 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     HttpSolrServer server = new HttpSolrServer(cloudJettys.get(0).url);
 
     String[] args = new String[] {
-        "--files",
-        RESOURCES_DIR + "/tika-config.xml",
+        "--files", RESOURCES_DIR + File.separator + TIKA_CONFIG_FILE_NAME,
         "--solr-home-dir=" + MINIMR_CONF_DIR.getAbsolutePath(),
         "--output-dir=" + outDir.toString(),
         "--mappers=3",
@@ -250,8 +250,7 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     INPATH = upAvroFile(fs, inDir, DATADIR, dataDir, inputAvroFile2);
     
     args = new String[] {
-        "--files",
-        RESOURCES_DIR + "/tika-config.xml",
+        "--files", RESOURCES_DIR + File.separator + TIKA_CONFIG_FILE_NAME,
         "--solr-home-dir=" + MINIMR_CONF_DIR.getAbsolutePath(),
         "--output-dir=" + outDir.toString(),
         "--mappers=3",
@@ -282,8 +281,7 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     INPATH = upAvroFile(fs, inDir, DATADIR, dataDir, inputAvroFile3);
     
     args = new String[] {
-        "--files",
-        RESOURCES_DIR + "/tika-config.xml",
+        "--files", RESOURCES_DIR + File.separator + TIKA_CONFIG_FILE_NAME,
         "--solr-home-dir=" + MINIMR_CONF_DIR.getAbsolutePath(),
         "--output-dir=" + outDir.toString(),
         "--mappers=3",
@@ -314,7 +312,7 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     Path INPATH = new Path(inDir, "input.txt");
     OutputStream os = fs.create(INPATH);
     Writer wr = new OutputStreamWriter(os, "UTF-8");
-    wr.write(DATADIR + "/" + inputAvroFile1);
+    wr.write(DATADIR + File.separator + inputAvroFile1);
     wr.close();
     
     assertTrue(fs.mkdirs(dataDir));

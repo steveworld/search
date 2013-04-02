@@ -90,9 +90,10 @@ public class MapReduceIndexerTool extends Configured implements Tool {
   static final String MAIN_MEMORY_RANDOMIZATION_THRESHOLD = 
       MapReduceIndexerTool.class.getName() + ".mainMemoryRandomizationThreshold";
   
-  /** A list of input file URLs. Used as input to the Mapper */
+  static final String TIKA_CONFIG_FILE_NAME = "tika-config.xml";
+  
   private static final String FULL_INPUT_LIST = "full-input-list.txt";
-
+  
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceIndexerTool.class);
 
   
@@ -260,16 +261,9 @@ public class MapReduceIndexerTool extends Configured implements Tool {
           }
         });
       
-      Argument inputListArg = parser.addArgument("--input-list")
-        .action(Arguments.append())
-        .metavar("URI")
-  //      .type(new PathArgumentType(fs).verifyExists().verifyCanRead())
-        .type(Path.class)
-        .help("Local URI or HDFS URI of a UTF-8 encoded file containing a list of HDFS URIs to index, " +
-              "one URI per line in the file. If '-' is specified, URIs are read from the standard input. " + 
-              "Multiple --input-list arguments can be specified.");
+      ArgumentGroup requiredGroup = parser.addArgumentGroup("Required arguments");
       
-      Argument outputDirArg = parser.addArgument("--output-dir")
+      Argument outputDirArg = requiredGroup.addArgument("--output-dir")
         .metavar("HDFS_URI")
         .type(new PathArgumentType(conf) {
           @Override
@@ -286,28 +280,46 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .help("HDFS directory to write Solr indexes to. Inside there one output directory per shard will be generated. " +
         		  "Example: hdfs://c2202.mycompany.com/user/$USER/test");
       
+      Argument inputListArg = parser.addArgument("--input-list")
+        .action(Arguments.append())
+        .metavar("URI")
+  //      .type(new PathArgumentType(fs).verifyExists().verifyCanRead())
+        .type(Path.class)
+        .help("Local URI or HDFS URI of a UTF-8 encoded file containing a list of HDFS URIs to index, " +
+              "one URI per line in the file. If '-' is specified, URIs are read from the standard input. " + 
+              "Multiple --input-list arguments can be specified.");
+        
       Argument solrHomeDirArg = parser.addArgument("--solr-home-dir")
-          .metavar("DIR")
-          .type(new FileArgumentType().verifyIsDirectory().verifyCanRead())
-          .required(true)
-          .help("Relative or absolute path to a local dir containing Solr conf/ dir and in particular " +
-          		  "conf/solrconfig.xml and optionally also lib/ dir. This directory will be uploaded to each MR task. " +
-          		  "Example: src/test/resources/solr/minimr");
-    
+        .metavar("DIR")
+        .type(new FileArgumentType() {
+          @Override
+          public File convert(ArgumentParser parser, Argument arg, String value) throws ArgumentParserException {
+            File solrHomeDir = super.convert(parser, arg, value);
+            File solrConfigFile = new File(new File(solrHomeDir, "conf"), "solrconfig.xml");
+            new FileArgumentType().verifyExists().verifyIsFile().verifyCanRead().convert(
+                parser, arg, solrConfigFile.getPath());
+            return solrHomeDir;
+          }
+        }.verifyIsDirectory().verifyCanRead())
+        .required(true)
+        .help("Relative or absolute path to a local dir containing Solr conf/ dir and in particular " +
+              "conf/solrconfig.xml and optionally also lib/ dir. This directory will be uploaded to each MR task. " +
+              "Example: src/test/resources/solr/minimr");
+        
       Argument updateConflictResolverArg = parser.addArgument("--update-conflict-resolver")
-      .metavar("FQCN")
-      .type(String.class)
-      .setDefault(RetainMostRecentUpdateConflictResolver.class.getName())
-      .help("Fully qualified class name of a Java class that implements the UpdateConflictResolver interface. " +
-      		"This enables deduplication and ordering of a series of document updates for the same unique document " +
-      		"key. For example, a MapReduce batch job might index multiple files in the same job where some of the " +
-      		"files contain old and new versions of the very same document, using the same unique document key.\n" +
-          "Typically, implementations of this interface forbid collisions by throwing an exception, or ignore all but " +
-          "the most recent document version, or, in the general case, order colliding updates ascending from least " +
-          "recent to most recent (partial) update. The caller of this interface (i.e. the Hadoop Reducer) will then " +
-          "apply the updates to Solr in the order returned by the orderUpdates() method.\n" +
-          "The default RetainMostRecentUpdateConflictResolver implementation ignores all but the most recent document " +
-          "version, based on a configurable numeric Solr field, which defaults to the file_last_modified timestamp");
+        .metavar("FQCN")
+        .type(String.class)
+        .setDefault(RetainMostRecentUpdateConflictResolver.class.getName())
+        .help("Fully qualified class name of a Java class that implements the UpdateConflictResolver interface. " +
+        		"This enables deduplication and ordering of a series of document updates for the same unique document " +
+        		"key. For example, a MapReduce batch job might index multiple files in the same job where some of the " +
+        		"files contain old and new versions of the very same document, using the same unique document key.\n" +
+            "Typically, implementations of this interface forbid collisions by throwing an exception, or ignore all but " +
+            "the most recent document version, or, in the general case, order colliding updates ascending from least " +
+            "recent to most recent (partial) update. The caller of this interface (i.e. the Hadoop Reducer) will then " +
+            "apply the updates to Solr in the order returned by the orderUpdates() method.\n" +
+            "The default RetainMostRecentUpdateConflictResolver implementation ignores all but the most recent document " +
+            "version, based on a configurable numeric Solr field, which defaults to the file_last_modified timestamp");
       
       Argument mappersArg = parser.addArgument("--mappers")
         .metavar("INTEGER")
@@ -544,6 +556,15 @@ public class MapReduceIndexerTool extends Configured implements Tool {
   
   /** API for Java clients; visible for testing; may become a public API eventually */
   int run(Options options) throws Exception {
+    if ("local".equals(getConf().get("mapred.job.tracker"))) {
+      if (!new File(TIKA_CONFIG_FILE_NAME).exists()) { // see BasicMiniMRTest
+        throw new IllegalStateException(
+          "Running with LocalJobRunner (i.e. all of Hadoop inside a single JVM) is not supported " +
+          "because LocalJobRunner does not (yet) implement the Hadoop Distributed Cache feature, " +
+          "which is required for passing files via --files and --libjars");
+      }
+    }
+
     long programStartTime = System.currentTimeMillis();
     if (options.fairSchedulerPool != null) {
       getConf().set("mapred.fairscheduler.pool", options.fairSchedulerPool);
@@ -672,7 +693,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     job.setNumReduceTasks(reducers);  
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(SolrInputDocumentWritable.class);
-    job.getConfiguration().set(TikaIndexer.TIKA_CONFIG_LOCATION, "tika-config.xml");
+    job.getConfiguration().set(TikaIndexer.TIKA_CONFIG_LOCATION, TIKA_CONFIG_FILE_NAME);
     LOG.info("Indexing {} files using {} real mappers into {} reducers", numFiles, realMappers, reducers);
     startTime = System.currentTimeMillis();
     if (!waitForCompletion(job, options.isVerbose)) {
