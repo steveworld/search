@@ -45,7 +45,7 @@
   <groupId>com.cloudera.search</groupId>
   <artifactId>search-parent</artifactId>
   <name>Search Parent</name>
-  <version>0.1.1-cdh4.2.0-SNAPSHOT</version>
+  <version>0.1.2-cdh4.2.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <parent>
@@ -65,7 +65,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <solr.version>${cdh.solr.version}</solr.version>
-    <solr.expected.version>4.2.0</solr.expected.version> <!-- sanity check to verify we actually run against the expected version rather than some outdated version -->
+    <solr.expected.version>4.2.1</solr.expected.version> <!-- sanity check to verify we actually run against the expected version rather than some outdated version -->
     <flume.version>${cdh.flume-ng.version}</flume.version>
     <avro.version>${cdh.avro.version}</avro.version>
     <tika.version>1.3</tika.version>
