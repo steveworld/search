@@ -16,9 +16,11 @@
  */
 package org.apache.solr.hadoop;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -29,6 +31,7 @@ import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
@@ -40,6 +43,8 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.io.Files;
 
 public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
 
@@ -159,17 +164,48 @@ public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
     int batchSize = getBatchSize(context.getConfiguration());
     return new SolrRecordWriter<K, V>(context, workDir, batchSize);
   }
-  
-  public static void setupSolrHomeCache(File solrHomeDir, Job job)
-      throws IOException {
+
+  public static void setupSolrHomeCache(File solrHomeDir, Job job) throws IOException{
     File solrHomeZip = createSolrHomeZip(solrHomeDir);
     addSolrConfToDistributedCache(job, solrHomeZip);
   }
 
   public static File createSolrHomeZip(File solrHomeDir) throws IOException {
+    return createSolrHomeZip(solrHomeDir, false);
+  }
+
+  private static void writeReplacementSolrConfigSite(File solrconfigsite) throws IOException {
+    BufferedWriter bw = new BufferedWriter(new FileWriter(solrconfigsite));
+    bw.write("<dataDir></dataDir>");
+    bw.close();
+  }
+
+  private static File createSolrHomeZip(File solrHomeDir, boolean safeToModify) throws IOException {
     if (solrHomeDir == null || !(solrHomeDir.exists() && solrHomeDir.isDirectory())) {
       throw new IOException("Invalid solr home: " + solrHomeDir);
     }
+    // solrconfig-site.xml may have an unneeded variable with no default value ${solr.host},
+    // which will cause the job to fail.  Replace it.
+    File solrConfigSite = new File(solrHomeDir, "conf" + File.separator + "solrconfig-site.xml");
+    if (solrConfigSite.isFile()) {
+      if (!safeToModify) {
+        // not safe to modify, let's copy the contents over to a temp directory
+        File newTmpDir = Files.createTempDir();
+        newTmpDir.deleteOnExit();
+        LOG.debug("Creating temporary copy of solr home dir at: " + newTmpDir.getAbsolutePath());
+        FileUtils.copyDirectory(solrHomeDir, newTmpDir);
+        return createSolrHomeZip(newTmpDir, true);
+      }
+      // find a suitable backup name
+      File backup = new File(solrHomeDir, solrConfigSite.getName() + ".bak");
+      while (backup.exists()) {
+        backup = new File(solrHomeDir, backup.getName() + ".bak");
+      }
+      LOG.debug("Moving existing " + solrConfigSite.getName() + " to " + backup.getName());
+      Files.move(solrConfigSite, backup);
+      writeReplacementSolrConfigSite(solrConfigSite);
+    }
+
     File solrHomeZip = File.createTempFile("solr", ".zip");
     createZip(solrHomeDir, solrHomeZip);
     return solrHomeZip;

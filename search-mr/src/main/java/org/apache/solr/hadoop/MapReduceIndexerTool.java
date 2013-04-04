@@ -67,6 +67,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.solr.common.cloud.SolrZkClient;
 import org.apache.solr.hadoop.dedup.RetainMostRecentUpdateConflictResolver;
 import org.apache.solr.hadoop.tika.TikaMapper;
 import org.apache.solr.handler.extraction.ExtractingParams;
@@ -301,7 +302,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
             return solrHomeDir;
           }
         }.verifyIsDirectory().verifyCanRead())
-        .required(true)
+        .required(false)
         .help("Relative or absolute path to a local dir containing Solr conf/ dir and in particular " +
               "conf/solrconfig.xml and optionally also lib/ dir. This directory will be uploaded to each MR task. " +
               "Example: src/test/resources/solr/minimr");
@@ -421,7 +422,9 @@ public class MapReduceIndexerTool extends Configured implements Tool {
             + "where the client would be rooted at '/solr' and all paths "
             + "would be relative to this root - i.e. getting/setting/etc... "
             + "'/foo/bar' would result in operations being run on "
-            + "'/solr/foo/bar' (from the server perspective).");
+            + "'/solr/foo/bar' (from the server perspective).\n"
+            + "If --solr-home-dir is not specified, the Solr home directory for the collection "
+            + "will be downloaded from this ZooKeeper ensemble.");
 
       Argument shardsArg = clusterInfoGroup.addArgument("--shards")
         .metavar("INTEGER")
@@ -582,7 +585,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     if (options.verifyGoLiveArgs) { 
       verifyGoLiveArgs(options, null); // verify in case we got called directly rather than from the CLI API
     }
-    
+    verifyZKStructure(options, null);
+
     int mappers = new JobClient(job.getConfiguration()).getClusterStatus().getMaxMapTasks(); // MR1
     //mappers = job.getCluster().getClusterStatus().getMapSlotCapacity(); // Yarn only
     LOG.info("Cluster reports {} mapper slots", mappers);
@@ -689,7 +693,16 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     job.getConfiguration().setInt(SolrCloudPartitioner.SHARDS, options.shards);
     
     job.setOutputFormatClass(SolrOutputFormat.class);
-    SolrOutputFormat.setupSolrHomeCache(options.solrHomeDir, job);      
+    if (options.solrHomeDir != null) {
+      SolrOutputFormat.setupSolrHomeCache(options.solrHomeDir, job);
+    } else {
+      assert options.zkHost != null;
+      // use the config that this collection uses for the SolrHomeCache.
+      ZooKeeperInspector zki = new ZooKeeperInspector();
+      SolrZkClient zkClient = zki.getZkClient(options.zkHost);
+      String configName = zki.readConfigName(zkClient, options.collection);
+      SolrOutputFormat.setupSolrHomeCache(zki.downloadConfigDir(zkClient, configName), job);
+    }
     job.setNumReduceTasks(reducers);  
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(SolrInputDocumentWritable.class);
@@ -1003,7 +1016,10 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     return dirs;
   }
 
-  private static void verifyGoLiveArgs(Options opts, ArgumentParser parser) throws ArgumentParserException {      
+  private static void verifyGoLiveArgs(Options opts, ArgumentParser parser) throws ArgumentParserException {
+    if (opts.zkHost == null && opts.solrHomeDir == null) {
+      throw new ArgumentParserException("At least one of --zkHost, --solr-home-dir required", parser);
+    }
     if (opts.goLive && opts.zkHost == null && opts.shardUrls == null) {
       throw new ArgumentParserException("--go-live requires that you also pass --shard-url or --zk-host", parser);
     }
@@ -1013,20 +1029,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     }
     
     if (opts.zkHost != null) {
-      assert opts.collection != null;
-      ZooKeeperInspector zki = new ZooKeeperInspector();
-      try {
-        opts.shardUrls = zki.extractShardUrls(opts.zkHost, opts.collection);
-      } catch (Exception e) {
-        LOG.debug("Cannot extract SolrCloud shard URLs from ZooKeeper", e);
-        throw new ArgumentParserException(e, parser);          
-      }
-      assert opts.shardUrls != null;
-      if (opts.shardUrls.size() == 0) {
-        throw new ArgumentParserException("--zk-host requires ZooKeeper " + opts.zkHost
-            + " to contain at least one SolrCore for collection: " + opts.collection, parser);
-      }
-      LOG.debug("Using SolrCloud shard URLs: {}", opts.shardUrls);
+      return;
+      // verify structure of ZK directory later, to avoid checking run-time errors during parsing.
     } else if (opts.shardUrls != null) {
       if (opts.shardUrls.size() == 0) {
         throw new ArgumentParserException("--shard-url requires at least one URL", parser);
@@ -1047,7 +1051,27 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     assert opts.shards != null;
     assert opts.shards > 0;
   }
-  
+
+  private static void verifyZKStructure(Options opts, ArgumentParser parser) throws ArgumentParserException {
+    if (opts.zkHost != null) {
+      assert opts.collection != null;
+      ZooKeeperInspector zki = new ZooKeeperInspector();
+      try {
+        opts.shardUrls = zki.extractShardUrls(opts.zkHost, opts.collection);
+      } catch (Exception e) {
+        LOG.debug("Cannot extract SolrCloud shard URLs from ZooKeeper", e);
+        throw new ArgumentParserException(e, parser);
+      }
+      assert opts.shardUrls != null;
+      if (opts.shardUrls.size() == 0) {
+      throw new ArgumentParserException("--zk-host requires ZooKeeper " + opts.zkHost
+        + " to contain at least one SolrCore for collection: " + opts.collection, parser);
+      }
+      opts.shards = opts.shardUrls.size();
+      LOG.debug("Using SolrCloud shard URLs: {}", opts.shardUrls);
+    }
+  }
+
   private boolean waitForCompletion(Job job, boolean isVerbose) 
       throws IOException, InterruptedException, ClassNotFoundException {
     

@@ -34,7 +34,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class MapReduceIndexerToolArgumentParserTest extends Assert {
-  
   private Configuration conf; 
   private MapReduceIndexerTool.MyArgumentParser parser;
   private MapReduceIndexerTool.Options opts;
@@ -376,7 +375,29 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         };
     assertArgumentParserException(args);
   }  
-  
+
+  @Test
+  public void testNoSolrHomeDirOrZKHost() {
+    String[] args = new String[] {
+        "--input-list", "file:///tmp",
+        "--output-dir", "file:/tmp/foo",
+        "--shards", "1",
+        };
+    assertArgumentParserException(args);
+  }
+
+  @Test
+  public void testZKHostNoSolrHomeDirOk() {
+    String[] args = new String[] {
+        "--input-list", "file:///tmp",
+        "--output-dir", "file:/tmp/foo",
+        "--zk-host", "http://localhost:2185",
+        "--collection", "collection1",
+        };
+    assertNull(parser.parseArgs(args, conf, opts));
+    assertEmptySystemErrAndEmptySystemOut();
+  }
+
   private void assertEmptySystemErrAndEmptySystemOut() {
     assertEquals(0, bout.toByteArray().length);
     assertEquals(0, berr.toByteArray().length);
