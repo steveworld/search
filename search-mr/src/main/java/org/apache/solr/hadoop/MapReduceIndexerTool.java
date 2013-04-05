@@ -533,7 +533,6 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     File solrHomeDir;
     String fairSchedulerPool;
     boolean isVerbose;
-    private boolean verifyGoLiveArgs = true;
   }
   // END OF INNER CLASS  
 
@@ -553,7 +552,6 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     if (exitCode != null) {
       return exitCode;
     }
-    opts.verifyGoLiveArgs = false; // no need to reverify if called from CLI b/c we already verified in parseArgs()
     return run(opts);
   }
   
@@ -582,9 +580,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     job = Job.getInstance(getConf());
     job.setJarByClass(getClass());
 
-    if (options.verifyGoLiveArgs) { 
-      verifyGoLiveArgs(options, null); // verify in case we got called directly rather than from the CLI API
-    }
+    verifyGoLiveArgs(options, null);
     verifyZKStructure(options, null);
 
     int mappers = new JobClient(job.getConfiguration()).getClusterStatus().getMaxMapTasks(); // MR1
@@ -1018,7 +1014,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
 
   private static void verifyGoLiveArgs(Options opts, ArgumentParser parser) throws ArgumentParserException {
     if (opts.zkHost == null && opts.solrHomeDir == null) {
-      throw new ArgumentParserException("At least one of --zkHost, --solr-home-dir required", parser);
+      throw new ArgumentParserException("At least one of --zk-host or --solr-home-dir is required", parser);
     }
     if (opts.goLive && opts.zkHost == null && opts.shardUrls == null) {
       throw new ArgumentParserException("--go-live requires that you also pass --shard-url or --zk-host", parser);
@@ -1064,8 +1060,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       }
       assert opts.shardUrls != null;
       if (opts.shardUrls.size() == 0) {
-      throw new ArgumentParserException("--zk-host requires ZooKeeper " + opts.zkHost
-        + " to contain at least one SolrCore for collection: " + opts.collection, parser);
+        throw new ArgumentParserException("--zk-host requires ZooKeeper " + opts.zkHost
+          + " to contain at least one SolrCore for collection: " + opts.collection, parser);
       }
       opts.shards = opts.shardUrls.size();
       LOG.debug("Using SolrCloud shard URLs: {}", opts.shardUrls);
