@@ -43,6 +43,7 @@ import com.google.common.io.Files;
  * Extracts SolrCloud information from ZooKeeper.
  */
 final class ZooKeeperInspector {
+  
   private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperInspector.class);
   
   public List<String> extractShardUrls(String zkHost, String collection) {
@@ -84,6 +85,30 @@ final class ZooKeeperInspector {
     }    
   }
 
+  public SolrZkClient getZkClient(String zkHost) {
+    if (zkHost == null) {
+      throw new IllegalArgumentException("zkHost must not be null");
+    }
+
+    SolrZkClient zkClient;
+    try {
+      zkClient = new SolrZkClient(zkHost, 15000);
+    } catch (Exception e) {
+      throw new IllegalArgumentException("Cannot connect to ZooKeeper: " + zkHost, e);
+    }
+    return zkClient;
+  }
+  
+  public List<Slice> getSortedSlices(Collection<Slice> slices) {
+    List<Slice> sorted = new ArrayList(slices);
+    Collections.sort(sorted, new Comparator<Slice>() {
+      @Override
+      public int compare(Slice slice1, Slice slice2) {
+        return slice1.getName().compareTo(slice2.getName());
+      }      
+    });
+    return sorted;
+  }
 
   /**
    * Returns config value given collection name
@@ -116,28 +141,13 @@ final class ZooKeeperInspector {
     return configName;
   }
 
-  public List<Slice> getSortedSlices(Collection<Slice> slices) {
-    List<Slice> sorted = new ArrayList(slices);
-    Collections.sort(sorted, new Comparator<Slice>() {
-      @Override
-      public int compare(Slice slice1, Slice slice2) {
-        return slice1.getName().compareTo(slice2.getName());
-      }      
-    });
-    return sorted;
-  }
-
   /**
    * Download and return the config directory from ZK
    */
   public File downloadConfigDir(SolrZkClient zkClient, String configName)
-  throws IOException, InterruptedException {
+  throws IOException, InterruptedException, KeeperException {
     File dir = Files.createTempDir();
-    try {
-      ZkController.downloadConfigDir(zkClient, configName, dir);
-    } catch (KeeperException ke) {
-      throw new IOException(ke);
-    }
+    ZkController.downloadConfigDir(zkClient, configName, dir);
     File confDir = new File(dir, "conf");
     if (!confDir.isDirectory()) {
       // create a temporary directory with "conf" subdir and mv the config in there.  This is
@@ -152,17 +162,4 @@ final class ZooKeeperInspector {
     return dir;
   }
 
-  public SolrZkClient getZkClient(String zkHost) {
-    if (zkHost == null) {
-      throw new IllegalArgumentException("zkHost must not be null");
-    }
-
-    SolrZkClient zkClient;
-    try {
-      zkClient = new SolrZkClient(zkHost, 15000);
-    } catch (Exception e) {
-      throw new IllegalArgumentException("Cannot connect to ZooKeeper: " + zkHost, e);
-    }
-    return zkClient;
-  }
 }
