@@ -423,6 +423,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
             + "would be relative to this root - i.e. getting/setting/etc... "
             + "'/foo/bar' would result in operations being run on "
             + "'/solr/foo/bar' (from the server perspective).\n"
+            + "\n"
             + "If --solr-home-dir is not specified, the Solr home directory for the collection "
             + "will be downloaded from this ZooKeeper ensemble.");
 
