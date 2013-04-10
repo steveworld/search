@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.solr.tika.parser.StreamingWarcParser;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.typesafe.config.Config;
@@ -33,7 +34,13 @@ import com.yammer.metrics.core.MetricsRegistry;
  * Test for regex doc-type based matching of the WarcParser
  */
 public class TestWarcParserRegex extends TikaIndexerTestBase {
+
   private static final String sampleWarcFile = "/IAH-20080430204825-00000-blackbook.warc.gz";
+
+  @BeforeClass
+  public static void beforeClass() throws Exception {
+    myInitCore(DEFAULT_BASE_DIR);
+  }
 
   @Override
   protected Map<String, String> getContext() {

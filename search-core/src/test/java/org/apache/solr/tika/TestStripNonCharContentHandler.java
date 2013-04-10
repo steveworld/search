@@ -21,12 +21,18 @@ package org.apache.solr.tika;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.handler.extraction.SolrContentHandler;
 import org.apache.tika.metadata.Metadata;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
  * Tests that {@link StripNonCharContentHandler} properly strips illegal characters.
  */
 public class TestStripNonCharContentHandler extends TikaIndexerTestBase {
+
+  @BeforeClass
+  public static void beforeClass() throws Exception {
+    myInitCore(DEFAULT_BASE_DIR);
+  }
 
   /**
    * Returns string "foobar" with illegal characters interspersed.

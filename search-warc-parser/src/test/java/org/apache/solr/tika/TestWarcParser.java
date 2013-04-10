@@ -34,18 +34,23 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.tika.parser.WarcParserCounter;
 import org.junit.Before;
-import org.junit.Ignore;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import com.yammer.metrics.core.Counter;
 import com.yammer.metrics.core.MetricName;
-import com.yammer.metrics.core.MetricsRegistry;
 
 public class TestWarcParser extends TikaIndexerTestBase {
+  
   private static final String sampleWarcFile = "/IAH-20080430204825-00000-blackbook.warc.gz";
   private Map<String,Integer> expectedRecords = new HashMap();
+
+  @BeforeClass
+  public static void beforeClass() throws Exception {
+    myInitCore(DEFAULT_BASE_DIR);
+  }
 
   @Override
   protected Map<String, String> getContext() {

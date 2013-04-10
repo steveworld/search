@@ -69,6 +69,7 @@ import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.txt.TXTParser;
 import org.apache.tika.sax.ToTextContentHandler;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.SAXException;
@@ -78,6 +79,11 @@ import com.drew.imaging.jpeg.JpegProcessingException;
 public class TestTikaIndexer extends TikaIndexerTestBase {
   
   private Map<String,Integer> expectedRecords = new HashMap();
+
+  @BeforeClass
+  public static void beforeClass() throws Exception {
+    myInitCore(DEFAULT_BASE_DIR);
+  }
 
   @Before
   @Override

@@ -34,6 +34,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -66,25 +67,21 @@ public class TikaIndexerTestBase extends SolrTestCaseJ4 {
   protected static final AtomicInteger SEQ_NUM = new AtomicInteger();
   protected static final AtomicInteger SEQ_NUM2 = new AtomicInteger();
   protected static final Logger LOGGER = LoggerFactory.getLogger(TestTikaIndexer.class);
+  
+  protected static final String DEFAULT_BASE_DIR = "solr";
 
-  @BeforeClass
-  public static void beforeClass() throws Exception {
+  protected static void myInitCore(String baseDirName) throws Exception {
     initCore(
-        RESOURCES_DIR + "/solr/collection1/conf/solrconfig.xml",
-        RESOURCES_DIR + "/solr/collection1/conf/schema.xml",
-        RESOURCES_DIR + "/solr"
-        );
-//    createJetty(
-//        new File(RESOURCES_DIR + "/solr").getAbsolutePath(),
-//        null, //RESOURCES_DIR + "/solr/collection1/conf/solrconfig.xml",
-//        null
-//        );
+        RESOURCES_DIR + "/" + baseDirName + "/collection1/conf/solrconfig.xml",
+        RESOURCES_DIR + "/" + baseDirName + "/collection1/conf/schema.xml",
+        RESOURCES_DIR + "/" + baseDirName
+        );    
   }
 
   protected Map<String, String> getContext() {
     final Map<String, String> context = new HashMap();
     context.put(TikaIndexer.TIKA_CONFIG_LOCATION, RESOURCES_DIR + "/tika-config.xml");
-    context.put(SolrInspector.SOLR_COLLECTION_LIST + ".testcoll." + SolrInspector.SOLR_CLIENT_HOME, RESOURCES_DIR + "/solr/collection1");
+    context.put(SolrInspector.SOLR_COLLECTION_LIST + ".testcoll." + SolrInspector.SOLR_CLIENT_HOME, testSolrHome + "/collection1");
     return context;
   }
 
@@ -261,6 +258,10 @@ public class TikaIndexerTestBase extends SolrTestCaseJ4 {
     SolrCollection collection = solrIndexer.getSolrCollection();
     QueryResponse rsp = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().query(new SolrQuery(query).setRows(Integer.MAX_VALUE));
     LOGGER.debug("rsp: {}", rsp);
+    int i = 0;
+    for (SolrDocument doc : rsp.getResults()) {
+      LOGGER.debug("rspDoc #{}: {}", i++, doc);
+    }
     int size = rsp.getResults().size();
     return size;
   }
