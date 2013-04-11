@@ -1,5 +1,4 @@
 /*
-
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,17 +20,12 @@ package org.apache.solr.tika;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
-import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.common.SolrDocument;
 import org.apache.solr.tika.parser.WarcParserCounter;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -165,59 +159,7 @@ public class TestWarcParser extends TikaIndexerTestBase {
     String testFileSuffix = ".warc.gz";
     String expectedFileSuffix = ".gold";
     String expectedFile = sampleWarcFile.substring(0, sampleWarcFile.length() - testFileSuffix.length()) + expectedFileSuffix;
-    HashMap<String, ExpectedResult> expectedResultMap = getExpectedOutput(path + "/" + expectedFile);
+    HashMap<String, TikaIndexerTestBase.ExpectedResult> expectedResultMap = getExpectedOutput(path + "/" + expectedFile);
     testDocumentContent(expectedResultMap);
-  }
-
-  private void testDocumentContent(HashMap<String, ExpectedResult> expectedResultMap) throws Exception {
-    SolrCollection collection = indexer.getSolrCollection();
-    QueryResponse rsp = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().query(new SolrQuery("*:*").setRows(Integer.MAX_VALUE));
-    // Check that every expected field/values shows up in the actual query
-    for (Entry<String, ExpectedResult> current : expectedResultMap.entrySet()) {
-      String field = current.getKey();
-      for (String expectedFieldValue : current.getValue().getFieldValues()) {
-        ExpectedResult.CompareType compareType = current.getValue().getCompareType();
-        boolean foundField = false;
-
-        for (SolrDocument doc : rsp.getResults()) {
-          Collection<Object> actualFieldValues = doc.getFieldValues(field);
-          if (compareType == ExpectedResult.CompareType.equals) {
-            if (actualFieldValues != null && actualFieldValues.contains(expectedFieldValue)) {
-              foundField = true;
-              break;
-            }
-          }
-          else {
-            for (Iterator<Object> it = actualFieldValues.iterator(); it.hasNext(); ) {
-              String actualValue = it.next().toString();  // test only supports string comparison
-              if (actualFieldValues != null && actualValue.contains(expectedFieldValue)) {
-                foundField = true;
-                break;
-              }
-            }
-          }
-        }
-        assert(foundField); // didn't find expected field/value in query
-      }
-    }
-  }
-
-  /**
-   * Representation of the expected output of a SolrQuery.
-   */
-  private static class ExpectedResult {
-    private HashSet<String> fieldValues;
-    private enum CompareType {
-      equals,    // Compare with equals, i.e. actual.equals(expected)
-      contains;  // Compare with contains, i.e. actual.contains(expected)
-    }
-    private CompareType compareType;
-
-    public ExpectedResult(HashSet<String> fieldValues, CompareType compareType) {
-      this.fieldValues = fieldValues;
-      this.compareType = compareType;
-    }
-    public HashSet<String> getFieldValues() { return fieldValues; }
-    public CompareType getCompareType() { return compareType; }
   }
 }

@@ -51,20 +51,11 @@ public class TestWarcParserRegex extends TikaIndexerTestBase {
     context.put(StreamingWarcParser.MIMETYPES_TO_PARSE_PROPERTY, regex);
     return context;
   }
-
-  private SolrIndexer getSolrIndexer(String regex, int expectedCount) throws Exception {
-    Map<String, String> context = getContext();
-    context.put(StreamingWarcParser.MIMETYPES_TO_PARSE_PROPERTY, regex);
-    Config config = ConfigFactory.parseMap(context);
-   
-    SolrIndexer solrIndexer =
-      new TikaIndexer(new SolrInspector().createSolrCollection(config, indexer.getSolrCollection().getDocumentLoader()), config, new MetricsRegistry());
-    deleteAllDocuments(solrIndexer);
-    return solrIndexer;
-  }
   
   private void verifyDocCount(String regex, int expectedCount) throws Exception {
-    SolrIndexer solrIndexer = getSolrIndexer(regex, expectedCount);
+    HashMap<String, String> extraContext = new HashMap<String, String>();
+    extraContext.put(StreamingWarcParser.MIMETYPES_TO_PARSE_PROPERTY, regex);
+    SolrIndexer solrIndexer = getSolrIndexer(extraContext);
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
       path + sampleWarcFile
