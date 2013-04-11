@@ -251,7 +251,6 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "  --libjars myconfig.jar \\\n" + 
               "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-              "  --solr-home-dir src/test/resources/solr/minimr \\\n" + 
               "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
               "  --zk-host zk01.mycompany.com:2181/solr \\\n" + 
               "  --collection collection1 \\\n" + 
