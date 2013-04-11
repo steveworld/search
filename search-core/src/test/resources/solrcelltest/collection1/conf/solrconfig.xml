@@ -979,25 +979,30 @@
        http://wiki.apache.org/solr/ExtractingRequestHandler 
 
     -->
-  <requestHandler name="/update/extract" 
+<requestHandler name="/update/extract" 
                   startup="lazy"
                   class="solr.extraction.ExtractingRequestHandler" >
-    <lst name="defaults">
-      <str name="capture">id</str>
-      <str name="capture">user_screen_name</str>
-      <str name="capture">created_at</str>
-      <str name="capture">text</str>
+  <lst name="defaults">
+    <!-- extract some fields with the capture directive -->
+    <str name="capture">id</str> 
+    <str name="capture">user_screen_name</str>
+    <str name="capture">created_at</str>
+    <str name="capture">text</str>
 
-      <str name="fmap.user_screen_name">username</str>
+    <!-- rename user_screen_name to username -->
+    <str name="fmap.user_screen_name">username</str>
 
-      <str name="lowernames">true</str>
-      <str name="uprefix">ignored_</str>
-    </lst>
+    <!-- ignore all unknown input fields -->
+    <str name="uprefix">ignored_</str>
+    
+    <!-- <str name="lowernames">true</str> -->      
+  </lst>
 
-    <lst name="date.formats"> <!-- zero or more SimpleDateFormat specs, see http://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html-->
-      <str>yyyy-MM-dd'T'HH:mm:ss'Z'</str> <!-- e.g. 2012-09-06T14:14:34Z -->
-    </lst>
-  </requestHandler>
+  <!-- see http://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html -->
+  <lst name="date.formats"> 
+    <str>yyyy-MM-dd'T'HH:mm:ss'Z'</str> <!-- e.g. 2012-09-06T14:14:34Z -->
+  </lst>
+</requestHandler>
 
 
   <!-- Field Analysis Request Handler
