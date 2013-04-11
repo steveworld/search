@@ -58,6 +58,7 @@ If multiple parsers support the same MIME type, the parser is chosen that is clo
     <parser class="org.apache.solr.tika.parser.TSVParser"/> 
     <parser class="org.apache.solr.tika.parser.CSVParser"/> 
     <parser class="org.apache.solr.tika.parser.AvroContainerParser"/>
+    <parser class="org.apache.solr.tika.parser.SequenceFileParser"/>
     
     <!--
     <parser class="org.apache.tika.parser.audio.AudioParser"> 

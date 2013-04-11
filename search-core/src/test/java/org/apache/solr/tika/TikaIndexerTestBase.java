@@ -21,9 +21,13 @@ package org.apache.solr.tika;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.io.FileUtils;
@@ -138,6 +142,21 @@ public class TikaIndexerTestBase extends SolrTestCaseJ4 {
     deleteAllDocuments();
   }
 
+  protected SolrIndexer getSolrIndexer(HashMap<String, String> extraContext) throws Exception {
+    Map<String, String> context = getContext();
+    if (extraContext != null) {
+      for (Map.Entry<String, String> entry : extraContext.entrySet()) {
+        context.put(entry.getKey(), entry.getValue());
+      }
+    }
+    Config config = ConfigFactory.parseMap(context);
+   
+    SolrIndexer solrIndexer =
+      new TikaIndexer(new SolrInspector().createSolrCollection(config, indexer.getSolrCollection().getDocumentLoader()), config, new MetricsRegistry());
+    deleteAllDocuments(solrIndexer);
+    return solrIndexer;
+  }
+
   protected void deleteAllDocuments(SolrIndexer solrIndexer) throws SolrServerException, IOException {
     SolrCollection collection = solrIndexer.getSolrCollection();
     SolrServer s = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer();
@@ -232,6 +251,45 @@ public class TikaIndexerTestBase extends SolrTestCaseJ4 {
     }
   }
 
+  protected void testDocumentContent(HashMap<String, ExpectedResult> expectedResultMap)
+  throws Exception {
+    testDocumentContent(indexer, expectedResultMap);
+  }
+
+  protected void testDocumentContent(SolrIndexer solrIndexer, HashMap<String, ExpectedResult> expectedResultMap)
+  throws Exception {
+    SolrCollection collection = solrIndexer.getSolrCollection();
+    QueryResponse rsp = ((SolrServerDocumentLoader)collection.getDocumentLoader()).getSolrServer().query(new SolrQuery("*:*").setRows(Integer.MAX_VALUE));
+    // Check that every expected field/values shows up in the actual query
+    for (Entry<String, ExpectedResult> current : expectedResultMap.entrySet()) {
+      String field = current.getKey();
+      for (String expectedFieldValue : current.getValue().getFieldValues()) {
+        ExpectedResult.CompareType compareType = current.getValue().getCompareType();
+        boolean foundField = false;
+
+        for (SolrDocument doc : rsp.getResults()) {
+          Collection<Object> actualFieldValues = doc.getFieldValues(field);
+          if (compareType == ExpectedResult.CompareType.equals) {
+            if (actualFieldValues != null && actualFieldValues.contains(expectedFieldValue)) {
+              foundField = true;
+              break;
+            }
+          }
+          else {
+            for (Iterator<Object> it = actualFieldValues.iterator(); it.hasNext(); ) {
+              String actualValue = it.next().toString();  // test only supports string comparison
+              if (actualFieldValues != null && actualValue.contains(expectedFieldValue)) {
+                foundField = true;
+                break;
+              }
+            }
+          }
+        }
+        assert(foundField); // didn't find expected field/value in query
+      }
+    }
+  }
+
   protected void load(StreamEvent event, SolrIndexer solrIndexer) throws IOException, SolrServerException, SAXException, TikaException {
     if (event instanceof TikaStreamEvent) {
       event = new TikaStreamEvent(event.getBody(), new HashMap(event.getHeaders()), ((TikaStreamEvent)event).getParseContext());
@@ -273,5 +331,23 @@ public class TikaIndexerTestBase extends SolrTestCaseJ4 {
   protected void setProductionMode(boolean isProduction) {
     this.isProductionMode = isProduction;
   }
-  
+
+  /**
+   * Representation of the expected output of a SolrQuery.
+   */
+  protected static class ExpectedResult {
+    private HashSet<String> fieldValues;
+    public enum CompareType {
+      equals,    // Compare with equals, i.e. actual.equals(expected)
+      contains;  // Compare with contains, i.e. actual.contains(expected)
+    }
+    private CompareType compareType;
+
+    public ExpectedResult(HashSet<String> fieldValues, CompareType compareType) {
+      this.fieldValues = fieldValues;
+      this.compareType = compareType;
+    }
+    public HashSet<String> getFieldValues() { return fieldValues; }
+    public CompareType getCompareType() { return compareType; }
+  }
 }
