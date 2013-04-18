@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudera.cdk.morphline.csv;
+package com.cloudera.cdk.morphline.parser;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,7 +28,6 @@ import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineParsingException;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
-import com.cloudera.cdk.morphline.tika.AbstractParser;
 import com.google.common.io.Closeables;
 import com.googlecode.jcsv.CSVStrategy;
 import com.googlecode.jcsv.reader.CSVReader;
@@ -47,23 +46,23 @@ import com.typesafe.config.Config;
  * 
  * Note that a quoted field can span multiple lines in the input stream.
  */
-public final class ParseCSVBuilder implements CommandBuilder {
+public final class ReadCSVBuilder implements CommandBuilder {
 
   @Override
   public String getName() {
-    return "parseCSV";
+    return "readCSV";
   }
 
   @Override
   public Command build(Config config, Command parent, Command child, MorphlineContext context) {
-    return new ParseCSV(config, parent, child, context);
+    return new ReadCSV(config, parent, child, context);
   }
   
   
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
   ///////////////////////////////////////////////////////////////////////////////
-  private static final class ParseCSV extends AbstractParser {
+  private static final class ReadCSV extends AbstractParser {
 
     private final char separatorChar;
     private final List<String> columnNames;
@@ -74,7 +73,7 @@ public final class ParseCSVBuilder implements CommandBuilder {
     private final char quoteChar = '"';
     private final boolean ignoreEmptyLines = true;
   
-    public ParseCSV(Config config, Command parent, Command child, MorphlineContext context) {
+    public ReadCSV(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
       String separator = Configs.getString(config, "separator", ",");
       if (separator.length() != 1) {

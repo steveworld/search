@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudera.cdk.morphline.csv;
+package com.cloudera.cdk.morphline.parser;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -29,7 +29,6 @@ import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
-import com.cloudera.cdk.morphline.tika.AbstractParser;
 import com.google.common.io.Closeables;
 import com.typesafe.config.Config;
 

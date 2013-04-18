@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudera.cdk.morphline.tika;
+package com.cloudera.cdk.morphline.parser;
 
 import java.io.InputStream;
 import java.util.Collections;
@@ -37,6 +37,7 @@ import com.typesafe.config.Config;
  */
 public abstract class AbstractParser extends AbstractCommand {
 
+  // FIXME: replace tika MediaType with guava MediaType (don't require a tika dependency here)
   private final Set<MediaType> supportedMimeTypes = new HashSet();
 
   public static final String SUPPORTED_MIME_TYPES = "supportedMimeTypes";

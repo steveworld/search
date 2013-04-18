@@ -13,13 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudera.cdk.morphline.tika;
+package com.cloudera.cdk.morphline.parser;
+
+import java.io.InputStream;
+import java.util.List;
+
+import org.slf4j.Logger;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
+import com.google.common.base.Preconditions;
 import com.typesafe.config.Config;
 
 /**
@@ -49,12 +55,37 @@ public final class RequireAtMostOneAttachmentBuilder implements CommandBuilder {
     
     @Override
     public boolean process(Record record) {
-      if (!Attachments.hasAtMostOneAttachment(record, LOG)) {
+      if (!hasAtMostOneAttachment(record, LOG)) {
         return false;
       }
       return super.process(record);
     }
 
+    private static boolean hasAtMostOneAttachment(Record record, Logger LOG) {
+      List mimeTypes = record.getFields().get(Record.ATTACHMENT_MIME_TYPE);
+      if (mimeTypes.size() > 1) {
+        LOG.debug("Command failed because the record must not contain more than one MIME type: {}", record);
+        return false;
+      }
+      
+      List bodies = record.getFields().get(Record.ATTACHMENT_BODY);
+      if (bodies.size() > 1) {
+        LOG.debug("Command failed because the record must not contain more than one attachment: {}", record);
+        return false;
+      }
+
+      if (bodies.size() > 0) {
+        Object body = bodies.get(0);
+        Preconditions.checkNotNull(body);
+        if (!(body instanceof byte[] || body instanceof InputStream)) {
+          LOG.debug("Command failed because the record's attachment must be a byte array or InputStream: {}", record);
+          return false;
+        }
+      }
+      
+      return true;
+    }
+   
   }
   
 }

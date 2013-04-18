@@ -34,6 +34,7 @@ import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
+import com.cloudera.cdk.morphline.parser.AbstractParser;
 import com.google.common.io.Closeables;
 import com.typesafe.config.Config;
 
