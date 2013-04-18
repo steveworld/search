@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.cloudera.cdk.morphline.api.Command;
@@ -85,6 +86,7 @@ public final class ReadMultiLineBuilder implements CommandBuilder {
       try {
         reader = new InputStreamReader(stream, charsetName);
         BufferedReader lineReader = new BufferedReader(reader);
+        Matcher matcher = pattern.matcher("");
         StringBuilder lines = null;
         String line;
         
@@ -92,7 +94,7 @@ public final class ReadMultiLineBuilder implements CommandBuilder {
           if (lines == null) {
             lines = new StringBuilder(line);
           } else {
-            boolean isMatch = pattern.matcher(line).matches();
+            boolean isMatch = matcher.reset(line).matches();
             if (negate) {
               isMatch = !isMatch;
             }
