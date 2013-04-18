@@ -132,7 +132,7 @@ public final class ReadMultiLineBuilder implements CommandBuilder {
             }
           }          
         }
-        if (lines != null) {
+        if (lines != null && lines.length() > 0) {
           return flushRecord(inputRecord, lines.toString());
         }
         return true;
