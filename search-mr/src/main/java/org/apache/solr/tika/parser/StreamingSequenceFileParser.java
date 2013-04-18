@@ -320,7 +320,7 @@ public class StreamingSequenceFileParser extends AbstractStreamingParser {
     public int read() throws IOException {
       byte [] b = new byte[1];
       int len = fosInputStream.read(b, 0, 1);
-      int ret = (len == -1)? -1 : b[0];
+      int ret = (len == -1)? -1 : b[0] & 0xFF;
       return ret;
     }
   }
