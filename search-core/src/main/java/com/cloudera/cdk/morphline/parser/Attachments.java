@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudera.cdk.morphline.tika;
+package com.cloudera.cdk.morphline.parser;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -44,31 +44,7 @@ final class Attachments {
     return true;
   }
   
-  public static boolean hasAtMostOneAttachment(Record record, Logger LOG) {
-    List mimeTypes = record.getFields().get(Record.ATTACHMENT_MIME_TYPE);
-    if (mimeTypes.size() > 1) {
-      LOG.debug("Command failed because the record must not contain more than one MIME type: {}", record);
-      return false;
-    }
-    
-    List bodies = record.getFields().get(Record.ATTACHMENT_BODY);
-    if (bodies.size() > 1) {
-      LOG.debug("Command failed because the record must not contain more than one attachment: {}", record);
-      return false;
-    }
-
-    if (bodies.size() > 0) {
-      Object body = bodies.get(0);
-      Preconditions.checkNotNull(body);
-      if (!(body instanceof byte[] || body instanceof InputStream)) {
-        LOG.debug("Command failed because the record's attachment must be a byte array or InputStream: {}", record);
-        return false;
-      }
-    }
-    
-    return true;
-  }
-  
+ 
   public static InputStream createAttachmentInputStream(Record record) {
     Object body = record.getFirstValue(Record.ATTACHMENT_BODY);
     Preconditions.checkNotNull(body);
