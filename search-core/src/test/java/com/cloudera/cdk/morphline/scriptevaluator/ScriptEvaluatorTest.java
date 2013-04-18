@@ -35,6 +35,7 @@ public class ScriptEvaluatorTest extends Assert {
       + "import java.util.*;" 
     ;
   }
+  
 	@Test
 	public void testBasic() throws Exception {
 		ScriptEvaluator script = new ScriptEvaluator(javaImports, "return x * 2; ", Integer.class, new String[] { "x" }, new Class[] { Integer.class }, "myQuery");
