@@ -35,10 +35,21 @@ import com.typesafe.config.Config;
 
 /**
  * Multiline log parser that collapse multiline messages into a single record; supports "pattern",
- * "what" and "negate" config parameters similar to logstash.
+ * "previous/next" and "negate" config parameters similar to logstash.
  * 
  * For example, this can be used to parse log4j with stack traces. Also see
  * https://gist.github.com/smougenot/3182192 and http://logstash.net/docs/1.1.9/filters/multiline
+ * 
+ * The <code>pattern</code> parameter should match what you believe to be an indicator that the
+ * field is part of a multi-line event
+ * 
+ * The <code>previous</code> parameter must be true (aka previous) or false (aka next) and indicates
+ * the relation to the multi-line event.
+ * 
+ * The <code>negate</code> parameter can be true or false (defaults false). If true, a message not
+ * matching the pattern will constitute a match of the multiline filter and the previous/next action
+ * will be applied. (vice-versa is also true)
+ * 
  * 
  * Example:
  * 
