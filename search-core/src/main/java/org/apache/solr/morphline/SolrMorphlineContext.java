@@ -21,7 +21,7 @@ import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.yammer.metrics.core.MetricsRegistry;
 
 /**
- * A context that is specific to Solr, in particular, included the Solr schema of a Solr collection.
+ * A context that is specific to Solr, in particular, includes the Solr schema of a Solr collection.
  */
 public class SolrMorphlineContext extends MorphlineContext {
 
