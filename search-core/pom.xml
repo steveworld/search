@@ -103,6 +103,12 @@
       <version>${typesafe.config.version}</version>
     </dependency>
 
+    <dependency> <!-- see https://github.com/tony19/named-regexp -->
+      <groupId>com.github.tony19</groupId>
+      <artifactId>named-regexp</artifactId>
+      <version>0.1.9</version>
+    </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -117,7 +123,7 @@
       <scope>test</scope>
     </dependency>
 
-    <dependency>
+    <dependency> <!-- see http://metrics.codahale.com -->
       <groupId>com.yammer.metrics</groupId>
       <artifactId>metrics-core</artifactId>
       <version>${yammer.metrics.version}</version>
