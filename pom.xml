@@ -202,6 +202,7 @@
                 <exclude>**/docs/**</exclude>
                 <exclude>**/src/*/resources/**</exclude>                  
                 <exclude>samples/**</exclude>                  
+                <exclude>**/scriptengine/java/**.java</exclude> <!-- FreeBSD -->
               </excludes>
             </configuration>
           </execution>

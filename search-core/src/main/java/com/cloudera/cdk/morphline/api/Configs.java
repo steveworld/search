@@ -1,0 +1,93 @@
+/**
+ * Copyright 2013 Cloudera Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.cloudera.cdk.morphline.api;
+
+import java.util.List;
+
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+
+/**
+ * Helpers to parse HOCON from external resources, and to traverse and read parts of a HOCON data
+ * structure.
+ */
+public final class Configs {
+  
+  public static Config parse(String resourceBaseName) {
+    return ConfigFactory.load(resourceBaseName);
+  }
+  
+  public static String getString(Config config, String path, String defaults) {
+    if (config.hasPath(path)) {
+      return config.getString(path);
+    } else {
+      return defaults;
+    }
+  }
+  
+  public static String getString(Config config, String path) {
+    return config.getString(path);
+  }
+  
+  public static List<String> getStringList(Config config, String path, List<String> defaults) {
+    if (config.hasPath(path)) {
+      return config.getStringList(path);
+    } else {
+      return defaults;
+    }
+  }
+  
+  public static List<String> getStringList(Config config, String path) {
+    return config.getStringList(path);
+  }
+  
+  public static List<? extends Config> getConfigList(Config config, String path, List<? extends Config> defaults) {
+    if (config.hasPath(path)) {
+      return config.getConfigList(path);
+    } else {
+      return defaults;
+    }
+  }
+
+  public static List<? extends Config> getConfigList(Config config, String path) {
+    return config.getConfigList(path);
+  }
+
+  public static boolean getBoolean(Config config, String path, boolean defaults) {
+    if (config.hasPath(path)) {
+      return config.getBoolean(path);
+    } else {
+      return defaults;
+    }
+  }
+  
+  public static boolean getBoolean(Config config, String path) {
+    return config.getBoolean(path);
+  }
+  
+  public static int getInt(Config config, String path, int defaults) {
+    if (config.hasPath(path)) {
+      return config.getInt(path);
+    } else {
+      return defaults;
+    }
+  }
+  
+  public static int getInt(Config config, String path) {
+    return config.getInt(path);
+  }  
+
+}
