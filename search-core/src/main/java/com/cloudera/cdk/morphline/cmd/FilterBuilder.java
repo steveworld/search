@@ -29,7 +29,20 @@ import com.cloudera.cdk.morphline.base.AbstractCommand;
 import com.typesafe.config.Config;
 
 /**
- * TODO
+ * A filter consists of zero or more rules.
+ * 
+ * A rule consists of zero or more commands.
+ * 
+ * The rules of a filter are processed in top-down order. If one of the commands in a rule fails,
+ * the filter stops processing of this rule, backtracks and tries the next rule, and so on, until a
+ * rule is found that runs all its commands to completion without failure (the rule succeeds). If a
+ * rule succeeds the remaining rules of the current filter are skipped. If no rule succeeds the
+ * record remains unchanged, but a warning may be issued (the warning can be turned off) or an
+ * exception may be thrown (which is logged and ignored in production mode).
+ * 
+ * Because a command can itself be a filter, there can be filters with actions, nested inside
+ * filters, inside filters, recursively. This helps to implement arbitrarily complex functionality
+ * for advanced usage.
  */
 public final class FilterBuilder implements CommandBuilder {
 
