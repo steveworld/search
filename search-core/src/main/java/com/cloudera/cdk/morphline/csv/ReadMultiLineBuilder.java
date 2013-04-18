@@ -41,15 +41,14 @@ import com.typesafe.config.Config;
  * https://gist.github.com/smougenot/3182192 and http://logstash.net/docs/1.1.9/filters/multiline
  * 
  * The <code>pattern</code> parameter should match what you believe to be an indicator that the
- * field is part of a multi-line event
+ * line is part of a multi-line record.
  * 
  * The <code>previous</code> parameter must be true (aka previous) or false (aka next) and indicates
- * the relation to the multi-line event.
+ * the relation to the multi-line record.
  * 
- * The <code>negate</code> parameter can be true or false (defaults false). If true, a message not
+ * The <code>negate</code> parameter can be true or false (defaults false). If true, a line not
  * matching the pattern will constitute a match of the multiline filter and the previous/next action
  * will be applied. (vice-versa is also true)
- * 
  * 
  * Example:
  * 
