@@ -272,7 +272,10 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         "--shard-url", "http://localhost:8983/solr/collection2",
         };
     assertNull(parser.parseArgs(args, conf, opts));
-    assertEquals(Arrays.asList("http://localhost:8983/solr/collection1", "http://localhost:8983/solr/collection2"), opts.shardUrls);
+    assertEquals(Arrays.asList(
+        Collections.singletonList("http://localhost:8983/solr/collection1"),
+        Collections.singletonList("http://localhost:8983/solr/collection2")),
+        opts.shardUrls);
     assertEquals(new Integer(2), opts.shards);
     assertEmptySystemErrAndEmptySystemOut();
   }
@@ -289,7 +292,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   }
   
   @Test
-  public void testArgsShardUrlAndShardsAreMutuallyExclusive() {
+  public void testArgsShardUrlAndShardsSucceeds() {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
         "--output-dir", "file:/tmp/foo",
@@ -297,7 +300,8 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         "--shards", "1", 
         "--shard-url", "http://localhost:8983/solr/collection1",
         };
-    assertArgumentParserException(args);
+    assertNull(parser.parseArgs(args, conf, opts));
+    assertEmptySystemErrAndEmptySystemOut();
   }
   
   @Test
@@ -405,7 +409,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   
   private void assertArgumentParserException(String[] args) {
     assertEquals("should have returned fail code", new Integer(1), parser.parseArgs(args, conf, opts));
-    assertEquals("no sys out expected", 0, bout.toByteArray().length);
+    assertEquals("no sys out expected:" + new String(bout.toByteArray()), 0, bout.toByteArray().length);
     String usageText;
     try {
       usageText = new String(berr.toByteArray(), "UTF-8");
