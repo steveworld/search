@@ -75,7 +75,7 @@ public abstract class AbstractCommand implements Command {
   
   @Override
   public void startSession() {
-    LOG.debug("startEvent()");
+    LOG.debug("startSession()");
     getChild().startSession();
   }
 

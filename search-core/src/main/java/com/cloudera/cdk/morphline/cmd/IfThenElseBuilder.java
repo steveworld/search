@@ -27,8 +27,8 @@ import com.typesafe.config.Config;
 
 /**
  * An If-Then-Else command consists of a chain of zero or more conditions commands, as well as a
- * chain of zero or or more commands that are evaluated if all conditions succeed ("then commands"),
- * as well as a chain of zero or more commands that are evaluated if one of the conditions fails
+ * chain of zero or or more commands that are processed if all conditions succeed ("then commands"),
+ * as well as a chain of zero or more commands that are processed if one of the conditions fails
  * ("else commands").
  * 
  * If one of the commands in the "then" chain or "else" chain fails then the entire "if" command
