@@ -24,6 +24,12 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -37,11 +43,15 @@ import org.apache.hadoop.util.JarFinder;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.lucene.util.LuceneTestCase.SuppressCodecs;
 import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.embedded.JettySolrRunner;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.cloud.AbstractFullDistribZkTestBase;
+import org.apache.solr.common.cloud.Replica;
+import org.apache.solr.common.cloud.Slice;
 import org.apache.solr.common.cloud.SolrZkClient;
+import org.apache.solr.common.cloud.ZkCoreNodeProps;
 import org.apache.solr.handler.extraction.ExtractingParams;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -154,7 +164,8 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     super.setUp();
     System.setProperty("host", "127.0.0.1");
     System.setProperty("numShards", Integer.toString(sliceCount));
-    
+    URI uri = dfsCluster.getFileSystem().getUri();
+    System.setProperty("solr.hdfs.home",  uri.toString() + "/" + this.getClass().getName());
     uploadConfFiles();
   }
   
@@ -164,7 +175,7 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     super.tearDown();
     System.clearProperty("host");
     System.clearProperty("numShards");
-    FileSystem.closeAll();
+    System.clearProperty("solr.hdfs.home");
   }
   
   @AfterClass
@@ -178,6 +189,7 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
       dfsCluster.shutdown();
       dfsCluster = null;
     }
+    FileSystem.closeAll();
   }
   
   private JobConf getJobConf() {
@@ -188,6 +200,101 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
   @Override
   public void testDistribSearch() throws Exception {
     super.testDistribSearch();
+  }
+  
+  @Test
+  public void testBuildShardUrls() throws Exception {
+    // 2x3
+    Integer numShards = 2;
+    List<Object> urls = new ArrayList<Object>();
+    urls.add("shard1");
+    urls.add("shard2");
+    urls.add("shard3");
+    urls.add("shard4");
+    urls.add("shard5");
+    urls.add("shard6");
+    List<List<String>> shardUrls = MapReduceIndexerTool.buildShardUrls(urls , numShards);
+    
+    assertEquals(shardUrls.toString(), 2, shardUrls.size());
+    
+    for (List<String> u : shardUrls) {
+      assertEquals(3, u.size());
+    }
+    
+    // 1x6
+    numShards = 1;
+    shardUrls = MapReduceIndexerTool.buildShardUrls(urls , numShards);
+    
+    assertEquals(shardUrls.toString(), 1, shardUrls.size());
+    
+    for (List<String> u : shardUrls) {
+      assertEquals(6, u.size());
+    }
+    
+    // 6x1
+    numShards = 6;
+    shardUrls = MapReduceIndexerTool.buildShardUrls(urls , numShards);
+    
+    assertEquals(shardUrls.toString(), 6, shardUrls.size());
+    
+    for (List<String> u : shardUrls) {
+      assertEquals(1, u.size());
+    }
+    
+    // 3x2
+    numShards = 3;
+    shardUrls = MapReduceIndexerTool.buildShardUrls(urls , numShards);
+    
+    assertEquals(shardUrls.toString(), 3, shardUrls.size());
+    
+    for (List<String> u : shardUrls) {
+      assertEquals(2, u.size());
+    }
+    
+    // null shards, 6x1
+    numShards = null;
+    shardUrls = MapReduceIndexerTool.buildShardUrls(urls , numShards);
+    
+    assertEquals(shardUrls.toString(), 6, shardUrls.size());
+    
+    for (List<String> u : shardUrls) {
+      assertEquals(1, u.size());
+    }
+    
+    // null shards 3x1
+    numShards = null;
+    
+    urls = new ArrayList<Object>();
+    urls.add("shard1");
+    urls.add("shard2");
+    urls.add("shard3");
+    
+    shardUrls = MapReduceIndexerTool.buildShardUrls(urls , numShards);
+
+    assertEquals(shardUrls.toString(), 3, shardUrls.size());
+    
+    for (List<String> u : shardUrls) {
+      assertEquals(1, u.size());
+    }
+    
+    // 2x(2,3) off balance
+    numShards = 2;
+    urls = new ArrayList<Object>();
+    urls.add("shard1");
+    urls.add("shard2");
+    urls.add("shard3");
+    urls.add("shard4");
+    urls.add("shard5");
+    shardUrls = MapReduceIndexerTool.buildShardUrls(urls , numShards);
+
+    assertEquals(shardUrls.toString(), 2, shardUrls.size());
+    
+    Set<Integer> counts = new HashSet<Integer>();
+    counts.add(shardUrls.get(0).size());
+    counts.add(shardUrls.get(1).size());
+    
+    assertTrue(counts.contains(2));
+    assertTrue(counts.contains(3));
   }
   
   @Override
@@ -305,6 +412,118 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     }    
     
     server.shutdown();
+    
+    // try using zookeeper with replication
+    String replicatedCollection = "replicated_collection";
+    createCollection(replicatedCollection, 2, 3, 2);
+    waitForRecoveriesToFinish(false);
+    cloudClient.setDefaultCollection(replicatedCollection);
+    fs.delete(inDir, true);    
+    fs.delete(dataDir, true);
+    assertTrue(fs.mkdirs(dataDir));
+    INPATH = upAvroFile(fs, inDir, DATADIR, dataDir, inputAvroFile3);
+    
+    args = new String[] {
+        "--files",
+        RESOURCES_DIR + "/tika-config.xml",
+        "--solr-home-dir=" + MINIMR_CONF_DIR.getAbsolutePath(),
+        "--output-dir=" + outDir.toString(),
+        "--mappers=3",
+        "--reducers=6",
+        "--verbose",
+        "--go-live",
+        "--zk-host", zkServer.getZkAddress(), 
+        "--collection", replicatedCollection, dataDir.toString()
+    };
+    
+    if (true) {
+      tool = new MapReduceIndexerTool();
+      res = ToolRunner.run(jobConf, tool, args);
+      assertEquals(0, res);
+      assertTrue(tool.job.isComplete());
+      assertTrue(tool.job.isSuccessful());
+      
+      results = cloudClient.query(new SolrQuery("*:*"));      
+      assertEquals(2104, results.getResults().getNumFound());
+      
+      checkConsistency(replicatedCollection);
+    }   
+    
+    // try using solr_url with replication
+    cloudClient.deleteByQuery("*:*");
+    cloudClient.commit();
+    fs.delete(inDir, true);    
+    fs.delete(dataDir, true);
+    assertTrue(fs.mkdirs(dataDir));
+    INPATH = upAvroFile(fs, inDir, DATADIR, dataDir, inputAvroFile3);
+    
+    args = new String[] {
+        "--solr-home-dir=" + MINIMR_CONF_DIR.getAbsolutePath(),
+        "--output-dir=" + outDir.toString(),
+        "--shards", "2",
+        "--mappers=3",
+        "--verbose",
+        "--go-live", 
+        "--go-live-threads", Integer.toString(random().nextInt(15) + 1),  dataDir.toString()
+    };
+
+    List<String> argList = new ArrayList<String>();
+    argList.add("--files");
+    argList.add(RESOURCES_DIR + "/tika-config.xml");
+    
+    getShardUrlArgs(argList, replicatedCollection);
+    argList.addAll(Arrays.asList(args));
+
+    args = argList.toArray(new String[0]);
+    
+    if (true) {
+      tool = new MapReduceIndexerTool();
+      res = ToolRunner.run(jobConf, tool, args);
+      assertEquals(0, res);
+      assertTrue(tool.job.isComplete());
+      assertTrue(tool.job.isSuccessful());
+      
+      checkConsistency(replicatedCollection);
+      
+      results = cloudClient.query(new SolrQuery("*:*"));      
+      assertEquals(2104, results.getResults().getNumFound());
+    }  
+    
+  }
+
+  private void checkConsistency(String replicatedCollection)
+      throws SolrServerException {
+    Collection<Slice> slices = cloudClient.getZkStateReader().getClusterState()
+        .getSlices(replicatedCollection);
+    for (Slice slice : slices) {
+      Collection<Replica> replicas = slice.getReplicas();
+      long found = -1;
+      for (Replica replica : replicas) {
+        HttpSolrServer client = new HttpSolrServer(
+            new ZkCoreNodeProps(replica).getCoreUrl());
+        SolrQuery query = new SolrQuery("*:*");
+        query.set("distrib", false);
+        QueryResponse replicaResults = client.query(query);
+        long count = replicaResults.getResults().getNumFound();
+        if (found != -1) {
+          assertEquals(slice.getName() + " is inconsistent "
+              + new ZkCoreNodeProps(replica).getCoreUrl(), found, count);
+        }
+        found = count;
+      }
+    }
+  }
+  
+  private void getShardUrlArgs(List<String> args, String replicatedCollection)
+      throws SolrServerException {
+    Collection<Slice> slices = cloudClient.getZkStateReader().getClusterState().getSlices(replicatedCollection);
+    for (Slice slice : slices) {
+      Collection<Replica> replicas = slice.getReplicas();
+      for (Replica replica : replicas) {
+        args.add("--shard-url");
+        args.add(new ZkCoreNodeProps(replica).getCoreUrl());
+      }
+    }
   }
   
   private Path upAvroFile(FileSystem fs, Path inDir, String DATADIR,
@@ -328,9 +547,6 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
         context, 0, solrConfigOverride, schemaOverride);
 
     jetty.setShards(shardList);
-    URI uri = dfsCluster.getFileSystem().getUri();
-    jetty.setDataDir(uri.toString()
-        + "/" + new File(dataDir).getName());
     
     if (System.getProperty("collection") == null) {
       System.setProperty("collection", "collection1");
@@ -419,4 +635,5 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     putConfig(zkClient, MINIMR_CONF_DIR, "synonyms.txt");
     zkClient.close();
   }
+  
 }

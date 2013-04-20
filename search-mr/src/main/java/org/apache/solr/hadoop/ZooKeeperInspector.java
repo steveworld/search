@@ -28,6 +28,7 @@ import java.util.List;
 import org.apache.solr.cloud.ZkController;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.cloud.DocCollection;
+import org.apache.solr.common.cloud.Replica;
 import org.apache.solr.common.cloud.Slice;
 import org.apache.solr.common.cloud.SolrZkClient;
 import org.apache.solr.common.cloud.ZkCoreNodeProps;
@@ -46,17 +47,23 @@ final class ZooKeeperInspector {
   
   private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperInspector.class);
   
-  public List<String> extractShardUrls(String zkHost, String collection) {
+  public List<List<String>> extractShardUrls(String zkHost, String collection) {
     DocCollection docCollection = extractDocCollection(zkHost, collection);
     List<Slice> slices = getSortedSlices(docCollection.getSlices());
-    List<String> solrUrls = new ArrayList<String>(slices.size());
+    List<List<String>> solrUrls = new ArrayList<List<String>>(slices.size());
     for (Slice slice : slices) {
       if (slice.getLeader() == null) {
         throw new IllegalArgumentException("Cannot find SolrCloud slice leader. " +
             "It looks like not all of your shards are registered in ZooKeeper yet");
       }
-      ZkCoreNodeProps props = new ZkCoreNodeProps(slice.getLeader());
-      solrUrls.add(props.getCoreUrl());
+      Collection<Replica> replicas = slice.getReplicas();
+      List<String> urls = new ArrayList<String>(replicas.size());
+      for (Replica replica : replicas) {
+        ZkCoreNodeProps props = new ZkCoreNodeProps(replica);
+        urls.add(props.getCoreUrl());
+      }
+      solrUrls.add(urls);
+
     }
     return solrUrls;
   }

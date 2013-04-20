@@ -46,7 +46,6 @@ import net.sourceforge.argparse4j.inf.ArgumentGroup;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.FeatureControl;
-import net.sourceforge.argparse4j.inf.MutuallyExclusiveGroup;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 import org.apache.hadoop.conf.Configuration;
@@ -384,13 +383,15 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .action(Arguments.storeTrue())
         .help("Turn on verbose output.");
   
-      MutuallyExclusiveGroup clusterInfoGroup = parser.addMutuallyExclusiveGroup("Cluster arguments")
-        .required(true)
-        .description("Mutually exclusive arguments that provide information about your Solr cluster. " +
-              "If you are not using --go-live, pass the --shards argument. If you are building shards for " +
-              "a Non-SolrCloud cluster, pass the --shard-url argument one or more times. If you are building " +
-              "shards for a SolrCloud cluster, pass the --zk-host argument. " +
-              "Using --go-live requires either --shard-url or --zk-host.");
+      ArgumentGroup clusterInfoGroup = parser
+          .addArgumentGroup("Cluster arguments")
+          .description(
+              "Arguments that provide information about your Solr cluster. "
+                  + "If you are not using --go-live, pass the --shards argument. If you are building shards for "
+                  + "a Non-SolrCloud cluster, pass the --shard-url argument one or more times. To build indexes for"
+                  + " a replicated cluster with --shard-url, pass replica urls consecutively and also pass --shards. " 
+                  + "If you are building shards for a SolrCloud cluster, pass the --zk-host argument. "
+                  + "Using --go-live requires either --shard-url or --zk-host.");
 
       Argument shardUrlsArg = clusterInfoGroup.addArgument("--shard-url")
         .metavar("URL")
@@ -488,8 +489,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       opts.fairSchedulerPool = ns.getString(fairSchedulerPoolArg.getDest());
       opts.isVerbose = ns.getBoolean(verboseArg.getDest());
       opts.zkHost = ns.getString(zkServerAddressArg.getDest());
-      opts.shardUrls = ns.getList(shardUrlsArg.getDest());
       opts.shards = ns.getInt(shardsArg.getDest());
+      opts.shardUrls = buildShardUrls(ns.getList(shardUrlsArg.getDest()), opts.shards);
       opts.goLive = ns.getBoolean(goLiveArg.getDest());
       opts.golivethreads = ns.getInt(golivethreadsArg.getDest());
       opts.collection = ns.getString(collectionArg.getDest());
@@ -514,13 +515,33 @@ public class MapReduceIndexerTool extends Configured implements Tool {
   }
   // END OF INNER CLASS  
 
+  static List<List<String>> buildShardUrls(List<Object> urls, Integer numShards) {
+    if (urls == null) return null;
+    List<List<String>> shardUrls = new ArrayList<List<String>>(urls.size());
+    List<String> list = null;
+    
+    int sz;
+    if (numShards == null) {
+      numShards = urls.size();
+    }
+    sz = (int) Math.ceil(urls.size() / (float)numShards);
+    for (int i = 0; i < urls.size(); i++) {
+      if (i % sz == 0) {
+        list = new ArrayList<String>();
+        shardUrls.add(list);
+      }
+      list.add((String) urls.get(i));
+    }
+
+    return shardUrls;
+  }
   
   static final class Options {    
     boolean goLive;
     String collection;
     String zkHost;
     Integer golivethreads;
-    List<String> shardUrls;
+    List<List<String>> shardUrls;
     List<Path> inputLists;
     List<Path> inputFiles;
     Path outputDir;

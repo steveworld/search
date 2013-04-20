@@ -20,6 +20,7 @@ package org.apache.solr.hadoop;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
@@ -61,58 +62,60 @@ class GoLive {
     try {
       CompletionService<Request> completionService = new ExecutorCompletionService<Request>(executor);
       Set<Future<Request>> pending = new HashSet<Future<Request>>();
-      
       int cnt = -1;
       for (final FileStatus dir : outDirs) {
         
         LOG.debug("processing:" + dir.getPath());
 
         cnt++;
-        String url = options.shardUrls.get(cnt);
+        List<String> urls = options.shardUrls.get(cnt);
         
-        String baseUrl = url;
-        if (baseUrl.endsWith("/")) {
-          baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
-        }
-        
-        int lastPathIndex = baseUrl.lastIndexOf("/");
-        if (lastPathIndex == -1) {
-          LOG.error("Found unexpected shardurl, live merge failed: " + baseUrl);
-          return false;
-        }
-        
-        final String name = baseUrl.substring(lastPathIndex + 1);
-        baseUrl = baseUrl.substring(0, lastPathIndex);
-        final String mergeUrl = baseUrl;
-
-        Callable<Request> task = new Callable<Request>() {
-          @Override
-          public Request call() {
-            Request req = new Request();
-            LOG.info("Live merge " + dir.getPath() + " into " + mergeUrl);
-            final HttpSolrServer server = new HttpSolrServer(mergeUrl);
-            try {
-              CoreAdminRequest.MergeIndexes mergeRequest = new CoreAdminRequest.MergeIndexes();
-              mergeRequest.setCoreName(name);
-              mergeRequest.setIndexDirs(Arrays.asList(new String[] {dir.getPath()
-                  .toString() + "/data/index"}));
-              try {
-                mergeRequest.process(server);
-                req.success = true;
-              } catch (SolrServerException e) {
-                req.e = e;
-                return req;
-              } catch (IOException e) {
-                req.e = e;
-                return req;
-              }
-            } finally {
-              server.shutdown();
-            }
-            return req;
+        for (String url : urls) {
+          
+          String baseUrl = url;
+          if (baseUrl.endsWith("/")) {
+            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
           }
-        };
-        pending.add(completionService.submit(task));
+          
+          int lastPathIndex = baseUrl.lastIndexOf("/");
+          if (lastPathIndex == -1) {
+            LOG.error("Found unexpected shardurl, live merge failed: " + baseUrl);
+            return false;
+          }
+          
+          final String name = baseUrl.substring(lastPathIndex + 1);
+          baseUrl = baseUrl.substring(0, lastPathIndex);
+          final String mergeUrl = baseUrl;
+          
+          Callable<Request> task = new Callable<Request>() {
+            @Override
+            public Request call() {
+              Request req = new Request();
+              LOG.info("Live merge " + dir.getPath() + " into " + mergeUrl);
+              final HttpSolrServer server = new HttpSolrServer(mergeUrl);
+              try {
+                CoreAdminRequest.MergeIndexes mergeRequest = new CoreAdminRequest.MergeIndexes();
+                mergeRequest.setCoreName(name);
+                mergeRequest.setIndexDirs(Arrays.asList(new String[] {dir
+                    .getPath().toString() + "/data/index"}));
+                try {
+                  mergeRequest.process(server);
+                  req.success = true;
+                } catch (SolrServerException e) {
+                  req.e = e;
+                  return req;
+                } catch (IOException e) {
+                  req.e = e;
+                  return req;
+                }
+              } finally {
+                server.shutdown();
+              }
+              return req;
+            }
+          };
+          pending.add(completionService.submit(task));
+        }
       }
       
       while (pending != null && pending.size() > 0) {
@@ -153,11 +156,13 @@ class GoLive {
           server.commit();
           server.shutdown();
         } else {
-          for (String url : options.shardUrls) {
-            // TODO: we should do these concurrently
-            HttpSolrServer server = new HttpSolrServer(url);
-            server.commit();
-            server.shutdown();
+          for (List<String> urls : options.shardUrls) {
+            for (String url : urls) {
+              // TODO: we should do these concurrently
+              HttpSolrServer server = new HttpSolrServer(url);
+              server.commit();
+              server.shutdown();
+            }
           }
         }
         LOG.info("Done committing live merge");
