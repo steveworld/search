@@ -24,6 +24,7 @@ import java.io.Reader;
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
+import com.cloudera.cdk.morphline.api.Field;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineParsingException;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
@@ -90,7 +91,7 @@ public final class ReadLineBuilder implements CommandBuilder {
           }
           Record outputRecord = new Record(inputRecord);
           removeAttachments(outputRecord);
-          outputRecord.replaceValues(Record.MESSAGE, line);
+          outputRecord.replaceValues(Field.MESSAGE, line);
           
           // pass record to next command in chain:
           if (!getChild().process(outputRecord)) {

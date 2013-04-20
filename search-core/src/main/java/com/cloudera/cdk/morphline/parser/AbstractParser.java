@@ -15,6 +15,7 @@
  */
 package com.cloudera.cdk.morphline.parser;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashSet;
@@ -23,13 +24,16 @@ import java.util.Locale;
 import java.util.Set;
 
 import org.apache.tika.mime.MediaType;
+import org.slf4j.Logger;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.Configs;
+import com.cloudera.cdk.morphline.api.Field;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
+import com.google.common.base.Preconditions;
 import com.typesafe.config.Config;
 
 /**
@@ -37,55 +41,86 @@ import com.typesafe.config.Config;
  */
 public abstract class AbstractParser extends AbstractCommand {
 
-  // FIXME: replace tika MediaType with guava MediaType (don't require a tika dependency here)
-  private final Set<MediaType> supportedMimeTypes = new HashSet();
+  private Set<MediaType> supportedMimeTypes = null;
 
   public static final String SUPPORTED_MIME_TYPES = "supportedMimeTypes";
-  public static final String ADDITIONAL_SUPPORTED_MIME_TYPES = "additionalSupportedMimeTypes";
   
   public AbstractParser(Config config, Command parent, Command child, MorphlineContext context) {
     super(config, parent, child, context);      
     if (config.hasPath(SUPPORTED_MIME_TYPES)) {
       List<String> mimeTypes = Configs.getStringList(config, SUPPORTED_MIME_TYPES, Collections.EMPTY_LIST);
       for (String streamMediaType : mimeTypes) {
-        supportedMimeTypes.add(MediaType.parse(streamMediaType.trim().toLowerCase(Locale.ROOT)));
-      }
-    }
-    if (config.hasPath(ADDITIONAL_SUPPORTED_MIME_TYPES)) {
-      List<String> mimeTypes = Configs.getStringList(config, ADDITIONAL_SUPPORTED_MIME_TYPES, Collections.EMPTY_LIST);
-      for (String streamMediaType : mimeTypes) {
-        supportedMimeTypes.add(MediaType.parse(streamMediaType.trim().toLowerCase(Locale.ROOT)));
+        addSupportedMimeType(parseMediaType(streamMediaType).getBaseType());
       }
     }
   }
 
-  protected Set<MediaType> getSupportedMimeTypes() {
-    return supportedMimeTypes;
+  protected void addSupportedMimeType(MediaType mediaType) {
+    if (supportedMimeTypes == null) {
+      supportedMimeTypes = new HashSet();
+    }
+    supportedMimeTypes.add(mediaType.getBaseType());
   }
-
-  protected abstract boolean process(Record record, InputStream stream);
 
   @Override
   public boolean process(Record record) {
-    if (!Attachments.hasAtLeastOneAttachmentWithMimeType(record, LOG)) {
+    if (!hasAtLeastOneAttachment(record, LOG)) {
       return false;
     }
 
-    String streamMediaType = (String) record.getFirstValue(Record.ATTACHMENT_MIME_TYPE);
-    if (!isMimeTypeSupported(streamMediaType)) {
+    String streamMediaType = (String) record.getFirstValue(Field.ATTACHMENT_MIME_TYPE);
+    if (!isMimeTypeSupported(streamMediaType, record)) {
       return false;
     }
 
-    InputStream stream = Attachments.createAttachmentInputStream(record);
+    InputStream stream = createAttachmentInputStream(record);
 
     return process(record, stream);
   }
   
+  protected abstract boolean process(Record record, InputStream stream);
+
+  private boolean isMimeTypeSupported(String mediaTypeStr, Record record) {
+    if (supportedMimeTypes == null) {
+      return true;
+    }
+    if (!hasAtLeastOneMimeType(record, LOG)) {
+      return false;
+    }
+    MediaType mediaType = parseMediaType(mediaTypeStr).getBaseType();
+    if (supportedMimeTypes.contains(mediaType)) {
+      return true; // fast path
+    }
+    // wildcard matching
+    for (MediaType rangePattern : supportedMimeTypes) {      
+      if (isMediaTypeMatch(mediaType, rangePattern)) {
+        return true;
+      }
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("No supported MIME type found for " + Field.ATTACHMENT_MIME_TYPE + "=" + mediaTypeStr);
+    }
+    return false;
+  }
+
+  protected MediaType parseMediaType(String mediaTypeStr) {
+    return MediaType.parse(mediaTypeStr.trim().toLowerCase(Locale.ROOT));
+  };
+      
+  /** Returns true if mediaType falls withing the given range (pattern), false otherwise */
+  protected boolean isMediaTypeMatch(MediaType mediaType, MediaType rangePattern) {
+    String WILDCARD = "*";
+    String rangePatternType = rangePattern.getType();
+    String rangePatternSubtype = rangePattern.getSubtype();
+    return (rangePatternType.equals(WILDCARD) || rangePatternType.equals(mediaType.getType()))
+        && (rangePatternSubtype.equals(WILDCARD) || rangePatternSubtype.equals(mediaType.getSubtype()));
+  }
+
   protected String detectCharset(Record record, String charset) {
     if (charset != null) {
       return charset;
     }
-    List charsets = record.getFields().get(Record.ATTACHMENT_CHARSET);
+    List charsets = record.getFields().get(Field.ATTACHMENT_CHARSET);
     if (charsets.size() == 0) {
       // TODO try autodetection (AutoDetectReader)
       throw new MorphlineRuntimeException("Missing charset for record: " + record); 
@@ -94,27 +129,55 @@ public abstract class AbstractParser extends AbstractCommand {
     return charsetName;
   }
 
-  protected void removeAttachments(Record outputRecord) {
-    outputRecord.removeAll(Record.ATTACHMENT_BODY);
-    outputRecord.removeAll(Record.ATTACHMENT_MIME_TYPE);
-    outputRecord.removeAll(Record.ATTACHMENT_CHARSET);
-    outputRecord.removeAll(Record.ATTACHMENT_NAME);
+  protected boolean hasAtLeastOneAttachment(Record record, Logger LOG) {
+    List attachments = record.getFields().get(Field.ATTACHMENT_BODY);
+    if (attachments.size() == 0) {
+      LOG.debug("Command failed because of missing attachment for record: {}", record);
+      return false;
+    }
+
+    Preconditions.checkNotNull(attachments.get(0));    
+    return true;
+  }
+  
+  protected boolean hasAtLeastOneMimeType(Record record, Logger LOG) {
+    List mimeTypes = record.getFields().get(Field.ATTACHMENT_MIME_TYPE);
+    if (mimeTypes.size() == 0) {
+      LOG.debug("Command failed because of missing MIME type for record: {}", record);
+      return false;
+    }
+  
+    return true;
   }
 
-  // TODO: implement wildcard matching
-  private boolean isMimeTypeSupported(String mimeTypeStr) {
-    MediaType mediaType = MediaType.parse(mimeTypeStr.trim().toLowerCase(Locale.ROOT));
-    if (supportedMimeTypes.contains(mediaType)) {
-      return true;
+  protected InputStream createAttachmentInputStream(Record record) {
+    Object body = record.getFirstValue(Field.ATTACHMENT_BODY);
+    Preconditions.checkNotNull(body);
+    if (body instanceof byte[]) {
+      return new ByteArrayInputStream((byte[]) body);
+    } else {
+      return (InputStream) body;
     }
-    if (mediaType.hasParameters() && supportedMimeTypes.contains(mediaType.getBaseType())) {
-      return true;
-    }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("No supported MIME type found for " + Record.ATTACHMENT_MIME_TYPE + "=" + mimeTypeStr);
-    }
-    return false;
   }
+
+  protected void removeAttachments(Record outputRecord) {
+    outputRecord.removeAll(Field.ATTACHMENT_BODY);
+    outputRecord.removeAll(Field.ATTACHMENT_MIME_TYPE);
+    outputRecord.removeAll(Field.ATTACHMENT_CHARSET);
+    outputRecord.removeAll(Field.ATTACHMENT_NAME);
+  }
+
+//public static XMediaType toGuavaMediaType(MediaType tika) {
+//return XMediaType.create(tika.getType(), tika.getSubtype()).withParameters(Multimaps.forMap(tika.getParameters()));
+//}
+//
+//public static List<XMediaType> toGuavaMediaType(Iterable<MediaType> tikaCollection) {
+//List<XMediaType> list = new ArrayList();
+//for (MediaType tika : tikaCollection) {
+//  list.add(toGuavaMediaType(tika));
+//}
+//return list;
+//}
 
 }
 

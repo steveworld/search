@@ -33,20 +33,6 @@ import com.google.common.collect.ListMultimap;
  */
 public final class Record {
   
-  public static final String ATTACHMENT_BODY = "_attachment_body";
-  public static final String ATTACHMENT_MIME_TYPE = "_attachment_mimetype";
-  public static final String ATTACHMENT_CHARSET = "_attachment_charset";
-  public static final String ATTACHMENT_NAME = "_attachment_name";
-
-  // logstash conventions:
-  public static final String ID = "id";
-  public static final String TYPE = "type";
-  public static final String TIMESTAMP = "timestamp";
-  public static final String TAGS = "tags";
-  public static final String SOURCE_HOST = "source_host";
-  public static final String SOURCE_URI = "source_uri";
-  public static final String MESSAGE = "message";
-  
   private ListMultimap<String, Object> fields;
 
   public Record() {

@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
+import com.cloudera.cdk.morphline.api.Field;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
@@ -33,26 +34,26 @@ import com.google.common.io.Closeables;
 import com.typesafe.config.Config;
 
 /**
- * Multiline log parser that collapse multiline messages into a single record; supports "pattern",
- * "previous/next" and "negate" config parameters similar to logstash.
+ * Multiline log parser that collapse multiline messages into a single record; supports "regex",
+ * "previous/next" and "negate" configuration parameters similar to logstash.
  * 
  * For example, this can be used to parse log4j with stack traces. Also see
  * https://gist.github.com/smougenot/3182192 and http://logstash.net/docs/1.1.9/filters/multiline
  * 
- * The <code>pattern</code> parameter should match what you believe to be an indicator that the
+ * The <code>regex</code> parameter should match what you believe to be an indicator that the
  * line is part of a multi-line record.
  * 
  * The <code>previous</code> parameter must be true (aka previous) or false (aka next) and indicates
  * the relation to the multi-line record.
  * 
  * The <code>negate</code> parameter can be true or false (defaults false). If true, a line not
- * matching the pattern will constitute a match of the multiline filter and the previous/next action
+ * matching the regex will constitute a match of the multiline filter and the previous/next action
  * will be applied. (vice-versa is also true)
  * 
  * Example:
  * 
  * <pre>
- * pattern : "(^.+Exception: .+)|(^\\s+at .+)|(^\\s+... \\d+ more)|(^\\s*Caused by:.+)"
+ * regex : "(^.+Exception: .+)|(^\\s+at .+)|(^\\s+... \\d+ more)|(^\\s*Caused by:.+)"
  * negate: false
  * previous : true
  * </pre>
@@ -75,14 +76,14 @@ public final class ReadMultiLineBuilder implements CommandBuilder {
   ///////////////////////////////////////////////////////////////////////////////
   private static final class ReadMultiLine extends AbstractParser {
 
-    private final Pattern pattern;
+    private final Pattern regex;
     private final boolean negate;
     private final boolean previous;
     private final String charset;
   
     public ReadMultiLine(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
-      this.pattern = Pattern.compile(Configs.getString(config, "pattern"));
+      this.regex = Pattern.compile(Configs.getString(config, "regex"));
       this.negate = Configs.getBoolean(config, "negate", false);
       this.previous = Configs.getBoolean(config, "previous");
       this.charset = Configs.getString(config, "charset", null);
@@ -95,7 +96,7 @@ public final class ReadMultiLineBuilder implements CommandBuilder {
       try {
         reader = new InputStreamReader(stream, charsetName);
         BufferedReader lineReader = new BufferedReader(reader);
-        Matcher matcher = pattern.matcher("");
+        Matcher matcher = regex.matcher("");
         StringBuilder lines = null;
         String line;
         
@@ -146,7 +147,7 @@ public final class ReadMultiLineBuilder implements CommandBuilder {
     private boolean flushRecord(Record inputRecord, String lines) {
       Record outputRecord = new Record(inputRecord);
       removeAttachments(outputRecord);
-      outputRecord.replaceValues(Record.MESSAGE, lines);
+      outputRecord.replaceValues(Field.MESSAGE, lines);
       
       // pass record to next command in chain:
       return getChild().process(outputRecord);

@@ -66,8 +66,10 @@ public final class UnpackBuilder implements CommandBuilder {
     public Unpack(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);      
       if (!config.hasPath(SUPPORTED_MIME_TYPES)) {
-        getSupportedMimeTypes().addAll(new PackageParser().getSupportedTypes(new ParseContext()));
-        getSupportedMimeTypes().add(GTAR); // apparently not already included in PackageParser.getSupportedTypes()
+        for (MediaType mediaType : new PackageParser().getSupportedTypes(new ParseContext())) {
+          addSupportedMimeType(mediaType);
+        }
+        addSupportedMimeType(GTAR); // apparently not already included in PackageParser.getSupportedTypes()
       }
     }
 
