@@ -22,6 +22,7 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 
 import com.cloudera.cdk.morphline.api.Command;
+import com.cloudera.cdk.morphline.api.Field;
 import com.cloudera.cdk.morphline.api.Record;
 import com.google.common.io.Closeables;
 
@@ -44,13 +45,13 @@ final class EmbeddedExtractor {
       }
       record = new Record(record);
 
-      record.replaceValues(Record.ATTACHMENT_BODY, newStream);
-      record.removeAll(Record.ATTACHMENT_MIME_TYPE);
-      record.removeAll(Record.ATTACHMENT_CHARSET);
+      record.replaceValues(Field.ATTACHMENT_BODY, newStream);
+      record.removeAll(Field.ATTACHMENT_MIME_TYPE);
+      record.removeAll(Field.ATTACHMENT_CHARSET);
       
-      record.removeAll(Record.ATTACHMENT_NAME);
+      record.removeAll(Field.ATTACHMENT_NAME);
       if (name != null && name.length() > 0) {
-        record.getFields().put(Record.ATTACHMENT_NAME, name);
+        record.getFields().put(Field.ATTACHMENT_NAME, name);
       }
       
       return child.process(record);

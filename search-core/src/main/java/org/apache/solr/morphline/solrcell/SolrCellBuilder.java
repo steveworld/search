@@ -23,7 +23,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -60,6 +59,7 @@ import org.xml.sax.SAXException;
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
+import com.cloudera.cdk.morphline.api.Field;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineParsingException;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
@@ -112,6 +112,8 @@ public final class SolrCellBuilder implements CommandBuilder {
     
     private static final XPathParser PARSER = new XPathParser("xhtml", XHTMLContentHandler.XHTML);
         
+    public static final String ADDITIONAL_SUPPORTED_MIME_TYPES = "additionalSupportedMimeTypes";
+    
     public SolrCell(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);      
       this.schema = ((SolrMorphlineContext)context).getIndexSchema();
@@ -176,118 +178,50 @@ public final class SolrCellBuilder implements CommandBuilder {
         Parser parser = (Parser) obj;
         this.parsers.add(parser);
 
-        List<String> supportedMimeTypes = Configs.getStringList(parserConfig, SUPPORTED_MIME_TYPES, Collections.EMPTY_LIST);
-        for (String streamMediaType : supportedMimeTypes) {
-          MediaType type = MediaType.parse(streamMediaType.trim().toLowerCase(Locale.ROOT));
-          getSupportedMimeTypes().add(type);
-          this.mediaTypeToParserMap.put(type, parser);
+        List<String> mediaTypes = Configs.getStringList(parserConfig, SUPPORTED_MIME_TYPES, Collections.EMPTY_LIST);
+        for (String mediaTypeStr : mediaTypes) {
+          MediaType mediaType = parseMediaType(mediaTypeStr).getBaseType();
+          addSupportedMimeType(mediaType);
+          this.mediaTypeToParserMap.put(mediaType, parser);
         }
         
         if (!parserConfig.hasPath(SUPPORTED_MIME_TYPES)) {
-          for (MediaType type : parser.getSupportedTypes(new ParseContext())) {
-            getSupportedMimeTypes().add(type);
-            this.mediaTypeToParserMap.put(type, parser);
-          }          
+          for (MediaType mediaType : parser.getSupportedTypes(new ParseContext())) {
+            mediaType = mediaType.getBaseType();
+            addSupportedMimeType(mediaType);
+            this.mediaTypeToParserMap.put(mediaType, parser);
+          }        
           List<String> extras = Configs.getStringList(parserConfig, ADDITIONAL_SUPPORTED_MIME_TYPES, Collections.EMPTY_LIST);
-          for (String streamMediaType : extras) {
-            MediaType type = MediaType.parse(streamMediaType.trim().toLowerCase(Locale.ROOT));
-            getSupportedMimeTypes().add(type);
-            this.mediaTypeToParserMap.put(type, parser);            
+          for (String mediaTypeStr : extras) {
+            MediaType mediaType = parseMediaType(mediaTypeStr).getBaseType();
+            addSupportedMimeType(mediaType);
+            this.mediaTypeToParserMap.put(mediaType, parser);            
           }
         }
-        
-//        for (MediaType type : parser.getSupportedTypes(new ParseContext())) {
-//          //type = mimeTypes.getMediaTypeRegistry().normalize(type);
-//          this.mediaTypeToParserMap.put(type, parser);
-//          if (!config.hasPath(SUPPORTED_MIME_TYPES)) {
-//            getSupportedMimeTypes().add(type);
-//          }
-//        }
-
-//        for (Map.Entry<String, Object> entry : parserConfig.root().unwrapped().entrySet()) {
-//          System.out.println(entry);
-//        }
       }
-
-//      List<? extends Config> parserClassNames = Configs.getConfigList(config, "parsers");
-//      parserClassNames = new ArrayList(new LinkedHashSet(parserClassNames)); // remove duplicates, if any
-//      List<String> parserClassNames = null;
-//      for (String className : parserClassNames) {
-//        Object obj;
-//        try {
-//          obj = Class.forName(className).newInstance();
-//        } catch (Exception e) {
-//          throw new MorphlineParsingException("Cannot instantiate Tika parser", config, e);
-//        }
-//        if (!(obj instanceof Parser)) {
-//          throw new MorphlineParsingException("Tika parser " + obj.getClass().getName()
-//              + " must be an instance of class " + Parser.class.getName(), config);
-//        }
-//        this.parsers.add((Parser) obj);
-//      }
-//          
-//      for (Parser parser : parsers) {
-//      }      
-      autoDetectParser = new AutoDetectParser(parsers.toArray(new Parser[parsers.size()]));
       //LOG.info("mediaTypeToParserMap="+mediaTypeToParserMap);
+
+      autoDetectParser = new AutoDetectParser(parsers.toArray(new Parser[parsers.size()]));
 
       Map<String, String[]> tmp = new HashMap();
       for (Map.Entry<String,Collection<String>> entry : cellParams.asMap().entrySet()) {
         tmp.put(entry.getKey(), entry.getValue().toArray(new String[entry.getValue().size()]));
       }
       this.solrParams = new MultiMapSolrParams(tmp);
-
-//      List<String> parserClassNames = Configs.getStringList(config, "parsers");
-//      parserClassNames = new ArrayList(new LinkedHashSet(parserClassNames)); // remove duplicates, if any
-//      for (String className : parserClassNames) {
-//        Object obj;
-//        try {
-//          obj = Class.forName(className).newInstance();
-//        } catch (Exception e) {
-//          throw new MorphlineParsingException("Cannot instantiate Tika parser", config, e);
-//        }
-//        if (!(obj instanceof Parser)) {
-//          throw new MorphlineParsingException("Tika parser " + obj.getClass().getName()
-//              + " must be an instance of class " + Parser.class.getName(), config);
-//        }
-//        this.parsers.add((Parser) obj);
-//      }
-//          
-//      this.mediaTypeToParserMap = new HashMap<MediaType, Parser>();
-//      //MimeTypes mimeTypes = MimeTypes.getDefaultMimeTypes(); // FIXME getMediaTypeRegistry.normalize() 
-//      for (Parser parser : parsers) {
-//        for (MediaType type : parser.getSupportedTypes(new ParseContext())) {
-//          //type = mimeTypes.getMediaTypeRegistry().normalize(type);
-//          this.mediaTypeToParserMap.put(type, parser);
-//          if (!config.hasPath(SUPPORTED_MIME_TYPES)) {
-//            getSupportedMimeTypes().add(type);
-//          }
-//        }
-//      }      
     }
 
     @Override
     public boolean process(Record record, InputStream inputStream) {
-
-      //ParseInfo parseInfo = new ParseInfo(record, this, mediaTypeToParserMap, getContext().getMetricsRegistry()); // ParseInfo is more practical than ParseContext
-
       Parser parser = detectParser(record);
       if (parser == null) {
         return false;
       }
-//      Object attachment = record.getFirstValue(Record.ATTACHMENT_BODY);
-
+      
+      //ParseInfo parseInfo = new ParseInfo(record, this, mediaTypeToParserMap, getContext().getMetricsRegistry()); // ParseInfo is more practical than ParseContext
       ParseContext parseContext = new ParseContext();
       
       // necessary for gzipped files or tar files, etc! copied from TikaCLI
       parseContext.set(Parser.class, parser);
-      
-//      InputStream inputStream;
-//      if (attachment instanceof byte[]) {
-//        inputStream = new ByteArrayInputStream((byte[]) attachment);
-//      } else {
-//        inputStream = (InputStream) attachment;
-//      }
       
       Metadata metadata = new Metadata();
       for (Entry<String, Object> entry : record.getFields().entries()) {
@@ -357,22 +291,28 @@ public final class SolrCellBuilder implements CommandBuilder {
       return getChild().process(toRecord(doc));
     }
 
-    // TODO: implement wildcard matching
     private Parser detectParser(Record record) {
-      String streamMediaType = (String) record.getFirstValue(Record.ATTACHMENT_MIME_TYPE); //ExtractingParams.STREAM_TYPE);
-      if (streamMediaType == null) {
-        throw new NullPointerException("Missing required field: " + Record.ATTACHMENT_MIME_TYPE);
+      if (!hasAtLeastOneMimeType(record, LOG)) {
+        return null;
       }
+      String mediaTypeStr = (String) record.getFirstValue(Field.ATTACHMENT_MIME_TYPE); //ExtractingParams.STREAM_TYPE);
+      assert mediaTypeStr != null;
 //      return autoDetectParser;
-      MediaType mediaType = MediaType.parse(streamMediaType.trim().toLowerCase(Locale.ROOT));
-      Parser parser = mediaTypeToParserMap.get(mediaType);
-      if (parser == null && mediaType.hasParameters()) {
-        parser = mediaTypeToParserMap.get(mediaType.getBaseType());
+      MediaType mediaType = parseMediaType(mediaTypeStr).getBaseType();
+      Parser parser = mediaTypeToParserMap.get(mediaType); // fast path
+      if (parser != null) {
+        return parser;
       }
-      if (parser == null) {
-        LOG.debug("No supported MIME type parser found for " + Record.ATTACHMENT_MIME_TYPE + "=" + streamMediaType);
+      // wildcard matching
+      for (Map.Entry<MediaType, Parser> entry : mediaTypeToParserMap.entrySet()) {
+        if (isMediaTypeMatch(mediaType, entry.getKey())) {
+          return entry.getValue();
+        }
       }
-      return parser;
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("No supported MIME type parser found for " + Field.ATTACHMENT_MIME_TYPE + "=" + mediaTypeStr);
+      }
+      return null;
     }
     
     private static SolrContentHandlerFactory getSolrContentHandlerFactory(

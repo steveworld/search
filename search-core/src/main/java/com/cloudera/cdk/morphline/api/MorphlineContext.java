@@ -18,7 +18,6 @@ package com.cloudera.cdk.morphline.api;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -37,6 +36,8 @@ public class MorphlineContext {
 
   private static final Logger LOG = LoggerFactory.getLogger(MorphlineContext.class);
       
+  // TODO: use builder pattern to allow for more than a metricsRegistry to be added later without breaking the constructor API
+  // also to pass a semi-immutable context instance to CommandBuilder.build()
   public MorphlineContext(MetricsRegistry metricsRegistry) {
     Preconditions.checkNotNull(metricsRegistry);
     this.metricsRegistry = metricsRegistry;
@@ -50,18 +51,21 @@ public class MorphlineContext {
     return commandBuilders;
   }
 
-  public void registerCommandBuilders(List<String> commandPackagePrefixes) {
-    registerCommandBuilder(
+  public void registerCommandBuilderPackagePrefixes(Collection<String> commandPackagePrefixes) {
+    registerCommandBuilders(
         new ClassPaths().getTopLevelClassesRecursive(commandPackagePrefixes, CommandBuilder.class));
   }
 
-  public void registerCommandBuilder(Collection<Class<CommandBuilder>> builderClasses) {
+  public void registerCommandBuilders(Collection<Class<CommandBuilder>> builderClasses) {
     if (commandBuilders == Collections.EMPTY_MAP) {
       commandBuilders = new HashMap();
       for (Class<CommandBuilder> builderClass : builderClasses) {
         try {
           CommandBuilder builder = builderClass.newInstance();
-          LOG.info("Registering command builder named: {} for class: {} ", builder.getName(), builderClass.getName());
+          LOG.info("Registering CommandBuilder named: {} for class: {}", builder.getName(), builderClass.getName());
+          if (builder.getName().contains(".")) {
+            LOG.warn("CommandBuilder name should not contain a period character: " + builder.getName());
+          }
           commandBuilders.put(builder.getName(), builderClass);
         } catch (Exception e) {
           throw new MorphlineRuntimeException(e);

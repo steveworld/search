@@ -26,11 +26,13 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipUtils;
 import org.apache.tika.io.CloseShieldInputStream;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.pkg.CompressorParser;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
+import com.cloudera.cdk.morphline.api.Field;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
@@ -64,7 +66,9 @@ public final class DecompressBuilder implements CommandBuilder {
     public Decompress(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);      
       if (!config.hasPath(SUPPORTED_MIME_TYPES)) {
-        getSupportedMimeTypes().addAll(new CompressorParser().getSupportedTypes(new ParseContext()));
+        for (MediaType mediaType : new CompressorParser().getSupportedTypes(new ParseContext())) {
+          addSupportedMimeType(mediaType);
+        }
       }
     }
  
@@ -72,7 +76,7 @@ public final class DecompressBuilder implements CommandBuilder {
     public boolean process(Record record, InputStream stream) {
       EmbeddedExtractor extractor = new EmbeddedExtractor();
 
-      String name = (String) record.getFirstValue(Record.ATTACHMENT_NAME);
+      String name = (String) record.getFirstValue(Field.ATTACHMENT_NAME);
       if (name != null) {
         if (name.endsWith(".tbz")) {
           name = name.substring(0, name.length() - 4) + ".tar";
