@@ -74,7 +74,7 @@ public final class FilterBuilder implements CommandBuilder {
       for (Config ruleConfig : ruleConfigs) {
 //        LOG.info("ruleConfig {}", ruleConfig);
         LOG.trace("ruleunwrapped {}", ruleConfig.root().unwrapped());
-        List<Command> commands = buildCommandChain(ruleConfig, child, true, context.getCommandBuilders());
+        List<Command> commands = buildCommandChain(ruleConfig, "commands", child, true, context.getCommandBuilders());
         if (commands.size() > 0) {
           childRules.add(commands.get(0));
         }

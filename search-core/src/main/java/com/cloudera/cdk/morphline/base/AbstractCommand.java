@@ -93,10 +93,10 @@ public abstract class AbstractCommand implements Command {
    *          if true indicates don't forward startSession() at the end of the chain of commands of a
    *          rule.
    */
-  protected List<Command> buildCommandChain(Config rootConfig, Command finalChild, boolean isRule,
+  protected List<Command> buildCommandChain(Config rootConfig, String configKey, Command finalChild, boolean isRule,
       Map<String, Class<CommandBuilder>> builders) {
     
-    List<? extends Config> commandConfigs = Configs.getConfigList(rootConfig, "commands", Collections.EMPTY_LIST);
+    List<? extends Config> commandConfigs = Configs.getConfigList(rootConfig, configKey, Collections.EMPTY_LIST);
     List<Command> commands = new ArrayList();
     Command currentParent = this;
     Connector lastConnector = null;        
