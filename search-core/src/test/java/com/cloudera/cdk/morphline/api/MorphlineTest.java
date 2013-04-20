@@ -128,6 +128,54 @@ public class MorphlineTest extends Assert {
   }
   
   @Test
+  public void testIfThenElseBasicThen() throws Exception {
+    Config config = parse("testIfThenElseBasicThen-morphline");    
+    morphline = createMorphline(config);
+    Record record = createBasicRecord();
+    morphline.startSession();
+    morphline.process(record);
+    assertEquals(Arrays.asList(record), collector.getRecords());
+    assertEquals(1, collector.getNumStartEvents());
+    assertEquals("then1", collector.getRecords().get(0).getFirstValue("state"));
+  }
+  
+  @Test
+  public void testIfThenElseBasicThenEmpty() throws Exception {
+    Config config = parse("testIfThenElseBasicThenEmpty-morphline");    
+    morphline = createMorphline(config);
+    Record record = createBasicRecord();
+    morphline.startSession();
+    morphline.process(record);
+    assertEquals(Arrays.asList(record), collector.getRecords());
+    assertEquals(1, collector.getNumStartEvents());
+    assertEquals("init1", collector.getRecords().get(0).getFirstValue("state"));
+  }
+  
+  @Test
+  public void testIfThenElseBasicElse() throws Exception {
+    Config config = parse("testIfThenElseBasicElse-morphline");    
+    morphline = createMorphline(config);
+    Record record = createBasicRecord();
+    morphline.startSession();
+    morphline.process(record);
+    assertEquals(Arrays.asList(record), collector.getRecords());
+    assertEquals(1, collector.getNumStartEvents());
+    assertEquals("else1", collector.getRecords().get(0).getFirstValue("state"));
+  }
+  
+  @Test
+  public void testIfThenElseBasicElseEmpty() throws Exception {
+    Config config = parse("testIfThenElseBasicElseEmpty-morphline");    
+    morphline = createMorphline(config);
+    Record record = createBasicRecord();
+    morphline.startSession();
+    morphline.process(record);
+    assertEquals(Arrays.asList(record), collector.getRecords());
+    assertEquals(1, collector.getNumStartEvents());
+    assertEquals("init1", collector.getRecords().get(0).getFirstValue("state"));
+  }
+  
+  @Test
   @Ignore
   public void testReflection() {
     long start = System.currentTimeMillis();
