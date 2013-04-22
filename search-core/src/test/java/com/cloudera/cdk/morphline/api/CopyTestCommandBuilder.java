@@ -50,7 +50,7 @@ public final class CopyTestCommandBuilder implements CommandBuilder {
     @Override
     public boolean process(Record record) {
       for (int i = 0; i < count; i++) {
-        Record next = new Record(record);
+        Record next = record.copy();
         next.getFields().replaceValues(name, Arrays.asList(i));
         if (!getChild().process(next)) {
           return false;

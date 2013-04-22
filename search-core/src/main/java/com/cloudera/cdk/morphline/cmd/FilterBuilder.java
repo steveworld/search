@@ -92,7 +92,7 @@ public final class FilterBuilder implements CommandBuilder {
     @Override
     public boolean process(Record record) {
       for (Command childRule : childRules) {
-        Record copy = new Record(record);
+        Record copy = record.copy();
 //        try {
           if (childRule.process(copy)) {
             return true; // rule was executed successfully; no need to try the other remaining rules

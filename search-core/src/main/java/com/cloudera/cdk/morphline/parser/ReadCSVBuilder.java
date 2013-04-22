@@ -96,7 +96,7 @@ public final class ReadCSVBuilder implements CommandBuilder {
         String[] columnValues;
         
         while ((columnValues = csvReader.readNext()) != null) {
-          Record outputRecord = new Record(inputRecord);
+          Record outputRecord = inputRecord.copy();
           removeAttachments(outputRecord);
           for (int i = 0; i < columnValues.length; i++) {
             if (i >= columnNames.size()) {

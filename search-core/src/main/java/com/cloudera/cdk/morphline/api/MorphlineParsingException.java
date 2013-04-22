@@ -18,9 +18,9 @@ package com.cloudera.cdk.morphline.api;
 import com.typesafe.config.Config;
 
 /**
- * Indicates a parser error.
+ * Indicates a parse error.
  */
-public class MorphlineParsingException extends MorphlineRuntimeException {
+public class MorphlineParsingException extends RuntimeException {
 
   private static final long serialVersionUID = 1L;
 
