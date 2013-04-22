@@ -49,12 +49,12 @@ public class MorphlineTest extends Assert {
     
   @Test
   public void testComplexParse() throws Exception {
-    parse("testComplexParse-morphline");
+    parse("test-morphlines/testComplexParse-morphline");
   }
   
   @Test
   public void testBasic() throws Exception {
-    Config config = parse("testBasic-morphline");    
+    Config config = parse("test-morphlines/testBasic-morphline");    
     morphline = createMorphline(config);    
     Record record = createBasicRecord();
     morphline.startSession();
@@ -65,7 +65,7 @@ public class MorphlineTest extends Assert {
 
   @Test
   public void testBasicFilterPass() throws Exception {
-    Config config = parse("testBasicFilterPass-morphline");    
+    Config config = parse("test-morphlines/testBasicFilterPass-morphline");    
     morphline = createMorphline(config);
     Record record = new Record();
     record.getFields().put("first_name", "Nadja");
@@ -85,7 +85,7 @@ public class MorphlineTest extends Assert {
 
   @Test
   public void testBasicFilterFail() throws Exception {
-    Config config = parse("testBasicFilterFail-morphline");    
+    Config config = parse("test-morphlines/testBasicFilterFail-morphline");    
     morphline = createMorphline(config);
     Record record = new Record();
     record.getFields().put("first_name", "Nadja");
@@ -105,7 +105,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testBasicFilterFailTwice() throws Exception {
-    Config config = parse("testBasicFilterFailTwice-morphline");    
+    Config config = parse("test-morphlines/testBasicFilterFailTwice-morphline");    
     morphline = createMorphline(config);
     Record record = new Record();
     record.getFields().put("first_name", "Nadja");
@@ -129,7 +129,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testIfThenElseBasicThen() throws Exception {
-    Config config = parse("testIfThenElseBasicThen-morphline");    
+    Config config = parse("test-morphlines/testIfThenElseBasicThen-morphline");    
     morphline = createMorphline(config);
     Record record = createBasicRecord();
     morphline.startSession();
@@ -141,7 +141,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testIfThenElseBasicThenEmpty() throws Exception {
-    Config config = parse("testIfThenElseBasicThenEmpty-morphline");    
+    Config config = parse("test-morphlines/testIfThenElseBasicThenEmpty-morphline");    
     morphline = createMorphline(config);
     Record record = createBasicRecord();
     morphline.startSession();
@@ -153,7 +153,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testIfThenElseBasicElse() throws Exception {
-    Config config = parse("testIfThenElseBasicElse-morphline");    
+    Config config = parse("test-morphlines/testIfThenElseBasicElse-morphline");    
     morphline = createMorphline(config);
     Record record = createBasicRecord();
     morphline.startSession();
@@ -165,7 +165,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testIfThenElseBasicElseEmpty() throws Exception {
-    Config config = parse("testIfThenElseBasicElseEmpty-morphline");    
+    Config config = parse("test-morphlines/testIfThenElseBasicElseEmpty-morphline");    
     morphline = createMorphline(config);
     Record record = createBasicRecord();
     morphline.startSession();

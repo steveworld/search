@@ -17,10 +17,7 @@ package com.cloudera.cdk.morphline.api;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -38,7 +35,6 @@ import org.apache.solr.tika.TestEmbeddedSolrServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.cloudera.cdk.morphline.base.Connector;
@@ -141,88 +137,8 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
   }
     
   @Test
-  public void testComplexParse() throws Exception {
-    parse("testComplexParse-morphline");
-  }
-  
-  @Test
-  public void testBasic() throws Exception {
-    Config config = parse("testBasic-morphline");    
-    morphline = createMorphline(config);    
-    Record record = createBasicRecord();
-    morphline.startSession();
-    morphline.process(record);
-    assertEquals(Arrays.asList(record), collector.getRecords());
-    assertEquals(1, collector.getNumStartEvents());
-  }
-
-  @Test
-  public void testBasicFilterPass() throws Exception {
-    Config config = parse("testBasicFilterPass-morphline");    
-    morphline = createMorphline(config);
-    Record record = new Record();
-    record.getFields().put("first_name", "Nadja");
-    List<Record> expectedList = new ArrayList();
-    for (int i = 0; i < 2; i++) {
-      Record expected = new Record(record);
-      expected.getFields().put("foo", "bar");
-      expected.getFields().replaceValues("iter", Arrays.asList(i));
-      expectedList.add(expected);
-    }
-    morphline.startSession();
-    morphline.process(record);
-    assertEquals(expectedList, collector.getRecords());
-    assertTrue(record != collector.getRecords().get(0));
-    assertEquals(1, collector.getNumStartEvents());
-  }
-
-  @Test
-  public void testBasicFilterFail() throws Exception {
-    Config config = parse("testBasicFilterFail-morphline");    
-    morphline = createMorphline(config);
-    Record record = new Record();
-    record.getFields().put("first_name", "Nadja");
-    List<Record> expectedList = new ArrayList();
-    for (int i = 0; i < 2; i++) {
-      Record expected = new Record(record);
-      expected.getFields().put("foo2", "bar2");
-      expected.getFields().replaceValues("iter2", Arrays.asList(i));
-      expectedList.add(expected);
-    }
-    morphline.startSession();
-    morphline.process(record);
-    assertEquals(expectedList, collector.getRecords());
-    assertTrue(record != collector.getRecords().get(0));
-    assertEquals(1, collector.getNumStartEvents());
-  }
-  
-  @Test
-  public void testBasicFilterFailTwice() throws Exception {
-    Config config = parse("testBasicFilterFailTwice-morphline");    
-    morphline = createMorphline(config);
-    Record record = new Record();
-    record.getFields().put("first_name", "Nadja");
-    List<Record> expectedList = new ArrayList();
-//    for (int i = 0; i < 2; i++) {
-//      Record expected = new Record(record);
-//      expected.getFields().put("foo2", "bar2");
-//      expected.getFields().replaceValues("iter2", Arrays.asList(i));
-//      expectedList.add(expected);
-//    }
-    morphline.startSession();
-    try {
-      morphline.process(record);
-      fail();
-    } catch (MorphlineRuntimeException e) {
-      assertTrue(e.getMessage().startsWith("Filter found no matching rule"));
-    }
-    assertEquals(expectedList, collector.getRecords());
-    assertEquals(1, collector.getNumStartEvents());
-  }
-  
-  @Test
   public void testJPGCompressed() throws Exception {
-    Config config = parse("testJPGCompressed-morphline.conf");    
+    Config config = parse("test-morphlines/testJPGCompressed-morphline.conf");    
     morphline = createMorphline(config); 
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
@@ -235,7 +151,7 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
 
   @Test
   public void testCSVBasic() throws Exception {
-    Config config = parse("testCSVBasic-morphline.conf");    
+    Config config = parse("test-morphlines/testCSVBasic-morphline.conf");    
     morphline = createMorphline(config); 
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
@@ -250,7 +166,7 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
 
   @Test
   public void testReadLineBasic() throws Exception {
-    Config config = parse("testReadLineBasic-morphline.conf");    
+    Config config = parse("test-morphlines/testReadLineBasic-morphline.conf");    
     morphline = createMorphline(config); 
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
@@ -260,7 +176,7 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
   }  
 
   public void testMultiLineBasic() throws Exception {
-    Config config = parse("testMultiLineBasic-morphline.conf");    
+    Config config = parse("test-morphlines/testMultiLineBasic-morphline.conf");    
     morphline = createMorphline(config); 
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
@@ -271,7 +187,7 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
 
   @Test
   public void testDocumentTypes() throws Exception {
-    Config config = parse("testDocumentTypes-morphline.conf");    
+    Config config = parse("test-morphlines/testDocumentTypes-morphline.conf");    
     morphline = createMorphline(config); 
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
@@ -299,7 +215,7 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
   
   @Test
   public void testDocumentTypes2() throws Exception {
-    Config config = parse("testDocumentTypes-morphline.conf");    
+    Config config = parse("test-morphlines/testDocumentTypes-morphline.conf");    
     morphline = createMorphline(config); 
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
@@ -452,16 +368,6 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
     return new SolrMorphlineContext(new MetricsRegistry(), schema);
   }
   
-  private Record createBasicRecord() {
-    Record record = new Record();
-    record.getFields().put("first_name", "Nadja");
-    record.getFields().put("age", 8);
-    record.getFields().put("tags", "one");
-    record.getFields().put("tags", 2);
-    record.getFields().put("tags", "three");
-    return record;
-  }
-
   private Config parse(String file) {
     Config config = Configs.parse(file);
     config = config.getConfigList("morphlines").get(0);
