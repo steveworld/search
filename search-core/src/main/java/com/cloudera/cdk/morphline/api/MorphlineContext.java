@@ -15,14 +15,19 @@
  */
 package com.cloudera.cdk.morphline.api;
 
+import java.io.IOException;
+import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.cdk.morphline.shaded.com.google.common.reflect.ClassPath;
+import com.cloudera.cdk.morphline.shaded.com.google.common.reflect.ClassPath.ClassInfo;
 import com.google.common.base.Preconditions;
 import com.yammer.metrics.core.MetricsRegistry;
 
@@ -53,7 +58,7 @@ public class MorphlineContext {
 
   public void registerCommandBuilderPackagePrefixes(Collection<String> commandPackagePrefixes) {
     registerCommandBuilders(
-        new ClassPaths().getTopLevelClassesRecursive(commandPackagePrefixes, CommandBuilder.class));
+        getTopLevelClassesRecursive(commandPackagePrefixes, CommandBuilder.class));
   }
 
   public void registerCommandBuilders(Collection<Class<CommandBuilder>> builderClasses) {
@@ -71,6 +76,59 @@ public class MorphlineContext {
           throw new MorphlineRuntimeException(e);
         }
       }
+    }
+  }
+
+  /**
+   * Returns all classes that implement the given interface and are contained in a Java package with
+   * the given prefix.
+   * 
+   * Uses a repackaged version of com.google.guava.reflect-14.0.1 to enable running with prior
+   * versions of guava without issues.
+   */
+  <T> Collection<Class<T>> getTopLevelClassesRecursive(Iterable<String> packageNamePrefixes, Class<T> iface) {    
+    HashMap<String,Class<T>> classes = new LinkedHashMap();
+    for (ClassLoader loader : getClassLoaders()) {
+      ClassPath classPath;
+      try {
+        classPath = ClassPath.from(loader);
+      } catch (IOException e) {
+        continue;
+      }
+      for (String packageNamePrefix : packageNamePrefixes) {
+        for (ClassInfo info : classPath.getTopLevelClassesRecursive(packageNamePrefix)) {
+          Class clazz;
+          try {
+            clazz = info.load();
+//            clazz = Class.forName(info.getName());
+          } catch (NoClassDefFoundError e) {
+            continue;
+          } catch (ExceptionInInitializerError e) {
+            continue;
+          } catch (UnsatisfiedLinkError e) {
+            continue;
+          }
+          if (!classes.containsKey(clazz.getName()) 
+              && iface.isAssignableFrom(clazz) 
+              && !clazz.isInterface()
+              && !Modifier.isAbstract(clazz.getModifiers())) {
+            classes.put(clazz.getName(), clazz);
+          }
+        }
+      }
+    }    
+    return classes.values();
+  }
+  
+  private ClassLoader[] getClassLoaders() {
+    ClassLoader contextLoader = Thread.currentThread().getContextClassLoader();
+    ClassLoader myLoader = getClass().getClassLoader();
+    if (contextLoader == null) {
+      return new ClassLoader[] { myLoader };
+    } else if (contextLoader == myLoader || myLoader == null) {
+      return new ClassLoader[] { contextLoader };
+    } else {
+      return new ClassLoader[] { contextLoader, myLoader };
     }
   }
 

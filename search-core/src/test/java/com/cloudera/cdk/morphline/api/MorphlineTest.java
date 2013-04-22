@@ -180,7 +180,7 @@ public class MorphlineTest extends Assert {
   public void testReflection() {
     long start = System.currentTimeMillis();
     List<String> packagePrefixes = Arrays.asList("com", "org", "net");
-    for (Class clazz : new ClassPaths().getTopLevelClassesRecursive(
+    for (Class clazz : new MorphlineContext(new MetricsRegistry()).getTopLevelClassesRecursive(
         packagePrefixes, CommandBuilder.class)) {
       System.out.println("found " + clazz);
     }
