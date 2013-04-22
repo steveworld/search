@@ -60,7 +60,10 @@ public class ScriptEvaluatorTest extends Assert {
 	@Test
 	public void testExternalObject() throws Exception {
 		ArrayListMultimap.create();
-		ScriptEvaluator script = new ScriptEvaluator(javaImports, "com.google.common.collect.ArrayListMultimap.create(); return new com.cloudera.cdk.morphline.api.Record(x); ", Record.class, new String[] { "x" }, new Class[] { Record.class }, "myQuery");
+    ScriptEvaluator script = new ScriptEvaluator(
+        javaImports,
+        "com.google.common.collect.ArrayListMultimap.create(); new com.cloudera.cdk.morphline.api.Record(); return x.copy(); ",
+        Record.class, new String[] { "x" }, new Class[] { Record.class }, "myQuery");
 		Object result = script.evaluate(new Object[] { new Record() });
     assertEquals(result, new Record());
     assertTrue(result != new Record());
