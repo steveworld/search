@@ -89,7 +89,7 @@ public final class ReadLineBuilder implements CommandBuilder {
           if (commentPrefix != null && line.startsWith(commentPrefix)) {
             continue; // ignore comments
           }
-          Record outputRecord = new Record(inputRecord);
+          Record outputRecord = inputRecord.copy();
           removeAttachments(outputRecord);
           outputRecord.replaceValues(Field.MESSAGE, line);
           

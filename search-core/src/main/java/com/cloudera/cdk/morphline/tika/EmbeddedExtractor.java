@@ -43,7 +43,7 @@ final class EmbeddedExtractor {
           newStream.setOpenContainer(container);
         }
       }
-      record = new Record(record);
+      record = record.copy();
 
       record.replaceValues(Field.ATTACHMENT_BODY, newStream);
       record.removeAll(Field.ATTACHMENT_MIME_TYPE);

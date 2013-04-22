@@ -71,7 +71,7 @@ public class MorphlineTest extends Assert {
     record.getFields().put("first_name", "Nadja");
     List<Record> expectedList = new ArrayList();
     for (int i = 0; i < 2; i++) {
-      Record expected = new Record(record);
+      Record expected = record.copy();
       expected.getFields().put("foo", "bar");
       expected.getFields().replaceValues("iter", Arrays.asList(i));
       expectedList.add(expected);
@@ -91,7 +91,7 @@ public class MorphlineTest extends Assert {
     record.getFields().put("first_name", "Nadja");
     List<Record> expectedList = new ArrayList();
     for (int i = 0; i < 2; i++) {
-      Record expected = new Record(record);
+      Record expected = record.copy();
       expected.getFields().put("foo2", "bar2");
       expected.getFields().replaceValues("iter2", Arrays.asList(i));
       expectedList.add(expected);

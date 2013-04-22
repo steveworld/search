@@ -41,6 +41,7 @@ import com.typesafe.config.Config;
  */
 public abstract class AbstractParser extends AbstractCommand {
 
+  // TODO: replace tika MediaType with guava MediaType to avoid needing to depend on tika-core
   private Set<MediaType> supportedMimeTypes = null;
 
   public static final String SUPPORTED_MIME_TYPES = "supportedMimeTypes";
@@ -68,6 +69,7 @@ public abstract class AbstractParser extends AbstractCommand {
       return false;
     }
 
+    // TODO: make field for stream configurable
     String streamMediaType = (String) record.getFirstValue(Field.ATTACHMENT_MIME_TYPE);
     if (!isMimeTypeSupported(streamMediaType, record)) {
       return false;

@@ -145,7 +145,7 @@ public final class ReadMultiLineBuilder implements CommandBuilder {
     }
 
     private boolean flushRecord(Record inputRecord, String lines) {
-      Record outputRecord = new Record(inputRecord);
+      Record outputRecord = inputRecord.copy();
       removeAttachments(outputRecord);
       outputRecord.replaceValues(Field.MESSAGE, lines);
       
