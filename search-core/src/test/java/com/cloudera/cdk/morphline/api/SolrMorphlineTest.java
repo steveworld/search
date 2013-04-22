@@ -443,22 +443,6 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
     return collector.getRecords().size();
   }
   
-  @Test
-  @Ignore
-  public void testReflection() {
-    long start = System.currentTimeMillis();
-    List<String> packagePrefixes = Arrays.asList("com", "org", "net");
-    for (Class clazz : new ClassPaths().getTopLevelClassesRecursive(
-        packagePrefixes, CommandBuilder.class)) {
-      System.out.println("found " + clazz);
-    }
-//    for (Class cmd : new Reflections("com", "org").getSubTypesOf(CommandBuilder.class)) {
-//      System.out.println(cmd);
-//    }
-    float secs = (System.currentTimeMillis() - start) / 1000.0f;
-    System.out.println("secs=" + secs);
-  }
-  
   private Command createMorphline(Config config) {
     return new MorphlineBuilder().build(config, new Connector(), collector, createMorphlineContext());
 //  return new Morphline(config, new Connector(), collector, new MorphlineContext());
