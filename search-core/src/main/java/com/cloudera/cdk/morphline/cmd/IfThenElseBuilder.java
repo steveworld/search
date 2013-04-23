@@ -77,19 +77,19 @@ public final class IfThenElseBuilder implements CommandBuilder {
       
       LOG.trace("ruleunwrapped {}", config.root().unwrapped());
       Command devNull = new DropRecordBuilder().build(null, this, null, context); // pipes into /dev/null
-      List<Command> conditions = buildCommandChain(config, "conditions", devNull, true, context.getCommandBuilders());
+      List<Command> conditions = buildCommandChain(config, "conditions", devNull, true);
       if (conditions.size() == 0) {
         throw new MorphlineParsingException("Missing condition", config);
       } else {
         this.conditionChain = conditions.get(0);
       }
 
-      List<Command> thenCommands = buildCommandChain(config, "then", child, true, context.getCommandBuilders());
+      List<Command> thenCommands = buildCommandChain(config, "then", child, true);
       if (thenCommands.size() > 0) {
         this.thenChain = thenCommands.get(0);
       }
       
-      List<Command> elseCommands = buildCommandChain(config, "else", child, true, context.getCommandBuilders());
+      List<Command> elseCommands = buildCommandChain(config, "else", child, true);
       if (elseCommands.size() > 0) {
         this.elseChain = elseCommands.get(0);
       }

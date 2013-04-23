@@ -46,7 +46,7 @@ final class Morphline extends AbstractCommand {
         Arrays.asList("com", "org", "net"));    
     context.registerCommandBuilderPackagePrefixes(commandPackagePrefixes);
     
-    List<Command> childCommands = buildCommandChain(config, "commands", child, false, context.getCommandBuilders());
+    List<Command> childCommands = buildCommandChain(config, "commands", child, false);
     if (childCommands.size() > 0) {
       this.realChild = childCommands.get(0);
     } else {

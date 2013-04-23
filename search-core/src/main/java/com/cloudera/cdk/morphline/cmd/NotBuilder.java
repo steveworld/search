@@ -47,7 +47,7 @@ public final class NotBuilder implements CommandBuilder {
     
     public Not(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
-      realChild = buildCommand(config, this, child, context.getCommandBuilders());
+      realChild = buildCommand(config, this, child);
     }
 
     @Override
