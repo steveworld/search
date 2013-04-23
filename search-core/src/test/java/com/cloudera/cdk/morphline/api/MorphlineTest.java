@@ -18,6 +18,8 @@ package com.cloudera.cdk.morphline.api;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -194,6 +196,52 @@ public class MorphlineTest extends Assert {
     Record record = createBasicRecord();
     morphline.startSession();
     assertTrue(morphline.process(record));
+    assertEquals(Arrays.asList(), collector.getRecords());
+    assertEquals(1, collector.getNumStartEvents());
+  }
+  
+  @Test
+  public void testGrokSeparatedValues() throws Exception {
+    String msg = "hello\tworld\tfoo";
+    Pattern pattern = Pattern.compile("(.+?)(\\t|\\z)");
+    Matcher matcher = pattern.matcher(msg);
+    List<String> results = new ArrayList();
+    while (matcher.find()) {
+      //System.out.println("match:'" + matcher.group(1) + "'");
+      results.add(matcher.group(1));
+    }
+    assertEquals(Arrays.asList("hello", "world", "foo"), results);
+  }
+  
+  @Test
+  public void testGrokSyslogMatch() throws Exception {
+    // match
+    Config config = parse("test-morphlines/testGrokSyslogMatch-morphline");    
+    morphline = createMorphline(config);
+    Record record = new Record();
+    String msg = "<164>Feb  4 10:46:14 syslog sshd[607]: Server listening on 0.0.0.0 port 22.";
+    record.getFields().put(Field.MESSAGE, msg);
+    morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    assertTrue(morphline.process(record));
+    Record expected = new Record();
+    expected.getFields().put(Field.MESSAGE, msg);
+    expected.getFields().put("syslog_program", "sshd");
+    expected.getFields().put("syslog_pri", "164");
+    expected.getFields().put("syslog_timestamp", "Feb  4 10:46:14");
+    expected.getFields().put("syslog_hostname", "syslog");
+    expected.getFields().put("syslog_message", "Server listening on 0.0.0.0 port 22.");
+    expected.getFields().put("syslog_pid", "607");
+    assertEquals(Arrays.asList(expected), collector.getRecords());
+    assertEquals(1, collector.getNumStartEvents());
+    
+    // mismatch
+    collector.reset();
+    record = new Record();
+    record.getFields().put(Field.MESSAGE, "foo" + msg);
+    morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    assertFalse(morphline.process(record));
     assertEquals(Arrays.asList(), collector.getRecords());
     assertEquals(1, collector.getNumStartEvents());
   }
