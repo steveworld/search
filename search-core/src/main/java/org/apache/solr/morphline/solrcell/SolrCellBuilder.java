@@ -292,7 +292,7 @@ public final class SolrCellBuilder implements CommandBuilder {
     }
 
     private Parser detectParser(Record record) {
-      if (!hasAtLeastOneMimeType(record, LOG)) {
+      if (!hasAtLeastOneMimeType(record)) {
         return null;
       }
       String mediaTypeStr = (String) record.getFirstValue(Field.ATTACHMENT_MIME_TYPE); //ExtractingParams.STREAM_TYPE);

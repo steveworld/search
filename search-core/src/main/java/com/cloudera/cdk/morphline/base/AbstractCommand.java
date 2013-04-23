@@ -119,7 +119,11 @@ public abstract class AbstractCommand implements Command {
     return commands;
   }
 
-  private Command buildCommand(Config cmdConfig, Command currentParent, Connector connector,
+  /**
+   * Factory method to create a command rooted at the given cmdConfig. The command will feed records
+   * into connector. The command will have currentParent as it's parent.
+   */
+  protected Command buildCommand(Config cmdConfig, Command currentParent, Command finalChild,
       Map<String, Class<CommandBuilder>> builders) {
     
     //LOG.info("cmdConfig {}", cmdConfig);
@@ -162,7 +166,7 @@ public abstract class AbstractCommand implements Command {
 //    cmdConfig.getValue("").
 //    getString(cmdClass);
     CommandBuilder builder = (CommandBuilder) obj;
-    Command cmd = builder.build(cmdConfig.getConfig(cmdName), currentParent, connector, context);
+    Command cmd = builder.build(cmdConfig.getConfig(cmdName), currentParent, finalChild, context);
     return cmd;
   }
   

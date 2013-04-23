@@ -176,6 +176,29 @@ public class MorphlineTest extends Assert {
   }
   
   @Test
+  public void testNotBasicTrue() throws Exception {
+    Config config = parse("test-morphlines/testNotBasicTrue-morphline");    
+    morphline = createMorphline(config);
+    Record record = createBasicRecord();
+    morphline.startSession();
+    assertFalse(morphline.process(record));
+    assertEquals(Arrays.asList(record), collector.getRecords());
+    assertEquals(1, collector.getNumStartEvents());
+    assertEquals("touched", collector.getRecords().get(0).getFirstValue("state"));
+  }
+  
+  @Test
+  public void testNotBasicFalse() throws Exception {
+    Config config = parse("test-morphlines/testNotBasicFalse-morphline");    
+    morphline = createMorphline(config);
+    Record record = createBasicRecord();
+    morphline.startSession();
+    assertTrue(morphline.process(record));
+    assertEquals(Arrays.asList(), collector.getRecords());
+    assertEquals(1, collector.getNumStartEvents());
+  }
+  
+  @Test
   @Ignore
   public void testReflection() {
     long start = System.currentTimeMillis();

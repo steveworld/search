@@ -65,7 +65,7 @@ public abstract class AbstractParser extends AbstractCommand {
 
   @Override
   public boolean process(Record record) {
-    if (!hasAtLeastOneAttachment(record, LOG)) {
+    if (!hasAtLeastOneAttachment(record)) {
       return false;
     }
 
@@ -86,7 +86,7 @@ public abstract class AbstractParser extends AbstractCommand {
     if (supportedMimeTypes == null) {
       return true;
     }
-    if (!hasAtLeastOneMimeType(record, LOG)) {
+    if (!hasAtLeastOneMimeType(record)) {
       return false;
     }
     MediaType mediaType = parseMediaType(mediaTypeStr).getBaseType();
@@ -131,7 +131,7 @@ public abstract class AbstractParser extends AbstractCommand {
     return charsetName;
   }
 
-  protected boolean hasAtLeastOneAttachment(Record record, Logger LOG) {
+  protected boolean hasAtLeastOneAttachment(Record record) {
     List attachments = record.getFields().get(Field.ATTACHMENT_BODY);
     if (attachments.size() == 0) {
       LOG.debug("Command failed because of missing attachment for record: {}", record);
@@ -142,7 +142,7 @@ public abstract class AbstractParser extends AbstractCommand {
     return true;
   }
   
-  protected boolean hasAtLeastOneMimeType(Record record, Logger LOG) {
+  protected boolean hasAtLeastOneMimeType(Record record) {
     List mimeTypes = record.getFields().get(Field.ATTACHMENT_MIME_TYPE);
     if (mimeTypes.size() == 0) {
       LOG.debug("Command failed because of missing MIME type for record: {}", record);

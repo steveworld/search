@@ -19,49 +19,46 @@ import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
+import com.cloudera.cdk.morphline.base.AbstractCommand;
 import com.typesafe.config.Config;
 
 /**
- * Command that silently consumes records without ever emitting any record - think /dev/null.
+ * A Not command consists of one nested command, the boolean return value of which is inverted.
  */
-public final class BlackHoleBuilder implements CommandBuilder {
+public final class NotBuilder implements CommandBuilder {
 
   @Override
   public String getName() {
-    return "blackHole";
+    return "not";
   }
-
+  
   @Override
   public Command build(Config config, Command parent, Command child, MorphlineContext context) {
-    return new BlackHole(config, parent);
+    return new Not(config, parent, child, context);
   }
   
   
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
   ///////////////////////////////////////////////////////////////////////////////
-  private static final class BlackHole implements Command {
+  private static final class Not extends AbstractCommand {
+
+    private Command realChild;
     
-    private Command parent;
-    
-    public BlackHole(Config config, Command parent) { 
-      this.parent = parent;
+    public Not(Config config, Command parent, Command child, MorphlineContext context) {
+      super(config, parent, child, context);
+      realChild = buildCommand(config, this, child, context.getCommandBuilders());
     }
 
     @Override
-    public Command getParent() {
-      return parent;
-    }
-    
-    @Override
-    public void startSession() {
+    protected Command getChild() {
+      return realChild;
     }
 
     @Override
     public boolean process(Record record) {
-      return true;
+      return !super.process(record);
     }
-
   }
-
+  
 }
