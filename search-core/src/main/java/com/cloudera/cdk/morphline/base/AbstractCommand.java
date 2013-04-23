@@ -93,8 +93,7 @@ public abstract class AbstractCommand implements Command {
    *          if true indicates don't forward startSession() at the end of the chain of commands of a
    *          rule.
    */
-  protected List<Command> buildCommandChain(Config rootConfig, String configKey, Command finalChild, boolean isRule) {
-    
+  protected List<Command> buildCommandChain(Config rootConfig, String configKey, Command finalChild, boolean isRule) {    
     List<? extends Config> commandConfigs = Configs.getConfigList(rootConfig, configKey, Collections.EMPTY_LIST);
     List<Command> commands = new ArrayList();
     Command currentParent = this;
@@ -122,8 +121,7 @@ public abstract class AbstractCommand implements Command {
    * Factory method to create a command rooted at the given cmdConfig. The command will feed records
    * into finalChild. The command will have currentParent as it's parent.
    */
-  protected Command buildCommand(Config cmdConfig, Command currentParent, Command finalChild) {
-    
+  protected Command buildCommand(Config cmdConfig, Command currentParent, Command finalChild) {    
     //LOG.info("cmdConfig {}", cmdConfig);
     LOG.trace("unwrapped {}", cmdConfig.root().unwrapped());    
     Set<Map.Entry<String, Object>> entries = cmdConfig.root().unwrapped().entrySet();
@@ -164,7 +162,7 @@ public abstract class AbstractCommand implements Command {
 //    cmdConfig.getValue("").
 //    getString(cmdClass);
     CommandBuilder builder = (CommandBuilder) obj;
-    Command cmd = builder.build(cmdConfig.getConfig(cmdName), currentParent, finalChild, context);
+    Command cmd = builder.build(cmdConfig.getConfig(cmdName), currentParent, finalChild, getContext());
     return cmd;
   }
   

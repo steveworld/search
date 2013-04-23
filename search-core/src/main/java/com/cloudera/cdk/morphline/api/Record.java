@@ -39,7 +39,7 @@ public final class Record {
     this(create());
   }
   
-  public Record(ListMultimap<String, Object> fields) {
+  private Record(ListMultimap<String, Object> fields) {
     Preconditions.checkNotNull(fields);
     this.fields = fields;
   }

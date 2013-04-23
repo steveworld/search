@@ -62,6 +62,18 @@ public final class Configs {
     }
   }
 
+  public static Config getConfig(Config config, String path) {
+    return config.getConfig(path);
+  }
+
+  public static Config getConfig(Config config, String path, Config defaults) {
+    if (config.hasPath(path)) {
+      return config.getConfig(path);
+    } else {
+      return defaults;
+    }
+  }
+
   public static List<? extends Config> getConfigList(Config config, String path) {
     return config.getConfigList(path);
   }

@@ -329,11 +329,11 @@ public final class SolrCellBuilder implements CommandBuilder {
     }
 
     private Record toRecord(SolrInputDocument doc) {
-      ArrayListMultimap<String, Object> multiMap = ArrayListMultimap.create();
+      Record record = new Record();
       for (Entry<String, SolrInputField> entry : doc.entrySet()) {
-        multiMap.replaceValues(entry.getKey(), entry.getValue().getValues());        
+        record.getFields().replaceValues(entry.getKey(), entry.getValue().getValues());        
       }
-      return new Record(multiMap);
+      return record;
     }
     
     /**
