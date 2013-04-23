@@ -21,13 +21,9 @@ package com.cloudera.cdk.morphline.api;
 public final class Field {
 
   // logstash conventions:
-  public static final String ID = "@id";
-  public static final String TIMESTAMP = "@timestamp";
-  public static final String TYPE = "@type";
-  public static final String TAGS = "@tags";
-  public static final String SOURCE_HOST = "@source_host";
-  public static final String SOURCE_URI = "@source_uri";
-  public static final String MESSAGE = "@message"; // the original plain-text message
+  public static final String ID = "id";
+  public static final String TIMESTAMP = "timestamp";
+  public static final String MESSAGE = "message"; // the original plain-text message
 
   public static final String ATTACHMENT_BODY = "_attachment_body";
   public static final String ATTACHMENT_MIME_TYPE = "_attachment_mimetype";

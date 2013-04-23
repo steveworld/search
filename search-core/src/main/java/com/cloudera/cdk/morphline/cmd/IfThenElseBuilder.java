@@ -76,8 +76,8 @@ public final class IfThenElseBuilder implements CommandBuilder {
       super(config, parent, child, context);
       
       LOG.trace("ruleunwrapped {}", config.root().unwrapped());
-      Command blackHole = new BlackHoleBuilder().build(null, this, null, context); // pipes into /dev/null
-      List<Command> conditions = buildCommandChain(config, "conditions", blackHole, true, context.getCommandBuilders());
+      Command devNull = new DropRecordBuilder().build(null, this, null, context); // pipes into /dev/null
+      List<Command> conditions = buildCommandChain(config, "conditions", devNull, true, context.getCommandBuilders());
       if (conditions.size() == 0) {
         throw new MorphlineParsingException("Missing condition", config);
       } else {
