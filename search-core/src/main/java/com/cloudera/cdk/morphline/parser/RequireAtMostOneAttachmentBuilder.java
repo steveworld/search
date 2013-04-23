@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
-import com.cloudera.cdk.morphline.api.Field;
+import com.cloudera.cdk.morphline.api.Fields;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
@@ -63,13 +63,13 @@ public final class RequireAtMostOneAttachmentBuilder implements CommandBuilder {
     }
 
     private static boolean hasAtMostOneAttachment(Record record, Logger LOG) {
-      List mimeTypes = record.getFields().get(Field.ATTACHMENT_MIME_TYPE);
+      List mimeTypes = record.getFields().get(Fields.ATTACHMENT_MIME_TYPE);
       if (mimeTypes.size() > 1) {
         LOG.debug("Command failed because the record must not contain more than one MIME type: {}", record);
         return false;
       }
       
-      List bodies = record.getFields().get(Field.ATTACHMENT_BODY);
+      List bodies = record.getFields().get(Fields.ATTACHMENT_BODY);
       if (bodies.size() > 1) {
         LOG.debug("Command failed because the record must not contain more than one attachment: {}", record);
         return false;

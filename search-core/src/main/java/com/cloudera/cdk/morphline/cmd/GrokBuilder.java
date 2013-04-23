@@ -57,7 +57,7 @@ public final class GrokBuilder implements CommandBuilder {
     try {
       return new Grok(config, parent, child, context);
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new MorphlineParsingException("Cannot parse", config, e);
     }
   }
   

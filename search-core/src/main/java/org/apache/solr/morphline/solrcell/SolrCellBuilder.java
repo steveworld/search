@@ -59,7 +59,7 @@ import org.xml.sax.SAXException;
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
-import com.cloudera.cdk.morphline.api.Field;
+import com.cloudera.cdk.morphline.api.Fields;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineParsingException;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
@@ -295,7 +295,7 @@ public final class SolrCellBuilder implements CommandBuilder {
       if (!hasAtLeastOneMimeType(record)) {
         return null;
       }
-      String mediaTypeStr = (String) record.getFirstValue(Field.ATTACHMENT_MIME_TYPE); //ExtractingParams.STREAM_TYPE);
+      String mediaTypeStr = (String) record.getFirstValue(Fields.ATTACHMENT_MIME_TYPE); //ExtractingParams.STREAM_TYPE);
       assert mediaTypeStr != null;
 //      return autoDetectParser;
       MediaType mediaType = parseMediaType(mediaTypeStr).getBaseType();
@@ -310,7 +310,7 @@ public final class SolrCellBuilder implements CommandBuilder {
         }
       }
       if (LOG.isDebugEnabled()) {
-        LOG.debug("No supported MIME type parser found for " + Field.ATTACHMENT_MIME_TYPE + "=" + mediaTypeStr);
+        LOG.debug("No supported MIME type parser found for " + Fields.ATTACHMENT_MIME_TYPE + "=" + mediaTypeStr);
       }
       return null;
     }

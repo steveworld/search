@@ -18,7 +18,7 @@ package com.cloudera.cdk.morphline.api;
 /**
  * Common record field names.
  */
-public final class Field {
+public final class Fields {
 
   // logstash conventions:
   public static final String ID = "id";

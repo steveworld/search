@@ -22,7 +22,7 @@ import com.typesafe.config.Config;
  */
 public interface CommandBuilder {
 
-  String getName();
+  String getName(); // TODO: allow synonyms for backwards compatible name changes
 
   Command build(Config morphConfig, Command parent, Command child, MorphlineContext context);
 
