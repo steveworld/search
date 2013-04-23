@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
-import com.cloudera.cdk.morphline.api.Field;
+import com.cloudera.cdk.morphline.api.Fields;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
@@ -147,7 +147,7 @@ public final class ReadMultiLineBuilder implements CommandBuilder {
     private boolean flushRecord(Record inputRecord, String lines) {
       Record outputRecord = inputRecord.copy();
       removeAttachments(outputRecord);
-      outputRecord.replaceValues(Field.MESSAGE, lines);
+      outputRecord.replaceValues(Fields.MESSAGE, lines);
       
       // pass record to next command in chain:
       return getChild().process(outputRecord);

@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.Configs;
-import com.cloudera.cdk.morphline.api.Field;
+import com.cloudera.cdk.morphline.api.Fields;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
@@ -70,7 +70,7 @@ public abstract class AbstractParser extends AbstractCommand {
     }
 
     // TODO: make field for stream configurable
-    String streamMediaType = (String) record.getFirstValue(Field.ATTACHMENT_MIME_TYPE);
+    String streamMediaType = (String) record.getFirstValue(Fields.ATTACHMENT_MIME_TYPE);
     if (!isMimeTypeSupported(streamMediaType, record)) {
       return false;
     }
@@ -100,7 +100,7 @@ public abstract class AbstractParser extends AbstractCommand {
       }
     }
     if (LOG.isDebugEnabled()) {
-      LOG.debug("No supported MIME type found for " + Field.ATTACHMENT_MIME_TYPE + "=" + mediaTypeStr);
+      LOG.debug("No supported MIME type found for " + Fields.ATTACHMENT_MIME_TYPE + "=" + mediaTypeStr);
     }
     return false;
   }
@@ -122,7 +122,7 @@ public abstract class AbstractParser extends AbstractCommand {
     if (charset != null) {
       return charset;
     }
-    List charsets = record.getFields().get(Field.ATTACHMENT_CHARSET);
+    List charsets = record.getFields().get(Fields.ATTACHMENT_CHARSET);
     if (charsets.size() == 0) {
       // TODO try autodetection (AutoDetectReader)
       throw new MorphlineRuntimeException("Missing charset for record: " + record); 
@@ -132,7 +132,7 @@ public abstract class AbstractParser extends AbstractCommand {
   }
 
   protected boolean hasAtLeastOneAttachment(Record record) {
-    List attachments = record.getFields().get(Field.ATTACHMENT_BODY);
+    List attachments = record.getFields().get(Fields.ATTACHMENT_BODY);
     if (attachments.size() == 0) {
       LOG.debug("Command failed because of missing attachment for record: {}", record);
       return false;
@@ -143,7 +143,7 @@ public abstract class AbstractParser extends AbstractCommand {
   }
   
   protected boolean hasAtLeastOneMimeType(Record record) {
-    List mimeTypes = record.getFields().get(Field.ATTACHMENT_MIME_TYPE);
+    List mimeTypes = record.getFields().get(Fields.ATTACHMENT_MIME_TYPE);
     if (mimeTypes.size() == 0) {
       LOG.debug("Command failed because of missing MIME type for record: {}", record);
       return false;
@@ -153,7 +153,7 @@ public abstract class AbstractParser extends AbstractCommand {
   }
 
   protected InputStream createAttachmentInputStream(Record record) {
-    Object body = record.getFirstValue(Field.ATTACHMENT_BODY);
+    Object body = record.getFirstValue(Fields.ATTACHMENT_BODY);
     Preconditions.checkNotNull(body);
     if (body instanceof byte[]) {
       return new ByteArrayInputStream((byte[]) body);
@@ -163,10 +163,10 @@ public abstract class AbstractParser extends AbstractCommand {
   }
 
   protected void removeAttachments(Record outputRecord) {
-    outputRecord.removeAll(Field.ATTACHMENT_BODY);
-    outputRecord.removeAll(Field.ATTACHMENT_MIME_TYPE);
-    outputRecord.removeAll(Field.ATTACHMENT_CHARSET);
-    outputRecord.removeAll(Field.ATTACHMENT_NAME);
+    outputRecord.removeAll(Fields.ATTACHMENT_BODY);
+    outputRecord.removeAll(Fields.ATTACHMENT_MIME_TYPE);
+    outputRecord.removeAll(Fields.ATTACHMENT_CHARSET);
+    outputRecord.removeAll(Fields.ATTACHMENT_NAME);
   }
 
 //public static XMediaType toGuavaMediaType(MediaType tika) {

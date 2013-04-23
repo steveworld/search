@@ -30,7 +30,7 @@ import org.apache.tika.mime.MediaType;
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
-import com.cloudera.cdk.morphline.api.Field;
+import com.cloudera.cdk.morphline.api.Fields;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
@@ -84,8 +84,8 @@ public final class DetectMimeTypeBuilder implements CommandBuilder {
     
     @Override
     public boolean process(Record record) {
-      if (record.getFields().get(Field.ATTACHMENT_MIME_TYPE).size() == 0) {
-        List attachments = record.getFields().get(Field.ATTACHMENT_BODY);
+      if (record.getFields().get(Fields.ATTACHMENT_MIME_TYPE).size() == 0) {
+        List attachments = record.getFields().get(Fields.ATTACHMENT_BODY);
         if (attachments.size() > 0) {
           Object attachment = attachments.get(0);
           Preconditions.checkNotNull(attachment);
@@ -100,13 +100,13 @@ public final class DetectMimeTypeBuilder implements CommandBuilder {
           
           // If you specify the resource name (the filename, roughly) with this
           // parameter, then Tika can use it in guessing the right MIME type
-          String resourceName = (String) record.getFirstValue(Field.ATTACHMENT_NAME);
+          String resourceName = (String) record.getFirstValue(Fields.ATTACHMENT_NAME);
           if (resourceName != null) {
             metadata.add(Metadata.RESOURCE_NAME_KEY, resourceName);
           }
 
           // Provide stream's charset as hint to Tika for better auto detection
-          String charset = (String) record.getFirstValue(Field.ATTACHMENT_CHARSET);
+          String charset = (String) record.getFirstValue(Fields.ATTACHMENT_CHARSET);
           if (charset != null) {
             metadata.add(Metadata.CONTENT_ENCODING, charset);
           }
@@ -118,7 +118,7 @@ public final class DetectMimeTypeBuilder implements CommandBuilder {
           }
 
           String mimeType = getMediaType(stream, metadata, excludeParameters);
-          record.replaceValues(Field.ATTACHMENT_MIME_TYPE, mimeType);
+          record.replaceValues(Fields.ATTACHMENT_MIME_TYPE, mimeType);
         }  
       }
       return super.process(record);

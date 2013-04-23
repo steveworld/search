@@ -220,25 +220,25 @@ public class MorphlineTest extends Assert {
     morphline = createMorphline(config);
     Record record = new Record();
     String msg = "<164>Feb  4 10:46:14 syslog sshd[607]: Server listening on 0.0.0.0 port 22.";
-    record.getFields().put(Field.MESSAGE, msg);
+    record.getFields().put(Fields.MESSAGE, msg);
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     Record expected = new Record();
-    expected.getFields().put(Field.MESSAGE, msg);
-    expected.getFields().put("syslog_program", "sshd");
+    expected.getFields().put(Fields.MESSAGE, msg);
     expected.getFields().put("syslog_pri", "164");
     expected.getFields().put("syslog_timestamp", "Feb  4 10:46:14");
     expected.getFields().put("syslog_hostname", "syslog");
-    expected.getFields().put("syslog_message", "Server listening on 0.0.0.0 port 22.");
+    expected.getFields().put("syslog_program", "sshd");
     expected.getFields().put("syslog_pid", "607");
+    expected.getFields().put("syslog_message", "Server listening on 0.0.0.0 port 22.");
     assertEquals(Arrays.asList(expected), collector.getRecords());
     assertEquals(1, collector.getNumStartEvents());
     
     // mismatch
     collector.reset();
     record = new Record();
-    record.getFields().put(Field.MESSAGE, "foo" + msg);
+    record.getFields().put(Fields.MESSAGE, "foo" + msg);
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertFalse(morphline.process(record));

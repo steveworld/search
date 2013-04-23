@@ -32,7 +32,7 @@ import org.apache.tika.parser.pkg.CompressorParser;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
-import com.cloudera.cdk.morphline.api.Field;
+import com.cloudera.cdk.morphline.api.Fields;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
@@ -76,7 +76,7 @@ public final class DecompressBuilder implements CommandBuilder {
     public boolean process(Record record, InputStream stream) {
       EmbeddedExtractor extractor = new EmbeddedExtractor();
 
-      String name = (String) record.getFirstValue(Field.ATTACHMENT_NAME);
+      String name = (String) record.getFirstValue(Fields.ATTACHMENT_NAME);
       if (name != null) {
         if (name.endsWith(".tbz")) {
           name = name.substring(0, name.length() - 4) + ".tar";

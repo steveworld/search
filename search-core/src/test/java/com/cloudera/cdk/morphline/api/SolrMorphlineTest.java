@@ -312,9 +312,9 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
         File f = new File(file);
         byte[] body = FileUtils.readFileToByteArray(f);
         Record event = new Record();
-        event.getFields().put(Field.ATTACHMENT_BODY, new ByteArrayInputStream(body));
+        event.getFields().put(Fields.ATTACHMENT_BODY, new ByteArrayInputStream(body));
 //        StreamEvent event = new StreamEvent(new ByteArrayInputStream(body), new HashMap());
-        event.getFields().put(Field.ATTACHMENT_NAME, f.getName());
+        event.getFields().put(Fields.ATTACHMENT_NAME, f.getName());
 
         boolean injectUnknownSolrField = false;
 
