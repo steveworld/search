@@ -35,9 +35,7 @@ import com.google.common.cache.LoadingCache;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigException;
 import com.typesafe.config.ConfigFactory;
-import com.typesafe.config.ConfigList;
 import com.typesafe.config.ConfigObject;
-import com.typesafe.config.ConfigValue;
 import com.typesafe.config.ConfigValueFactory;
 
 /** See https://github.com/typesafehub/config */
@@ -108,35 +106,6 @@ public class TestHoconConfig extends Assert {
     String filePath = config.get(TikaIndexer.TIKA_CONFIG_LOCATION).unwrapped().toString();
     assertEquals(map.get(TikaIndexer.TIKA_CONFIG_LOCATION), filePath);
     assertEquals(map.get(key), config.get(key).unwrapped().toString());
-  }
-
-  @Test
-  public void testParsers() {
-    Config conf = ConfigFactory.load("testComplexParse-morphline");
-//    System.out.println("root.entrySet="+conf.root().entrySet());
-//    for (Map.Entry<String, ConfigValue> entry : conf.root().entrySet()) {
-//      System.out.println("entry="+entry.toString());
-//    }
-    for (Config coll : conf.getConfigList("morphlines")) {
-//      for (Map.Entry<String, ConfigValue> entry : coll.root().entrySet()) {
-//        System.out.println("entry="+entry.toString());
-//      }
-
-
-      System.out.println("coll="+coll);
-//      System.out.println("test3="+coll.getString("test3"));
-//      System.out.println("test4="+coll.getString("test4"));
-//      System.out.println("multiline="+coll.getString("multiline"));
-      for (Config cmd : coll.getConfigList("commands")) {
-//        System.out.println("foo="+cmd.getAnyRef("foo"));
-        //System.out.println("cmdany="+cmd.getAnyRef("."));
-        System.out.println("cmd="+cmd);
-        System.out.println("cmd.root.unwrapped="+cmd.root().unwrapped());
-        for (Map.Entry entry : cmd.root().entrySet()) {
-          System.out.println("root.entry="+entry);
-        }
-      }
-    }
   }
   
   @Test
