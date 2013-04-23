@@ -34,6 +34,7 @@ import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
 import com.google.common.base.Preconditions;
+import com.google.common.io.Closeables;
 import com.typesafe.config.Config;
 
 /**
@@ -76,8 +77,11 @@ public abstract class AbstractParser extends AbstractCommand {
     }
 
     InputStream stream = createAttachmentInputStream(record);
-
-    return process(record, stream);
+    try {
+      return process(record, stream);
+    } finally {
+      Closeables.closeQuietly(stream);
+    }
   }
   
   protected abstract boolean process(Record record, InputStream stream);
