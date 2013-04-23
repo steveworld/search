@@ -214,6 +214,22 @@ public class MorphlineTest extends Assert {
   }
   
   @Test
+  public void testReadClobBasic() throws Exception {
+    Config config = parse("test-morphlines/testReadClobBasic-morphline");    
+    morphline = createMorphline(config);
+    Record record = new Record();
+    String msg = "foo";
+    record.getFields().put(Fields.ATTACHMENT_BODY, msg.getBytes("UTF-8"));
+    morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    assertTrue(morphline.process(record));
+    Record expected = new Record();
+    expected.getFields().put(Fields.MESSAGE, msg);
+    assertEquals(Arrays.asList(expected), collector.getRecords());
+    assertEquals(1, collector.getNumStartEvents());    
+  }
+  
+  @Test
   public void testGrokSyslogMatch() throws Exception {
     // match
     Config config = parse("test-morphlines/testGrokSyslogMatch-morphline");    
