@@ -93,8 +93,7 @@ public abstract class AbstractCommand implements Command {
    *          if true indicates don't forward startSession() at the end of the chain of commands of a
    *          rule.
    */
-  protected List<Command> buildCommandChain(Config rootConfig, String configKey, Command finalChild, boolean isRule,
-      Map<String, Class<CommandBuilder>> builders) {
+  protected List<Command> buildCommandChain(Config rootConfig, String configKey, Command finalChild, boolean isRule) {
     
     List<? extends Config> commandConfigs = Configs.getConfigList(rootConfig, configKey, Collections.EMPTY_LIST);
     List<Command> commands = new ArrayList();
@@ -107,7 +106,7 @@ public abstract class AbstractCommand implements Command {
         connector.setChild(finalChild);
       }
       Config cmdConfig = commandConfigs.get(i);
-      Command cmd = buildCommand(cmdConfig, currentParent, connector, builders);
+      Command cmd = buildCommand(cmdConfig, currentParent, connector);
       commands.add(cmd);
       if (i > 0) {
         lastConnector.setChild(cmd);
@@ -121,10 +120,9 @@ public abstract class AbstractCommand implements Command {
 
   /**
    * Factory method to create a command rooted at the given cmdConfig. The command will feed records
-   * into connector. The command will have currentParent as it's parent.
+   * into finalChild. The command will have currentParent as it's parent.
    */
-  protected Command buildCommand(Config cmdConfig, Command currentParent, Command finalChild,
-      Map<String, Class<CommandBuilder>> builders) {
+  protected Command buildCommand(Config cmdConfig, Command currentParent, Command finalChild) {
     
     //LOG.info("cmdConfig {}", cmdConfig);
     LOG.trace("unwrapped {}", cmdConfig.root().unwrapped());    
@@ -138,7 +136,7 @@ public abstract class AbstractCommand implements Command {
     Class cmdClass;
     LOG.trace("cmdName: {}", cmdName);
     if (!cmdName.contains(".") && !cmdName.contains("/")) {
-      cmdClass = builders.get(cmdName);
+      cmdClass = getContext().getCommandBuilders().get(cmdName);
       if (cmdClass == null) {
         throw new MorphlineParsingException("No command builder registered for name: " + cmdName, cmdConfig);
       }
