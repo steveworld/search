@@ -35,6 +35,7 @@ import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineParsingException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
+import com.cloudera.cdk.morphline.base.Validator;
 import com.cloudera.cdk.morphline.shaded.com.google.code.regexp.Matcher;
 import com.cloudera.cdk.morphline.shaded.com.google.code.regexp.Pattern;
 import com.google.common.base.Joiner;
@@ -100,7 +101,7 @@ import com.typesafe.config.ConfigFactory;
  * field value, or merely a substring within. Defaults to false.</li>
  * 
  * <li>addEmptyStrings (boolean): indicates whether zero length strings stemming from empty (but
- * matching) named capturing groups shall be added to the output record. Defaults to false.</li>
+ * matching) capturing groups shall be added to the output record. Defaults to false.</li>
  * </ul>
  */
 public final class GrokBuilder implements CommandBuilder {
@@ -161,8 +162,10 @@ public final class GrokBuilder implements CommandBuilder {
       }
       
       this.extract = Configs.getBoolean(config, "extract", true);
-      this.numRequiredMatches = NumRequiredMatches.valueOf(
-          Configs.getString(config, "numRequiredMatches", NumRequiredMatches.atLeastOnce.toString()));
+      this.numRequiredMatches = new Validator<NumRequiredMatches>().validateEnum(
+          config,
+          Configs.getString(config, "numRequiredMatches", NumRequiredMatches.atLeastOnce.toString()),
+          NumRequiredMatches.class);
       this.findSubstrings = Configs.getBoolean(config, "findSubstrings", false);
       this.addEmptyStrings = Configs.getBoolean(config, "addEmptyStrings", false);
     }
