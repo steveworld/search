@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Collections;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -61,8 +63,8 @@ import com.typesafe.config.Config;
 public final class ReadMultiLineBuilder implements CommandBuilder {
 
   @Override
-  public String getName() {
-    return "readMultiLine";
+  public Set<String> getNames() {
+    return Collections.singleton("readMultiLine");
   }
 
   @Override

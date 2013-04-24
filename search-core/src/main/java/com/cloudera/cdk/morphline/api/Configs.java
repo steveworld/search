@@ -62,8 +62,8 @@ public final class Configs {
     }
   }
 
-  public static Config getConfig(Config config, String path) {
-    return config.getConfig(path);
+  public static List<? extends Config> getConfigList(Config config, String path) {
+    return config.getConfigList(path);
   }
 
   public static Config getConfig(Config config, String path, Config defaults) {
@@ -74,8 +74,8 @@ public final class Configs {
     }
   }
 
-  public static List<? extends Config> getConfigList(Config config, String path) {
-    return config.getConfigList(path);
+  public static Config getConfig(Config config, String path) {
+    return config.getConfig(path);
   }
 
   public static boolean getBoolean(Config config, String path, boolean defaults) {

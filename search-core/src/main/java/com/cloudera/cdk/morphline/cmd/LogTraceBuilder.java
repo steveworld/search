@@ -15,6 +15,9 @@
  */
 package com.cloudera.cdk.morphline.cmd;
 
+import java.util.Collections;
+import java.util.Set;
+
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
@@ -26,8 +29,8 @@ import com.typesafe.config.Config;
 public final class LogTraceBuilder implements CommandBuilder {
 
   @Override
-  public String getName() {
-    return "logTrace";
+  public Set<String> getNames() {
+    return Collections.singleton("logTrace");
   }
   
   @Override

@@ -15,13 +15,16 @@
  */
 package com.cloudera.cdk.morphline.api;
 
+import java.util.Collections;
+import java.util.Set;
+
 import com.typesafe.config.Config;
 
 public final class FailCommandBuilder implements CommandBuilder {
 
   @Override
-  public String getName() {
-    return "fail";
+  public Set<String> getNames() {
+    return Collections.singleton("fail");
   }
 
   @Override

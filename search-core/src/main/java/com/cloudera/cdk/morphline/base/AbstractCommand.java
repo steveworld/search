@@ -134,7 +134,7 @@ public abstract class AbstractCommand implements Command {
     Class cmdClass;
     LOG.trace("cmdName: {}", cmdName);
     if (!cmdName.contains(".") && !cmdName.contains("/")) {
-      cmdClass = getContext().getCommandBuilders().get(cmdName);
+      cmdClass = getContext().getCommandBuilder(cmdName);
       if (cmdClass == null) {
         throw new MorphlineParsingException("No command builder registered for name: " + cmdName, cmdConfig);
       }

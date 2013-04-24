@@ -52,8 +52,8 @@ public class MorphlineContext {
     return metricsRegistry;
   }
 
-  public Map<String, Class<CommandBuilder>> getCommandBuilders() {
-    return commandBuilders;
+  public Class<CommandBuilder> getCommandBuilder(String builderName) {
+    return commandBuilders.get(builderName);
   }
 
   public void registerCommandBuilderPackagePrefixes(Collection<String> commandPackagePrefixes) {
@@ -67,11 +67,13 @@ public class MorphlineContext {
       for (Class<CommandBuilder> builderClass : builderClasses) {
         try {
           CommandBuilder builder = builderClass.newInstance();
-          LOG.info("Registering CommandBuilder named: {} for class: {}", builder.getName(), builderClass.getName());
-          if (builder.getName().contains(".")) {
-            LOG.warn("CommandBuilder name should not contain a period character: " + builder.getName());
+          for (String builderName : builder.getNames()) {
+            LOG.info("Registering CommandBuilder named: {} for class: {}", builderName, builderClass.getName());
+            if (builderName.contains(".")) {
+              LOG.warn("CommandBuilder name should not contain a period character: " + builderName);
+            }
+            commandBuilders.put(builderName, builderClass);
           }
-          commandBuilders.put(builder.getName(), builderClass);
         } catch (Exception e) {
           throw new MorphlineRuntimeException(e);
         }
