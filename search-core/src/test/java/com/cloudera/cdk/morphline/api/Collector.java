@@ -55,7 +55,7 @@ public final class Collector implements Command {
   @Override
   public boolean process(Record record) {
     Preconditions.checkNotNull(record);
-    records.add(record.copy());
+    records.add(record);
     return true;
   }
   

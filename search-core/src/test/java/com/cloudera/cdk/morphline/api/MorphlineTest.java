@@ -60,9 +60,10 @@ public class MorphlineTest extends Assert {
     morphline = createMorphline(config);    
     Record record = createBasicRecord();
     morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
     morphline.process(record);
     assertEquals(Arrays.asList(record), collector.getRecords());
-    assertEquals(1, collector.getNumStartEvents());
+    assertSame(record, collector.getRecords().get(0));
   }
 
   @Test
@@ -79,10 +80,10 @@ public class MorphlineTest extends Assert {
       expectedList.add(expected);
     }
     morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
     morphline.process(record);
     assertEquals(expectedList, collector.getRecords());
-    assertTrue(record != collector.getRecords().get(0));
-    assertEquals(1, collector.getNumStartEvents());
+    assertNotSame(record, collector.getRecords().get(0));
   }
 
   @Test
@@ -99,10 +100,10 @@ public class MorphlineTest extends Assert {
       expectedList.add(expected);
     }
     morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
     morphline.process(record);
     assertEquals(expectedList, collector.getRecords());
-    assertTrue(record != collector.getRecords().get(0));
-    assertEquals(1, collector.getNumStartEvents());
+    assertNotSame(record, collector.getRecords().get(0));
   }
   
   @Test
@@ -119,6 +120,7 @@ public class MorphlineTest extends Assert {
 //      expectedList.add(expected);
 //    }
     morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
     try {
       morphline.process(record);
       fail();
@@ -126,7 +128,6 @@ public class MorphlineTest extends Assert {
       assertTrue(e.getMessage().startsWith("Filter found no matching rule"));
     }
     assertEquals(expectedList, collector.getRecords());
-    assertEquals(1, collector.getNumStartEvents());
   }
   
   @Test
@@ -135,9 +136,10 @@ public class MorphlineTest extends Assert {
     morphline = createMorphline(config);
     Record record = createBasicRecord();
     morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
     morphline.process(record);
     assertEquals(Arrays.asList(record), collector.getRecords());
-    assertEquals(1, collector.getNumStartEvents());
+    assertSame(record, collector.getRecords().get(0));
     assertEquals("then1", collector.getRecords().get(0).getFirstValue("state"));
   }
   
@@ -147,9 +149,10 @@ public class MorphlineTest extends Assert {
     morphline = createMorphline(config);
     Record record = createBasicRecord();
     morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
     morphline.process(record);
     assertEquals(Arrays.asList(record), collector.getRecords());
-    assertEquals(1, collector.getNumStartEvents());
+    assertSame(record, collector.getRecords().get(0));
     assertEquals("init1", collector.getRecords().get(0).getFirstValue("state"));
   }
   
@@ -159,9 +162,10 @@ public class MorphlineTest extends Assert {
     morphline = createMorphline(config);
     Record record = createBasicRecord();
     morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
     morphline.process(record);
     assertEquals(Arrays.asList(record), collector.getRecords());
-    assertEquals(1, collector.getNumStartEvents());
+    assertSame(record, collector.getRecords().get(0));
     assertEquals("else1", collector.getRecords().get(0).getFirstValue("state"));
   }
   
@@ -171,9 +175,10 @@ public class MorphlineTest extends Assert {
     morphline = createMorphline(config);
     Record record = createBasicRecord();
     morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
     morphline.process(record);
     assertEquals(Arrays.asList(record), collector.getRecords());
-    assertEquals(1, collector.getNumStartEvents());
+    assertSame(record, collector.getRecords().get(0));
     assertEquals("init1", collector.getRecords().get(0).getFirstValue("state"));
   }
   
@@ -183,9 +188,10 @@ public class MorphlineTest extends Assert {
     morphline = createMorphline(config);
     Record record = createBasicRecord();
     morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
     assertFalse(morphline.process(record));
     assertEquals(Arrays.asList(record), collector.getRecords());
-    assertEquals(1, collector.getNumStartEvents());
+    assertSame(record, collector.getRecords().get(0));
     assertEquals("touched", collector.getRecords().get(0).getFirstValue("state"));
   }
   
@@ -195,9 +201,9 @@ public class MorphlineTest extends Assert {
     morphline = createMorphline(config);
     Record record = createBasicRecord();
     morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     assertEquals(Arrays.asList(), collector.getRecords());
-    assertEquals(1, collector.getNumStartEvents());
   }
   
   @Test
@@ -213,13 +219,22 @@ public class MorphlineTest extends Assert {
     Record expected = new Record();
     expected.getFields().put(Fields.MESSAGE, msg);
     assertEquals(Arrays.asList(expected), collector.getRecords());
-    assertEquals(1, collector.getNumStartEvents());    
+    assertNotSame(record, collector.getRecords().get(0));
   }
   
   @Test
   public void testGrokSyslogMatch() throws Exception {
+    testGrokSyslogMatchInternal(false);
+  }
+  
+  @Test
+  public void testGrokSyslogMatchInplace() throws Exception {
+    testGrokSyslogMatchInternal(true);
+  }
+  
+  private void testGrokSyslogMatchInternal(boolean inplace) throws Exception {
     // match
-    Config config = parse("test-morphlines/testGrokSyslogMatch-morphline");    
+    Config config = parse("test-morphlines/testGrokSyslogMatch" + (inplace ? "Inplace" : "") + "-morphline");    
     morphline = createMorphline(config);
     Record record = new Record();
     String msg = "<164>Feb  4 10:46:14 syslog sshd[607]: Server listening on 0.0.0.0 port 22.";
@@ -236,7 +251,11 @@ public class MorphlineTest extends Assert {
     expected.getFields().put("syslog_pid", "607");
     expected.getFields().put("syslog_message", "Server listening on 0.0.0.0 port 22.");
     assertEquals(Arrays.asList(expected), collector.getRecords());
-    assertEquals(1, collector.getNumStartEvents());
+    if (inplace) {
+      assertSame(record, collector.getRecords().get(0));
+    } else {
+      assertNotSame(record, collector.getRecords().get(0));      
+    }
     
     // mismatch
     collector.reset();
@@ -246,7 +265,6 @@ public class MorphlineTest extends Assert {
     assertEquals(1, collector.getNumStartEvents());
     assertFalse(morphline.process(record));
     assertEquals(Arrays.asList(), collector.getRecords());
-    assertEquals(1, collector.getNumStartEvents());
   }
   
   @Test
@@ -266,7 +284,7 @@ public class MorphlineTest extends Assert {
     expected.getFields().put("word", "world");
     expected.getFields().put("word", "foo");
     assertEquals(Arrays.asList(expected), collector.getRecords());
-    assertEquals(1, collector.getNumStartEvents());
+    assertNotSame(record, collector.getRecords().get(0));
     
     // mismatch
     collector.reset();
@@ -276,7 +294,6 @@ public class MorphlineTest extends Assert {
     assertEquals(1, collector.getNumStartEvents());
     assertFalse(morphline.process(record));
     assertEquals(Arrays.asList(), collector.getRecords());
-    assertEquals(1, collector.getNumStartEvents());
   }
   
   @Test
