@@ -289,8 +289,17 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testGrokFindSubstrings() throws Exception {
+    testGrokFindSubstringsInternal(false);
+  }
+  
+  @Test
+  public void testGrokFindSubstringsInplace() throws Exception {
+    testGrokFindSubstringsInternal(true);
+  }
+  
+  private void testGrokFindSubstringsInternal(boolean inplace) throws Exception {
     // match
-    Config config = parse("test-morphlines/testGrokFindSubstrings-morphline");    
+    Config config = parse("test-morphlines/testGrokFindSubstrings"+ (inplace ? "Inplace" : "") + "-morphline");    
     morphline = createMorphline(config);
     Record record = new Record();
     String msg = "hello\t\tworld\tfoo";
@@ -304,7 +313,11 @@ public class MorphlineTest extends Assert {
     expected.getFields().put("word", "world");
     expected.getFields().put("word", "foo");
     assertEquals(Arrays.asList(expected), collector.getRecords());
-    assertNotSame(record, collector.getRecords().get(0));
+    if (inplace) {
+      assertSame(record, collector.getRecords().get(0));
+    } else {
+      assertNotSame(record, collector.getRecords().get(0));      
+    }
     
     // mismatch
     collector.reset();
