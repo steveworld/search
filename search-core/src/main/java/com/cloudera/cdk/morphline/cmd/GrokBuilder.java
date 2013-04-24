@@ -350,6 +350,9 @@ public final class GrokBuilder implements CommandBuilder {
                 if (numMatches > maxMatches) {
                   return false;
                 }
+                if (!doExtract && numMatches >= minMatches && maxMatches == Integer.MAX_VALUE) {
+                  break; // fast path
+                }
               }
               extract(outputRecord, pattern, matcher, doExtract);
             }
