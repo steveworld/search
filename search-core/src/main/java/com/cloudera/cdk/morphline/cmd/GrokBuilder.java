@@ -122,9 +122,9 @@ public final class GrokBuilder implements CommandBuilder {
 
     private final Map<String, String> dictionary = new HashMap();
     private final Map<String, Pattern> regexes = new HashMap();
-    private final boolean extract; // whether or not to add the content of named capturing groups to the output record.
-    private final NumRequiredMatches numRequiredMatches; // indicates the minimum and maximum number of field values that must match a given grok expression, for each input field name. Can be "atLeastOnce" (default) or "once" or "all".
-    private final boolean findSubstrings; // indicates whether the grok expression must match the entire input field value, or merely a substring within. 
+    private final boolean extract;
+    private final NumRequiredMatches numRequiredMatches;
+    private final boolean findSubstrings; 
     
     public Grok(Config config, Command parent, Command child, MorphlineContext context) throws IOException {
       super(config, parent, child, context);
