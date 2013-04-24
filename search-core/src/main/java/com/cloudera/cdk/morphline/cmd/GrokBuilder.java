@@ -309,6 +309,7 @@ public final class GrokBuilder implements CommandBuilder {
       for (Map.Entry<String, Pattern> regexEntry : regexes.entrySet()) {
         Pattern pattern = regexEntry.getValue();
         List values = record.getFields().get(regexEntry.getKey());
+        int todo = values.size();
         int minMatches = 1;
         int maxMatches = Integer.MAX_VALUE;
         switch (numRequiredMatches) {
@@ -317,7 +318,7 @@ public final class GrokBuilder implements CommandBuilder {
             break;
           }
           case all : { 
-            minMatches = values.size();
+            minMatches = todo;
             break;
           }
           default: {
@@ -348,9 +349,10 @@ public final class GrokBuilder implements CommandBuilder {
               extract(outputRecord, pattern, matcher, doExtract);
             }
           }
+          todo--;
         }
-        if (numMatches < minMatches) {
-          return false;
+        if (numMatches + todo < minMatches) {
+          return false;          
         }
       }
       return true;
