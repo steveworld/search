@@ -138,9 +138,7 @@ public final class ReadMultiLineBuilder implements CommandBuilder {
       } catch (IOException e) {
         throw new MorphlineRuntimeException(e);
       } finally {
-        if (reader != null) {
-          Closeables.closeQuietly(reader);
-        }
+        Closeables.closeQuietly(reader);
       }
     }
 
