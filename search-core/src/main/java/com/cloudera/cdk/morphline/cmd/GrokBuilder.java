@@ -34,8 +34,8 @@ import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineParsingException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
-import com.google.code.regexp.Matcher;
-import com.google.code.regexp.Pattern;
+import com.cloudera.cdk.morphline.shaded.com.google.code.regexp.Matcher;
+import com.cloudera.cdk.morphline.shaded.com.google.code.regexp.Pattern;
 import com.google.common.base.Joiner;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
@@ -47,6 +47,11 @@ import com.typesafe.config.ConfigFactory;
  */
 public final class GrokBuilder implements CommandBuilder {
 
+  /*
+   * Uses a shaded version of com.google.code.regexp-0.1.9 to minimize potential dependency issues.
+   * See https://github.com/tony19/named-regexp
+   */
+  
   @Override
   public String getName() {
     return "grok";
