@@ -44,7 +44,54 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
 /**
- * TODO
+ * The Grok command uses regex pattern matching to extract structured fields from unstructured log
+ * data.
+ * <p>
+ * It is perfect for syslog logs, apache and other webserver logs, mysql logs, and in general, any
+ * log format that is generally written for humans and not computer consumption.
+ * <p>
+ * A grok command can load zero or more dictionaries. A dictionary is a file or string that contains
+ * zero or more REGEX_NAME to REGEX mappings, one per line, separated by space, for example:
+ * 
+ * <pre>
+ * INT (?:[+-]?(?:[0-9]+))
+ * HOSTNAME \b(?:[0-9A-Za-z][0-9A-Za-z-]{0,62})(?:\.(?:[0-9A-Za-z][0-9A-Za-z-]{0,62}))*(\.?|\b)
+ * </pre>
+ * 
+ * For example, the regex named "INT" is associated with the pattern <code>[+-]?(?:[0-9]+)</code>
+ * and matches strings like "123" and the regex named "HOSTNAME" is associated with the pattern
+ * <code>\b(?:[0-9A-Za-z][0-9A-Za-z-]{0,62})(?:\.(?:[0-9A-Za-z][0-9A-Za-z-]{0,62}))*(\.?|\b)</code>
+ * and matches strings like "www.google.com".
+ * <p>
+ * A grok command can contain zero or more grok expressions. Each grok expression refers to a record
+ * input field name and can contain zero or more grok patterns. Here is an example grok expression
+ * that refers to the input field named "message" and contains two grok patterns:
+ * 
+ * <pre>
+ * regexes : {
+ *   message : """\s+%{INT:pid} %{HOSTNAME:my_name_servers}"""
+ * }
+ * </pre>
+ * 
+ * The syntax for a grok pattern is %{REGEX_NAME:GROUP_NAME}, for example %{INT:pid} or
+ * %{HOSTNAME:my_name_servers}
+ * <p>
+ * The REGEX_NAME is the name of a regex within a loaded dictionary.
+ * <p>
+ * The GROUP_NAME is the name of an output field. The content of the named capturing group will be
+ * added to this output field of the output record.
+ * <p>
+ * In addition, grok command supports the following parameters:
+ * <p>
+ * <ul>
+ * <li>extract (boolean): whether or not to add the content of named capturing groups to the output
+ * record. Defaults to true.</li>
+ * <li>numRequiredMatches (String): indicates the minimum and maximum number of field values that
+ * must match a given grok expression, for each input field name. Can be "atLeastOnce" (default) or
+ * "once" or "all".</li>
+ * <li>findSubstrings (boolean): indicates whether the grok expression must match the entire input
+ * field value, or merely a substring within. Defaults to false.</li>
+ * </ul>
  */
 public final class GrokBuilder implements CommandBuilder {
 
@@ -75,6 +122,9 @@ public final class GrokBuilder implements CommandBuilder {
 
     private final Map<String, String> dictionary = new HashMap();
     private final Map<String, Pattern> regexes = new HashMap();
+    private final boolean extract; // whether or not to add the content of named capturing groups to the output record.
+    private final NumRequiredMatches numRequiredMatches; // indicates the minimum and maximum number of field values that must match a given grok expression, for each input field name. Can be "atLeastOnce" (default) or "once" or "all".
+    private final boolean findSubstrings; // indicates whether the grok expression must match the entire input field value, or merely a substring within. 
     
     public Grok(Config config, Command parent, Command child, MorphlineContext context) throws IOException {
       super(config, parent, child, context);
@@ -98,6 +148,11 @@ public final class GrokBuilder implements CommandBuilder {
         Pattern pattern = Pattern.compile(expr);
         regexes.put(entry.getKey(), pattern);
       }
+      
+      this.extract = Configs.getBoolean(config, "extract", true);
+      this.numRequiredMatches = NumRequiredMatches.valueOf(
+          Configs.getString(config, "numRequiredMatches", NumRequiredMatches.atLeastOnce.toString()));
+      this.findSubstrings = Configs.getBoolean(config, "findSubstrings", false);
     }
     
     private void loadDictionaryFile(File fileOrDir) throws IOException {
@@ -177,11 +232,11 @@ public final class GrokBuilder implements CommandBuilder {
         String grokPattern = expr.substring(i + PATTERN_START.length(),  j);
         //LOG.debug("grokPattern=" + grokPattern + ", entryValue=" + entryValue);
         int p = grokPattern.indexOf(SEPARATOR);
-        String patternName = grokPattern;
+        String regexName = grokPattern;
         String groupName = null;
         String conversion = null; // FIXME
         if (p >= 0) {
-          patternName = grokPattern.substring(0, p);
+          regexName = grokPattern.substring(0, p);
           groupName = grokPattern.substring(p+1, grokPattern.length());
           int q = groupName.indexOf(SEPARATOR);
           if (q >= 0) {
@@ -190,16 +245,16 @@ public final class GrokBuilder implements CommandBuilder {
           }
         }
         //LOG.debug("patternName=" + patternName + ", groupName=" + groupName + ", conversion=" + conversion);
-        String refValue = dictionary.get(patternName);
+        String refValue = dictionary.get(regexName);
         if (refValue == null) {
-          throw new MorphlineParsingException("Missing value for name: " + patternName, getConfig());
+          throw new MorphlineParsingException("Missing value for name: " + regexName, getConfig());
         }
         if (refValue.contains(PATTERN_START)) {
           break; // not a literal value; defer resolution until next iteration
         }
         String replacement = refValue;
         if (groupName != null) { // named capturing group
-          replacement = "(?<" + groupName + ">" + replacement + ")";
+          replacement = "(?<" + groupName + ">" + refValue + ")";
         }
         expr = new StringBuilder(expr).replace(i, j + PATTERN_END.length(), replacement).toString();
       }
@@ -208,28 +263,74 @@ public final class GrokBuilder implements CommandBuilder {
         
     @Override
     public boolean process(Record record) {
-      Record outputRecord = record.copy();
+      Record outputRecord = extract ? record.copy() : record;
       for (Map.Entry<String, Pattern> regexEntry : regexes.entrySet()) {
         Pattern pattern = regexEntry.getValue();
-        int numMatches = 0;
         List values = record.getFields().get(regexEntry.getKey());
+        int minMatches = 1;
+        int maxMatches = Integer.MAX_VALUE;
+        switch (numRequiredMatches) {
+          case once : { 
+            maxMatches = 1;
+            break;
+          }
+          case all : { 
+            minMatches = values.size();
+            break;
+          }
+          default: {
+            break;
+          }
+        }        
+        int numMatches = 0;
         for (Object value : values) {
           String strValue = value.toString();
           Matcher matcher = pattern.matcher(strValue);
-          if (matcher.matches()) {
-            numMatches++;
-            for (String groupName : pattern.groupNames()) {
-              outputRecord.getFields().put(groupName, matcher.group(groupName));
+          if (!findSubstrings) {
+            if (matcher.matches()) {
+              numMatches++;
+              if (numMatches > maxMatches) {
+                return false;
+              }
+              extract(outputRecord, pattern, matcher);
+            }
+          } else {
+            int previousNumMatches = numMatches;
+            while (matcher.find()) {
+              if (numMatches == previousNumMatches) {
+                numMatches++;
+                if (numMatches > maxMatches) {
+                  return false;
+                }
+              }
+              extract(outputRecord, pattern, matcher);
             }
           }
         }
-        if (numMatches == 0) {
+        if (numMatches < minMatches) {
           return false;
         }
       }
       return super.process(outputRecord);
     }
+
+    private void extract(Record outputRecord, Pattern pattern, Matcher matcher) {
+      if (extract) {
+        for (String groupName : pattern.groupNames()) {
+          outputRecord.getFields().put(groupName, matcher.group(groupName));
+        }
+      }
+    }
+
     
+    ///////////////////////////////////////////////////////////////////////////////
+    // Nested classes:
+    ///////////////////////////////////////////////////////////////////////////////
+    private static enum NumRequiredMatches {
+      atLeastOnce,
+      once,
+      all     
+    }     
   }
   
 }
