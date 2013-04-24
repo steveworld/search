@@ -326,9 +326,14 @@ public final class GrokBuilder implements CommandBuilder {
           }
         }        
         int numMatches = 0;
+        Matcher matcher = null;
         for (Object value : values) {
           String strValue = value.toString();
-          Matcher matcher = pattern.matcher(strValue);
+          if (matcher == null) {
+            matcher = pattern.matcher(strValue);
+          } else {
+            matcher.reset(strValue);
+          }
           if (!findSubstrings) {
             if (matcher.matches()) {
               numMatches++;
@@ -350,6 +355,9 @@ public final class GrokBuilder implements CommandBuilder {
             }
           }
           todo--;
+          if (!doExtract && numMatches >= minMatches && maxMatches == Integer.MAX_VALUE) {
+            break; // fast path
+          }
         }
         if (numMatches + todo < minMatches) {
           return false;          
