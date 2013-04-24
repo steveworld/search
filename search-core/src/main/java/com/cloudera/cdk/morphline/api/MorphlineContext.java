@@ -83,7 +83,7 @@ public class MorphlineContext {
    * Returns all classes that implement the given interface and are contained in a Java package with
    * the given prefix.
    * 
-   * Uses a repackaged version of com.google.guava.reflect-14.0.1 to enable running with prior
+   * Uses a shaded version of com.google.guava.reflect-14.0.1 to enable running with prior
    * versions of guava without issues.
    */
   <T> Collection<Class<T>> getTopLevelClassesRecursive(Iterable<String> packageNamePrefixes, Class<T> iface) {    

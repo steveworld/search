@@ -103,12 +103,6 @@
       <version>${typesafe.config.version}</version>
     </dependency>
 
-    <dependency> <!-- see https://github.com/tony19/named-regexp -->
-      <groupId>com.github.tony19</groupId>
-      <artifactId>named-regexp</artifactId>
-      <version>0.1.9</version>
-    </dependency>
-
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
