@@ -182,112 +182,6 @@ public final class GrokBuilder implements CommandBuilder {
       this.addEmptyStrings = Configs.getBoolean(config, "addEmptyStrings", false);
     }
     
-    private void loadDictionaryFile(File fileOrDir) throws IOException {
-      if (fileOrDir.isDirectory()) {
-        File[] files = fileOrDir.listFiles();
-        for (File file : files) {
-          loadDictionaryFile(file);
-        }
-      } else {
-        Reader reader = new InputStreamReader(new FileInputStream(fileOrDir), "UTF-8");
-        try {
-          loadDictionary(reader);
-        } finally {
-          Closeables.closeQuietly(reader);
-        }
-      }      
-    }
-    
-    private void loadDictionary(Reader reader) throws IOException {
-      for (String line : CharStreams.readLines(reader)) {
-        line = line.trim();
-        if (line.length() == 0) {
-          continue; // ignore empty lines
-        }
-        if (line.startsWith("#")) {
-          continue; // ignore comment lines
-        }
-        int i = line.indexOf(" ");
-        if (i < 0) {
-          throw new MorphlineParsingException("Dictionary entry line must contain a space to separate name and value: " + line, getConfig());
-        }
-        if (i == 0) {
-          throw new MorphlineParsingException("Dictionary entry line must contain a name: " + line, getConfig());
-        }
-        String name = line.substring(0, i);
-        String value = line.substring(i + 1, line.length()).trim();
-        if (value.length() == 0) {
-          throw new MorphlineParsingException("Dictionary entry line must contain a value: " + line, getConfig());
-        }
-        dictionary.put(name, value);
-      }      
-    }
-    
-    private void resolveDictionaryExpressions() {
-      boolean wasModified = true;
-      while (wasModified) {
-        wasModified = false;
-        for (Map.Entry<String, String> entry : dictionary.entrySet()) {
-          String expr = entry.getValue();
-          String resolvedExpr = resolveExpression(expr);        
-          wasModified = (expr != resolvedExpr);
-          if (wasModified) {
-            entry.setValue(resolvedExpr);
-            break;
-          }
-        }
-      }
-      LOG.debug("dictionary: {}", Joiner.on("\n").join(new TreeMap(dictionary).entrySet()));
-      for (Map.Entry<String, String> entry : dictionary.entrySet()) {
-        Pattern.compile(entry.getValue()); // validate syntax
-      }
-    }
-
-    private String resolveExpression(String expr) {
-      String PATTERN_START = "%{";
-      String PATTERN_END= "}";
-      char SEPARATOR = ':';
-      while (true) {
-        int i = expr.indexOf(PATTERN_START);
-        if (i < 0) {
-          break;
-        }     
-        int j = expr.indexOf(PATTERN_END, i + PATTERN_START.length());
-        if (j < 0) {
-          break;
-        }     
-        String grokPattern = expr.substring(i + PATTERN_START.length(),  j);
-        //LOG.debug("grokPattern=" + grokPattern + ", entryValue=" + entryValue);
-        int p = grokPattern.indexOf(SEPARATOR);
-        String regexName = grokPattern;
-        String groupName = null;
-        String conversion = null; // FIXME
-        if (p >= 0) {
-          regexName = grokPattern.substring(0, p);
-          groupName = grokPattern.substring(p+1, grokPattern.length());
-          int q = groupName.indexOf(SEPARATOR);
-          if (q >= 0) {
-            conversion = groupName.substring(q+1, groupName.length());
-            groupName = groupName.substring(0, q);
-          }
-        }
-        //LOG.debug("patternName=" + patternName + ", groupName=" + groupName + ", conversion=" + conversion);
-        String refValue = dictionary.get(regexName);
-        if (refValue == null) {
-          throw new MorphlineParsingException("Missing value for name: " + regexName, getConfig());
-        }
-        if (refValue.contains(PATTERN_START)) {
-          break; // not a literal value; defer resolution until next iteration
-        }
-        String replacement = refValue;
-        if (groupName != null) { // named capturing group
-          replacement = "(?<" + groupName + ">" + refValue + ")";
-        }
-        expr = new StringBuilder(expr).replace(i, j + PATTERN_END.length(), replacement).toString();
-      }
-      return expr;
-    }
-        
     @Override
     public boolean process(Record record) {
       Record outputRecord = ((extractInPlace || !extract) ? record : record.copy());
@@ -401,6 +295,112 @@ public final class GrokBuilder implements CommandBuilder {
       }
     }
     
+    private void loadDictionaryFile(File fileOrDir) throws IOException {
+      if (fileOrDir.isDirectory()) {
+        File[] files = fileOrDir.listFiles();
+        for (File file : files) {
+          loadDictionaryFile(file);
+        }
+      } else {
+        Reader reader = new InputStreamReader(new FileInputStream(fileOrDir), "UTF-8");
+        try {
+          loadDictionary(reader);
+        } finally {
+          Closeables.closeQuietly(reader);
+        }
+      }      
+    }
+    
+    private void loadDictionary(Reader reader) throws IOException {
+      for (String line : CharStreams.readLines(reader)) {
+        line = line.trim();
+        if (line.length() == 0) {
+          continue; // ignore empty lines
+        }
+        if (line.startsWith("#")) {
+          continue; // ignore comment lines
+        }
+        int i = line.indexOf(" ");
+        if (i < 0) {
+          throw new MorphlineParsingException("Dictionary entry line must contain a space to separate name and value: " + line, getConfig());
+        }
+        if (i == 0) {
+          throw new MorphlineParsingException("Dictionary entry line must contain a name: " + line, getConfig());
+        }
+        String name = line.substring(0, i);
+        String value = line.substring(i + 1, line.length()).trim();
+        if (value.length() == 0) {
+          throw new MorphlineParsingException("Dictionary entry line must contain a value: " + line, getConfig());
+        }
+        dictionary.put(name, value);
+      }      
+    }
+    
+    private void resolveDictionaryExpressions() {
+      boolean wasModified = true;
+      while (wasModified) {
+        wasModified = false;
+        for (Map.Entry<String, String> entry : dictionary.entrySet()) {
+          String expr = entry.getValue();
+          String resolvedExpr = resolveExpression(expr);        
+          wasModified = (expr != resolvedExpr);
+          if (wasModified) {
+            entry.setValue(resolvedExpr);
+            break;
+          }
+        }
+      }
+      LOG.debug("dictionary: {}", Joiner.on("\n").join(new TreeMap(dictionary).entrySet()));
+      for (Map.Entry<String, String> entry : dictionary.entrySet()) {
+        Pattern.compile(entry.getValue()); // validate syntax
+      }
+    }
+
+    private String resolveExpression(String expr) {
+      String PATTERN_START = "%{";
+      String PATTERN_END= "}";
+      char SEPARATOR = ':';
+      while (true) {
+        int i = expr.indexOf(PATTERN_START);
+        if (i < 0) {
+          break;
+        }     
+        int j = expr.indexOf(PATTERN_END, i + PATTERN_START.length());
+        if (j < 0) {
+          break;
+        }     
+        String grokPattern = expr.substring(i + PATTERN_START.length(),  j);
+        //LOG.debug("grokPattern=" + grokPattern + ", entryValue=" + entryValue);
+        int p = grokPattern.indexOf(SEPARATOR);
+        String regexName = grokPattern;
+        String groupName = null;
+        String conversion = null; // FIXME
+        if (p >= 0) {
+          regexName = grokPattern.substring(0, p);
+          groupName = grokPattern.substring(p+1, grokPattern.length());
+          int q = groupName.indexOf(SEPARATOR);
+          if (q >= 0) {
+            conversion = groupName.substring(q+1, groupName.length());
+            groupName = groupName.substring(0, q);
+          }
+        }
+        //LOG.debug("patternName=" + patternName + ", groupName=" + groupName + ", conversion=" + conversion);
+        String refValue = dictionary.get(regexName);
+        if (refValue == null) {
+          throw new MorphlineParsingException("Missing value for name: " + regexName, getConfig());
+        }
+        if (refValue.contains(PATTERN_START)) {
+          break; // not a literal value; defer resolution until next iteration
+        }
+        String replacement = refValue;
+        if (groupName != null) { // named capturing group
+          replacement = "(?<" + groupName + ">" + refValue + ")";
+        }
+        expr = new StringBuilder(expr).replace(i, j + PATTERN_END.length(), replacement).toString();
+      }
+      return expr;
+    }
+        
     
     ///////////////////////////////////////////////////////////////////////////////
     // Nested classes:
