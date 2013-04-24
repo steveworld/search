@@ -36,6 +36,7 @@ import com.cloudera.cdk.morphline.api.MorphlineParsingException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
 import com.cloudera.cdk.morphline.base.Validator;
+import com.cloudera.cdk.morphline.shaded.com.google.code.regexp.GroupInfo;
 import com.cloudera.cdk.morphline.shaded.com.google.code.regexp.Matcher;
 import com.cloudera.cdk.morphline.shaded.com.google.code.regexp.Pattern;
 import com.google.common.base.Joiner;
@@ -90,8 +91,9 @@ import com.typesafe.config.ConfigFactory;
  * 
  * <li>dictionaryString (String): An optional inline string from which to load a dictionary.</li>
  * 
- * <li>extract (boolean): whether or not to add the content of named capturing groups to the output
- * record. Defaults to true.</li>
+ * <li>extract (String): Can be "false", "true" or "inplace". Add the content of named capturing
+ * groups to the input record ("inplace"), or to a copy of the input record ("true") or to no record
+ * ("false").</li>
  * 
  * <li>numRequiredMatches (String): indicates the minimum and maximum number of field values that
  * must match a given grok expression, for each input field name. Can be "atLeastOnce" (default) or
@@ -134,9 +136,12 @@ public final class GrokBuilder implements CommandBuilder {
     private final Map<String, String> dictionary = new HashMap();
     private final Map<String, Pattern> regexes = new HashMap();
     private final boolean extract;
+    private final boolean extractInPlace;
     private final NumRequiredMatches numRequiredMatches;
     private final boolean findSubstrings;
     private final boolean addEmptyStrings;
+    
+    private static final boolean ENABLE_FAST_EXTRACTION_PATH = true;
     
     public Grok(Config config, Command parent, Command child, MorphlineContext context) throws IOException {
       super(config, parent, child, context);
@@ -160,8 +165,15 @@ public final class GrokBuilder implements CommandBuilder {
         Pattern pattern = Pattern.compile(expr);
         regexes.put(entry.getKey(), pattern);
       }
+
+      String extractStr = Configs.getString(config, "extract", "true");
+      this.extractInPlace = extractStr.equals("inplace");
+      if (extractInPlace) {
+        this.extract = true;
+      } else {
+        this.extract = Configs.getBoolean(config, "extract", true);
+      }
       
-      this.extract = Configs.getBoolean(config, "extract", true);
       this.numRequiredMatches = new Validator<NumRequiredMatches>().validateEnum(
           config,
           Configs.getString(config, "numRequiredMatches", NumRequiredMatches.atLeastOnce.toString()),
@@ -278,7 +290,22 @@ public final class GrokBuilder implements CommandBuilder {
         
     @Override
     public boolean process(Record record) {
-      Record outputRecord = extract ? record.copy() : record;
+      Record outputRecord = ((extractInPlace || !extract) ? record : record.copy());
+      if (extractInPlace) {
+        // Ensure that we mutate the record inplace only if *all* expressions match.
+        // To ensure this we potentially run doMatch() twice: the first time to check, the second
+        // time to mutate
+        if (!doMatch(record, outputRecord, false)) {
+          return false;
+        }
+      }
+      if (!doMatch(record, outputRecord, extract)) {
+        return false;
+      }
+      return super.process(outputRecord);
+    }
+
+    private boolean doMatch(Record record, Record outputRecord, boolean doExtract) {
       for (Map.Entry<String, Pattern> regexEntry : regexes.entrySet()) {
         Pattern pattern = regexEntry.getValue();
         List values = record.getFields().get(regexEntry.getKey());
@@ -307,7 +334,7 @@ public final class GrokBuilder implements CommandBuilder {
               if (numMatches > maxMatches) {
                 return false;
               }
-              extract(outputRecord, pattern, matcher);
+              extract(outputRecord, pattern, matcher, doExtract);
             }
           } else {
             int previousNumMatches = numMatches;
@@ -318,7 +345,7 @@ public final class GrokBuilder implements CommandBuilder {
                   return false;
                 }
               }
-              extract(outputRecord, pattern, matcher);
+              extract(outputRecord, pattern, matcher, doExtract);
             }
           }
         }
@@ -326,20 +353,41 @@ public final class GrokBuilder implements CommandBuilder {
           return false;
         }
       }
-      return super.process(outputRecord);
+      return true;
     }
 
-    private void extract(Record outputRecord, Pattern pattern, Matcher matcher) {
-      if (extract) {
-        for (String groupName : pattern.groupNames()) {
-          String value = matcher.group(groupName);
-          if (addEmptyStrings || value.length() > 0) {
-            outputRecord.getFields().put(groupName, value);
-          }
+    private void extract(Record outputRecord, Pattern pattern, Matcher matcher, boolean doExtract) {
+      if (doExtract) {
+        if (ENABLE_FAST_EXTRACTION_PATH) {
+          extractFast(outputRecord, pattern, matcher);
+        } else {
+          extractSlow(outputRecord, pattern, matcher); // same semantics but less efficient
         }
       }
     }
 
+    private void extractFast(Record outputRecord, Pattern pattern, Matcher matcher) {
+      for (Map.Entry<String, List<GroupInfo>> entry : pattern.groupInfo().entrySet()) {
+        String groupName = entry.getKey();
+        List<GroupInfo> list = entry.getValue();
+        int idx = list.get(0).groupIndex();
+        int group = idx > -1 ? idx + 1 : -1;
+        String value = matcher.group(group);
+        if (value.length() > 0 || addEmptyStrings) {
+          outputRecord.getFields().put(groupName, value);
+        }
+      }
+    }
+
+    private void extractSlow(Record outputRecord, Pattern pattern, Matcher matcher) {
+      for (String groupName : pattern.groupNames()) {
+        String value = matcher.group(groupName);
+        if (value.length() > 0 || addEmptyStrings) {
+          outputRecord.getFields().put(groupName, value);
+        }
+      }
+    }
+    
     
     ///////////////////////////////////////////////////////////////////////////////
     // Nested classes:
@@ -349,6 +397,7 @@ public final class GrokBuilder implements CommandBuilder {
       once,
       all     
     }     
+
   }
   
 }
