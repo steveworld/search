@@ -18,6 +18,7 @@ package com.cloudera.cdk.morphline.api;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -265,6 +266,25 @@ public class MorphlineTest extends Assert {
     assertEquals(1, collector.getNumStartEvents());
     assertFalse(morphline.process(record));
     assertEquals(Arrays.asList(), collector.getRecords());
+    
+    // double match
+    collector.reset();
+    record = new Record();
+    record.getFields().put(Fields.MESSAGE, msg);
+    record.getFields().put(Fields.MESSAGE, msg);
+    morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    assertTrue(morphline.process(record));
+    Record tmp = expected.copy();
+    for (Map.Entry<String, Object> entry : tmp.getFields().entries()) {
+      expected.getFields().put(entry.getKey(), entry.getValue());
+    }        
+    assertEquals(Arrays.asList(expected), collector.getRecords());
+    if (inplace) {
+      assertSame(record, collector.getRecords().get(0));
+    } else {
+      assertNotSame(record, collector.getRecords().get(0));      
+    }
   }
   
   @Test
