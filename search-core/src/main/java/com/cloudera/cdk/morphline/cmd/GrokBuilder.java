@@ -84,6 +84,11 @@ import com.typesafe.config.ConfigFactory;
  * In addition, grok command supports the following parameters:
  * <p>
  * <ul>
+ * <li>dictionaryFiles (String[]): A list of zero or more local files or directory trees from which
+ * to load dictionaries. Defaults to the empty list.</li>
+ * <li>dictionaryString (String): An optional inline string from which to load a dictionary.</li>
+ * <li>extract (boolean): whether or not to add the content of named capturing groups to the output
+ * record. Defaults to true.</li>
  * <li>extract (boolean): whether or not to add the content of named capturing groups to the output
  * record. Defaults to true.</li>
  * <li>numRequiredMatches (String): indicates the minimum and maximum number of field values that
