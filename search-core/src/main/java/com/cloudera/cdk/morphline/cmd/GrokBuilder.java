@@ -89,8 +89,6 @@ import com.typesafe.config.ConfigFactory;
  * <li>dictionaryString (String): An optional inline string from which to load a dictionary.</li>
  * <li>extract (boolean): whether or not to add the content of named capturing groups to the output
  * record. Defaults to true.</li>
- * <li>extract (boolean): whether or not to add the content of named capturing groups to the output
- * record. Defaults to true.</li>
  * <li>numRequiredMatches (String): indicates the minimum and maximum number of field values that
  * must match a given grok expression, for each input field name. Can be "atLeastOnce" (default) or
  * "once" or "all".</li>
