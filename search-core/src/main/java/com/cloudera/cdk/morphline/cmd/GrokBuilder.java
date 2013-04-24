@@ -86,14 +86,21 @@ import com.typesafe.config.ConfigFactory;
  * <ul>
  * <li>dictionaryFiles (String[]): A list of zero or more local files or directory trees from which
  * to load dictionaries. Defaults to the empty list.</li>
+ * 
  * <li>dictionaryString (String): An optional inline string from which to load a dictionary.</li>
+ * 
  * <li>extract (boolean): whether or not to add the content of named capturing groups to the output
  * record. Defaults to true.</li>
+ * 
  * <li>numRequiredMatches (String): indicates the minimum and maximum number of field values that
  * must match a given grok expression, for each input field name. Can be "atLeastOnce" (default) or
  * "once" or "all".</li>
+ * 
  * <li>findSubstrings (boolean): indicates whether the grok expression must match the entire input
  * field value, or merely a substring within. Defaults to false.</li>
+ * 
+ * <li>addEmptyStrings (boolean): indicates whether zero length strings stemming from empty (but
+ * matching) named capturing groups shall be added to the output record. Defaults to false.</li>
  * </ul>
  */
 public final class GrokBuilder implements CommandBuilder {
@@ -127,7 +134,8 @@ public final class GrokBuilder implements CommandBuilder {
     private final Map<String, Pattern> regexes = new HashMap();
     private final boolean extract;
     private final NumRequiredMatches numRequiredMatches;
-    private final boolean findSubstrings; 
+    private final boolean findSubstrings;
+    private final boolean addEmptyStrings;
     
     public Grok(Config config, Command parent, Command child, MorphlineContext context) throws IOException {
       super(config, parent, child, context);
@@ -156,6 +164,7 @@ public final class GrokBuilder implements CommandBuilder {
       this.numRequiredMatches = NumRequiredMatches.valueOf(
           Configs.getString(config, "numRequiredMatches", NumRequiredMatches.atLeastOnce.toString()));
       this.findSubstrings = Configs.getBoolean(config, "findSubstrings", false);
+      this.addEmptyStrings = Configs.getBoolean(config, "addEmptyStrings", false);
     }
     
     private void loadDictionaryFile(File fileOrDir) throws IOException {
@@ -320,7 +329,10 @@ public final class GrokBuilder implements CommandBuilder {
     private void extract(Record outputRecord, Pattern pattern, Matcher matcher) {
       if (extract) {
         for (String groupName : pattern.groupNames()) {
-          outputRecord.getFields().put(groupName, matcher.group(groupName));
+          String value = matcher.group(groupName);
+          if (addEmptyStrings || value.length() > 0) {
+            outputRecord.getFields().put(groupName, value);
+          }
         }
       }
     }
