@@ -18,6 +18,8 @@ package com.cloudera.cdk.morphline.tika;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
+import java.util.Set;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveException;
@@ -46,8 +48,8 @@ import com.typesafe.config.Config;
 public final class UnpackBuilder implements CommandBuilder {
 
   @Override
-  public String getName() {
-    return "unpack";
+  public Set<String> getNames() {
+    return Collections.singleton("unpack");
   }
 
   @Override

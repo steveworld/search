@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 
 import org.apache.commons.compress.compressors.CompressorInputStream;
@@ -84,8 +85,8 @@ import com.typesafe.config.Config;
 public final class SolrCellBuilder implements CommandBuilder {
 
   @Override
-  public String getName() {
-    return "solrCell";
+  public Set<String> getNames() {
+    return Collections.singleton("solrCell");
   }
 
   @Override

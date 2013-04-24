@@ -18,6 +18,7 @@ package com.cloudera.cdk.morphline.cmd;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
@@ -47,8 +48,8 @@ import com.typesafe.config.Config;
 public final class FilterBuilder implements CommandBuilder {
 
   @Override
-  public String getName() {
-    return "filter";
+  public Set<String> getNames() {
+    return Collections.singleton("filter");
   }
   
   @Override

@@ -26,9 +26,21 @@ package com.cloudera.cdk.morphline.api;
  */
 public interface Command {
   
+  /**
+   * Begins a sequence of zero or more related records.
+   */
   void startSession();
   
-  boolean process(Record record); // return true -> continue, false -> backtrack
+  /**
+   * Processes the given record.
+   * 
+   * @return true to indicate that processing shall continue, false to indicate that backtracking
+   *         shall be done
+   */
+  boolean process(Record record);
   
+  /** 
+   * Returns the parent of this command.
+   */
   Command getParent();
 }

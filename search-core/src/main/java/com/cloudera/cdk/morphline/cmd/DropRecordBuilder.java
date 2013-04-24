@@ -15,6 +15,9 @@
  */
 package com.cloudera.cdk.morphline.cmd;
 
+import java.util.Collections;
+import java.util.Set;
+
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
@@ -27,8 +30,8 @@ import com.typesafe.config.Config;
 public final class DropRecordBuilder implements CommandBuilder {
 
   @Override
-  public String getName() {
-    return "dropRecord";
+  public Set<String> getNames() {
+    return Collections.singleton("dropRecord");
   }
 
   @Override

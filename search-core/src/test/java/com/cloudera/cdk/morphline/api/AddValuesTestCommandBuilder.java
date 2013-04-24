@@ -15,14 +15,17 @@
  */
 package com.cloudera.cdk.morphline.api;
 
+import java.util.Collections;
+import java.util.Set;
+
 import com.cloudera.cdk.morphline.base.AbstractCommand;
 import com.typesafe.config.Config;
 
 public final class AddValuesTestCommandBuilder implements CommandBuilder {
 
   @Override
-  public String getName() {
-    return "addValuesTest";
+  public Set<String> getNames() {
+    return Collections.singleton("addValuesTest");
   }
   
   @Override

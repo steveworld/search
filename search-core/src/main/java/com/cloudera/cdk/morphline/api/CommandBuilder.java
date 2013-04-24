@@ -15,6 +15,8 @@
  */
 package com.cloudera.cdk.morphline.api;
 
+import java.util.Set;
+
 import com.typesafe.config.Config;
 
 /**
@@ -22,8 +24,19 @@ import com.typesafe.config.Config;
  */
 public interface CommandBuilder {
 
-  String getName(); // TODO: allow synonyms for backwards compatible name changes
+  /**
+   * Returns the names with which this command can be invoked.
+   * 
+   * The returned set can contain synonyms to enable backwards compatible name changes.
+   */
+  Set<String> getNames();
 
+  /**
+   * Creates and returns a command rooted at the given morphConfig.
+   * 
+   * The command will feed records into child. The command will have parent as it's parent.
+   * Additional paramters can be passed via the context.
+   */
   Command build(Config morphConfig, Command parent, Command child, MorphlineContext context);
 
 }
