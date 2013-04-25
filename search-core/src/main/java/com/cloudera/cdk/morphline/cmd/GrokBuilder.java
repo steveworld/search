@@ -70,7 +70,7 @@ import com.typesafe.config.ConfigFactory;
  * that refers to the input field named "message" and contains two grok patterns:
  * 
  * <pre>
- * regexes : {
+ * expressions : {
  *   message : """\s+%{INT:pid} %{HOSTNAME:my_name_servers}"""
  * }
  * </pre>
@@ -153,8 +153,8 @@ public final class GrokBuilder implements CommandBuilder {
       loadDictionary(new StringReader(dictionaryString));
       resolveDictionaryExpressions();
       
-      Config regexConfig = Configs.getConfig(config, "regexes", ConfigFactory.empty());
-      for (Map.Entry<String, Object> entry : regexConfig.root().unwrapped().entrySet()) {
+      Config exprConfig = Configs.getConfig(config, "expressions", ConfigFactory.empty());
+      for (Map.Entry<String, Object> entry : exprConfig.root().unwrapped().entrySet()) {
         String expr = entry.getValue().toString();
         //LOG.debug("expr before: {}", expr);
         expr = resolveExpression(expr);     
