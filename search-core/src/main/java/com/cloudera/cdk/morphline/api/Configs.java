@@ -15,6 +15,9 @@
  */
 package com.cloudera.cdk.morphline.api;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 
 import com.typesafe.config.Config;
@@ -26,8 +29,23 @@ import com.typesafe.config.ConfigFactory;
  */
 public final class Configs {
   
+  /** Loads the given config file from the classpath */
   public static Config parse(String resourceBaseName) {
     return ConfigFactory.load(resourceBaseName);
+  }
+  
+  /** Loads the given config file from the local file system */
+  public static Config parse(File file) throws IOException {
+    if (!file.exists()) {
+      throw new FileNotFoundException("File not found: " + file);
+    }
+    if (!file.canRead()) {
+      throw new IOException("Insufficient permissions to read file: " + file);
+    }
+    Config config = ConfigFactory.parseFile(file);
+    config = ConfigFactory.load(config);
+    config.checkValid(ConfigFactory.defaultReference()); // eagerly validate aspects of tree config  
+    return config;
   }
   
   public static String getString(Config config, String path, String defaults) {
@@ -102,4 +120,34 @@ public final class Configs {
     return config.getInt(path);
   }  
 
+//  public static Config parse(File file) throws IOException {
+//    if (!file.exists()) {
+//      throw new FileNotFoundException("File not found: " + file);
+//    }
+//    if (!file.canRead()) {
+//      throw new IOException("Insufficient permissions to read file: " + file);
+//    }
+//    String path = file.getAbsolutePath();
+//    String oldConfigResource = System.clearProperty("config.resource");
+//    String oldConfigFile = System.setProperty("config.file", path);
+//    String oldConfigUrl = System.clearProperty("config.url");
+//    try {
+//      Config config = ConfigFactory.load();
+//      config.checkValid(ConfigFactory.defaultReference()); // eagerly validate aspects of tree config  
+//      return config;
+//    } finally {
+//      setSystemProperty("config.resource", oldConfigResource);
+//      setSystemProperty("config.file", oldConfigFile);
+//      setSystemProperty("config.url", oldConfigUrl);
+//    }
+//  }
+//  
+//  private static String setSystemProperty(String name, String value) {
+//    if (value == null) {
+//      return System.clearProperty(name);
+//    } else {
+//      return System.setProperty(name, value);
+//    }    
+//  }
+  
 }
