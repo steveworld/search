@@ -137,8 +137,8 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
   }
     
   @Test
-  public void testJPGCompressed() throws Exception {
-    Config config = parse("test-morphlines/testJPGCompressed-morphline.conf");    
+  public void testSolrCellJPGCompressed() throws Exception {
+    Config config = parse("test-morphlines/testSolrCellJPGCompressed-morphline.conf");    
     morphline = createMorphline(config); 
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
@@ -150,8 +150,8 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
   }  
 
   @Test
-  public void testCSVBasic() throws Exception {
-    Config config = parse("test-morphlines/testCSVBasic-morphline.conf");    
+  public void testReadCSVBasic() throws Exception {
+    Config config = parse("test-morphlines/testReadCSVBasic-morphline.conf");    
     morphline = createMorphline(config); 
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
@@ -175,8 +175,8 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
     testDocumentTypesInternal(files, expectedRecords);
   }  
 
-  public void testMultiLineBasic() throws Exception {
-    Config config = parse("test-morphlines/testMultiLineBasic-morphline.conf");    
+  public void testReadMultiLineBasic() throws Exception {
+    Config config = parse("test-morphlines/testReadMultiLineBasic-morphline.conf");    
     morphline = createMorphline(config); 
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
@@ -186,8 +186,8 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
   }  
 
   @Test
-  public void testDocumentTypes() throws Exception {
-    Config config = parse("test-morphlines/testDocumentTypes-morphline.conf");    
+  public void testSolrCellDocumentTypes() throws Exception {
+    Config config = parse("test-morphlines/testSolrCellDocumentTypes-morphline.conf");    
     morphline = createMorphline(config); 
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
@@ -214,8 +214,8 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
   }
   
   @Test
-  public void testDocumentTypes2() throws Exception {
-    Config config = parse("test-morphlines/testDocumentTypes-morphline.conf");    
+  public void testSolrCellDocumentTypes2() throws Exception {
+    Config config = parse("test-morphlines/testSolrCellDocumentTypes-morphline.conf");    
     morphline = createMorphline(config); 
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
