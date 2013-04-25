@@ -70,8 +70,8 @@ public class MorphlineTest extends Assert {
   }
 
   @Test
-  public void testBasicFilterPass() throws Exception {
-    Config config = parse("test-morphlines/testBasicFilterPass-morphline");    
+  public void testTryRulesPass() throws Exception {
+    Config config = parse("test-morphlines/testTryRulesPass-morphline");    
     morphline = createMorphline(config);
     Record record = new Record();
     record.getFields().put("first_name", "Nadja");
@@ -90,8 +90,8 @@ public class MorphlineTest extends Assert {
   }
 
   @Test
-  public void testBasicFilterFail() throws Exception {
-    Config config = parse("test-morphlines/testBasicFilterFail-morphline");    
+  public void testTryRulesFail() throws Exception {
+    Config config = parse("test-morphlines/testTryRulesFail-morphline");    
     morphline = createMorphline(config);
     Record record = new Record();
     record.getFields().put("first_name", "Nadja");
@@ -110,8 +110,8 @@ public class MorphlineTest extends Assert {
   }
   
   @Test
-  public void testBasicFilterFailTwice() throws Exception {
-    Config config = parse("test-morphlines/testBasicFilterFailTwice-morphline");    
+  public void testTryRulesFailTwice() throws Exception {
+    Config config = parse("test-morphlines/testTryRulesFailTwice-morphline");    
     morphline = createMorphline(config);
     Record record = new Record();
     record.getFields().put("first_name", "Nadja");
