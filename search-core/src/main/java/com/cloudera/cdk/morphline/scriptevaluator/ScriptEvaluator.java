@@ -28,12 +28,12 @@ import javax.script.ScriptException;
 import com.cloudera.cdk.morphline.scriptengine.java.FastJavaScriptEngine;
 
 /**
- * Creates and compiles the given Java statements, wrapped into a Java method with the given return
+ * Creates and compiles the given Java code block, wrapped into a Java method with the given return
  * type and parameter types, along with a Java class definition that contains the given import
  * statements.
- * 
+ * <p>
  * Compilation is done in main memory, i.e. without writing to the filesystem.
- * 
+ * <p>
  * The result is an object that can be executed (and reused) any number of times. This is a high
  * performance implementation, using an optimized variant of https://scripting.dev.java.net/" (JSR
  * 223 Java Scripting). Calling {@link #evaluate(Object...)} just means calling
@@ -45,14 +45,14 @@ import com.cloudera.cdk.morphline.scriptengine.java.FastJavaScriptEngine;
 public class ScriptEvaluator<T> {
 
 	private final FastJavaScriptEngine.JavaCompiledScript compiledScript;
-	private final String javaStatements;
+	private final String javaCodeBlock;
 	private final String parseLocation;
 	
 	private static final AtomicLong nextClassNum = new AtomicLong();
 	
 	private static final String METHOD_NAME = "eval";
 
-	public ScriptEvaluator(String javaImports, String javaStatements, Class<T> returnType,
+	public ScriptEvaluator(String javaImports, String javaCodeBlock, Class<T> returnType,
 			String[] parameterNames, Class[] parameterTypes,
 			String parseLocation) throws ScriptException {
 		
@@ -63,7 +63,7 @@ public class ScriptEvaluator<T> {
 						+ ") do not match"); 
 		}
 		
-		this.javaStatements = javaStatements;
+		this.javaCodeBlock = javaCodeBlock;
 		this.parseLocation = parseLocation;		
 		String myPackageName = getClass().getName();
 		myPackageName = myPackageName.substring(0, myPackageName.lastIndexOf('.'));
@@ -84,7 +84,7 @@ public class ScriptEvaluator<T> {
 			}
 			script += parameterTypes[i].getCanonicalName() + " " + parameterNames[i];
 		}
-		script += ") { " + javaStatements + " }";		 
+		script += ") { " + javaCodeBlock + " }";		 
 		script += "\n }";
 //		System.out.println(script);
 		
@@ -101,36 +101,41 @@ public class ScriptEvaluator<T> {
 			if (errorMsg.length() > 0) 
 				errorMsg = ": " + errorMsg;
 			
-			throwScriptSyntaxException(parseLocation, e.getMessage() + errorMsg);
+			throwScriptCompilationException(parseLocation, e.getMessage() + errorMsg, null);
 			throw null; // keep compiler happy
 		}
 		
 		engine.getContext().setErrorWriter(new PrintWriter(System.err, true)); // reset
 	}
 	
-	public T evaluate(Object... params) {
+	public T evaluate(Object... params) throws ScriptException {
 		// TODO: consider restricting permissions/sandboxing; also see http://worldwizards.blogspot.com/2009/08/java-scripting-api-sandbox.html
 		try {
 			return (T) compiledScript.eval(params);
 		} catch (ScriptException e) {				
-			throwScriptException(parseLocation + " near: '" + javaStatements + "'", params, e);
+			throwScriptExecutionException(parseLocation + " near: '" + javaCodeBlock + "'", params, e);
 		}
 		return null; // keep compiler happy
 	}
 
-	private static void throwScriptSyntaxException(String parseLocation, String msg) {
-		throwScriptSyntaxException(parseLocation, msg, null);
+	private static void throwScriptCompilationException(String parseLocation, String msg, Throwable t) 
+	    throws ScriptException {
+	  
+		if (t == null) {
+			throw new ScriptException("Cannot compile script: " + parseLocation + " caused by " + msg);
+		} else {
+		  ScriptException se = new ScriptException("Cannot compile script: " + parseLocation + " caused by " + msg);
+		  se.initCause(t);
+			throw se;
+		}
 	}
 	
-	private static void throwScriptSyntaxException(String parseLocation, String msg, Throwable t) {
-		if (t == null)
-			throw new IllegalArgumentException("Cannot parse script: " + parseLocation + " caused by " + msg);
-		else
-			throw new IllegalArgumentException("Cannot parse script: " + parseLocation + " caused by " + msg, t);
-	}
-	
-	private static void throwScriptException(String parseLocation, Object[] params, Throwable e) {
-		throw new IllegalArgumentException("Cannot execute script: " + parseLocation + " for params " + Arrays.asList(params).toString(), e);
+	private static void throwScriptExecutionException(String parseLocation, Object[] params, Throwable e) 
+	    throws ScriptException {
+	  
+	  ScriptException se = new ScriptException("Cannot execute script: " + parseLocation + " for params " + Arrays.asList(params).toString());
+	  se.initCause(e);
+	  throw se;
 	}
 	
 }
