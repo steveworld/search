@@ -30,43 +30,44 @@ import com.cloudera.cdk.morphline.base.AbstractCommand;
 import com.typesafe.config.Config;
 
 /**
- * A filter consists of zero or more rules.
+ * A tryRules command consists of zero or more rules.
  * 
  * A rule consists of zero or more commands.
  * 
- * The rules of a filter are processed in top-down order. If one of the commands in a rule fails,
- * the filter stops processing of this rule, backtracks and tries the next rule, and so on, until a
- * rule is found that runs all its commands to completion without failure (the rule succeeds). If a
- * rule succeeds the remaining rules of the current filter are skipped. If no rule succeeds the
- * record remains unchanged, but a warning may be issued (the warning can be turned off) or an
- * exception may be thrown (which is logged and ignored in production mode).
+ * The rules of a tryRules command are processed in top-down order. If one of the commands in a rule
+ * fails, the tryRules command stops processing of this rule, backtracks and tries the next rule,
+ * and so on, until a rule is found that runs all its commands to completion without failure (the
+ * rule succeeds). If a rule succeeds the remaining rules of the current tryRules command are
+ * skipped. If no rule succeeds the record remains unchanged, but a warning may be issued (the
+ * warning can be turned off) or an exception may be thrown (which is logged and ignored in
+ * production mode).
  * 
- * Because a command can itself be a filter, there can be filters with actions, nested inside
- * filters, inside filters, recursively. This helps to implement arbitrarily complex functionality
- * for advanced usage.
+ * Because a command can itself be a tryRules command, there can be tryRules commands with commands,
+ * nested inside tryRules, inside tryRules, recursively. This helps to implement arbitrarily complex
+ * functionality for advanced usage.
  */
-public final class FilterBuilder implements CommandBuilder {
+public final class TryRulesBuilder implements CommandBuilder {
 
   @Override
   public Set<String> getNames() {
-    return Collections.singleton("filter");
+    return Collections.singleton("tryRules");
   }
   
   @Override
   public Command build(Config config, Command parent, Command child, MorphlineContext context) {
-    return new Filter(config, parent, child, context);
+    return new TryRules(config, parent, child, context);
   }
   
   
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
   ///////////////////////////////////////////////////////////////////////////////
-  private static final class Filter extends AbstractCommand {
+  private static final class TryRules extends AbstractCommand {
 
     private List<Command> childRules = new ArrayList();
     private boolean throwExceptionIfFoundNoMatchingRule;
     
-    public Filter(Config config, Command parent, Command child, MorphlineContext context) {
+    public TryRules(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
       this.throwExceptionIfFoundNoMatchingRule = 
           Configs.getBoolean(config, "throwExceptionIfFoundNoMatchingRule", true);
