@@ -46,8 +46,8 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
 /**
- * The Grok command uses regex pattern matching to extract structured fields from unstructured log
- * data.
+ * The Grok command uses regular expression pattern matching to extract structured fields from
+ * unstructured log data.
  * <p>
  * It is perfect for syslog logs, apache and other webserver logs, mysql logs, and in general, any
  * log format that is generally written for humans and not computer consumption.
