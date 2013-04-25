@@ -121,7 +121,6 @@ public final class IfThenElseBuilder implements CommandBuilder {
         }
       }
       
-      // turns out both branches are empty: if (...) {} else {}
       return super.process(record); 
     }  
   }
