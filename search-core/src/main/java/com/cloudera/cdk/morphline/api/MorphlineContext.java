@@ -56,12 +56,12 @@ public class MorphlineContext {
     return commandBuilders.get(builderName);
   }
 
-  public void registerCommandBuilderPackagePrefixes(Collection<String> commandPackagePrefixes) {
-    registerCommandBuilders(
+  public void importCommandBuilderPackagePrefixes(Collection<String> commandPackagePrefixes) {
+    importCommandBuilders(
         getTopLevelClassesRecursive(commandPackagePrefixes, CommandBuilder.class));
   }
 
-  public void registerCommandBuilders(Collection<Class<CommandBuilder>> builderClasses) {
+  public void importCommandBuilders(Collection<Class<CommandBuilder>> builderClasses) {
     if (commandBuilders == Collections.EMPTY_MAP) {
       commandBuilders = new HashMap();
       for (Class<CommandBuilder> builderClass : builderClasses) {

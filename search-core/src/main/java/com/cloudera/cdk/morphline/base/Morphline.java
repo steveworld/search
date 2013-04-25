@@ -42,9 +42,9 @@ final class Morphline extends AbstractCommand {
     this.ignoreRecoverableExceptions = Configs.getBoolean(config, "ignoreRecoverableExceptions", false);
     this.ignoreLoads = Configs.getBoolean(config, "ignoreLoads", false);
     
-    List<String> commandPackagePrefixes = Configs.getStringList(config, "registerCommandPackagePrefixes", 
+    List<String> commandPackagePrefixes = Configs.getStringList(config, "importCommandPackagePrefixes", 
         Arrays.asList("com", "org", "net"));    
-    context.registerCommandBuilderPackagePrefixes(commandPackagePrefixes);
+    context.importCommandBuilderPackagePrefixes(commandPackagePrefixes);
     
     List<Command> childCommands = buildCommandChain(config, "commands", child, false);
     if (childCommands.size() > 0) {

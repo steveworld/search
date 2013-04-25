@@ -54,12 +54,12 @@ public class MorphlineTest extends Assert {
     
   @Test
   public void testParseComplexConfig() throws Exception {
-    parse("test-morphlines/testParseComplexConfig-morphline");
+    parse("test-morphlines/parseComplexConfig");
   }
   
   @Test
   public void testMorphlineWithTwoBasicCommands() throws Exception {
-    Config config = parse("test-morphlines/testMorphlineWithTwoBasicCommands-morphline");    
+    Config config = parse("test-morphlines/morphlineWithTwoBasicCommands");    
     morphline = createMorphline(config);    
     Record record = createBasicRecord();
     morphline.startSession();
@@ -71,7 +71,7 @@ public class MorphlineTest extends Assert {
 
   @Test
   public void testTryRulesPass() throws Exception {
-    Config config = parse("test-morphlines/testTryRulesPass-morphline");    
+    Config config = parse("test-morphlines/tryRulesPass");    
     morphline = createMorphline(config);
     Record record = new Record();
     record.getFields().put("first_name", "Nadja");
@@ -91,7 +91,7 @@ public class MorphlineTest extends Assert {
 
   @Test
   public void testTryRulesFail() throws Exception {
-    Config config = parse("test-morphlines/testTryRulesFail-morphline");    
+    Config config = parse("test-morphlines/tryRulesFail");    
     morphline = createMorphline(config);
     Record record = new Record();
     record.getFields().put("first_name", "Nadja");
@@ -111,7 +111,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testTryRulesFailTwice() throws Exception {
-    Config config = parse("test-morphlines/testTryRulesFailTwice-morphline");    
+    Config config = parse("test-morphlines/tryRulesFailTwice");    
     morphline = createMorphline(config);
     Record record = new Record();
     record.getFields().put("first_name", "Nadja");
@@ -135,7 +135,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testIfThenElseBasicThen() throws Exception {
-    Config config = parse("test-morphlines/testIfThenElseBasicThen-morphline");    
+    Config config = parse("test-morphlines/ifThenElseBasicThen");    
     morphline = createMorphline(config);
     Record record = createBasicRecord();
     morphline.startSession();
@@ -148,7 +148,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testIfThenElseBasicThenEmpty() throws Exception {
-    Config config = parse("test-morphlines/testIfThenElseBasicThenEmpty-morphline");    
+    Config config = parse("test-morphlines/ifThenElseBasicThenEmpty");    
     morphline = createMorphline(config);
     Record record = createBasicRecord();
     morphline.startSession();
@@ -161,7 +161,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testIfThenElseBasicElse() throws Exception {
-    Config config = parse("test-morphlines/testIfThenElseBasicElse-morphline");    
+    Config config = parse("test-morphlines/ifThenElseBasicElse");    
     morphline = createMorphline(config);
     Record record = createBasicRecord();
     morphline.startSession();
@@ -174,7 +174,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testIfThenElseBasicElseEmpty() throws Exception {
-    Config config = parse("test-morphlines/testIfThenElseBasicElseEmpty-morphline");    
+    Config config = parse("test-morphlines/ifThenElseBasicElseEmpty");    
     morphline = createMorphline(config);
     Record record = createBasicRecord();
     morphline.startSession();
@@ -187,7 +187,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testNotBasicTrue() throws Exception {
-    Config config = parse("test-morphlines/testNotBasicTrue-morphline");    
+    Config config = parse("test-morphlines/notBasicTrue");    
     System.out.println(config);
     morphline = createMorphline(config);
     Record record = createBasicRecord();
@@ -201,7 +201,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testNotBasicFalse() throws Exception {
-    Config config = parse("test-morphlines/testNotBasicFalse-morphline");    
+    Config config = parse("test-morphlines/notBasicFalse");    
     morphline = createMorphline(config);
     Record record = createBasicRecord();
     morphline.startSession();
@@ -212,7 +212,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testReadClobBasic() throws Exception {
-    Config config = parse("test-morphlines/testReadClobBasic-morphline");    
+    Config config = parse("test-morphlines/readClobBasic");    
     morphline = createMorphline(config);
     Record record = new Record();
     String msg = "foo";
@@ -244,10 +244,10 @@ public class MorphlineTest extends Assert {
   private void testGrokSyslogMatchInternal(boolean inplace, boolean twoExpressions) throws Exception {
     // match
     Config config = parse(
-        "test-morphlines/testGrokSyslogMatch" 
+        "test-morphlines/grokSyslogMatch" 
         + (inplace ? "Inplace" : "")
         + (twoExpressions ? "TwoExpressions" : "") 
-        + "-morphline");
+        + "");
     morphline = createMorphline(config);
     Record record = new Record();
     String msg = "<164>Feb  4 10:46:14 syslog sshd[607]: Server listening on 0.0.0.0 port 22.";
@@ -322,10 +322,10 @@ public class MorphlineTest extends Assert {
   private void testGrokFindSubstringsInternal(boolean inplace, boolean twoExpressions) throws Exception {
     // match
     Config config = parse(
-        "test-morphlines/testGrokFindSubstrings" 
+        "test-morphlines/grokFindSubstrings" 
         + (inplace ? "Inplace" : "")
         + (twoExpressions ? "TwoExpressions" : "") 
-        + "-morphline");
+        + "");
     morphline = createMorphline(config);
     Record record = new Record();
     String msg = "hello\t\tworld\tfoo";
