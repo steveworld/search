@@ -227,6 +227,49 @@ public class MorphlineTest extends Assert {
   }
   
   @Test
+  public void testJavaBasic() throws Exception {
+    Config config = parse("test-morphlines/javaBasic");    
+    morphline = createMorphline(config);
+    Record record = new Record();
+    record.getFields().put("tags", "hello");
+    morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    assertTrue(morphline.process(record));
+    Record expected = new Record();
+    expected.getFields().put("tags", "hello");
+    expected.getFields().put("tags", "world");
+    assertEquals(Arrays.asList(expected), collector.getRecords());
+    assertSame(record, collector.getRecords().get(0));
+  }
+  
+  @Test
+  public void testJavaRuntimeException() throws Exception {
+    Config config = parse("test-morphlines/javaRuntimeException");    
+    morphline = createMorphline(config);
+    Record record = new Record();
+    morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    try {
+      morphline.process(record);
+      fail();
+    } catch (MorphlineRuntimeException e) {
+      assertTrue(e.getMessage().startsWith("Cannot execute script"));
+    }
+    assertEquals(Arrays.asList(), collector.getRecords());
+  }
+  
+  @Test
+  public void testJavaCompilationException() throws Exception {
+    Config config = parse("test-morphlines/javaCompilationException");    
+    try {
+      createMorphline(config);
+      fail();
+    } catch (MorphlineParsingException e) {
+      assertTrue(e.getMessage().startsWith("Cannot compile script"));
+    }
+  }
+  
+  @Test
   public void testGrokSyslogMatch() throws Exception {
     testGrokSyslogMatchInternal(false, false);
   }
