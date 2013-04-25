@@ -190,7 +190,7 @@ public final class GrokBuilder implements CommandBuilder {
         // To ensure this we potentially run doMatch() twice: the first time to check, the second
         // time to mutate
         if (regexes.size() <= 1 && numRequiredMatches == NumRequiredMatches.atLeastOnce) {
-          // Performance enhancement:
+          // Performance enhancement for "atLeastOnce" with a single expression:
           // By the time we find a regex match we know that the whole command will succeed,
           // so there's really no need to run doMatch() twice.
           ; 
