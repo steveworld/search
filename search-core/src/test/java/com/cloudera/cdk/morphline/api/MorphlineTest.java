@@ -15,6 +15,8 @@
  */
 package com.cloudera.cdk.morphline.api;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -186,6 +188,7 @@ public class MorphlineTest extends Assert {
   @Test
   public void testNotBasicTrue() throws Exception {
     Config config = parse("test-morphlines/testNotBasicTrue-morphline");    
+    System.out.println(config);
     morphline = createMorphline(config);
     Record record = createBasicRecord();
     morphline.startSession();
@@ -404,8 +407,9 @@ public class MorphlineTest extends Assert {
     return record;
   }
 
-  private Config parse(String file) {
-    Config config = Configs.parse(file);
+  private Config parse(String file) throws IOException {
+//    Config config = Configs.parse(file);
+    Config config = Configs.parse(new File("src/test/resources/" + file + ".conf"));
     config = config.getConfigList("morphlines").get(0);
     return config;
   }
