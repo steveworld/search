@@ -53,13 +53,13 @@ public class MorphlineTest extends Assert {
   }
     
   @Test
-  public void testComplexParse() throws Exception {
-    parse("test-morphlines/testComplexParse-morphline");
+  public void testParseComplexConfig() throws Exception {
+    parse("test-morphlines/testParseComplexConfig-morphline");
   }
   
   @Test
-  public void testBasic() throws Exception {
-    Config config = parse("test-morphlines/testBasic-morphline");    
+  public void testMorphlineWithTwoBasicCommands() throws Exception {
+    Config config = parse("test-morphlines/testMorphlineWithTwoBasicCommands-morphline");    
     morphline = createMorphline(config);    
     Record record = createBasicRecord();
     morphline.startSession();
@@ -128,7 +128,7 @@ public class MorphlineTest extends Assert {
       morphline.process(record);
       fail();
     } catch (MorphlineRuntimeException e) {
-      assertTrue(e.getMessage().startsWith("Filter found no matching rule"));
+      assertTrue(e.getMessage().startsWith("tryRules command found no matching rule"));
     }
     assertEquals(expectedList, collector.getRecords());
   }

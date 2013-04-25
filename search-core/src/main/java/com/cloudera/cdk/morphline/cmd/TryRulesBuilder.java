@@ -100,13 +100,13 @@ public final class TryRulesBuilder implements CommandBuilder {
             return true; // rule was executed successfully; no need to try the other remaining rules
           }
 //        } catch (MorphlineRuntimeException e) {
-//          LOG.warn("Filter rule exception", e);
+//          LOG.warn("tryRules rule exception", e);
 //          // continue and try the other remaining rules
 //        }
       }
-      LOG.warn("Filter found no matching rule");
+      LOG.warn("tryRules command found no matching rule");
       if (throwExceptionIfFoundNoMatchingRule) {
-        throw new MorphlineRuntimeException("Filter found no matching rule");
+        throw new MorphlineRuntimeException("tryRules command found no matching rule");
       }
       return false;
     }
