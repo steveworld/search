@@ -80,10 +80,14 @@ import com.typesafe.config.ConfigFactory;
  * <p>
  * The REGEX_NAME is the name of a regex within a loaded dictionary.
  * <p>
- * The GROUP_NAME is the name of an output field. The content of the named capturing group will be
- * added to this output field of the output record.
+ * The GROUP_NAME is the name of an output field.
  * <p>
- * In addition, grok command supports the following parameters:
+ * If <b>all</b> expressions of the grok command match the input record, then the command succeeds
+ * and the content of the named capturing group will be added to this output field of the output
+ * record. Otherwise, the record remains unchanged and the grok command fails (which causes
+ * backtracking of the command chain).
+ * <p>
+ * In addition, the grok command supports the following parameters:
  * <p>
  * <ul>
  * <li>dictionaryFiles (String[]): A list of zero or more local files or directory trees from which
