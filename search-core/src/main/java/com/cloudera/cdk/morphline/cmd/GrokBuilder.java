@@ -189,7 +189,12 @@ public final class GrokBuilder implements CommandBuilder {
         // Ensure that we mutate the record inplace only if *all* expressions match.
         // To ensure this we potentially run doMatch() twice: the first time to check, the second
         // time to mutate
-        if (!doMatch(record, outputRecord, false)) {
+        if (regexes.size() <= 1 && numRequiredMatches == NumRequiredMatches.atLeastOnce) {
+          // Performance enhancement:
+          // By the time we find a regex match we know that the whole command will succeed,
+          // so there's really no need to run doMatch() twice.
+          ; 
+        } else if (!doMatch(record, outputRecord, false)) {
           return false;
         }
       }
