@@ -225,26 +225,38 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testGrokSyslogMatch() throws Exception {
-    testGrokSyslogMatchInternal(false);
+    testGrokSyslogMatchInternal(false, false);
   }
   
   @Test
   public void testGrokSyslogMatchInplace() throws Exception {
-    testGrokSyslogMatchInternal(true);
+    testGrokSyslogMatchInternal(true, false);
   }
   
-  private void testGrokSyslogMatchInternal(boolean inplace) throws Exception {
+  @Test
+  public void testGrokSyslogMatchInplaceTwoExpressions() throws Exception {
+    testGrokSyslogMatchInternal(true, true);
+  }
+  
+  private void testGrokSyslogMatchInternal(boolean inplace, boolean twoExpressions) throws Exception {
     // match
-    Config config = parse("test-morphlines/testGrokSyslogMatch" + (inplace ? "Inplace" : "") + "-morphline");    
+    Config config = parse(
+        "test-morphlines/testGrokSyslogMatch" 
+        + (inplace ? "Inplace" : "")
+        + (twoExpressions ? "TwoExpressions" : "") 
+        + "-morphline");
     morphline = createMorphline(config);
     Record record = new Record();
     String msg = "<164>Feb  4 10:46:14 syslog sshd[607]: Server listening on 0.0.0.0 port 22.";
     record.getFields().put(Fields.MESSAGE, msg);
+    String id = "myid";
+    record.getFields().put(Fields.ID, id);
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     Record expected = new Record();
     expected.getFields().put(Fields.MESSAGE, msg);
+    expected.getFields().put(Fields.ID, id);
     expected.getFields().put("syslog_pri", "164");
     expected.getFields().put("syslog_timestamp", "Feb  4 10:46:14");
     expected.getFields().put("syslog_hostname", "syslog");
@@ -272,6 +284,8 @@ public class MorphlineTest extends Assert {
     record = new Record();
     record.getFields().put(Fields.MESSAGE, msg);
     record.getFields().put(Fields.MESSAGE, msg);
+    record.getFields().put(Fields.ID, id);
+    record.getFields().put(Fields.ID, id);
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
@@ -289,26 +303,38 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testGrokFindSubstrings() throws Exception {
-    testGrokFindSubstringsInternal(false);
+    testGrokFindSubstringsInternal(false, false);
   }
   
   @Test
   public void testGrokFindSubstringsInplace() throws Exception {
-    testGrokFindSubstringsInternal(true);
+    testGrokFindSubstringsInternal(true, false);
   }
   
-  private void testGrokFindSubstringsInternal(boolean inplace) throws Exception {
+  @Test
+  public void testGrokFindSubstringsInplaceTwoExpressions() throws Exception {
+    testGrokFindSubstringsInternal(true, true);
+  }
+  
+  private void testGrokFindSubstringsInternal(boolean inplace, boolean twoExpressions) throws Exception {
     // match
-    Config config = parse("test-morphlines/testGrokFindSubstrings"+ (inplace ? "Inplace" : "") + "-morphline");    
+    Config config = parse(
+        "test-morphlines/testGrokFindSubstrings" 
+        + (inplace ? "Inplace" : "")
+        + (twoExpressions ? "TwoExpressions" : "") 
+        + "-morphline");
     morphline = createMorphline(config);
     Record record = new Record();
     String msg = "hello\t\tworld\tfoo";
     record.getFields().put(Fields.MESSAGE, msg);
+    String id = "myid";
+    record.getFields().put(Fields.ID, id);
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     Record expected = new Record();
     expected.getFields().put(Fields.MESSAGE, msg);
+    expected.getFields().put(Fields.ID, id);
     expected.getFields().put("word", "hello");
     expected.getFields().put("word", "world");
     expected.getFields().put("word", "foo");
@@ -323,6 +349,7 @@ public class MorphlineTest extends Assert {
     collector.reset();
     record = new Record();
     record.getFields().put(Fields.MESSAGE, "");
+    record.getFields().put(Fields.ID, id);
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertFalse(morphline.process(record));
