@@ -229,7 +229,7 @@ public final class GrokBuilder implements CommandBuilder {
         for (Object value : values) {
           String strValue = value.toString();
           if (matcher == null) {
-            matcher = pattern.matcher(strValue);
+            matcher = pattern.matcher(strValue); // TODO cache that object more permanently (perf)?
           } else {
             matcher.reset(strValue);
           }
@@ -283,7 +283,7 @@ public final class GrokBuilder implements CommandBuilder {
         String groupName = entry.getKey();
         List<GroupInfo> list = entry.getValue();
         int idx = list.get(0).groupIndex();
-        int group = idx > -1 ? idx + 1 : -1;
+        int group = idx > -1 ? idx + 1 : -1; // TODO cache that number (perf)?
         String value = matcher.group(group);
         if (value.length() > 0 || addEmptyStrings) {
           outputRecord.getFields().put(groupName, value);
