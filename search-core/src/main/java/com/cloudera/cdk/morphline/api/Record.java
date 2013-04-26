@@ -44,6 +44,10 @@ public final class Record {
     this.fields = fields;
   }
 
+  public Record copy() {
+    return new Record(ArrayListMultimap.create(getFields()));
+  }
+  
   public ListMultimap<String, Object> getFields() {
     return fields;
   }
@@ -57,12 +61,14 @@ public final class Record {
     fields.replaceValues(key, Collections.singletonList(value)); // TODO optimize?
   }
   
-  public Record copy() {
-    return new Record(ArrayListMultimap.create(getFields()));
-  }
-  
   public void removeAll(String key) {
     fields.removeAll(key);
+  }
+  
+  public void putIfAbsent(String key, Object value) {
+    if (!fields.containsEntry(key, value)) {
+      fields.put(key, value);
+    }
   }
   
   @Override
