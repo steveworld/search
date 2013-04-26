@@ -120,6 +120,30 @@ public final class Configs {
     return config.getInt(path);
   }  
 
+  public static long getLong(Config config, String path, long defaults) {
+    if (config.hasPath(path)) {
+      return config.getLong(path);
+    } else {
+      return defaults;
+    }
+  }
+  
+  public static long getLong(Config config, String path) {
+    return config.getLong(path);
+  }  
+
+  public static double getDouble(Config config, String path, double defaults) {
+    if (config.hasPath(path)) {
+      return config.getDouble(path);
+    } else {
+      return defaults;
+    }
+  }
+  
+  public static double getDouble(Config config, String path) {
+    return config.getDouble(path);
+  }  
+
 //  public static Config parse(File file) throws IOException {
 //    if (!file.exists()) {
 //      throw new FileNotFoundException("File not found: " + file);
