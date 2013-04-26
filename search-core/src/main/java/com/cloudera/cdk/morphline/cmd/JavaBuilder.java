@@ -39,8 +39,9 @@ import com.typesafe.config.Config;
  * return type and several parameters, along with a Java class definition that contains the given
  * import statements.
  * <p>
- * The parameters passed to the code block are "record", "child", "context", "LOG" and are of types
- * Record.class, Command.class, MorphlineContext.class, Logger.class, respectively.
+ * The parameters passed to the code block are "record", "config", "parent", "child", "context",
+ * "logger" and are of types Record.class, Config.class, Command.class, Command.class,
+ * MorphlineContext.class, Logger.class, respectively.
  * <p>
  * Compilation is done in main memory, i.e. without writing to the filesystem.
  * <p>
@@ -91,16 +92,16 @@ public final class JavaBuilder implements CommandBuilder {
           javaImports, 
           javaCodeBlock, 
           Boolean.class,
-          new String[] {"record", "child", "context", "LOG"}, 
-          new Class[] {Record.class, Command.class, MorphlineContext.class, Logger.class}, 
+          new String[] {"record", "config", "parent", "child", "context", "logger"}, 
+          new Class[] {Record.class, Config.class, Command.class, Command.class, MorphlineContext.class, Logger.class}, 
           javaCodeBlock
           );
     }
         
     @Override
-    public boolean process(Record record) {      
+    public boolean process(Record record) { 
       try {
-        return script.evaluate(record, getChild(), getContext(), LOG);
+        return script.evaluate(record, getConfig(), this, getChild(), getContext(), LOG);
       } catch (ScriptException e) {
         throw new MorphlineRuntimeException("Cannot execute script", e);
       } 
