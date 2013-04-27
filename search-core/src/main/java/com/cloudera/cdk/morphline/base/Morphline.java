@@ -58,14 +58,5 @@ final class Morphline extends AbstractCommand {
   protected Command getChild() {
     return realChild;
   }
-
-//  public boolean process(Record record) {
-//    return getChild().process(record);
-//  }
   
-//  @Override
-//  public void startEvent() {
-//    getChild().startEvent();
-//  }
-
 }

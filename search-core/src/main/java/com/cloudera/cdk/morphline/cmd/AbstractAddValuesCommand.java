@@ -24,7 +24,7 @@ import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
-import com.cloudera.cdk.morphline.base.FieldExpressions;
+import com.cloudera.cdk.morphline.base.FieldExpression;
 import com.typesafe.config.Config;
 
 /**
@@ -46,12 +46,12 @@ abstract class AbstractAddValuesCommand extends AbstractCommand {
       prepare(record, fieldName);
       Object entryValue = entry.getValue();
       if (entryValue instanceof String) {
-        List results = FieldExpressions.evaluate((String) entryValue, record);
+        List results = new FieldExpression((String) entryValue).evaluate(record);
         putAll(record, fieldName, results);
       } else if (entryValue instanceof List) {
         for (Object value : (List)entryValue) {
           if (value instanceof String) {
-            List results = FieldExpressions.evaluate((String) value, record);
+            List results = new FieldExpression((String) value).evaluate(record);
             putAll(record, fieldName, results);
           } else {
             put(record, fieldName, value);

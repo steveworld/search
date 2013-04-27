@@ -81,7 +81,7 @@ public final class IfThenElseBuilder implements CommandBuilder {
       Command devNull = new DropRecordBuilder().build(null, this, null, context); // pipes into /dev/null
       List<Command> conditions = buildCommandChain(config, "conditions", devNull, true);
       if (conditions.size() == 0) {
-        throw new MorphlineParsingException("Missing condition", config);
+        throw new MorphlineParsingException("Missing conditions", config);
       } else {
         this.conditionChain = conditions.get(0);
       }

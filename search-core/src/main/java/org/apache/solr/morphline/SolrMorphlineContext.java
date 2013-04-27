@@ -46,6 +46,8 @@ public class SolrMorphlineContext extends MorphlineContext {
         
     private IndexSchema schema;
     
+    public Builder() {}
+
     public Builder setIndexSchema(IndexSchema schema) {
       Preconditions.checkNotNull(schema);
       this.schema = schema;

@@ -50,10 +50,6 @@ public final class Connector implements Command {
     this.parent = parent;
   }
   
-  private Command getChild() {
-    return this.child;
-  }
-
   public void setChild(Command child) {
     this.child = child;
   }

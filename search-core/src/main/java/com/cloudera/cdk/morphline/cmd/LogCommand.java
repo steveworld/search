@@ -26,7 +26,7 @@ import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
-import com.cloudera.cdk.morphline.base.FieldExpressions;
+import com.cloudera.cdk.morphline.base.FieldExpression;
 import com.typesafe.config.Config;
 
 /**
@@ -48,7 +48,7 @@ abstract class LogCommand extends AbstractCommand {
   public boolean process(Record record) {
     Object[] resolvedArgs = new Object[args.length];
     for (int i = 0; i < args.length; i++) {
-      resolvedArgs[i] = FieldExpressions.evaluate(args[i], record);
+      resolvedArgs[i] = new FieldExpression(args[i]).evaluate(record);
     }
     log(format, resolvedArgs);
     return super.process(record);

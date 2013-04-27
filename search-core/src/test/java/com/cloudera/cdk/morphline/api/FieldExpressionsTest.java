@@ -23,9 +23,7 @@ import java.util.regex.Pattern;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.cloudera.cdk.morphline.api.MorphlineParsingException;
-import com.cloudera.cdk.morphline.api.Record;
-import com.cloudera.cdk.morphline.base.FieldExpressions;
+import com.cloudera.cdk.morphline.base.FieldExpression;
 import com.google.common.base.Joiner;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -137,7 +135,7 @@ public class FieldExpressionsTest extends Assert {
   }
   
   private List resolveExpression(String expr, Record record) {
-    return FieldExpressions.evaluate(expr, record);
+    return new FieldExpression(expr).evaluate(record);
   }
   
   private List resolveReference(String expr, Record record) {
