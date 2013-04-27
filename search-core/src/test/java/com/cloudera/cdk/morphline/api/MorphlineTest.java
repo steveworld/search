@@ -420,7 +420,7 @@ public class MorphlineTest extends Assert {
   public void testReflection() {
     long start = System.currentTimeMillis();
     List<String> packagePrefixes = Arrays.asList("com", "org", "net");
-    for (Class clazz : new MorphlineContext(new MetricsRegistry()).getTopLevelClassesRecursive(
+    for (Class clazz : new MorphlineContext().getTopLevelClassesRecursive(
         packagePrefixes, CommandBuilder.class)) {
       System.out.println("found " + clazz);
     }
@@ -437,7 +437,7 @@ public class MorphlineTest extends Assert {
   }
 
   private MorphlineContext createMorphlineContext() {
-    return new MorphlineContext(new MetricsRegistry());
+    return new MorphlineContext.Builder().setMetricsRegistry(new MetricsRegistry()).build();
   }
   
   private Record createBasicRecord() {

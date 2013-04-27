@@ -365,7 +365,10 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
   }
 
   private MorphlineContext createMorphlineContext() {
-    return new SolrMorphlineContext(new MetricsRegistry(), schema);
+    return new SolrMorphlineContext.Builder()
+      .setIndexSchema(schema)
+      .setMetricsRegistry(new MetricsRegistry())
+      .build();
   }
   
   private Config parse(String file) {

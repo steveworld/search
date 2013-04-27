@@ -36,19 +36,16 @@ import com.yammer.metrics.core.MetricsRegistry;
  */
 public class MorphlineContext {
 
-  private final MetricsRegistry metricsRegistry;
+  private MetricsRegistry metricsRegistry;
   private Map<String, Class<CommandBuilder>> commandBuilders = Collections.EMPTY_MAP;
 
   private static final Logger LOG = LoggerFactory.getLogger(MorphlineContext.class);
-      
-  // TODO: use builder pattern to allow for more than a metricsRegistry to be added later without breaking the constructor API
-  // also to pass a semi-immutable context instance to CommandBuilder.build()
-  public MorphlineContext(MetricsRegistry metricsRegistry) {
-    Preconditions.checkNotNull(metricsRegistry);
-    this.metricsRegistry = metricsRegistry;
-  }
+
+  /** For public access use {@link Builder#build()} instead */  
+  protected MorphlineContext() {}
   
   public MetricsRegistry getMetricsRegistry() {
+    assert metricsRegistry != null;
     return metricsRegistry;
   }
 
@@ -132,6 +129,42 @@ public class MorphlineContext {
     } else {
       return new ClassLoader[] { contextLoader, myLoader };
     }
+  }
+
+  
+  ///////////////////////////////////////////////////////////////////////////////
+  // Nested classes:
+  ///////////////////////////////////////////////////////////////////////////////
+  /**
+   * Helper to construct a {@link MorphlineContext} instance.
+   * 
+   * Example usage: 
+   * 
+   * <pre>
+   * MorphlineContext context = new MorphlineContext.Builder().setMetricsRegistry(new MetricsRegistry()).build();
+   * </pre>
+   */
+  public static class Builder {
+    
+    protected MorphlineContext context = create();
+    private MetricsRegistry metricsRegistry;
+
+    public Builder setMetricsRegistry(MetricsRegistry metricsRegistry) {
+      Preconditions.checkNotNull(metricsRegistry);
+      this.metricsRegistry = metricsRegistry;
+      return this;
+    }
+
+    public MorphlineContext build() {
+      Preconditions.checkNotNull(metricsRegistry, "build() requires a prior call to setMetricsRegistry()");
+      context.metricsRegistry = metricsRegistry;
+      return context;
+    }
+
+    protected MorphlineContext create() {
+      return new MorphlineContext();
+    }
+    
   }
 
 }
