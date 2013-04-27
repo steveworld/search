@@ -125,7 +125,7 @@ public abstract class AbstractParser extends AbstractCommand {
     if (charset != null) {
       return charset;
     }
-    List charsets = record.getFields().get(Fields.ATTACHMENT_CHARSET);
+    List charsets = record.get(Fields.ATTACHMENT_CHARSET);
     if (charsets.size() == 0) {
       // TODO try autodetection (AutoDetectReader)
       throw new MorphlineRuntimeException("Missing charset for record: " + record); 
@@ -135,7 +135,7 @@ public abstract class AbstractParser extends AbstractCommand {
   }
 
   protected boolean hasAtLeastOneAttachment(Record record) {
-    List attachments = record.getFields().get(Fields.ATTACHMENT_BODY);
+    List attachments = record.get(Fields.ATTACHMENT_BODY);
     if (attachments.size() == 0) {
       LOG.debug("Command failed because of missing attachment for record: {}", record);
       return false;
@@ -146,7 +146,7 @@ public abstract class AbstractParser extends AbstractCommand {
   }
   
   protected boolean hasAtLeastOneMimeType(Record record) {
-    List mimeTypes = record.getFields().get(Fields.ATTACHMENT_MIME_TYPE);
+    List mimeTypes = record.get(Fields.ATTACHMENT_MIME_TYPE);
     if (mimeTypes.size() == 0) {
       LOG.debug("Command failed because of missing MIME type for record: {}", record);
       return false;

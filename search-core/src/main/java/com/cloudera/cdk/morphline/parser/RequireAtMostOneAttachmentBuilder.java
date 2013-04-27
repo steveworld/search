@@ -65,13 +65,13 @@ public final class RequireAtMostOneAttachmentBuilder implements CommandBuilder {
     }
 
     private static boolean hasAtMostOneAttachment(Record record, Logger LOG) {
-      List mimeTypes = record.getFields().get(Fields.ATTACHMENT_MIME_TYPE);
+      List mimeTypes = record.get(Fields.ATTACHMENT_MIME_TYPE);
       if (mimeTypes.size() > 1) {
         LOG.debug("Command failed because the record must not contain more than one MIME type: {}", record);
         return false;
       }
       
-      List bodies = record.getFields().get(Fields.ATTACHMENT_BODY);
+      List bodies = record.get(Fields.ATTACHMENT_BODY);
       if (bodies.size() > 1) {
         LOG.debug("Command failed because the record must not contain more than one attachment: {}", record);
         return false;

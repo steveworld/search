@@ -51,7 +51,7 @@ final class EmbeddedExtractor {
       
       record.removeAll(Fields.ATTACHMENT_NAME);
       if (name != null && name.length() > 0) {
-        record.getFields().put(Fields.ATTACHMENT_NAME, name);
+        record.put(Fields.ATTACHMENT_NAME, name);
       }
       
       return child.process(record);

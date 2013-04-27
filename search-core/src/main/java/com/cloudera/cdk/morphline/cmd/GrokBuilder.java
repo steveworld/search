@@ -214,7 +214,7 @@ public final class GrokBuilder implements CommandBuilder {
     private boolean doMatch(Record record, Record outputRecord, boolean doExtract) {
       for (Map.Entry<String, Pattern> regexEntry : regexes.entrySet()) {
         Pattern pattern = regexEntry.getValue();
-        List values = record.getFields().get(regexEntry.getKey());
+        List values = record.get(regexEntry.getKey());
         int todo = values.size();
         int minMatches = 1;
         int maxMatches = Integer.MAX_VALUE;
@@ -293,7 +293,7 @@ public final class GrokBuilder implements CommandBuilder {
         int group = idx > -1 ? idx + 1 : -1; // TODO cache that number (perf)?
         String value = matcher.group(group);
         if (value.length() > 0 || addEmptyStrings) {
-          outputRecord.getFields().put(groupName, value);
+          outputRecord.put(groupName, value);
         }
       }
     }
@@ -302,7 +302,7 @@ public final class GrokBuilder implements CommandBuilder {
       for (String groupName : pattern.groupNames()) {
         String value = matcher.group(groupName);
         if (value.length() > 0 || addEmptyStrings) {
-          outputRecord.getFields().put(groupName, value);
+          outputRecord.put(groupName, value);
         }
       }
     }

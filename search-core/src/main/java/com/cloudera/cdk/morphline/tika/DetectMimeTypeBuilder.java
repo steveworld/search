@@ -86,8 +86,8 @@ public final class DetectMimeTypeBuilder implements CommandBuilder {
     
     @Override
     public boolean process(Record record) {
-      if (record.getFields().get(Fields.ATTACHMENT_MIME_TYPE).size() == 0) {
-        List attachments = record.getFields().get(Fields.ATTACHMENT_BODY);
+      if (record.get(Fields.ATTACHMENT_MIME_TYPE).size() == 0) {
+        List attachments = record.get(Fields.ATTACHMENT_BODY);
         if (attachments.size() > 0) {
           Object attachment = attachments.get(0);
           Preconditions.checkNotNull(attachment);
