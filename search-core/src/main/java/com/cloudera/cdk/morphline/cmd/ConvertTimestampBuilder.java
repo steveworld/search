@@ -36,6 +36,7 @@ import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineParsingException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
+import com.google.common.base.Joiner;
 import com.typesafe.config.Config;
 
 /**
@@ -88,6 +89,11 @@ public final class ConvertTimestampBuilder implements CommandBuilder {
       String outputFormatStr = Configs.getString(config, "outputFormat", NATIVE_SOLR_FORMAT);
       this.outputFormat = new SimpleDateFormat(outputFormatStr, outputLocale);
       this.outputFormat.setTimeZone(outputTimeZone);
+      
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("availableTimeZoneIDs: {}", Joiner.on("\n").join(TimeZone.getAvailableIDs()));
+        LOG.trace("availableLocales: {}", Joiner.on("\n").join(Locale.getAvailableLocales()));
+      }
     }
         
     @Override
