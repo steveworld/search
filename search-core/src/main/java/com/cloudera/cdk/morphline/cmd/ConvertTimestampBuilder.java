@@ -65,8 +65,10 @@ public final class ConvertTimestampBuilder implements CommandBuilder {
     private final List<SimpleDateFormat> inputFormats = new ArrayList();
     private final SimpleDateFormat outputFormat;
     
+    private static final String NATIVE_SOLR_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"; // e.g. 2007-04-26T08:05:04.789Z
+    
     static {
-      DateUtil.DEFAULT_DATE_FORMATS.add(0, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"); 
+      DateUtil.DEFAULT_DATE_FORMATS.add(0, NATIVE_SOLR_FORMAT); 
     }    
     
     public ConvertTimestamp(Config config, Command parent, Command child, MorphlineContext context) {
@@ -83,7 +85,7 @@ public final class ConvertTimestampBuilder implements CommandBuilder {
       }
       TimeZone outputTimeZone = getTimeZone(Configs.getString(config, "outputTimezone", "UTC"));
       Locale outputLocale = getLocale(Configs.getString(config, "outputLocale", ""));
-      String outputFormatStr = Configs.getString(config, "outputFormat");
+      String outputFormatStr = Configs.getString(config, "outputFormat", NATIVE_SOLR_FORMAT);
       this.outputFormat = new SimpleDateFormat(outputFormatStr, outputLocale);
       this.outputFormat.setTimeZone(outputTimeZone);
     }

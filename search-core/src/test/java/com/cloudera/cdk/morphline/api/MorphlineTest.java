@@ -523,9 +523,9 @@ public class MorphlineTest extends Assert {
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     Record expected = new Record();
-    expected.getFields().put(Fields.TIMESTAMP, "2011-09-06T14:14:34.789+0000");
-    expected.getFields().put(Fields.TIMESTAMP, "2012-09-06T14:14:34.000+0000");
-    expected.getFields().put(Fields.TIMESTAMP, "2013-09-06T00:00:00.000+0000");
+    expected.getFields().put(Fields.TIMESTAMP, "2011-09-06T14:14:34.789Z");
+    expected.getFields().put(Fields.TIMESTAMP, "2012-09-06T14:14:34.000Z");
+    expected.getFields().put(Fields.TIMESTAMP, "2013-09-06T00:00:00.000Z");
     assertEquals(Arrays.asList(expected), collector.getRecords());
     assertSame(record, collector.getRecords().get(0));
   }
