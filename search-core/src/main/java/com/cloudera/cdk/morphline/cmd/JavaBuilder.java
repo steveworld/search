@@ -81,6 +81,7 @@ public final class JavaBuilder implements CommandBuilder {
         "import java.text.*;\n" +
         "import com.google.common.base.*;\n" + 
         "import com.google.common.collect.*;\n" +
+        "import " + Record.class.getPackage().getName() + ".*;\n" +
         "";
     
     public Java(Config config, Command parent, Command child, MorphlineContext context) throws ScriptException {
