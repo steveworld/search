@@ -93,7 +93,7 @@ public final class ConvertTimestampBuilder implements CommandBuilder {
     @Override
     public boolean process(Record record) {
       ParsePosition pos = new ParsePosition(0);
-      ListIterator iter = record.getFields().get(fieldName).listIterator();
+      ListIterator iter = record.get(fieldName).listIterator();
       while (iter.hasNext()) {
         String timestamp = iter.next().toString();
         boolean foundMatchingFormat = false;

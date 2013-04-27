@@ -64,7 +64,7 @@ public final class FieldExpression {
         buf.append(record.toString()); // @{} means dump string representation of entire record
         evaluate(end + 1, record, buf, results);
       } else {
-        List resolvedValues = record.getFields().get(ref);
+        List resolvedValues = record.get(ref);
         if (start == 0 && end + 1 == expression.length()) { 
           results.addAll(resolvedValues); // "@{first_name}" resolves to object list rather than string concat
         } else {

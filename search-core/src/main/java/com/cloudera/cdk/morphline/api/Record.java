@@ -52,6 +52,14 @@ public final class Record {
     return fields;
   }
 
+  public List get(String key) {
+    return fields.get(key);
+  }
+  
+  public void put(String key, Object value) {
+    fields.put(key, value);    
+  }
+  
   public Object getFirstValue(String key) {
     List values = fields.get(key);
     return values.size() > 0 ? values.get(0) : null;

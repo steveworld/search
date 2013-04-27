@@ -107,7 +107,7 @@ public final class ReadCSVBuilder implements CommandBuilder {
             String columnName = columnNames.get(i);
             outputRecord.removeAll(columnName);
             if (columnName.length() > 0) { // empty column name indicates omit this field on output
-              outputRecord.getFields().put(columnName, trim(columnValues[i]));
+              outputRecord.put(columnName, trim(columnValues[i]));
             }
           }
           
