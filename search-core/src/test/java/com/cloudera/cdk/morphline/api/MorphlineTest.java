@@ -531,6 +531,17 @@ public class MorphlineTest extends Assert {
   }
   
   @Test
+  public void testConvertTimestampWithBadTimezone() throws Exception {
+    Config config = parse("test-morphlines/convertTimestampWithBadTimezone");    
+    try {
+      createMorphline(config);
+      fail();
+    } catch (MorphlineParsingException e) {
+      assertTrue(e.getMessage().startsWith("Unknown timezone"));
+    }
+  }
+  
+  @Test
   @Ignore
   public void testReflection() {
     long start = System.currentTimeMillis();

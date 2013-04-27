@@ -73,8 +73,7 @@ public final class ConvertTimestampBuilder implements CommandBuilder {
       super(config, parent, child, context);
       
       this.fieldName = Configs.getString(config, "field", Fields.TIMESTAMP);
-      String inputTimezoneID = Configs.getString(config, "inputTimezone", "UTC");
-      TimeZone inputTimeZone = TimeZone.getTimeZone(inputTimezoneID);
+      TimeZone inputTimeZone = getTimeZone(Configs.getString(config, "inputTimezone", "UTC"));
       Locale inputLocale = getLocale(Configs.getString(config, "inputLocale", ""));
       for (String inputFormat : Configs.getStringList(config, "inputFormats", DateUtil.DEFAULT_DATE_FORMATS)) {
         SimpleDateFormat df = new SimpleDateFormat(inputFormat, inputLocale);
@@ -82,8 +81,7 @@ public final class ConvertTimestampBuilder implements CommandBuilder {
         df.set2DigitYearStart(DateUtil.DEFAULT_TWO_DIGIT_YEAR_START);
         this.inputFormats.add(df);
       }
-      String outputTimezoneID = Configs.getString(config, "outputTimezone", "UTC");
-      TimeZone outputTimeZone = TimeZone.getTimeZone(outputTimezoneID);
+      TimeZone outputTimeZone = getTimeZone(Configs.getString(config, "outputTimezone", "UTC"));
       Locale outputLocale = getLocale(Configs.getString(config, "outputLocale", ""));
       String outputFormatStr = Configs.getString(config, "outputFormat");
       this.outputFormat = new SimpleDateFormat(outputFormatStr, outputLocale);
@@ -113,6 +111,13 @@ public final class ConvertTimestampBuilder implements CommandBuilder {
         }
       }
       return super.process(record);
+    }
+    
+    private TimeZone getTimeZone(String timeZoneID) {
+      if (!Arrays.asList(TimeZone.getAvailableIDs()).contains(timeZoneID)) {
+        throw new MorphlineParsingException("Unknown timezone: " + timeZoneID, getConfig());
+      }
+      return TimeZone.getTimeZone(timeZoneID);
     }
     
     private Locale getLocale(String name) {
