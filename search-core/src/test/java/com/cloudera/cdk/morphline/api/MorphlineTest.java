@@ -468,6 +468,69 @@ public class MorphlineTest extends Assert {
   }
   
   @Test
+  public void testConvertTimestamp() throws Exception {
+    Config config = parse("test-morphlines/convertTimestamp");    
+    morphline = createMorphline(config);
+    Record record = new Record();
+    record.getFields().put("ts1", "2011-09-06T14:14:34.789Z"); // "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+    record.getFields().put("ts1", "2012-09-06T14:14:34"); 
+    record.getFields().put("ts1", "2013-09-06");
+    morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    assertTrue(morphline.process(record));
+    Record expected = new Record();
+    expected.getFields().put("ts1", "2011-09-06T07:14:34.789-0700");
+    expected.getFields().put("ts1", "2012-09-06T07:14:34.000-0700");
+    expected.getFields().put("ts1", "2013-09-05T17:00:00.000-0700");
+    assertEquals(Arrays.asList(expected), collector.getRecords());
+    assertSame(record, collector.getRecords().get(0));
+  }
+  
+  @Test
+  public void testConvertTimestampEmpty() throws Exception {
+    Config config = parse("test-morphlines/convertTimestamp");
+    morphline = createMorphline(config);
+    Record record = new Record();
+    morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    assertTrue(morphline.process(record));
+    Record expected = new Record();
+    assertEquals(Arrays.asList(expected), collector.getRecords());
+    assertSame(record, collector.getRecords().get(0));
+  }
+  
+  @Test
+  public void testConvertTimestampBad() throws Exception {
+    Config config = parse("test-morphlines/convertTimestamp");
+    morphline = createMorphline(config);
+    Record record = new Record();
+    record.getFields().put("ts1", "this is an invalid timestamp");
+    morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    assertFalse(morphline.process(record));
+    assertEquals(Arrays.asList(), collector.getRecords());
+  }
+  
+  @Test
+  public void testConvertTimestampWithDefaults() throws Exception {
+    Config config = parse("test-morphlines/convertTimestampWithDefaults");    
+    morphline = createMorphline(config);
+    Record record = new Record();
+    record.getFields().put(Fields.TIMESTAMP, "2011-09-06T14:14:34.789Z");
+    record.getFields().put(Fields.TIMESTAMP, "2012-09-06T14:14:34"); 
+    record.getFields().put(Fields.TIMESTAMP, "2013-09-06");
+    morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    assertTrue(morphline.process(record));
+    Record expected = new Record();
+    expected.getFields().put(Fields.TIMESTAMP, "2011-09-06T14:14:34.789+0000");
+    expected.getFields().put(Fields.TIMESTAMP, "2012-09-06T14:14:34.000+0000");
+    expected.getFields().put(Fields.TIMESTAMP, "2013-09-06T00:00:00.000+0000");
+    assertEquals(Arrays.asList(expected), collector.getRecords());
+    assertSame(record, collector.getRecords().get(0));
+  }
+  
+  @Test
   @Ignore
   public void testReflection() {
     long start = System.currentTimeMillis();
