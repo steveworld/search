@@ -32,12 +32,13 @@ import com.cloudera.cdk.morphline.api.Fields;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
+import com.cloudera.cdk.morphline.base.Validator;
 import com.google.common.io.Closeables;
 import com.typesafe.config.Config;
 
 /**
  * Multiline log parser that collapse multiline messages into a single record; supports "regex",
- * "previous/next" and "negate" configuration parameters similar to logstash.
+ * "what" and "negate" configuration parameters similar to logstash.
  * 
  * For example, this can be used to parse log4j with stack traces. Also see
  * https://gist.github.com/smougenot/3182192 and http://logstash.net/docs/1.1.9/filters/multiline
@@ -45,8 +46,8 @@ import com.typesafe.config.Config;
  * The <code>regex</code> parameter should match what you believe to be an indicator that the
  * line is part of a multi-line record.
  * 
- * The <code>previous</code> parameter must be true (aka previous) or false (aka next) and indicates
- * the relation to the multi-line record.
+ * The <code>what</code> parameter must be one of "previous" or "next" and indicates
+ * the relation of the regex to the multi-line record.
  * 
  * The <code>negate</code> parameter can be true or false (defaults false). If true, a line not
  * matching the regex will constitute a match of the multiline filter and the previous/next action
@@ -57,7 +58,7 @@ import com.typesafe.config.Config;
  * <pre>
  * regex : "(^.+Exception: .+)|(^\\s+at .+)|(^\\s+... \\d+ more)|(^\\s*Caused by:.+)"
  * negate: false
- * previous : true
+ * what : previous
  * </pre>
  */
 public final class ReadMultiLineBuilder implements CommandBuilder {
@@ -80,15 +81,18 @@ public final class ReadMultiLineBuilder implements CommandBuilder {
 
     private final Pattern regex;
     private final boolean negate;
-    private final boolean previous;
+    private final What what;
     private final String charset;
   
     public ReadMultiLine(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
       this.regex = Pattern.compile(Configs.getString(config, "regex"));
       this.negate = Configs.getBoolean(config, "negate", false);
-      this.previous = Configs.getBoolean(config, "previous");
       this.charset = Configs.getString(config, "charset", null);
+      this.what = new Validator<What>().validateEnum(
+          config,
+          Configs.getString(config, "numRequiredMatches", What.previous.toString()),
+          What.class);
     }
 
     @Override
@@ -116,7 +120,7 @@ public final class ReadMultiLineBuilder implements CommandBuilder {
             match && previous     --> do previous
             match && next         --> do next             
             */
-            boolean doPrevious = previous;
+            boolean doPrevious = (what == What.previous);
             if (!isMatch) {
               doPrevious = !doPrevious;
             }
@@ -153,5 +157,14 @@ public final class ReadMultiLineBuilder implements CommandBuilder {
       return getChild().process(outputRecord);
     }
     
+    
+    ///////////////////////////////////////////////////////////////////////////////
+    // Nested classes:
+    ///////////////////////////////////////////////////////////////////////////////
+    private static enum What {
+      previous,
+      next
+    }     
+
   }
 }
