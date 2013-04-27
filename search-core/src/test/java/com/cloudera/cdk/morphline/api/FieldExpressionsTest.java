@@ -135,7 +135,7 @@ public class FieldExpressionsTest extends Assert {
   }
   
   private List resolveExpression(String expr, Record record) {
-    return new FieldExpression(expr).evaluate(record);
+    return new FieldExpression(expr, null).evaluate(record);
   }
   
   private List resolveReference(String expr, Record record) {

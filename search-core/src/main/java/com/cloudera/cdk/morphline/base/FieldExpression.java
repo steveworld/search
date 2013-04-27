@@ -20,6 +20,7 @@ import java.util.List;
 
 import com.cloudera.cdk.morphline.api.Record;
 import com.google.common.base.Preconditions;
+import com.typesafe.config.Config;
 
 /**
  * Helper to fetch the values of a field of a {@link Record} referred to by a field expression,
@@ -29,9 +30,9 @@ public final class FieldExpression {
   
   private String expression;
   
-  public FieldExpression(String expression) {
+  public FieldExpression(String expression, Config config) {
     Preconditions.checkNotNull(expression);
-    this.expression = expression;
+    this.expression = expression; // TODO: optimize by separating compilation and evaluation phase
   }
   
   /** Returns the values of a {@link Record} referred to by the given field expression */

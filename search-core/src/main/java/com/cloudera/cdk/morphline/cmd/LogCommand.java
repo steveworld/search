@@ -48,7 +48,7 @@ abstract class LogCommand extends AbstractCommand {
   public boolean process(Record record) {
     Object[] resolvedArgs = new Object[args.length];
     for (int i = 0; i < args.length; i++) {
-      resolvedArgs[i] = new FieldExpression(args[i]).evaluate(record);
+      resolvedArgs[i] = new FieldExpression(args[i], getConfig()).evaluate(record);
     }
     log(format, resolvedArgs);
     return super.process(record);

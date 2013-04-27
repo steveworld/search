@@ -16,8 +16,8 @@
 package com.cloudera.cdk.morphline.cmd;
 
 import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 
 import javax.script.ScriptException;
 
@@ -54,8 +54,8 @@ import com.typesafe.config.Config;
 public final class JavaBuilder implements CommandBuilder {
 
   @Override
-  public Set<String> getNames() {
-    return Collections.singleton("java");
+  public Collection<String> getNames() {
+    return Collections.singletonList("java");
   }
 
   @Override

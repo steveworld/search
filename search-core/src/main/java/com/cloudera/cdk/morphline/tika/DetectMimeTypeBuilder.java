@@ -18,10 +18,10 @@ package com.cloudera.cdk.morphline.tika;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.Detector;
@@ -46,8 +46,8 @@ import com.typesafe.config.Config;
 public final class DetectMimeTypeBuilder implements CommandBuilder {
 
   @Override
-  public Set<String> getNames() {
-    return Collections.singleton("detectMimeType");
+  public Collection<String> getNames() {
+    return Collections.singletonList("detectMimeType");
   }
   
   @Override

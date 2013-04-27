@@ -15,9 +15,9 @@
  */
 package com.cloudera.cdk.morphline.cmd;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
@@ -55,8 +55,8 @@ import com.typesafe.config.Config;
 public final class IfThenElseBuilder implements CommandBuilder {
 
   @Override
-  public Set<String> getNames() {
-    return Collections.singleton("if");
+  public Collection<String> getNames() {
+    return Collections.singletonList("if");
   }
   
   @Override

@@ -16,9 +16,9 @@
 package com.cloudera.cdk.morphline.parser;
 
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import org.slf4j.Logger;
 
@@ -37,8 +37,8 @@ import com.typesafe.config.Config;
 public final class RequireAtMostOneAttachmentBuilder implements CommandBuilder {
 
   @Override
-  public Set<String> getNames() {
-    return Collections.singleton("requireAtMostOneAttachment");
+  public Collection<String> getNames() {
+    return Collections.singletonList("requireAtMostOneAttachment");
   }
   
   @Override
