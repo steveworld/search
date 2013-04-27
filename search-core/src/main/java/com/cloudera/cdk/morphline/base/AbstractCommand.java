@@ -122,7 +122,6 @@ public abstract class AbstractCommand implements Command {
    * into finalChild. The command will have currentParent as it's parent.
    */
   protected Command buildCommand(Config cmdConfig, Command currentParent, Command finalChild) {    
-    //LOG.info("cmdConfig {}", cmdConfig);
     LOG.trace("unwrapped {}", cmdConfig.root().unwrapped());    
     Set<Map.Entry<String, Object>> entries = cmdConfig.root().unwrapped().entrySet();
     if (entries.size() != 1) {
@@ -156,11 +155,6 @@ public abstract class AbstractCommand implements Command {
       throw new MorphlineParsingException("Type of command " + cmdName + " must be an instance of "
           + CommandBuilder.class.getName() + " but is: " + cmdClass.getName(), cmdConfig);
     } 
-    //LOG.info("cmdConfigEntry {}", cmdConfig.entrySet().iterator().next());
-//    LOG.info("cmdConfigConvertToAndBack {}", cmdConfig.root().entrySet().iterator().next().getValue().
-//    .toConfig().getConfig(cmdClass));      
-//    cmdConfig.getValue("").
-//    getString(cmdClass);
     CommandBuilder builder = (CommandBuilder) obj;
     Command cmd = builder.build(cmdConfig.getConfig(cmdName), currentParent, finalChild, getContext());
     return cmd;

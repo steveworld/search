@@ -20,7 +20,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.cloudera.cdk.morphline.api.Record;
-import com.cloudera.cdk.morphline.scriptevaluator.ScriptEvaluator;
 import com.google.common.collect.ArrayListMultimap;
 
 

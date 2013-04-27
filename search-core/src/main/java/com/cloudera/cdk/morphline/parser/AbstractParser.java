@@ -24,7 +24,6 @@ import java.util.Locale;
 import java.util.Set;
 
 import org.apache.tika.mime.MediaType;
-import org.slf4j.Logger;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.Configs;

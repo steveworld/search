@@ -19,49 +19,58 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.cloudera.cdk.morphline.api.Record;
+import com.google.common.base.Preconditions;
 
 /**
  * Helper to fetch the values of a field of a {@link Record} referred to by a field expression,
  * which is a String of the form <code>@{fieldname}</code>.
  */
-public final class FieldExpressions {
+public final class FieldExpression {
   
-  public static List evaluate(String expression, Record record) {
+  private String expression;
+  
+  public FieldExpression(String expression) {
+    Preconditions.checkNotNull(expression);
+    this.expression = expression;
+  }
+  
+  /** Returns the values of a {@link Record} referred to by the given field expression */
+  public List evaluate(Record record) {
     ArrayList results = new ArrayList(1);
-    evaluate(0, expression, record, new StringBuilder(), results);
+    evaluate(0, record, new StringBuilder(), results);
     return results;
   }
 
-  private static void evaluate(int from, String expr, Record record, StringBuilder buf, ArrayList results) {
+  private void evaluate(int from, Record record, StringBuilder buf, ArrayList results) {
     String START_TOKEN = "@{";
     char END_TOKEN = '}';
-    int start = expr.indexOf(START_TOKEN, from);
+    int start = expression.indexOf(START_TOKEN, from);
     if (start < 0) { // START_TOKEN not found
       if (from == 0) {
-        results.add(expr); // fast path
+        results.add(expression); // fast path
       } else {
-        buf.append(expr, from, expr.length());
+        buf.append(expression, from, expression.length());
         results.add(buf.toString());
       }
     } else { // START_TOKEN found
-      int end = expr.indexOf(END_TOKEN, start + START_TOKEN.length());
+      int end = expression.indexOf(END_TOKEN, start + START_TOKEN.length());
       if (end < 0) {
         throw new IllegalArgumentException("Missing closing token: " + END_TOKEN);
       }
-      buf.append(expr, from, start);
-      String ref = expr.substring(start + START_TOKEN.length(), end);
+      buf.append(expression, from, start);
+      String ref = expression.substring(start + START_TOKEN.length(), end);
       if (ref.length() == 0) {
         buf.append(record.toString()); // @{} means dump string representation of entire record
-        evaluate(end + 1, expr, record, buf, results);
+        evaluate(end + 1, record, buf, results);
       } else {
         List resolvedValues = record.getFields().get(ref);
-        if (start == 0 && end + 1 == expr.length()) { 
+        if (start == 0 && end + 1 == expression.length()) { 
           results.addAll(resolvedValues); // "@{first_name}" resolves to object list rather than string concat
         } else {
           for (Object value : resolvedValues) {
             StringBuilder buf2 = new StringBuilder(buf);
             buf2.append(value.toString());
-            evaluate(end + 1, expr, record, buf2, results);
+            evaluate(end + 1, record, buf2, results);
           }
         }
       }

@@ -65,7 +65,7 @@ public class MorphlineContext {
         try {
           CommandBuilder builder = builderClass.newInstance();
           for (String builderName : builder.getNames()) {
-            LOG.info("Registering CommandBuilder named: {} for class: {}", builderName, builderClass.getName());
+            LOG.info("Importing CommandBuilder named: {} for class: {}", builderName, builderClass.getName());
             if (builderName.contains(".")) {
               LOG.warn("CommandBuilder name should not contain a period character: " + builderName);
             }
@@ -148,6 +148,8 @@ public class MorphlineContext {
     
     protected MorphlineContext context = create();
     private MetricsRegistry metricsRegistry;
+    
+    public Builder() {}
 
     public Builder setMetricsRegistry(MetricsRegistry metricsRegistry) {
       Preconditions.checkNotNull(metricsRegistry);
