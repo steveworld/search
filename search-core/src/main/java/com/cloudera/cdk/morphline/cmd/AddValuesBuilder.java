@@ -13,53 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudera.cdk.morphline.api;
+package com.cloudera.cdk.morphline.cmd;
 
 import java.util.Collections;
 import java.util.Set;
 
-import com.cloudera.cdk.morphline.base.AbstractCommand;
+import com.cloudera.cdk.morphline.api.Command;
+import com.cloudera.cdk.morphline.api.CommandBuilder;
+import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.typesafe.config.Config;
 
-public final class CopyTestCommandBuilder implements CommandBuilder {
+/**
+ * For each input field value, add the value to the given record output field.
+ */
+public final class AddValuesBuilder implements CommandBuilder {
 
   @Override
   public Set<String> getNames() {
-    return Collections.singleton("copyTest");
+    return Collections.singleton("addValues");
   }
-  
+
   @Override
   public Command build(Config config, Command parent, Command child, MorphlineContext context) {
-    return new CopyTestCommand(config, parent, child, context);
+    return new AddValues(config, parent, child, context);
   }
   
   
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
   ///////////////////////////////////////////////////////////////////////////////
-  private static final class CopyTestCommand extends AbstractCommand {
+  private static final class AddValues extends AbstractAddValuesCommand {
 
-    private String name;
-    private int count;
-    
-    public CopyTestCommand(Config config, Command parent, Command child, MorphlineContext context) {
-      super(config, parent, child, context);
-      this.name = Configs.getString(config, "name");
-      this.count = Configs.getInt(config, "count", 2);
+    public AddValues(Config config, Command parent, Command child, MorphlineContext context) {
+      super(config, parent, child, context);      
     }
-    
-    @Override
-    public boolean process(Record record) {
-      for (int i = 0; i < count; i++) {
-        Record next = record.copy();
-        next.replaceValues(name, i);
-        if (!getChild().process(next)) {
-          return false;
-        }
-      }
-      return true;
-    }
-    
+        
   }
-  
+    
 }

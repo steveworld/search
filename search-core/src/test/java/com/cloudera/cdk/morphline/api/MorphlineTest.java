@@ -70,6 +70,58 @@ public class MorphlineTest extends Assert {
   }
 
   @Test
+  public void testAddValues() throws Exception {
+    Config config = parse("test-morphlines/addValues");    
+    morphline = createMorphline(config);    
+    Record record = new Record();
+    record.getFields().put("first_name", "Nadja");
+    morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    morphline.process(record);
+    Record expected = new Record();
+    expected.getFields().put("first_name", "Nadja");
+    expected.getFields().put("source_type", "text/log");
+    expected.getFields().put("source_type", "text/log2");
+    expected.getFields().put("source_host", 123);
+    expected.getFields().put("name", "Nadja");
+    expected.getFields().put("names", "Nadja");
+    expected.getFields().put("pids", 456);
+    expected.getFields().put("pids", "hello");
+    assertEquals(Arrays.asList(expected), collector.getRecords());
+    assertSame(record, collector.getRecords().get(0));
+  }
+
+  @Test
+  public void testSetValues() throws Exception {
+    Config config = parse("test-morphlines/setValues");    
+    morphline = createMorphline(config);    
+    Record record = new Record();
+    record.getFields().put("first_name", "Nadja");
+    record.getFields().put("source_type", "XXXX");
+    record.getFields().put("source_type", "XXXX");
+    record.getFields().put("source_host", 999);
+    record.getFields().put("name", "XXXX");
+    record.getFields().put("names", "XXXX");
+    record.getFields().put("pids", 789);
+    record.getFields().put("pids", "YYYY");
+
+    morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    morphline.process(record);
+    Record expected = new Record();
+    expected.getFields().put("first_name", "Nadja");
+    expected.getFields().put("source_type", "text/log");
+    expected.getFields().put("source_type", "text/log2");
+    expected.getFields().put("source_host", 123);
+    expected.getFields().put("name", "Nadja");
+    expected.getFields().put("names", "Nadja");
+    expected.getFields().put("pids", 456);
+    expected.getFields().put("pids", "hello");
+    assertEquals(Arrays.asList(expected), collector.getRecords());
+    assertSame(record, collector.getRecords().get(0));
+  }
+
+  @Test
   public void testTryRulesPass() throws Exception {
     Config config = parse("test-morphlines/tryRulesPass");    
     morphline = createMorphline(config);
