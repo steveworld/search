@@ -13,47 +13,49 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudera.cdk.morphline.api;
+package com.cloudera.cdk.morphline.cmd;
 
 import java.util.Collections;
 import java.util.Set;
 
-import com.cloudera.cdk.morphline.base.AbstractCommand;
+import com.cloudera.cdk.morphline.api.Command;
+import com.cloudera.cdk.morphline.api.CommandBuilder;
+import com.cloudera.cdk.morphline.api.MorphlineContext;
+import com.cloudera.cdk.morphline.api.Record;
 import com.typesafe.config.Config;
 
-public final class AddValuesTestCommandBuilder implements CommandBuilder {
+/**
+ * For each input field, set the given record output field to the same values.
+ * 
+ * That is, first remove all values from the output field, then add new values.
+ */
+public final class SetValuesBuilder implements CommandBuilder {
 
   @Override
   public Set<String> getNames() {
-    return Collections.singleton("addValuesTest");
+    return Collections.singleton("setValues");
   }
-  
+
   @Override
   public Command build(Config config, Command parent, Command child, MorphlineContext context) {
-    return new AddValuesTestCommand(config, parent, child, context);
+    return new SetValues(config, parent, child, context);
   }
   
   
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
   ///////////////////////////////////////////////////////////////////////////////
-  private static final class AddValuesTestCommand extends AbstractCommand {
+  private static final class SetValues extends AbstractAddValuesCommand {
 
-    private String name;
-    private String value;
-    
-    public AddValuesTestCommand(Config config, Command parent, Command child, MorphlineContext context) {
-      super(config, parent, child, context);
-      this.name = Configs.getString(config, "name");
-      this.value = Configs.getString(config, "value");
+    public SetValues(Config config, Command parent, Command child, MorphlineContext context) {
+      super(config, parent, child, context);      
     }
-    
+
     @Override
-    public boolean process(Record record) {
-      record.getFields().put(name, value);
-      return super.process(record);
+    protected void prepare(Record record, String key) {
+      record.removeAll(key);
     }
-    
+        
   }
-  
+    
 }
