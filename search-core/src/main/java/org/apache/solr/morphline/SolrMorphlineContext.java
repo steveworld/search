@@ -18,21 +18,52 @@ package org.apache.solr.morphline;
 import org.apache.solr.schema.IndexSchema;
 
 import com.cloudera.cdk.morphline.api.MorphlineContext;
-import com.yammer.metrics.core.MetricsRegistry;
+import com.google.common.base.Preconditions;
 
 /**
  * A context that is specific to Solr, in particular, includes the Solr schema of a Solr collection.
  */
 public class SolrMorphlineContext extends MorphlineContext {
 
-  private final IndexSchema schema;
+  private IndexSchema schema;
   
-  public SolrMorphlineContext(MetricsRegistry metricsRegistry, IndexSchema schema) {
-    super(metricsRegistry);
-    this.schema = schema;
-  }
-
+  /** For public access use {@link Builder#build()} instead */  
+  protected SolrMorphlineContext() {}
+  
   public IndexSchema getIndexSchema() {
+    assert schema != null;
     return schema;
   }
+
+  
+  ///////////////////////////////////////////////////////////////////////////////
+  // Nested classes:
+  ///////////////////////////////////////////////////////////////////////////////
+  /**
+   * Helper to construct a {@link SolrMorphlineContext} instance.
+   */
+  public static class Builder extends MorphlineContext.Builder {
+        
+    private IndexSchema schema;
+    
+    public Builder setIndexSchema(IndexSchema schema) {
+      Preconditions.checkNotNull(schema);
+      this.schema = schema;
+      return this;
+    }    
+
+    @Override
+    public SolrMorphlineContext build() {
+      Preconditions.checkNotNull(schema, "build() requires a prior call to setIndexSchema()");
+      ((SolrMorphlineContext)context).schema = schema;
+      return (SolrMorphlineContext) super.build();
+    }
+
+    @Override
+    protected SolrMorphlineContext create() {
+      return new SolrMorphlineContext();
+    }
+    
+  }
+ 
 }
