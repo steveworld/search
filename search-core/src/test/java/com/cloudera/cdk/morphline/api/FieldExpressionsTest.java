@@ -99,6 +99,8 @@ public class FieldExpressionsTest extends Assert {
     assertEquals(Arrays.asList("Nadja"), resolveExpression("@{first_name}", record));
     assertEquals(Arrays.asList("pembo", "shanti"), resolveExpression("@{likes}", record));
     assertEquals(Arrays.asList("Ms. Nadja"), resolveExpression("Ms. @{first_name}", record));
+    assertEquals(Arrays.asList(), resolveExpression("Ms. @{nonExistingField}", record));
+    assertEquals(Arrays.asList(), resolveExpression("@{nonExistingField}", record));
     
     assertEquals(Arrays.asList(
         "Ms. Nadja is 8 years old."), 

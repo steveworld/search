@@ -21,7 +21,7 @@ import java.util.List;
 import com.cloudera.cdk.morphline.api.Record;
 
 /**
- * Helper to fetch the values of a field of a {@link Record} referred to by a dynamic reference,
+ * Helper to fetch the values of a field of a {@link Record} referred to by a field expression,
  * which is a String of the form <code>@{fieldname}</code>.
  */
 public final class FieldExpressions {
@@ -38,7 +38,7 @@ public final class FieldExpressions {
     int start = expr.indexOf(START_TOKEN, from);
     if (start < 0) { // START_TOKEN not found
       if (from == 0) {
-        results.add(expr);
+        results.add(expr); // fast path
       } else {
         buf.append(expr, from, expr.length());
         results.add(buf.toString());
