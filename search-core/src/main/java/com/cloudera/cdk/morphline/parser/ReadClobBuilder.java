@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
@@ -40,8 +40,8 @@ import com.typesafe.config.Config;
 public final class ReadClobBuilder implements CommandBuilder {
 
   @Override
-  public Set<String> getNames() {
-    return Collections.singleton("readClob");
+  public Collection<String> getNames() {
+    return Collections.singletonList("readClob");
   }
 
   @Override

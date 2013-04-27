@@ -18,8 +18,8 @@ package com.cloudera.cdk.morphline.tika;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorInputStream;
@@ -48,8 +48,8 @@ import com.typesafe.config.Config;
 public final class DecompressBuilder implements CommandBuilder {
 
   @Override
-  public Set<String> getNames() {
-    return Collections.singleton("decompress");
+  public Collection<String> getNames() {
+    return Collections.singletonList("decompress");
   }
 
   @Override

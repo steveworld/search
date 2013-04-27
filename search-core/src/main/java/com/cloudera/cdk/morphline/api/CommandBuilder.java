@@ -15,7 +15,7 @@
  */
 package com.cloudera.cdk.morphline.api;
 
-import java.util.Set;
+import java.util.Collection;
 
 import com.typesafe.config.Config;
 
@@ -29,7 +29,7 @@ public interface CommandBuilder {
    * 
    * The returned set can contain synonyms to enable backwards compatible name changes.
    */
-  Set<String> getNames();
+  Collection<String> getNames();
 
   /**
    * Creates and returns a command rooted at the given morphConfig.

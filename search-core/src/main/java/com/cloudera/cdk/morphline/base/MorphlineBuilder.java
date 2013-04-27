@@ -15,8 +15,8 @@
  */
 package com.cloudera.cdk.morphline.base;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
@@ -29,8 +29,8 @@ import com.typesafe.config.Config;
 public final class MorphlineBuilder implements CommandBuilder {
 
   @Override
-  public Set<String> getNames() {
-    return Collections.singleton("morphline");
+  public Collection<String> getNames() {
+    return Collections.singletonList("morphline");
   }
   
   @Override

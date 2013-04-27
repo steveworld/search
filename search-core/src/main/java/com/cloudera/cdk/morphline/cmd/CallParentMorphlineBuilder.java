@@ -15,8 +15,8 @@
  */
 package com.cloudera.cdk.morphline.cmd;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
@@ -30,8 +30,8 @@ import com.typesafe.config.Config;
 public final class CallParentMorphlineBuilder implements CommandBuilder {
 
   @Override
-  public Set<String> getNames() {
-    return Collections.singleton("callParentMorphline");
+  public Collection<String> getNames() {
+    return Collections.singletonList("callParentMorphline");
   }
 
   @Override

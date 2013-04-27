@@ -15,8 +15,8 @@
  */
 package com.cloudera.cdk.morphline.api;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 
 import com.cloudera.cdk.morphline.base.AbstractCommand;
 import com.typesafe.config.Config;
@@ -24,8 +24,8 @@ import com.typesafe.config.Config;
 public final class CopyTestCommandBuilder implements CommandBuilder {
 
   @Override
-  public Set<String> getNames() {
-    return Collections.singleton("copyTest");
+  public Collection<String> getNames() {
+    return Collections.singletonList("copyTest");
   }
   
   @Override

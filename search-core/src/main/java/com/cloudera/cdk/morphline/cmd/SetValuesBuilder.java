@@ -15,8 +15,8 @@
  */
 package com.cloudera.cdk.morphline.cmd;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
@@ -32,8 +32,8 @@ import com.typesafe.config.Config;
 public final class SetValuesBuilder implements CommandBuilder {
 
   @Override
-  public Set<String> getNames() {
-    return Collections.singleton("setValues");
+  public Collection<String> getNames() {
+    return Collections.singletonList("setValues");
   }
 
   @Override
