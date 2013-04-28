@@ -30,6 +30,9 @@ public final class FieldExpression {
   
   private String expression;
   
+  private static final String START_TOKEN = "@{";
+  private static final char END_TOKEN = '}';
+  
   public FieldExpression(String expression, Config config) {
     Preconditions.checkNotNull(expression);
     this.expression = expression; // TODO: optimize by separating compilation and evaluation phase
@@ -43,8 +46,6 @@ public final class FieldExpression {
   }
 
   private void evaluate(int from, Record record, StringBuilder buf, ArrayList results) {
-    String START_TOKEN = "@{";
-    char END_TOKEN = '}';
     int start = expression.indexOf(START_TOKEN, from);
     if (start < 0) { // START_TOKEN not found
       if (from == 0) {
