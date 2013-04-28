@@ -27,10 +27,8 @@ import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.Fields;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
-import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.google.common.io.CharStreams;
-import com.google.common.io.Closeables;
 import com.typesafe.config.Config;
 
 /**
@@ -63,27 +61,16 @@ public final class ReadClobBuilder implements CommandBuilder {
     }
   
     @Override
-    protected boolean process(Record inputRecord, InputStream stream) {
+    protected boolean process(Record inputRecord, InputStream stream) throws IOException {
       String charsetName = detectCharset(inputRecord, charset);  
-      Reader reader = null;
-      try {
-        reader = new InputStreamReader(stream, charsetName);
-        String clob = CharStreams.toString(reader);
-        Record outputRecord = inputRecord.copy();
-        removeAttachments(outputRecord);
-        outputRecord.replaceValues(Fields.MESSAGE, clob);
-          
-        // pass record to next command in chain:
-        if (!getChild().process(outputRecord)) {
-          return false;
-        }
+      Reader reader = new InputStreamReader(stream, charsetName);
+      String clob = CharStreams.toString(reader);
+      Record outputRecord = inputRecord.copy();
+      removeAttachments(outputRecord);
+      outputRecord.replaceValues(Fields.MESSAGE, clob);
         
-        return true;
-      } catch (IOException e) {
-        throw new MorphlineRuntimeException(e);
-      } finally {
-        Closeables.closeQuietly(reader);
-      }
+      // pass record to next command in chain:
+      return getChild().process(outputRecord);
     }
       
   }

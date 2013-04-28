@@ -30,10 +30,8 @@ import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.Fields;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
-import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Validator;
-import com.google.common.io.Closeables;
 import com.typesafe.config.Config;
 
 /**
@@ -96,56 +94,49 @@ public final class ReadMultiLineBuilder implements CommandBuilder {
     }
 
     @Override
-    protected boolean process(Record inputRecord, InputStream stream) {
+    protected boolean process(Record inputRecord, InputStream stream) throws IOException {
       String charsetName = detectCharset(inputRecord, charset);  
-      Reader reader = null;
-      try {
-        reader = new InputStreamReader(stream, charsetName);
-        BufferedReader lineReader = new BufferedReader(reader);
-        Matcher matcher = regex.matcher("");
-        StringBuilder lines = null;
-        String line;
-        
-        while ((line = lineReader.readLine()) != null) {
-          if (lines == null) {
-            lines = new StringBuilder(line);
-          } else {
-            boolean isMatch = matcher.reset(line).matches();
-            if (negate) {
-              isMatch = !isMatch;
+      Reader reader = new InputStreamReader(stream, charsetName);
+      BufferedReader lineReader = new BufferedReader(reader);
+      Matcher matcher = regex.matcher("");
+      StringBuilder lines = null;
+      String line;
+      
+      while ((line = lineReader.readLine()) != null) {
+        if (lines == null) {
+          lines = new StringBuilder(line);
+        } else {
+          boolean isMatch = matcher.reset(line).matches();
+          if (negate) {
+            isMatch = !isMatch;
+          }
+          /*
+          not match && previous --> do next
+          not match && next     --> do previous
+          match && previous     --> do previous
+          match && next         --> do next             
+          */
+          boolean doPrevious = (what == What.previous);
+          if (!isMatch) {
+            doPrevious = !doPrevious;
+          }
+          
+          if (doPrevious) { // do previous
+            lines.append('\n');
+            lines.append(line);
+          } else {          // do next
+            if (lines.length() > 0 && !flushRecord(inputRecord, lines.toString())) {
+              return false;
             }
-            /*
-            not match && previous --> do next
-            not match && next     --> do previous
-            match && previous     --> do previous
-            match && next         --> do next             
-            */
-            boolean doPrevious = (what == What.previous);
-            if (!isMatch) {
-              doPrevious = !doPrevious;
-            }
-            
-            if (doPrevious) { // do previous
-              lines.append('\n');
-              lines.append(line);
-            } else {          // do next
-              if (lines.length() > 0 && !flushRecord(inputRecord, lines.toString())) {
-                return false;
-              }
-              lines.setLength(0);
-              lines.append(line);              
-            }
-          }          
-        }
-        if (lines != null && lines.length() > 0) {
-          return flushRecord(inputRecord, lines.toString());
-        }
-        return true;
-      } catch (IOException e) {
-        throw new MorphlineRuntimeException(e);
-      } finally {
-        Closeables.closeQuietly(reader);
+            lines.setLength(0);
+            lines.append(line);              
+          }
+        }          
       }
+      if (lines != null && lines.length() > 0) {
+        return flushRecord(inputRecord, lines.toString());
+      }
+      return true;
     }
 
     private boolean flushRecord(Record inputRecord, String lines) {
