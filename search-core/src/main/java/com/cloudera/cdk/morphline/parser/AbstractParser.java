@@ -16,6 +16,7 @@
 package com.cloudera.cdk.morphline.parser;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashSet;
@@ -78,12 +79,14 @@ public abstract class AbstractParser extends AbstractCommand {
     InputStream stream = createAttachmentInputStream(record);
     try {
       return process(record, stream);
+    } catch (IOException e) {
+      throw new MorphlineRuntimeException(e);
     } finally {
       Closeables.closeQuietly(stream);
     }
   }
   
-  protected abstract boolean process(Record record, InputStream stream);
+  protected abstract boolean process(Record record, InputStream stream) throws IOException;
 
   private boolean isMimeTypeSupported(String mediaTypeStr, Record record) {
     if (supportedMimeTypes == null) {

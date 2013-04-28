@@ -559,7 +559,6 @@ public class MorphlineTest extends Assert {
   
   private Command createMorphline(Config config) {
     return new MorphlineBuilder().build(config, new Connector(), collector, createMorphlineContext());
-//  return new Morphline(config, new Connector(), collector, new MorphlineContext());
   }
 
   private MorphlineContext createMorphlineContext() {
