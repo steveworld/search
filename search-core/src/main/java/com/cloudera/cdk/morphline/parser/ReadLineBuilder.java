@@ -29,9 +29,7 @@ import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.Fields;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineParsingException;
-import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
-import com.google.common.io.Closeables;
 import com.typesafe.config.Config;
 
 /**
@@ -71,42 +69,34 @@ public final class ReadLineBuilder implements CommandBuilder {
     }
   
     @Override
-    protected boolean process(Record inputRecord, InputStream stream) {
+    protected boolean process(Record inputRecord, InputStream stream) throws IOException {
       String charsetName = detectCharset(inputRecord, charset);  
-      Reader reader = null;
-      try {
-        reader = new InputStreamReader(stream, charsetName);
-        BufferedReader lineReader = new BufferedReader(reader);
-        boolean isFirst = true;
-        String line;
-  
-        while ((line = lineReader.readLine()) != null) {
-          if (isFirst && ignoreFirstLine) {
-            isFirst = false;
-            continue; // ignore first line
-          }
-          if (line.length() == 0) {
-            continue; // ignore empty lines
-          }
-          if (commentPrefix != null && line.startsWith(commentPrefix)) {
-            continue; // ignore comments
-          }
-          Record outputRecord = inputRecord.copy();
-          removeAttachments(outputRecord);
-          outputRecord.replaceValues(Fields.MESSAGE, line);
-          
-          // pass record to next command in chain:
-          if (!getChild().process(outputRecord)) {
-            return false;
-          }
+      Reader reader = new InputStreamReader(stream, charsetName);
+      BufferedReader lineReader = new BufferedReader(reader);
+      boolean isFirst = true;
+      String line;
+
+      while ((line = lineReader.readLine()) != null) {
+        if (isFirst && ignoreFirstLine) {
+          isFirst = false;
+          continue; // ignore first line
         }
+        if (line.length() == 0) {
+          continue; // ignore empty lines
+        }
+        if (commentPrefix != null && line.startsWith(commentPrefix)) {
+          continue; // ignore comments
+        }
+        Record outputRecord = inputRecord.copy();
+        removeAttachments(outputRecord);
+        outputRecord.replaceValues(Fields.MESSAGE, line);
         
-        return true;
-      } catch (IOException e) {
-        throw new MorphlineRuntimeException(e);
-      } finally {
-        Closeables.closeQuietly(reader);
+        // pass record to next command in chain:
+        if (!getChild().process(outputRecord)) {
+          return false;
+        }
       }
+      return true;        
     }
       
   }

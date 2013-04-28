@@ -168,7 +168,7 @@ public abstract class AbstractParser extends AbstractCommand {
     }
   }
 
-  protected void removeAttachments(Record outputRecord) {
+  public static void removeAttachments(Record outputRecord) {
     outputRecord.removeAll(Fields.ATTACHMENT_BODY);
     outputRecord.removeAll(Fields.ATTACHMENT_MIME_TYPE);
     outputRecord.removeAll(Fields.ATTACHMENT_CHARSET);

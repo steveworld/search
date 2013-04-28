@@ -28,9 +28,7 @@ import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineParsingException;
-import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
-import com.google.common.io.Closeables;
 import com.googlecode.jcsv.CSVStrategy;
 import com.googlecode.jcsv.reader.CSVReader;
 import com.googlecode.jcsv.reader.internal.CSVReaderBuilder;
@@ -89,41 +87,33 @@ public final class ReadCSVBuilder implements CommandBuilder {
     }
   
     @Override
-    protected boolean process(Record inputRecord, InputStream stream) {
+    protected boolean process(Record inputRecord, InputStream stream) throws IOException {
       String charsetName = detectCharset(inputRecord, charset);  
-      Reader reader = null;
-      try {
-        reader = new InputStreamReader(stream, charsetName);
-        CSVReader<String[]> csvReader = createCSVReader(reader);      
-        String[] columnValues;
-        
-        while ((columnValues = csvReader.readNext()) != null) {
-          Record outputRecord = inputRecord.copy();
-          removeAttachments(outputRecord);
-          for (int i = 0; i < columnValues.length; i++) {
-            if (i >= columnNames.size()) {
-              columnNames.add("column" + i);
-            }
-            String columnName = columnNames.get(i);
-            outputRecord.removeAll(columnName);
-            if (columnName.length() > 0) { // empty column name indicates omit this field on output
-              outputRecord.put(columnName, trim(columnValues[i]));
-            }
+      Reader reader = new InputStreamReader(stream, charsetName);
+      CSVReader<String[]> csvReader = createCSVReader(reader);      
+      String[] columnValues;
+      
+      while ((columnValues = csvReader.readNext()) != null) {
+        Record outputRecord = inputRecord.copy();
+        removeAttachments(outputRecord);
+        for (int i = 0; i < columnValues.length; i++) {
+          if (i >= columnNames.size()) {
+            columnNames.add("column" + i);
           }
-          
-          // pass record to next command in chain:
-          if (!getChild().process(outputRecord)) {
-            return false;
+          String columnName = columnNames.get(i);
+          outputRecord.removeAll(columnName);
+          if (columnName.length() > 0) { // empty column name indicates omit this field on output
+            outputRecord.put(columnName, trim(columnValues[i]));
           }
         }
         
-        csvReader.close();
-        return true;
-      } catch (IOException e) {
-        throw new MorphlineRuntimeException(e);
-      } finally {
-        Closeables.closeQuietly(reader);
+        // pass record to next command in chain:
+        if (!getChild().process(outputRecord)) {
+          return false;
+        }
       }
+      
+      return true;
     }
 
     private String trim(String str) {
