@@ -42,7 +42,6 @@ import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
 import com.cloudera.cdk.morphline.base.Fields;
-import com.cloudera.cdk.morphline.parser.AbstractParser;
 import com.google.common.annotations.Beta;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
@@ -156,7 +155,6 @@ public final class ExtractAvroPathsBuilder implements CommandBuilder {
       Preconditions.checkNotNull(datum);
       Preconditions.checkNotNull(datum.getSchema());      
       Record outputRecord = inputRecord.copy();
-      AbstractParser.removeAttachments(outputRecord);
       
       for (Map.Entry<String, Collection<String>> entry : stepMap.entrySet()) {
         String fieldName = entry.getKey();
