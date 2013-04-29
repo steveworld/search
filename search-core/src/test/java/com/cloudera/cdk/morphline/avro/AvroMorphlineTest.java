@@ -46,6 +46,7 @@ import org.junit.Test;
 import com.cloudera.cdk.morphline.api.AbstractMorphlineTest;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Fields;
+import com.cloudera.cdk.morphline.parser.AbstractParser;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 
@@ -141,6 +142,7 @@ public class AvroMorphlineTest extends AbstractMorphlineTest {
     assertTrue(load(event));
     assertEquals(1, queryResultSetSize("*:*"));
     Record first = collector.getFirstRecord();    
+    AbstractParser.removeAttachments(first);
     assertEquals(Arrays.asList(1, 2, 3, 4, 5, 10, 20, 100, 200), first.get("/price"));
     assertEquals(1, first.getFields().asMap().size());
   }
@@ -298,6 +300,7 @@ public class AvroMorphlineTest extends AbstractMorphlineTest {
     assertEquals(Arrays.asList(20, 40, 60), first.get("/links/forward"));
     assertEquals(Arrays.asList("http://A", "http://B"), first.get("/name/url"));
     assertEquals(Arrays.asList(10), first.get("/docId"));
+    AbstractParser.removeAttachments(first);
     assertEquals(5, first.getFields().asMap().size());
   }
   
@@ -347,6 +350,7 @@ public class AvroMorphlineTest extends AbstractMorphlineTest {
     assertEquals(1, queryResultSetSize("*:*"));
     Record first = collector.getFirstRecord();
     assertEquals(Arrays.asList("nadja"), first.get("/mapField/foo/label"));
+    AbstractParser.removeAttachments(first);
     assertEquals(1, first.getFields().asMap().size());
   }
 

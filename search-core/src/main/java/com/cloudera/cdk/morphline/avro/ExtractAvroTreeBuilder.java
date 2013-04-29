@@ -37,7 +37,6 @@ import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
 import com.cloudera.cdk.morphline.base.Fields;
-import com.cloudera.cdk.morphline.parser.AbstractParser;
 import com.google.common.annotations.Beta;
 import com.google.common.base.Preconditions;
 import com.typesafe.config.Config;
@@ -98,7 +97,6 @@ public final class ExtractAvroTreeBuilder implements CommandBuilder {
       Preconditions.checkNotNull(datum);
       Preconditions.checkNotNull(datum.getSchema());      
       Record outputRecord = inputRecord.copy();
-      AbstractParser.removeAttachments(outputRecord);
       
       extractTree(datum, datum.getSchema(), outputRecord, outputFieldPrefix);
         
