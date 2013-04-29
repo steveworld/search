@@ -31,7 +31,7 @@ public class AbstractMorphlineTest extends Assert {
   protected Collector collector;
   protected Command morphline;
   
-//  protected static final String RESOURCES_DIR = "target/test-classes";
+  protected static final String RESOURCES_DIR = "target/test-classes";
   
   @Before
   public void setUp() throws Exception {

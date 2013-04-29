@@ -51,6 +51,9 @@ import com.typesafe.config.Config;
  */
 public final class ReadAvroContainerBuilder implements CommandBuilder {
 
+  /** The MIME type that input attachments shall have */
+  public static final String MIME_TYPE = "avro/binary";
+  
   @Override
   public Collection<String> getNames() {
     return Collections.singletonList("readAvroContainer");

@@ -32,6 +32,11 @@ public class MorphlineParsingException extends RuntimeException {
     super(msg + render(config), th);
   }
 
+  public MorphlineParsingException(String msg, Config config, Throwable th, CommandBuilder builder) {
+    this(msg + " for command: " + builder.getNames() + " with builder: "
+        + builder.getClass().getName(), config, th);
+  }
+
   private static String render(Config config) {
     return " near: " + config.root().render();
   }

@@ -15,29 +15,41 @@
  */
 package com.cloudera.cdk.morphline.tika;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 
+import org.apache.tika.config.ServiceLoader;
 import org.apache.tika.config.TikaConfig;
+import org.apache.tika.detect.DefaultDetector;
 import org.apache.tika.detect.Detector;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
+import org.apache.tika.mime.MimeTypeException;
+import org.apache.tika.mime.MimeTypes;
+import org.apache.tika.mime.MimeTypesFactory;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
+import com.cloudera.cdk.morphline.api.MorphlineParsingException;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.google.common.base.Preconditions;
+import com.google.common.io.Closeables;
 import com.typesafe.config.Config;
 
 /**
@@ -52,7 +64,13 @@ public final class DetectMimeTypeBuilder implements CommandBuilder {
   
   @Override
   public Command build(Config config, Command parent, Command child, MorphlineContext context) {
-    return new DetectMimeType(config, parent, child, context);
+    try {
+      return new DetectMimeType(config, parent, child, context);
+    } catch (IOException e) {
+      throw new MorphlineParsingException("Cannot instantiate command", config, e, this);
+    } catch (MimeTypeException e) {
+      throw new MorphlineParsingException("Cannot instantiate command", config, e, this);
+    }
   }
   
   
@@ -65,23 +83,52 @@ public final class DetectMimeTypeBuilder implements CommandBuilder {
     private final boolean includeMetaData;
     private final boolean excludeParameters;
     
-    public DetectMimeType(Config config, Command parent, Command child, MorphlineContext context) {
+    public DetectMimeType(Config config, Command parent, Command child, MorphlineContext context) throws IOException, MimeTypeException {
       super(config, parent, child, context);
       this.includeMetaData = Configs.getBoolean(config, "includeMetaData", false);
       this.excludeParameters = Configs.getBoolean(config, "excludeParameters", true);
-      List<String> mimeTypeFiles = null;
-      if (config.hasPath("mimeTypesFiles")) {
-        mimeTypeFiles = Configs.getStringList(config, "mimeTypesFiles");
-        throw new UnsupportedOperationException(); // FIXME
-      } else {
-        try {
-          detector = new TikaConfig().getDetector();
-        } catch (TikaException e) {
-          throw new MorphlineRuntimeException(e);
-        } catch (IOException e) {
-          throw new MorphlineRuntimeException(e);
+      List<InputStream> inputStreams = new ArrayList();
+      try {
+        if (Configs.getBoolean(config, "includeDefaultMimeTypes", true)) {
+          // adapted from Tika MimeTypesFactory.create(String coreFilePath, String extensionFilePath)
+          String coreFilePath = "tika-mimetypes.xml"; 
+          String classPrefix = MimeTypesFactory.class.getPackage().getName().replace('.', '/') + "/"; 
+          ClassLoader cl = MimeTypesFactory.class.getClassLoader();       
+          URL coreURL = cl.getResource(classPrefix + coreFilePath);
+          InputStream in = new BufferedInputStream(coreURL.openStream());
+          inputStreams.add(in);
         }
-      }      
+        for (String mimeTypesFile : Configs.getStringList(config, "mimeTypesFiles", Collections.EMPTY_LIST)) {
+          InputStream in = new BufferedInputStream(new FileInputStream(new File(mimeTypesFile)));
+          inputStreams.add(in);
+        }
+        String mimeTypesString = Configs.getString(config, "mimeTypesString", null);
+        if (mimeTypesString != null) {
+          InputStream in = new ByteArrayInputStream(mimeTypesString.getBytes("UTF-8"));
+          inputStreams.add(in);
+        }
+        
+        if (inputStreams.size() > 0) {
+          MimeTypes mimeTypes = MimeTypesFactory.create(inputStreams.toArray(new InputStream[inputStreams.size()]));
+          ServiceLoader loader = new ServiceLoader();
+          this.detector = new DefaultDetector(mimeTypes, loader);
+        } else {
+          // FIXME throw an Exception instead?
+          if (true) throw new UnsupportedOperationException();
+          // this was old style config via classpath: 
+          try {
+            detector = new TikaConfig().getDetector();
+          } catch (TikaException e) {
+            throw new MorphlineRuntimeException(e);
+          } catch (IOException e) {
+            throw new MorphlineRuntimeException(e);
+          }
+        }      
+      } finally {
+        for (InputStream in : inputStreams) {
+          Closeables.closeQuietly(in);
+        }
+      }
     }
     
     @Override
