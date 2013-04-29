@@ -25,7 +25,7 @@ import com.google.common.base.Preconditions;
 /**
  * Command that is sandwiched between two other commands, chaining the two other commands together.
  */
-public final class Connector implements Command {
+final class Connector implements Command {
   
   private Command parent;
   private Command child;

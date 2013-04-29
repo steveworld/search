@@ -22,6 +22,7 @@ import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
+import com.google.common.base.Preconditions;
 import com.typesafe.config.Config;
 
 /**
@@ -54,6 +55,14 @@ public final class CallParentMorphlineBuilder implements CommandBuilder {
       ; // don't forward to avoid endless loops
     }
     
+    private static Morphline getMorphline(Command p) {
+      while (!(p instanceof Morphline)) {
+        p = p.getParent();
+      }
+      Preconditions.checkNotNull(p);
+      return (Morphline) p;
+    }
+
   }
   
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudera.cdk.morphline.base;
+package com.cloudera.cdk.morphline.cmd;
 
 import java.util.Arrays;
 import java.util.List;
@@ -21,6 +21,7 @@ import java.util.List;
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
+import com.cloudera.cdk.morphline.base.AbstractCommand;
 import com.typesafe.config.Config;
 
 /**
@@ -37,7 +38,7 @@ final class Morphline extends AbstractCommand {
 
   public Morphline(Config config, Command parent, Command child, MorphlineContext context) {
     super(config, parent, child, context);
-    this.name = Configs.getString(config, "name", null);
+    this.name = Configs.getString(config, "name");
     this.productionMode = Configs.getBoolean(config, "productionMode", false);
     this.ignoreRecoverableExceptions = Configs.getBoolean(config, "ignoreRecoverableExceptions", false);
     this.ignoreLoads = Configs.getBoolean(config, "ignoreLoads", false);

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudera.cdk.morphline.base;
+package com.cloudera.cdk.morphline.cmd;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -21,6 +21,7 @@ import java.util.Collections;
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
+import com.cloudera.cdk.morphline.api.Record;
 import com.typesafe.config.Config;
 
 /**
@@ -35,7 +36,32 @@ public final class MorphlineBuilder implements CommandBuilder {
   
   @Override
   public Command build(Config config, Command parent, Command child, MorphlineContext context) {
-    return new Morphline(config, parent, child, context);
+    return new Morphline(config, (parent != null ? parent : new RootCommand()), child, context);
   }
+
+  
+  ///////////////////////////////////////////////////////////////////////////////
+  // Nested classes:
+  ///////////////////////////////////////////////////////////////////////////////
+  /**
+   * The root of the command tree (the parent at the top level).
+   */
+  private static final class RootCommand implements Command {
     
+    @Override
+    public Command getParent() {
+      return null;
+    }
+    
+    @Override
+    public void startSession() {
+      throw new UnsupportedOperationException("Root command should be invisible and must not be called");
+    }
+
+    @Override
+    public boolean process(Record record) {
+      throw new UnsupportedOperationException("Root command should be invisible and must not be called");
+    }
+
+  }
 }
