@@ -26,28 +26,28 @@ import com.google.common.base.Preconditions;
 import com.typesafe.config.Config;
 
 /**
- * Command that routes records to the enclosing morphline object.
+ * Command that routes records to the enclosing pipe morphline object.
  */
-public final class CallParentMorphlineBuilder implements CommandBuilder {
+public final class CallParentPipeBuilder implements CommandBuilder {
 
   @Override
   public Collection<String> getNames() {
-    return Collections.singletonList("callParentMorphline");
+    return Collections.singletonList("callParentPipe");
   }
 
   @Override
   public Command build(Config config, Command parent, Command child, MorphlineContext context) {
-    return new CallParentMorphline(config, parent, child, context);
+    return new CallParentPipe(config, parent, child, context);
   }
   
   
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
   ///////////////////////////////////////////////////////////////////////////////
-  private static final class CallParentMorphline extends AbstractCommand {
+  private static final class CallParentPipe extends AbstractCommand {
 
-    public CallParentMorphline(Config config, Command parent, Command child, MorphlineContext context) {
-      super(config, parent, getMorphline(parent), context);
+    public CallParentPipe(Config config, Command parent, Command child, MorphlineContext context) {
+      super(config, parent, getPipe(parent), context);
     }
     
     @Override
@@ -55,12 +55,12 @@ public final class CallParentMorphlineBuilder implements CommandBuilder {
       ; // don't forward to avoid endless loops
     }
     
-    private static Morphline getMorphline(Command p) {
-      while (!(p instanceof Morphline)) {
+    private static Pipe getPipe(Command p) {
+      while (!(p instanceof Pipe)) {
         p = p.getParent();
       }
       Preconditions.checkNotNull(p);
-      return (Morphline) p;
+      return (Pipe) p;
     }
 
   }

@@ -22,8 +22,8 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 
 import com.cloudera.cdk.morphline.api.Command;
-import com.cloudera.cdk.morphline.api.Fields;
 import com.cloudera.cdk.morphline.api.Record;
+import com.cloudera.cdk.morphline.base.Fields;
 import com.google.common.io.Closeables;
 
 /**

@@ -23,6 +23,7 @@ import java.util.Map;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.shaded.com.google.code.regexp.Matcher;
 import com.cloudera.cdk.morphline.shaded.com.google.code.regexp.Pattern;
 import com.typesafe.config.Config;

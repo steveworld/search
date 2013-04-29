@@ -56,7 +56,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
-import com.cloudera.cdk.morphline.cmd.MorphlineBuilder;
+import com.cloudera.cdk.morphline.base.Fields;
+import com.cloudera.cdk.morphline.cmd.PipeBuilder;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.yammer.metrics.core.MetricsRegistry;
@@ -598,11 +599,11 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
   }
 
   protected Command createMorphline(String file) {
-    return new MorphlineBuilder().build(parse(file), null, collector, createMorphlineContext());
+    return new PipeBuilder().build(parse(file), null, collector, createMorphlineContext());
   }
 
   protected Command createMorphline(Config config) {
-    return new MorphlineBuilder().build(config, null, collector, createMorphlineContext());
+    return new PipeBuilder().build(config, null, collector, createMorphlineContext());
   }
 
   private MorphlineContext createMorphlineContext() {

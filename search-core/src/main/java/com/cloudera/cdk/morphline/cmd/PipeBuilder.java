@@ -25,18 +25,18 @@ import com.cloudera.cdk.morphline.api.Record;
 import com.typesafe.config.Config;
 
 /**
- * Factory to create morphline instances.
+ * Factory to create morphline pipe instances.
  */
-public final class MorphlineBuilder implements CommandBuilder {
+public final class PipeBuilder implements CommandBuilder {
 
   @Override
   public Collection<String> getNames() {
-    return Collections.singletonList("morphline");
+    return Collections.singletonList("pipe");
   }
   
   @Override
   public Command build(Config config, Command parent, Command child, MorphlineContext context) {
-    return new Morphline(config, (parent != null ? parent : new RootCommand()), child, context);
+    return new Pipe(config, (parent != null ? parent : new RootCommand()), child, context);
   }
 
   

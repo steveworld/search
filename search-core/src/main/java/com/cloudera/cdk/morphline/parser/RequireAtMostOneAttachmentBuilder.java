@@ -24,10 +24,10 @@ import org.slf4j.Logger;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
-import com.cloudera.cdk.morphline.api.Fields;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
+import com.cloudera.cdk.morphline.base.Fields;
 import com.google.common.base.Preconditions;
 import com.typesafe.config.Config;
 
