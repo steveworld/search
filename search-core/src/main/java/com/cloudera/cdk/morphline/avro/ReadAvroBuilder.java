@@ -84,13 +84,22 @@ public final class ReadAvroBuilder implements CommandBuilder {
           try { 
             this.schema = new Parser().parse(new File(schemaFile));
           } catch (IOException e) {
-            throw new MorphlineParsingException("Cannot parse Avro schema file: " + schemaFile, config, e);
+            throw new MorphlineParsingException("Cannot parse external Avro schema file: " + schemaFile, config, e);
           }
         } else {
           this.schema = null;
         }
       }
       this.isJson = Configs.getBoolean(config, "isJson", false);
+      validate();
+    }
+    
+    /** Override and disable check in subclasses as appropriate */
+    protected void validate() {
+      if (schema == null) {
+        throw new MorphlineParsingException(
+            "You must specify an external Avro schema because this is required to read containerless Avro", getConfig());
+      }
     }
     
     /** Returns the Avro schema to use for reading */
