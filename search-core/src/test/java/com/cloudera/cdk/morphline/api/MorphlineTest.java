@@ -15,43 +15,20 @@
  */
 package com.cloudera.cdk.morphline.api;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.cloudera.cdk.morphline.base.Connector;
-import com.cloudera.cdk.morphline.base.MorphlineBuilder;
 import com.cloudera.cdk.morphline.shaded.com.google.code.regexp.Matcher;
 import com.cloudera.cdk.morphline.shaded.com.google.code.regexp.Pattern;
 import com.typesafe.config.Config;
-import com.yammer.metrics.core.MetricsRegistry;
 
-public class MorphlineTest extends Assert {
+public class MorphlineTest extends AbstractMorphlineTest {
   
-  private Collector collector;
-  private Command morphline;
-  
-//  protected static final String RESOURCES_DIR = "target/test-classes";
-  
-  @Before
-  public void setUp() throws Exception {
-    collector = new Collector();
-  }
-  
-  @After
-  public void tearDown() throws Exception {
-    collector = null;
-  }
-    
   @Test
   public void testParseComplexConfig() throws Exception {
     parse("test-morphlines/parseComplexConfig");
@@ -59,8 +36,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testMorphlineWithTwoBasicCommands() throws Exception {
-    Config config = parse("test-morphlines/morphlineWithTwoBasicCommands");    
-    morphline = createMorphline(config);    
+    morphline = createMorphline("test-morphlines/morphlineWithTwoBasicCommands");    
     Record record = createBasicRecord();
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
@@ -71,8 +47,7 @@ public class MorphlineTest extends Assert {
 
   @Test
   public void testAddValues() throws Exception {
-    Config config = parse("test-morphlines/addValues");    
-    morphline = createMorphline(config);    
+    morphline = createMorphline("test-morphlines/addValues");    
     Record record = new Record();
     record.getFields().put("first_name", "Nadja");
     morphline.startSession();
@@ -93,8 +68,7 @@ public class MorphlineTest extends Assert {
 
   @Test
   public void testSetValues() throws Exception {
-    Config config = parse("test-morphlines/setValues");    
-    morphline = createMorphline(config);    
+    morphline = createMorphline("test-morphlines/setValues");    
     Record record = new Record();
     record.getFields().put("first_name", "Nadja");
     record.getFields().put("source_type", "XXXX");
@@ -123,8 +97,7 @@ public class MorphlineTest extends Assert {
 
   @Test
   public void testTryRulesPass() throws Exception {
-    Config config = parse("test-morphlines/tryRulesPass");    
-    morphline = createMorphline(config);
+    morphline = createMorphline("test-morphlines/tryRulesPass");    
     Record record = new Record();
     record.getFields().put("first_name", "Nadja");
     List<Record> expectedList = new ArrayList();
@@ -143,8 +116,7 @@ public class MorphlineTest extends Assert {
 
   @Test
   public void testTryRulesFail() throws Exception {
-    Config config = parse("test-morphlines/tryRulesFail");    
-    morphline = createMorphline(config);
+    morphline = createMorphline("test-morphlines/tryRulesFail");    
     Record record = new Record();
     record.getFields().put("first_name", "Nadja");
     List<Record> expectedList = new ArrayList();
@@ -163,8 +135,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testTryRulesFailTwice() throws Exception {
-    Config config = parse("test-morphlines/tryRulesFailTwice");    
-    morphline = createMorphline(config);
+    morphline = createMorphline("test-morphlines/tryRulesFailTwice");    
     Record record = new Record();
     record.getFields().put("first_name", "Nadja");
     List<Record> expectedList = new ArrayList();
@@ -187,8 +158,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testIfThenElseBasicThen() throws Exception {
-    Config config = parse("test-morphlines/ifThenElseBasicThen");    
-    morphline = createMorphline(config);
+    morphline = createMorphline("test-morphlines/ifThenElseBasicThen");    
     Record record = createBasicRecord();
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
@@ -200,8 +170,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testIfThenElseBasicThenEmpty() throws Exception {
-    Config config = parse("test-morphlines/ifThenElseBasicThenEmpty");    
-    morphline = createMorphline(config);
+    morphline = createMorphline("test-morphlines/ifThenElseBasicThenEmpty");    
     Record record = createBasicRecord();
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
@@ -213,8 +182,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testIfThenElseBasicElse() throws Exception {
-    Config config = parse("test-morphlines/ifThenElseBasicElse");    
-    morphline = createMorphline(config);
+    morphline = createMorphline("test-morphlines/ifThenElseBasicElse");    
     Record record = createBasicRecord();
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
@@ -226,8 +194,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testIfThenElseBasicElseEmpty() throws Exception {
-    Config config = parse("test-morphlines/ifThenElseBasicElseEmpty");    
-    morphline = createMorphline(config);
+    morphline = createMorphline("test-morphlines/ifThenElseBasicElseEmpty");    
     Record record = createBasicRecord();
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
@@ -239,9 +206,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testNotBasicTrue() throws Exception {
-    Config config = parse("test-morphlines/notBasicTrue");    
-    System.out.println(config);
-    morphline = createMorphline(config);
+    morphline = createMorphline("test-morphlines/notBasicTrue");    
     Record record = createBasicRecord();
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
@@ -253,8 +218,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testNotBasicFalse() throws Exception {
-    Config config = parse("test-morphlines/notBasicFalse");    
-    morphline = createMorphline(config);
+    morphline = createMorphline("test-morphlines/notBasicFalse");    
     Record record = createBasicRecord();
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
@@ -264,8 +228,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testReadClobBasic() throws Exception {
-    Config config = parse("test-morphlines/readClobBasic");    
-    morphline = createMorphline(config);
+    morphline = createMorphline("test-morphlines/readClobBasic");    
     Record record = new Record();
     String msg = "foo";
     record.getFields().put(Fields.ATTACHMENT_BODY, msg.getBytes("UTF-8"));
@@ -280,8 +243,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testJavaBasic() throws Exception {
-    Config config = parse("test-morphlines/javaBasic");    
-    morphline = createMorphline(config);
+    morphline = createMorphline("test-morphlines/javaBasic");    
     Record record = new Record();
     record.getFields().put("tags", "hello");
     morphline.startSession();
@@ -296,8 +258,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testJavaRuntimeException() throws Exception {
-    Config config = parse("test-morphlines/javaRuntimeException");    
-    morphline = createMorphline(config);
+    morphline = createMorphline("test-morphlines/javaRuntimeException");    
     Record record = new Record();
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
@@ -338,12 +299,11 @@ public class MorphlineTest extends Assert {
   
   private void testGrokSyslogMatchInternal(boolean inplace, boolean twoExpressions) throws Exception {
     // match
-    Config config = parse(
+    morphline = createMorphline(
         "test-morphlines/grokSyslogMatch" 
         + (inplace ? "Inplace" : "")
         + (twoExpressions ? "TwoExpressions" : "") 
         + "");
-    morphline = createMorphline(config);
     Record record = new Record();
     String msg = "<164>Feb  4 10:46:14 syslog sshd[607]: Server listening on 0.0.0.0 port 22.";
     record.getFields().put(Fields.MESSAGE, msg);
@@ -416,12 +376,11 @@ public class MorphlineTest extends Assert {
   
   private void testGrokFindSubstringsInternal(boolean inplace, boolean twoExpressions) throws Exception {
     // match
-    Config config = parse(
+    morphline = createMorphline(
         "test-morphlines/grokFindSubstrings" 
         + (inplace ? "Inplace" : "")
         + (twoExpressions ? "TwoExpressions" : "") 
         + "");
-    morphline = createMorphline(config);
     Record record = new Record();
     String msg = "hello\t\tworld\tfoo";
     record.getFields().put(Fields.MESSAGE, msg);
@@ -469,8 +428,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testConvertTimestamp() throws Exception {
-    Config config = parse("test-morphlines/convertTimestamp");    
-    morphline = createMorphline(config);
+    morphline = createMorphline("test-morphlines/convertTimestamp");    
     Record record = new Record();
     record.getFields().put("ts1", "2011-09-06T14:14:34.789Z"); // "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
     record.getFields().put("ts1", "2012-09-06T14:14:34"); 
@@ -488,8 +446,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testConvertTimestampEmpty() throws Exception {
-    Config config = parse("test-morphlines/convertTimestamp");
-    morphline = createMorphline(config);
+    morphline = createMorphline("test-morphlines/convertTimestamp");
     Record record = new Record();
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
@@ -501,8 +458,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testConvertTimestampBad() throws Exception {
-    Config config = parse("test-morphlines/convertTimestamp");
-    morphline = createMorphline(config);
+    morphline = createMorphline("test-morphlines/convertTimestamp");
     Record record = new Record();
     record.getFields().put("ts1", "this is an invalid timestamp");
     morphline.startSession();
@@ -513,8 +469,7 @@ public class MorphlineTest extends Assert {
   
   @Test
   public void testConvertTimestampWithDefaults() throws Exception {
-    Config config = parse("test-morphlines/convertTimestampWithDefaults");    
-    morphline = createMorphline(config);
+    morphline = createMorphline("test-morphlines/convertTimestampWithDefaults");    
     Record record = new Record();
     record.getFields().put(Fields.TIMESTAMP, "2011-09-06T14:14:34.789Z");
     record.getFields().put(Fields.TIMESTAMP, "2012-09-06T14:14:34"); 
@@ -557,14 +512,6 @@ public class MorphlineTest extends Assert {
     System.out.println("secs=" + secs);
   }
   
-  private Command createMorphline(Config config) {
-    return new MorphlineBuilder().build(config, new Connector(), collector, createMorphlineContext());
-  }
-
-  private MorphlineContext createMorphlineContext() {
-    return new MorphlineContext.Builder().setMetricsRegistry(new MetricsRegistry()).build();
-  }
-  
   private Record createBasicRecord() {
     Record record = new Record();
     record.getFields().put("first_name", "Nadja");
@@ -575,11 +522,4 @@ public class MorphlineTest extends Assert {
     return record;
   }
 
-  private Config parse(String file) throws IOException {
-//    Config config = Configs.parse(file);
-    Config config = Configs.parse(new File("src/test/resources/" + file + ".conf"));
-    config = config.getConfigList("morphlines").get(0);
-    return config;
-  }
-  
 }

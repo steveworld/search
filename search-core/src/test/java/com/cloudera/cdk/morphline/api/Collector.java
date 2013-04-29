@@ -63,6 +63,16 @@ public final class Collector implements Command {
     return records;
   }
   
+  public Record getFirstRecord() {
+    if (records.size() != 1) {
+      throw new IllegalStateException();
+    }
+    if (records.get(0) == null) {
+      throw new IllegalStateException();
+    }
+    return records.get(0);
+  }
+  
   public int getNumStartEvents() {
     return numStartEvents;
   }

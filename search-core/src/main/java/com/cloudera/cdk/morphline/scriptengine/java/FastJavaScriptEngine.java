@@ -76,7 +76,7 @@ public class FastJavaScriptEngine extends AbstractScriptEngine implements Compil
 					"Cannot find public static method: " + methodName); }
 		}
 
-		public Object eval(Object[] params) throws ScriptException {
+		public Object eval(Object... params) throws ScriptException {
 			try {
 				return targetMethod.invoke(null, params);
 			} catch (Exception e) {

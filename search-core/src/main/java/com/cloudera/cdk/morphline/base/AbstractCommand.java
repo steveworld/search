@@ -160,12 +160,4 @@ public abstract class AbstractCommand implements Command {
     return cmd;
   }
   
-  protected static Morphline getMorphline(Command p) {
-    while (!(p instanceof Morphline)) {
-      p = p.getParent();
-    }
-    Preconditions.checkNotNull(p);
-    return (Morphline) p;
-  }
-
 }
