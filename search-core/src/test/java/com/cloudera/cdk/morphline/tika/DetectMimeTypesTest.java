@@ -64,7 +64,6 @@ public class DetectMimeTypesTest extends AbstractMorphlineTest {
   
   @Test
   public void testDetectMimeTypesWithDefaultMimeTypes() throws Exception {
-    // config file uses mimeTypesString : """ some mime types go here """ 
     morphline = createMorphline("test-morphlines/detectMimeTypesWithDefaultMimeTypes");    
     Record record = new Record();    
     record.put(Fields.ATTACHMENT_BODY, Files.toByteArray(JPG_FILE));
