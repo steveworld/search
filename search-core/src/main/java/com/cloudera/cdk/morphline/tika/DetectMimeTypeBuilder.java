@@ -114,7 +114,7 @@ public final class DetectMimeTypeBuilder implements CommandBuilder {
           this.detector = new DefaultDetector(mimeTypes, loader);
         } else {
           // FIXME throw an Exception instead?
-          if (true) throw new UnsupportedOperationException();
+          if (true) throw new MorphlineParsingException("Missing specification for MIME type mappings", config);
           // this was old style config via classpath: 
           try {
             detector = new TikaConfig().getDetector();
