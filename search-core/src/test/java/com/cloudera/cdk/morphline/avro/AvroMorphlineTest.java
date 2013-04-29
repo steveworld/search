@@ -44,6 +44,7 @@ import org.apache.avro.util.Utf8;
 import org.junit.Test;
 
 import com.cloudera.cdk.morphline.api.AbstractMorphlineTest;
+import com.cloudera.cdk.morphline.api.MorphlineParsingException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.parser.AbstractParser;
@@ -423,6 +424,17 @@ public class AvroMorphlineTest extends AbstractMorphlineTest {
       deleteAllDocuments();
       assertTrue(load(event));
       assertEquals(1, queryResultSetSize("*:*"));
+    }
+  }
+
+  @Test
+  public void testReadAvroWithMissingExternalSchema() throws Exception {
+    try {
+      morphline = createMorphline("test-morphlines/readAvroWithMissingExternalSchema");
+      fail();
+    } catch (MorphlineParsingException e) {
+      assertTrue(e.getMessage().startsWith(
+          "You must specify an external Avro schema because this is required to read containerless Avro"));
     }
   }
 

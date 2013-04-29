@@ -33,6 +33,7 @@ import org.apache.avro.io.DatumReader;
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
+import com.cloudera.cdk.morphline.api.MorphlineParsingException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.avro.ReadAvroBuilder.ReadAvro;
 import com.cloudera.cdk.morphline.base.Fields;
@@ -68,6 +69,11 @@ public final class ReadAvroContainerBuilder implements CommandBuilder {
 
     public ReadAvroContainer(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
+    }
+    
+    @Override
+    protected void validate() { 
+      // no external avro schema required
     }
     
     @Override
