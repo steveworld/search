@@ -44,8 +44,8 @@ import org.apache.avro.util.Utf8;
 import org.junit.Test;
 
 import com.cloudera.cdk.morphline.api.AbstractMorphlineTest;
-import com.cloudera.cdk.morphline.api.Fields;
 import com.cloudera.cdk.morphline.api.Record;
+import com.cloudera.cdk.morphline.base.Fields;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 

@@ -28,7 +28,7 @@ import com.typesafe.config.Config;
  * A morphline has a name and contains a chain of zero or more commands, through which the morphline
  * pipes each input record. A command transforms the record into zero or more records.
  */
-final class Morphline extends AbstractCommand {
+final class Pipe extends AbstractCommand {
   
   private final String name;
   private final boolean productionMode; // TODO
@@ -36,7 +36,7 @@ final class Morphline extends AbstractCommand {
   private final boolean ignoreLoads;
   private final Command realChild;
 
-  public Morphline(Config config, Command parent, Command child, MorphlineContext context) {
+  public Pipe(Config config, Command parent, Command child, MorphlineContext context) {
     super(config, parent, child, context);
     this.name = Configs.getString(config, "name");
     this.productionMode = Configs.getBoolean(config, "productionMode", false);
