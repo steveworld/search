@@ -36,8 +36,8 @@ public class MorphlineTest extends AbstractMorphlineTest {
   }
   
   @Test
-  public void testMorphlineWithTwoBasicCommands() throws Exception {
-    morphline = createMorphline("test-morphlines/morphlineWithTwoBasicCommands");    
+  public void testPipeWithTwoBasicCommands() throws Exception {
+    morphline = createMorphline("test-morphlines/pipeWithTwoBasicCommands");    
     Record record = createBasicRecord();
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
@@ -158,8 +158,8 @@ public class MorphlineTest extends AbstractMorphlineTest {
   }
   
   @Test
-  public void testIfThenElseBasicThen() throws Exception {
-    morphline = createMorphline("test-morphlines/ifThenElseBasicThen");    
+  public void testIfThenElseWithThen() throws Exception {
+    morphline = createMorphline("test-morphlines/ifThenElseWithThen");    
     Record record = createBasicRecord();
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
@@ -170,8 +170,8 @@ public class MorphlineTest extends AbstractMorphlineTest {
   }
   
   @Test
-  public void testIfThenElseBasicThenEmpty() throws Exception {
-    morphline = createMorphline("test-morphlines/ifThenElseBasicThenEmpty");    
+  public void testIfThenElseWithThenEmpty() throws Exception {
+    morphline = createMorphline("test-morphlines/ifThenElseWithThenEmpty");    
     Record record = createBasicRecord();
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
@@ -182,8 +182,8 @@ public class MorphlineTest extends AbstractMorphlineTest {
   }
   
   @Test
-  public void testIfThenElseBasicElse() throws Exception {
-    morphline = createMorphline("test-morphlines/ifThenElseBasicElse");    
+  public void testIfThenElseWithElse() throws Exception {
+    morphline = createMorphline("test-morphlines/ifThenElseWithElse");    
     Record record = createBasicRecord();
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
@@ -194,8 +194,8 @@ public class MorphlineTest extends AbstractMorphlineTest {
   }
   
   @Test
-  public void testIfThenElseBasicElseEmpty() throws Exception {
-    morphline = createMorphline("test-morphlines/ifThenElseBasicElseEmpty");    
+  public void testIfThenElseWithElseEmpty() throws Exception {
+    morphline = createMorphline("test-morphlines/ifThenElseWithElseEmpty");    
     Record record = createBasicRecord();
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
@@ -206,8 +206,8 @@ public class MorphlineTest extends AbstractMorphlineTest {
   }
   
   @Test
-  public void testNotBasicTrue() throws Exception {
-    morphline = createMorphline("test-morphlines/notBasicTrue");    
+  public void testNotWithTrue() throws Exception {
+    morphline = createMorphline("test-morphlines/notWithTrue");    
     Record record = createBasicRecord();
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
@@ -218,8 +218,8 @@ public class MorphlineTest extends AbstractMorphlineTest {
   }
   
   @Test
-  public void testNotBasicFalse() throws Exception {
-    morphline = createMorphline("test-morphlines/notBasicFalse");    
+  public void testNotWithFalse() throws Exception {
+    morphline = createMorphline("test-morphlines/notWithFalse");    
     Record record = createBasicRecord();
     morphline.startSession();
     assertEquals(1, collector.getNumStartEvents());
@@ -228,8 +228,8 @@ public class MorphlineTest extends AbstractMorphlineTest {
   }
   
   @Test
-  public void testReadClobBasic() throws Exception {
-    morphline = createMorphline("test-morphlines/readClobBasic");    
+  public void testReadClob() throws Exception {
+    morphline = createMorphline("test-morphlines/readClob");    
     Record record = new Record();
     String msg = "foo";
     record.getFields().put(Fields.ATTACHMENT_BODY, msg.getBytes("UTF-8"));
@@ -243,8 +243,8 @@ public class MorphlineTest extends AbstractMorphlineTest {
   }
   
   @Test
-  public void testJavaBasic() throws Exception {
-    morphline = createMorphline("test-morphlines/javaBasic");    
+  public void testJavaHelloWorld() throws Exception {
+    morphline = createMorphline("test-morphlines/javaHelloWorld");    
     Record record = new Record();
     record.getFields().put("tags", "hello");
     morphline.startSession();
