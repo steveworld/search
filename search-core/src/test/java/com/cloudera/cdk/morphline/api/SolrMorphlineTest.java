@@ -169,8 +169,8 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
   }  
 
   @Test
-  public void testReadCSVBasic() throws Exception {
-    Config config = parse("test-morphlines/readCSVBasic.conf");    
+  public void testReadCSV() throws Exception {
+    Config config = parse("test-morphlines/readCSV.conf");    
     morphline = createMorphline(config); 
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
@@ -184,8 +184,8 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
   }  
 
   @Test
-  public void testReadLineBasic() throws Exception {
-    Config config = parse("test-morphlines/readLineBasic.conf");    
+  public void testReadLine() throws Exception {
+    Config config = parse("test-morphlines/readLine.conf");    
     morphline = createMorphline(config); 
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
@@ -194,8 +194,8 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
     testDocumentTypesInternal(files, expectedRecords);
   }  
 
-  public void testReadMultiLineBasic() throws Exception {
-    Config config = parse("test-morphlines/readMultiLineBasic.conf");    
+  public void testReadMultiLine() throws Exception {
+    Config config = parse("test-morphlines/readMultiLine.conf");    
     morphline = createMorphline(config); 
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {

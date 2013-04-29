@@ -31,6 +31,7 @@ import com.cloudera.cdk.morphline.api.MorphlineParsingException;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
+import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.scriptevaluator.ScriptEvaluator;
 import com.typesafe.config.Config;
 
@@ -82,6 +83,7 @@ public final class JavaBuilder implements CommandBuilder {
         "import com.google.common.base.*;\n" + 
         "import com.google.common.collect.*;\n" +
         "import " + Record.class.getPackage().getName() + ".*;\n" +
+        "import " + Fields.class.getName() + ";\n" +
         "";
     
     public Java(Config config, Command parent, Command child, MorphlineContext context) throws ScriptException {
