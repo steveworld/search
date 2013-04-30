@@ -17,7 +17,7 @@ package com.cloudera.cdk.morphline.base;
 
 import java.util.Arrays;
 
-import com.cloudera.cdk.morphline.api.MorphlineParsingException;
+import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.typesafe.config.Config;
@@ -59,7 +59,7 @@ public final class Validator<T> {
   }
   
   private void fail(Config config, String msg) {
-    throw new MorphlineParsingException(msg, config);
+    throw new MorphlineCompilationException(msg, config);
   }
   
 //  public T validateChoice(Config config, String value, T... choices) {

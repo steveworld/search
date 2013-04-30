@@ -43,7 +43,7 @@ import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
-import com.cloudera.cdk.morphline.api.MorphlineParsingException;
+import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
@@ -67,9 +67,9 @@ public final class DetectMimeTypeBuilder implements CommandBuilder {
     try {
       return new DetectMimeType(config, parent, child, context);
     } catch (IOException e) {
-      throw new MorphlineParsingException("Cannot instantiate command", config, e, this);
+      throw new MorphlineCompilationException("Cannot instantiate command", config, e, this);
     } catch (MimeTypeException e) {
-      throw new MorphlineParsingException("Cannot instantiate command", config, e, this);
+      throw new MorphlineCompilationException("Cannot instantiate command", config, e, this);
     }
   }
   
@@ -114,7 +114,7 @@ public final class DetectMimeTypeBuilder implements CommandBuilder {
           this.detector = new DefaultDetector(mimeTypes, loader);
         } else {
           // FIXME throw an Exception instead?
-          if (true) throw new MorphlineParsingException("Missing specification for MIME type mappings", config);
+          if (true) throw new MorphlineCompilationException("Missing specification for MIME type mappings", config);
           // this was old style config via classpath: 
           try {
             detector = new TikaConfig().getDetector();

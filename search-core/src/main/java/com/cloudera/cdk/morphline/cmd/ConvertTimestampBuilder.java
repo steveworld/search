@@ -32,7 +32,7 @@ import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
-import com.cloudera.cdk.morphline.api.MorphlineParsingException;
+import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
 import com.cloudera.cdk.morphline.base.Fields;
@@ -123,7 +123,7 @@ public final class ConvertTimestampBuilder implements CommandBuilder {
     
     private TimeZone getTimeZone(String timeZoneID) {
       if (!Arrays.asList(TimeZone.getAvailableIDs()).contains(timeZoneID)) {
-        throw new MorphlineParsingException("Unknown timezone: " + timeZoneID, getConfig());
+        throw new MorphlineCompilationException("Unknown timezone: " + timeZoneID, getConfig());
       }
       return TimeZone.getTimeZone(timeZoneID);
     }
@@ -138,7 +138,7 @@ public final class ConvertTimestampBuilder implements CommandBuilder {
       if (name.equals(Locale.ROOT.toString())) {
         return Locale.ROOT;
       }
-      throw new MorphlineParsingException("Unknown locale: " + name, getConfig());
+      throw new MorphlineCompilationException("Unknown locale: " + name, getConfig());
     }
     
     

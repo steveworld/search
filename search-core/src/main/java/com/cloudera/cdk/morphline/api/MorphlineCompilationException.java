@@ -20,19 +20,19 @@ import com.typesafe.config.Config;
 /**
  * Indicates a parse error.
  */
-public class MorphlineParsingException extends RuntimeException {
+public class MorphlineCompilationException extends RuntimeException {
 
   private static final long serialVersionUID = 1L;
 
-  public MorphlineParsingException(String msg, Config config) {
+  public MorphlineCompilationException(String msg, Config config) {
     super(msg + render(config));
   }
 
-  public MorphlineParsingException(String msg, Config config, Throwable th) {
+  public MorphlineCompilationException(String msg, Config config, Throwable th) {
     super(msg + render(config), th);
   }
 
-  public MorphlineParsingException(String msg, Config config, Throwable th, CommandBuilder builder) {
+  public MorphlineCompilationException(String msg, Config config, Throwable th, CommandBuilder builder) {
     this(msg + " for command: " + builder.getNames() + " with builder: "
         + builder.getClass().getName(), config, th);
   }

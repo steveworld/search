@@ -43,7 +43,7 @@ public class ValidatorTest extends Assert {
       param = new Validator<NumRequiredMatches>().validateEnum(empty, "all", NumRequiredMatches.class,
           NumRequiredMatches.atLeastOnce, NumRequiredMatches.once);
       fail();
-    } catch (MorphlineParsingException e) {
+    } catch (MorphlineCompilationException e) {
       ; // 
     }
   }
@@ -57,7 +57,7 @@ public class ValidatorTest extends Assert {
     try {
       new Validator<Integer>().validateRange(empty, 5, 9, 10);
       fail();
-    } catch (MorphlineParsingException e) {
+    } catch (MorphlineCompilationException e) {
       ; // 
     }
   }

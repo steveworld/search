@@ -27,7 +27,7 @@ import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
-import com.cloudera.cdk.morphline.api.MorphlineParsingException;
+import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.parser.AbstractParser;
 import com.googlecode.jcsv.CSVStrategy;
@@ -78,7 +78,7 @@ public final class ReadCSVBuilder implements CommandBuilder {
       super(config, parent, child, context);
       String separator = Configs.getString(config, "separator", ",");
       if (separator.length() != 1) {
-        throw new MorphlineParsingException("CSV separator must be one character only: " + separator, config);
+        throw new MorphlineCompilationException("CSV separator must be one character only: " + separator, config);
       }
       this.separatorChar = separator.charAt(0);
       this.columnNames = Configs.getStringList(config, "columns");

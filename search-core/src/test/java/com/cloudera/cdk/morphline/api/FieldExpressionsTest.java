@@ -74,7 +74,7 @@ public class FieldExpressionsTest extends Assert {
     try {
       resolveReference("first_name", record);
       fail();
-    } catch (MorphlineParsingException e) {
+    } catch (MorphlineCompilationException e) {
       ;
     }
   }
@@ -129,7 +129,7 @@ public class FieldExpressionsTest extends Assert {
     try {
       resolveReference("first_name", record);
       fail();
-    } catch (MorphlineParsingException e) {
+    } catch (MorphlineCompilationException e) {
       ;
     }
   }
@@ -149,7 +149,7 @@ public class FieldExpressionsTest extends Assert {
   List resolveReference(String reference, Record record, Config config) {
     Matcher matcher = PATTERN.matcher(reference);
     if (!matcher.matches()) {
-      throw new MorphlineParsingException("Invalid variable reference", config);
+      throw new MorphlineCompilationException("Invalid variable reference", config);
     }
     String value = reference.substring("@{".length(), reference.length() - "}".length());
     List resolvedValues = record.getFields().get(value);

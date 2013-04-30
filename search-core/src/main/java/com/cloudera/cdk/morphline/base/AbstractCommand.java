@@ -28,7 +28,7 @@ import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
-import com.cloudera.cdk.morphline.api.MorphlineParsingException;
+import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.google.common.base.Preconditions;
 import com.typesafe.config.Config;
@@ -125,7 +125,7 @@ public abstract class AbstractCommand implements Command {
     LOG.trace("unwrapped {}", cmdConfig.root().unwrapped());    
     Set<Map.Entry<String, Object>> entries = cmdConfig.root().unwrapped().entrySet();
     if (entries.size() != 1) {
-      throw new MorphlineParsingException("Illegal number of entries: " + entries.size(), cmdConfig);
+      throw new MorphlineCompilationException("Illegal number of entries: " + entries.size(), cmdConfig);
     }
     Map.Entry<String, Object> entry = entries.iterator().next();
     String cmdName = entry.getKey();
@@ -135,24 +135,24 @@ public abstract class AbstractCommand implements Command {
     if (!cmdName.contains(".") && !cmdName.contains("/")) {
       cmdClass = getContext().getCommandBuilder(cmdName);
       if (cmdClass == null) {
-        throw new MorphlineParsingException("No command builder registered for name: " + cmdName, cmdConfig);
+        throw new MorphlineCompilationException("No command builder registered for name: " + cmdName, cmdConfig);
       }
     } else {
       String className = cmdName.replace('/', '.');
       try {
         cmdClass = Class.forName(className);
       } catch (ClassNotFoundException e) {
-        throw new MorphlineParsingException("Cannot find command class: " + className, cmdConfig, e);
+        throw new MorphlineCompilationException("Cannot find command class: " + className, cmdConfig, e);
       }
     }
     Object obj;
     try {
       obj = cmdClass.newInstance();
     } catch (Exception e) {
-      throw new MorphlineParsingException("Cannot instantiate command class: " + cmdClass.getName(), cmdConfig, e);
+      throw new MorphlineCompilationException("Cannot instantiate command class: " + cmdClass.getName(), cmdConfig, e);
     }
     if (!(obj instanceof CommandBuilder)) {
-      throw new MorphlineParsingException("Type of command " + cmdName + " must be an instance of "
+      throw new MorphlineCompilationException("Type of command " + cmdName + " must be an instance of "
           + CommandBuilder.class.getName() + " but is: " + cmdClass.getName(), cmdConfig);
     } 
     CommandBuilder builder = (CommandBuilder) obj;
