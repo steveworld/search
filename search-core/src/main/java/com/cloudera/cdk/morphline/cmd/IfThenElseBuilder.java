@@ -98,15 +98,15 @@ public final class IfThenElseBuilder implements CommandBuilder {
     }
     
     @Override
-    public void startSession() {
-      conditionChain.startSession();
+    public void notify(Record notification) {
+      conditionChain.notify(notification);
       if (thenChain != null) {
-        thenChain.startSession();
+        thenChain.notify(notification);
       }
       if (elseChain != null) {
-        elseChain.startSession();
+        elseChain.notify(notification);
       }
-      super.startSession();
+      super.notify(notification);
     }
       
     @Override

@@ -54,7 +54,7 @@ public final class PipeBuilder implements CommandBuilder {
     }
     
     @Override
-    public void startSession() {
+    public void notify(Record notification) {
       throw new UnsupportedOperationException("Root command should be invisible and must not be called");
     }
 

@@ -21,6 +21,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.cdk.morphline.base.Notifications;
 import com.google.common.base.Preconditions;
 
 public final class Collector implements Command {
@@ -46,8 +47,10 @@ public final class Collector implements Command {
   }
   
   @Override
-  public void startSession() {
-    numStartEvents++;
+  public void notify(Record notification) {
+    if (Notifications.contains(notification, Notifications.LifeCycleEvent.startSession)) {
+      numStartEvents++;
+    }
 //    Preconditions.checkNotNull(parent);
 //    Preconditions.checkNotNull(child);    
   }
