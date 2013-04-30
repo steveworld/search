@@ -22,6 +22,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 
+import com.cloudera.cdk.morphline.base.Notifications;
 import com.cloudera.cdk.morphline.cmd.PipeBuilder;
 import com.typesafe.config.Config;
 import com.yammer.metrics.core.MetricsRegistry;
@@ -52,6 +53,10 @@ public class AbstractMorphlineTest extends Assert {
 
   protected Command createMorphline(Config config) {
     return new PipeBuilder().build(config, null, collector, createMorphlineContext());
+  }
+  
+  protected void startSession() {
+    Notifications.notifyStartSession(morphline);
   }
 
   protected void deleteAllDocuments() {

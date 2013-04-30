@@ -84,11 +84,11 @@ public final class TryRulesBuilder implements CommandBuilder {
     }
     
     @Override
-    public void startSession() {
+    public void notify(Record notification) {
       for (Command childRule : childRules) {
-        childRule.startSession();
+        childRule.notify(notification);
       }
-      getChild().startSession();
+      getChild().notify(notification);
     }
   
     @Override

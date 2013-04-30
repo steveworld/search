@@ -52,8 +52,8 @@ public final class FailCommandBuilder implements CommandBuilder {
     }
     
     @Override
-    public void startSession() {
-      child.startSession();
+    public void notify(Record notification) {
+      child.notify(notification);
     }
 
     @Override

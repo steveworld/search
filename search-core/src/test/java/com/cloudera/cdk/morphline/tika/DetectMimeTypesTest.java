@@ -49,7 +49,7 @@ public class DetectMimeTypesTest extends AbstractMorphlineTest {
     morphline = createMorphline(configFile);    
     Record record = new Record();    
     record.put(Fields.ATTACHMENT_BODY, Files.toByteArray(AVRO_FILE));
-    morphline.startSession();
+    startSession();
     morphline.process(record);
     assertEquals(AVRO_MIME_TYPE, collector.getFirstRecord().getFirstValue(Fields.ATTACHMENT_MIME_TYPE));
 
@@ -57,7 +57,7 @@ public class DetectMimeTypesTest extends AbstractMorphlineTest {
     collector.reset();
     record = new Record();    
     record.put(Fields.ATTACHMENT_BODY, Files.toByteArray(JPG_FILE));
-    morphline.startSession();
+    startSession();
     morphline.process(record);
     assertEquals("application/octet-stream", collector.getFirstRecord().getFirstValue(Fields.ATTACHMENT_MIME_TYPE));
   }
@@ -67,7 +67,7 @@ public class DetectMimeTypesTest extends AbstractMorphlineTest {
     morphline = createMorphline("test-morphlines/detectMimeTypesWithDefaultMimeTypes");    
     Record record = new Record();    
     record.put(Fields.ATTACHMENT_BODY, Files.toByteArray(JPG_FILE));
-    morphline.startSession();
+    startSession();
     morphline.process(record);
     assertEquals("image/jpeg", collector.getFirstRecord().getFirstValue(Fields.ATTACHMENT_MIME_TYPE));
   }
@@ -78,7 +78,7 @@ public class DetectMimeTypesTest extends AbstractMorphlineTest {
     Record record = new Record();    
     record.put(Fields.ATTACHMENT_BODY, Files.toByteArray(JPG_FILE));
     record.put(Fields.ATTACHMENT_MIME_TYPE, "foo/bar");
-    morphline.startSession();
+    startSession();
     morphline.process(record);
     assertEquals("foo/bar", collector.getFirstRecord().getFirstValue(Fields.ATTACHMENT_MIME_TYPE));
   }

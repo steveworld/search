@@ -27,9 +27,9 @@ package com.cloudera.cdk.morphline.api;
 public interface Command {
   
   /**
-   * Begins a sequence of zero or more related records.
+   * Sends the given notification on the control plane to the subtree rooted at this command.
    */
-  void startSession();
+  void notify(Record notification);
   
   /**
    * Processes the given record.

@@ -29,7 +29,7 @@ final class Connector implements Command {
   
   private Command parent;
   private Command child;
-  private boolean ignoreStartSession;
+  private boolean ignoreNotifications;
   
   private static final Logger LOG = LoggerFactory.getLogger(Connector.class);
   
@@ -37,8 +37,8 @@ final class Connector implements Command {
     this(false);
   }
 
-  public Connector(boolean ignoreStartSession) {
-    this.ignoreStartSession = ignoreStartSession;
+  public Connector(boolean ignoreNotifications) {
+    this.ignoreNotifications = ignoreNotifications;
   }
 
   @Override
@@ -55,11 +55,11 @@ final class Connector implements Command {
   }
 
   @Override
-  public void startSession() {
+  public void notify(Record notification) {
     Preconditions.checkNotNull(parent);
     Preconditions.checkNotNull(child);
-    if (!ignoreStartSession) {
-      child.startSession();
+    if (!ignoreNotifications) {
+      child.notify(notification);
     }
   }
 

@@ -57,7 +57,7 @@ public final class DropRecordBuilder implements CommandBuilder {
     }
     
     @Override
-    public void startSession() {
+    public void notify(Record notification) {
     }
 
     @Override

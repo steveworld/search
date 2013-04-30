@@ -57,6 +57,7 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import com.cloudera.cdk.morphline.base.Fields;
+import com.cloudera.cdk.morphline.base.Notifications;
 import com.cloudera.cdk.morphline.cmd.PipeBuilder;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -582,7 +583,7 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
   }
 
   private boolean load(Record record) {
-    morphline.startSession();
+    Notifications.notifyStartSession(morphline);
     return morphline.process(record);
   }
   

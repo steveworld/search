@@ -87,7 +87,7 @@ public class AvroMorphlineTest extends AbstractMorphlineTest {
       deleteAllDocuments();
       Record record = new Record();
       record.put(Fields.ATTACHMENT_BODY, document0);
-      morphline.startSession();
+      startSession();
   //    System.out.println(documentSchema.toString(true));
   //    System.out.println(document0.toString());
       assertTrue(morphline.process(record));
@@ -105,7 +105,7 @@ public class AvroMorphlineTest extends AbstractMorphlineTest {
       deleteAllDocuments();
       Record record = new Record();
       record.put(Fields.ATTACHMENT_BODY, document1);
-      morphline.startSession();
+      startSession();
   //    System.out.println(documentSchema.toString(true));
   //    System.out.println(document1.toString());
       assertTrue(morphline.process(record));
@@ -121,7 +121,7 @@ public class AvroMorphlineTest extends AbstractMorphlineTest {
       deleteAllDocuments();
       Record record = new Record();
       record.put(Fields.ATTACHMENT_BODY, document0);
-      morphline.startSession();
+      startSession();
 //      System.out.println(documentSchema.toString(true));
 //      System.out.println(document0.toString());
       assertTrue(morphline.process(record));
@@ -244,7 +244,7 @@ public class AvroMorphlineTest extends AbstractMorphlineTest {
       deleteAllDocuments();
       Record record = new Record();
       record.put(Fields.ATTACHMENT_BODY, document0);
-      morphline.startSession();
+      startSession();
 //      System.out.println(documentSchema.toString(true));
 //      System.out.println(document0.toString());
       assertTrue(morphline.process(record));
@@ -267,7 +267,7 @@ public class AvroMorphlineTest extends AbstractMorphlineTest {
       deleteAllDocuments();
       Record record = new Record();
       record.put(Fields.ATTACHMENT_BODY, document0);
-      morphline.startSession();
+      startSession();
 //      System.out.println(documentSchema.toString(true));
 //      System.out.println(document0.toString());
       assertTrue(morphline.process(record));
@@ -320,7 +320,7 @@ public class AvroMorphlineTest extends AbstractMorphlineTest {
     deleteAllDocuments();
     Record record = new Record();
     record.put(Fields.ATTACHMENT_BODY, document0);
-    morphline.startSession();
+    startSession();
 //    System.out.println(schema.toString(true));
 //    System.out.println(document0.toString());
     assertTrue(morphline.process(record));
@@ -332,7 +332,7 @@ public class AvroMorphlineTest extends AbstractMorphlineTest {
     deleteAllDocuments();
     record = new Record();
     record.put(Fields.ATTACHMENT_BODY, document0);
-    morphline.startSession();
+    startSession();
 //      System.out.println(documentSchema.toString(true));
 //      System.out.println(document0.toString());
     assertTrue(morphline.process(record));
@@ -439,7 +439,7 @@ public class AvroMorphlineTest extends AbstractMorphlineTest {
   }
 
   private boolean load(Record record) {
-    morphline.startSession();
+    startSession();
     return morphline.process(record);
   }
   

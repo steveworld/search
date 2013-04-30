@@ -40,7 +40,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
   public void testPipeWithTwoBasicCommands() throws Exception {
     morphline = createMorphline("test-morphlines/pipeWithTwoBasicCommands");    
     Record record = createBasicRecord();
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     morphline.process(record);
     assertEquals(Arrays.asList(record), collector.getRecords());
@@ -52,7 +52,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     morphline = createMorphline("test-morphlines/addValues");    
     Record record = new Record();
     record.getFields().put("first_name", "Nadja");
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     morphline.process(record);
     Record expected = new Record();
@@ -81,7 +81,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     record.getFields().put("pids", 789);
     record.getFields().put("pids", "YYYY");
 
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     morphline.process(record);
     Record expected = new Record();
@@ -109,7 +109,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
       expected.getFields().replaceValues("iter", Arrays.asList(i));
       expectedList.add(expected);
     }
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     morphline.process(record);
     assertEquals(expectedList, collector.getRecords());
@@ -128,7 +128,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
       expected.getFields().replaceValues("iter2", Arrays.asList(i));
       expectedList.add(expected);
     }
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     morphline.process(record);
     assertEquals(expectedList, collector.getRecords());
@@ -147,7 +147,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
 //      expected.getFields().replaceValues("iter2", Arrays.asList(i));
 //      expectedList.add(expected);
 //    }
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     try {
       morphline.process(record);
@@ -175,7 +175,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     System.setProperty("MY_VARIABLE", "true");
     morphline = createMorphline("test-morphlines/isTrue");    
     Record record = createBasicRecord();
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     assertSame(record, collector.getFirstRecord());
@@ -200,7 +200,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
   public void testIfThenElseWithThen() throws Exception {
     morphline = createMorphline("test-morphlines/ifThenElseWithThen");    
     Record record = createBasicRecord();
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     morphline.process(record);
     assertEquals(Arrays.asList(record), collector.getRecords());
@@ -212,7 +212,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
   public void testIfThenElseWithThenEmpty() throws Exception {
     morphline = createMorphline("test-morphlines/ifThenElseWithThenEmpty");    
     Record record = createBasicRecord();
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     morphline.process(record);
     assertEquals(Arrays.asList(record), collector.getRecords());
@@ -224,7 +224,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
   public void testIfThenElseWithElse() throws Exception {
     morphline = createMorphline("test-morphlines/ifThenElseWithElse");    
     Record record = createBasicRecord();
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     morphline.process(record);
     assertEquals(Arrays.asList(record), collector.getRecords());
@@ -236,7 +236,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
   public void testIfThenElseWithElseEmpty() throws Exception {
     morphline = createMorphline("test-morphlines/ifThenElseWithElseEmpty");    
     Record record = createBasicRecord();
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     morphline.process(record);
     assertEquals(Arrays.asList(record), collector.getRecords());
@@ -248,7 +248,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
   public void testNotWithTrue() throws Exception {
     morphline = createMorphline("test-morphlines/notWithTrue");    
     Record record = createBasicRecord();
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertFalse(morphline.process(record));
     assertEquals(Arrays.asList(record), collector.getRecords());
@@ -260,7 +260,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
   public void testNotWithFalse() throws Exception {
     morphline = createMorphline("test-morphlines/notWithFalse");    
     Record record = createBasicRecord();
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     assertEquals(Arrays.asList(), collector.getRecords());
@@ -272,7 +272,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     Record record = new Record();
     String msg = "foo";
     record.getFields().put(Fields.ATTACHMENT_BODY, msg.getBytes("UTF-8"));
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     Record expected = new Record();
@@ -286,7 +286,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     morphline = createMorphline("test-morphlines/javaHelloWorld");    
     Record record = new Record();
     record.getFields().put("tags", "hello");
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     Record expected = new Record();
@@ -300,7 +300,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
   public void testJavaRuntimeException() throws Exception {
     morphline = createMorphline("test-morphlines/javaRuntimeException");    
     Record record = new Record();
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     try {
       morphline.process(record);
@@ -349,7 +349,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     record.getFields().put(Fields.MESSAGE, msg);
     String id = "myid";
     record.getFields().put(Fields.ID, id);
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     Record expected = new Record();
@@ -372,7 +372,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     collector.reset();
     record = new Record();
     record.getFields().put(Fields.MESSAGE, "foo" + msg);
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertFalse(morphline.process(record));
     assertEquals(Arrays.asList(), collector.getRecords());
@@ -384,7 +384,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     record.getFields().put(Fields.MESSAGE, msg);
     record.getFields().put(Fields.ID, id);
     record.getFields().put(Fields.ID, id);
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     Record tmp = expected.copy();
@@ -426,7 +426,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     record.getFields().put(Fields.MESSAGE, msg);
     String id = "myid";
     record.getFields().put(Fields.ID, id);
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     Record expected = new Record();
@@ -447,7 +447,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     record = new Record();
     record.getFields().put(Fields.MESSAGE, "");
     record.getFields().put(Fields.ID, id);
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertFalse(morphline.process(record));
     assertEquals(Arrays.asList(), collector.getRecords());
@@ -473,7 +473,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     record.getFields().put("ts1", "2011-09-06T14:14:34.789Z"); // "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
     record.getFields().put("ts1", "2012-09-06T14:14:34"); 
     record.getFields().put("ts1", "2013-09-06");
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     Record expected = new Record();
@@ -488,7 +488,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
   public void testConvertTimestampEmpty() throws Exception {
     morphline = createMorphline("test-morphlines/convertTimestamp");
     Record record = new Record();
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     Record expected = new Record();
@@ -501,7 +501,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     morphline = createMorphline("test-morphlines/convertTimestamp");
     Record record = new Record();
     record.getFields().put("ts1", "this is an invalid timestamp");
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertFalse(morphline.process(record));
     assertEquals(Arrays.asList(), collector.getRecords());
@@ -514,7 +514,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     record.getFields().put(Fields.TIMESTAMP, "2011-09-06T14:14:34.789Z");
     record.getFields().put(Fields.TIMESTAMP, "2012-09-06T14:14:34"); 
     record.getFields().put(Fields.TIMESTAMP, "2013-09-06");
-    morphline.startSession();
+    startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     Record expected = new Record();
