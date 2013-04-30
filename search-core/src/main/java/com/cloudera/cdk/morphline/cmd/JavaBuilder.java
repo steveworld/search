@@ -27,7 +27,7 @@ import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
-import com.cloudera.cdk.morphline.api.MorphlineParsingException;
+import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
@@ -64,7 +64,7 @@ public final class JavaBuilder implements CommandBuilder {
     try {
       return new Java(config, parent, child, context);
     } catch (ScriptException e) {
-      throw new MorphlineParsingException("Cannot compile script", config, e);
+      throw new MorphlineCompilationException("Cannot compile script", config, e);
     }
   }
   

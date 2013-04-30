@@ -317,7 +317,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     try {
       createMorphline(config);
       fail();
-    } catch (MorphlineParsingException e) {
+    } catch (MorphlineCompilationException e) {
       assertTrue(e.getMessage().startsWith("Cannot compile script"));
     }
   }
@@ -531,7 +531,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     try {
       createMorphline(config);
       fail();
-    } catch (MorphlineParsingException e) {
+    } catch (MorphlineCompilationException e) {
       assertTrue(e.getMessage().startsWith("Unknown timezone"));
     }
   }

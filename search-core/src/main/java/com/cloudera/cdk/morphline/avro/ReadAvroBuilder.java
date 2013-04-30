@@ -35,7 +35,7 @@ import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
-import com.cloudera.cdk.morphline.api.MorphlineParsingException;
+import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.parser.AbstractParser;
@@ -70,24 +70,24 @@ public final class ReadAvroBuilder implements CommandBuilder {
   ///////////////////////////////////////////////////////////////////////////////
   static class ReadAvro extends AbstractParser {
 
-    private final Schema schema;
+    private final Schema externalSchema;
     private final boolean isJson;
     
     public ReadAvro(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
       String schemaString = Configs.getString(config, "schemaString", null);
       if (schemaString != null) {
-        this.schema = new Parser().parse(schemaString);
+        this.externalSchema = new Parser().parse(schemaString);
       } else {        
         String schemaFile = Configs.getString(config, "schemaFile", null);
         if (schemaFile != null) {
           try { 
-            this.schema = new Parser().parse(new File(schemaFile));
+            this.externalSchema = new Parser().parse(new File(schemaFile));
           } catch (IOException e) {
-            throw new MorphlineParsingException("Cannot parse external Avro schema file: " + schemaFile, config, e);
+            throw new MorphlineCompilationException("Cannot parse external Avro schema file: " + schemaFile, config, e);
           }
         } else {
-          this.schema = null;
+          this.externalSchema = null;
         }
       }
       this.isJson = Configs.getBoolean(config, "isJson", false);
@@ -96,16 +96,16 @@ public final class ReadAvroBuilder implements CommandBuilder {
     
     /** Override and disable check in subclasses as appropriate */
     protected void validate() {
-      if (schema == null) {
-        throw new MorphlineParsingException(
+      if (externalSchema == null) {
+        throw new MorphlineCompilationException(
             "You must specify an external Avro schema because this is required to read containerless Avro", getConfig());
       }
     }
     
     /** Returns the Avro schema to use for reading */
     protected Schema getSchema(Schema dataFileReaderSchema) {
-      if (this.schema != null) {
-        return this.schema;
+      if (this.externalSchema != null) {
+        return this.externalSchema;
       }
       return dataFileReaderSchema;
     }

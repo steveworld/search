@@ -63,7 +63,7 @@ import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
-import com.cloudera.cdk.morphline.api.MorphlineParsingException;
+import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Fields;
@@ -172,10 +172,10 @@ public final class SolrCellBuilder implements CommandBuilder {
         try {
           obj = Class.forName(parserClassName).newInstance();
         } catch (Exception e) {
-          throw new MorphlineParsingException("Cannot instantiate Tika parser", config, e);
+          throw new MorphlineCompilationException("Cannot instantiate Tika parser", config, e);
         }
         if (!(obj instanceof Parser)) {
-          throw new MorphlineParsingException("Tika parser " + obj.getClass().getName()
+          throw new MorphlineCompilationException("Tika parser " + obj.getClass().getName()
               + " must be an instance of class " + Parser.class.getName(), config);
         }
         Parser parser = (Parser) obj;
@@ -323,10 +323,10 @@ public final class SolrCellBuilder implements CommandBuilder {
       try {
         return factoryClass.getConstructor(Collection.class).newInstance(dateFormats);
       } catch (NoSuchMethodException nsme) {
-        throw new MorphlineParsingException("Unable to find valid constructor of type "
+        throw new MorphlineCompilationException("Unable to find valid constructor of type "
           + factoryClass.getName() + " for creating SolrContentHandler", config, nsme);
       } catch (Exception e) {
-        throw new MorphlineParsingException("Unexpected exception when trying to create SolrContentHandlerFactory of type "
+        throw new MorphlineCompilationException("Unexpected exception when trying to create SolrContentHandlerFactory of type "
           + factoryClass.getName(), config, e);
       }
     }

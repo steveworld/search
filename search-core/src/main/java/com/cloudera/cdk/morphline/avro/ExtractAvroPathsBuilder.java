@@ -37,7 +37,7 @@ import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
-import com.cloudera.cdk.morphline.api.MorphlineParsingException;
+import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
@@ -120,7 +120,7 @@ public final class ExtractAvroPathsBuilder implements CommandBuilder {
         String fieldName = entry.getKey();        
         String path = entry.getValue().toString().trim();
         if (path.contains("//")) {
-          throw new MorphlineParsingException("No support for descendant axis available yet", config);
+          throw new MorphlineCompilationException("No support for descendant axis available yet", config);
         }
         if (path.startsWith("/")) {
           path = path.substring(1);

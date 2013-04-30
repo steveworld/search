@@ -33,7 +33,7 @@ import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
-import com.cloudera.cdk.morphline.api.MorphlineParsingException;
+import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
 import com.cloudera.cdk.morphline.base.Validator;
@@ -128,7 +128,7 @@ public final class GrokBuilder implements CommandBuilder {
     try {
       return new Grok(config, parent, child, context);
     } catch (IOException e) {
-      throw new MorphlineParsingException("Cannot parse", config, e);
+      throw new MorphlineCompilationException("Cannot parse", config, e);
     }
   }
   
@@ -335,15 +335,15 @@ public final class GrokBuilder implements CommandBuilder {
         }
         int i = line.indexOf(" ");
         if (i < 0) {
-          throw new MorphlineParsingException("Dictionary entry line must contain a space to separate name and value: " + line, getConfig());
+          throw new MorphlineCompilationException("Dictionary entry line must contain a space to separate name and value: " + line, getConfig());
         }
         if (i == 0) {
-          throw new MorphlineParsingException("Dictionary entry line must contain a name: " + line, getConfig());
+          throw new MorphlineCompilationException("Dictionary entry line must contain a name: " + line, getConfig());
         }
         String name = line.substring(0, i);
         String value = line.substring(i + 1, line.length()).trim();
         if (value.length() == 0) {
-          throw new MorphlineParsingException("Dictionary entry line must contain a value: " + line, getConfig());
+          throw new MorphlineCompilationException("Dictionary entry line must contain a value: " + line, getConfig());
         }
         dictionary.put(name, value);
       }      
@@ -400,7 +400,7 @@ public final class GrokBuilder implements CommandBuilder {
         //LOG.debug("patternName=" + patternName + ", groupName=" + groupName + ", conversion=" + conversion);
         String refValue = dictionary.get(regexName);
         if (refValue == null) {
-          throw new MorphlineParsingException("Missing value for name: " + regexName, getConfig());
+          throw new MorphlineCompilationException("Missing value for name: " + regexName, getConfig());
         }
         if (refValue.contains(PATTERN_START)) {
           break; // not a literal value; defer resolution until next iteration
