@@ -52,7 +52,6 @@ public final class IsTrueBuilder implements CommandBuilder {
     public IsTrue(Config config, Command parent, Command child, MorphlineContext context) { 
       super(config, parent, child, context);
       this.doContinue = Configs.getBoolean(config, "value");
-      System.out.println(doContinue);
     }
 
     @Override
