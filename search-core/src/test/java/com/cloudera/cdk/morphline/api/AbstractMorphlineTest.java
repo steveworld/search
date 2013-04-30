@@ -30,12 +30,14 @@ public class AbstractMorphlineTest extends Assert {
   
   protected Collector collector;
   protected Command morphline;
+  protected boolean useFileAPI;
   
   protected static final String RESOURCES_DIR = "target/test-classes";
   
   @Before
   public void setUp() throws Exception {
     collector = new Collector();
+    useFileAPI = true;
   }
   
   @After
@@ -57,8 +59,12 @@ public class AbstractMorphlineTest extends Assert {
   }
   
   protected Config parse(String file) throws IOException {
-//    Config config = Configs.parse(file);
-    Config config = Configs.parse(new File("src/test/resources/" + file + ".conf"));
+    Config config;
+    if (useFileAPI) {
+      config = Configs.parse(new File("src/test/resources/" + file + ".conf"));
+    } else {
+      config = Configs.parse(file);      
+    };
     config = config.getConfigList("morphlines").get(0);
     return config;
   }
