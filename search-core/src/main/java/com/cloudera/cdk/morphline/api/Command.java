@@ -22,17 +22,18 @@ package com.cloudera.cdk.morphline.api;
  * morphline implement this interface. Commands are chained together. The parent of a command A is
  * the command B that passes records to A.
  * 
- * A session is a sequence of zero or more records.
+ * Data is sent on the data plane whereas notifications are sent on the control plane, which is a
+ * separate communication channel.
  */
 public interface Command {
   
   /**
-   * Sends the given notification on the control plane to the subtree rooted at this command.
+   * Processes the given notification on the control plane of the subtree rooted at this command.
    */
   void notify(Record notification);
   
   /**
-   * Processes the given record.
+   * Processes the given record on the data plane of this command.
    * 
    * @return true to indicate that processing shall continue, false to indicate that backtracking
    *         shall be done
