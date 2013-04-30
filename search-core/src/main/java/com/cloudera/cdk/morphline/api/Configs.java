@@ -29,9 +29,14 @@ import com.typesafe.config.ConfigFactory;
  */
 public final class Configs {
   
+  private static final Object LOCK = new Object();
+  
   /** Loads the given config file from the classpath */
   public static Config parse(String resourceBaseName) {
-    return ConfigFactory.load(resourceBaseName);
+    synchronized (LOCK) {
+      ConfigFactory.invalidateCaches();
+      return ConfigFactory.load(resourceBaseName);
+    }
   }
   
   /** Loads the given config file from the local file system */
@@ -43,8 +48,11 @@ public final class Configs {
       throw new IOException("Insufficient permissions to read file: " + file);
     }
     Config config = ConfigFactory.parseFile(file);
-    config = ConfigFactory.load(config);
-    config.checkValid(ConfigFactory.defaultReference()); // eagerly validate aspects of tree config  
+    synchronized (LOCK) {
+      ConfigFactory.invalidateCaches();
+      config = ConfigFactory.load(config);
+      config.checkValid(ConfigFactory.defaultReference()); // eagerly validate aspects of tree config
+    }
     return config;
   }
   

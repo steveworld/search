@@ -27,6 +27,7 @@ import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.shaded.com.google.code.regexp.Matcher;
 import com.cloudera.cdk.morphline.shaded.com.google.code.regexp.Pattern;
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException;
 
 public class MorphlineTest extends AbstractMorphlineTest {
   
@@ -155,6 +156,44 @@ public class MorphlineTest extends AbstractMorphlineTest {
       assertTrue(e.getMessage().startsWith("tryRules command found no matching rule"));
     }
     assertEquals(expectedList, collector.getRecords());
+  }
+  
+  @Test
+  public void testIsTrue() throws Exception {
+    boolean oldUseFileAPI = useFileAPI;
+    try {
+      useFileAPI = false;
+      testIsTrueInternal();
+      useFileAPI = true;      
+      testIsTrueInternal();
+    } finally {
+      useFileAPI = oldUseFileAPI;
+    }
+  }
+  
+  private void testIsTrueInternal() throws Exception {    
+    System.setProperty("MY_VARIABLE", "true");
+    morphline = createMorphline("test-morphlines/isTrue");    
+    Record record = createBasicRecord();
+    morphline.startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    assertTrue(morphline.process(record));
+    assertSame(record, collector.getFirstRecord());
+    
+    collector.reset();
+    System.setProperty("MY_VARIABLE", "false");
+    morphline = createMorphline("test-morphlines/isTrue");    
+    assertFalse(morphline.process(createBasicRecord()));
+    assertEquals(0, collector.getRecords().size());
+    
+    collector.reset();
+    System.clearProperty("MY_VARIABLE");
+    try {
+      morphline = createMorphline("test-morphlines/isTrue");
+      fail();
+    } catch (ConfigException.UnresolvedSubstitution e) {
+      ; 
+    }
   }
   
   @Test
