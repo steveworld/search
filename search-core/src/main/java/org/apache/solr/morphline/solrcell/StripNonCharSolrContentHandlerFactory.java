@@ -31,24 +31,24 @@ import org.apache.tika.metadata.Metadata;
  * SolrContentHandler and associated factory that strips non-characters anhd trims on output.
  * This prevents exceptions on parsing integer fields inside Solr server.
  */
-public class StripNonCharContentHandlerFactory extends SolrContentHandlerFactory {
+public class StripNonCharSolrContentHandlerFactory extends SolrContentHandlerFactory {
 
-  public StripNonCharContentHandlerFactory(Collection<String> dateFormats) {
+  public StripNonCharSolrContentHandlerFactory(Collection<String> dateFormats) {
     super(dateFormats);
   }
 
   @Override
   public SolrContentHandler createSolrContentHandler(Metadata metadata, SolrParams params, IndexSchema schema) {
-    return new StripNonCharContentHandler(metadata, params, schema, dateFormats);
+    return new StripNonCharSolrContentHandler(metadata, params, schema, dateFormats);
   }
 
 
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
   ///////////////////////////////////////////////////////////////////////////////
-  private static final class StripNonCharContentHandler extends SolrContentHandler {
+  private static final class StripNonCharSolrContentHandler extends SolrContentHandler {
 
-    public StripNonCharContentHandler(Metadata metadata, SolrParams params, IndexSchema schema, Collection<String> dateFormats) {
+    public StripNonCharSolrContentHandler(Metadata metadata, SolrParams params, IndexSchema schema, Collection<String> dateFormats) {
       super(metadata, params, schema, dateFormats);
     }
 

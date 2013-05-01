@@ -42,9 +42,10 @@ import com.typesafe.config.Config;
  * the current session. The count is reset to zero whenever a "startSession" notification is
  * received.
  * <p>
- * For example, assume a CSV file containing multiple records, and the <code>baseIdField</code>
- * field is the filesystem path of the file. Now this command can be used to assign the following
- * record values to Solr's unique key field: <code>$path#0, $path#1, ... $path#N</code>.
+ * For example, assume a CSV file containing multiple records but no unique ids, and the
+ * <code>baseIdField</code> field is the filesystem path of the file. Now this command can be used
+ * to assign the following record values to Solr's unique key field:
+ * <code>$path#0, $path#1, ... $path#N</code>.
  * <p>
  * The name of the unique key field is fetched from Solr's schema.xml file, as directed by the
  * <code>solrLocator</code> configuration parameter.
