@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.TreeMap;
 
 import org.apache.solr.schema.IndexSchema;
 
@@ -31,6 +32,7 @@ import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.typesafe.config.Config;
 
@@ -38,7 +40,7 @@ import com.typesafe.config.Config;
  * Command that sanitizes record fields that are unknown to Solr schema.xml by either deleting them
  * (renameToPrefix is absent or a zero length string), or by moving them to a field prefixed with
  * the given renameToPrefix (e.g. renameToPrefix = "ignored_" to use typical dynamic Solr fields).
- * 
+ * <p>
  * Recall that Solr throws an exception on any attempt to load a document that contains a field that
  * isn't specified in schema.xml.
  */
@@ -65,8 +67,14 @@ public final class SanitizeUnknownSolrFieldsBuilder implements CommandBuilder {
         
     public SanitizeUnknownSolrFields(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);      
-      this.schema = ((SolrMorphlineContext)context).getIndexSchema();
+      
+      Config solrLocatorConfig = Configs.getConfig(config, "solrLocator");
+      SolrLocator locator = new SolrLocator(solrLocatorConfig, context);
+      LOG.debug("solrLocator: {}", locator);
+      this.schema = locator.getIndexSchema();
       Preconditions.checkNotNull(schema);
+      LOG.trace("Solr schema: \n{}", Joiner.on("\n").join(new TreeMap(schema.getFields()).values()));
+      
       String str = Configs.getString(config, "renameToPrefix", "").trim();
       this.renameToPrefix = str.length() > 0 ? str : null;  
     }

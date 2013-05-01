@@ -15,8 +15,12 @@
  */
 package com.cloudera.cdk.morphline.api;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -26,14 +30,34 @@ import org.junit.Test;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.shaded.com.google.code.regexp.Matcher;
 import com.cloudera.cdk.morphline.shaded.com.google.code.regexp.Pattern;
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.io.Files;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigException;
+import com.typesafe.config.ConfigFactory;
 
 public class MorphlineTest extends AbstractMorphlineTest {
   
   @Test
   public void testParseComplexConfig() throws Exception {
     parse("test-morphlines/parseComplexConfig");
+  }
+  
+  @Test
+  public void testParseVariables() throws Exception {
+    System.setProperty("ENV_ZK_HOST", "zk.foo.com:2181/solr");
+    System.setProperty("ENV_SOLR_URL", "http://foo.com:8983/solr/myCollection");
+    System.setProperty("ENV_SOLR_LOCATOR", "{ collection : collection1 }");
+    try {
+      Config override = ConfigFactory.parseString("SOLR_LOCATOR : { collection : fallback } ");
+      Config config = parse("test-morphlines/parseVariables", override);
+      System.out.println(config.root().render());
+    } finally {
+      System.clearProperty("ENV_ZK_HOST");
+      System.clearProperty("ENV_SOLR_URL");  
+      System.clearProperty("ENV_SOLR_LOCATOR");
+    }
   }
   
   @Test
@@ -281,6 +305,70 @@ public class MorphlineTest extends AbstractMorphlineTest {
     assertNotSame(record, collector.getRecords().get(0));
   }
   
+  @Test
+  public void testReadCSV() throws Exception {
+    morphline = createMorphline("test-morphlines/readCSV");    
+    InputStream in = new FileInputStream(new File(RESOURCES_DIR + "/test-documents/cars.csv"));
+    Record record = new Record();
+    record.getFields().put(Fields.ATTACHMENT_BODY, in);
+    startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    assertTrue(morphline.process(record));
+    
+    ImmutableMultimap expected;
+    Iterator<Record> iter = collector.getRecords().iterator();
+    expected = ImmutableMultimap.of("Year", "Year", "Description", "Description", "Model", "Model", "column4", "Price");
+    assertEquals(expected, iter.next().getFields());
+    expected = ImmutableMultimap.of("Year", "1997", "Description", "ac, abs, moon", "Model", "E350", "column4", "3000.00");
+    assertEquals(expected, iter.next().getFields());
+    expected = ImmutableMultimap.of("Year", "1999", "Description", "", "Model", "Venture \"Extended Edition\"", "column4", "4900.00");
+    assertEquals(expected, iter.next().getFields());
+    expected = ImmutableMultimap.of("Year", "1999", "Description", "", "Model", "Venture \"Extended Edition, Very Large\"", "column4", "5000.00");
+    assertEquals(expected, iter.next().getFields());
+    expected = ImmutableMultimap.of("Year", "1996", "Description", "MUST SELL!\nair, moon roof, loaded", "Model", "Grand Cherokee", "column4", "4799.00");
+    assertEquals(expected, iter.next().getFields());
+    assertFalse(iter.hasNext());
+    in.close();
+  }  
+  
+  @Test
+  public void testReadLine() throws Exception {
+    morphline = createMorphline("test-morphlines/readCSV");
+    String threeLines = "first\nsecond\nthird";
+    byte[] in = threeLines.getBytes("UTF-8");
+    morphline = createMorphline("test-morphlines/readLine"); // uses ignoreFirstLine : true
+    Record record = new Record();
+    record.getFields().put(Fields.ATTACHMENT_BODY, in);
+    startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    assertTrue(morphline.process(record));
+    
+    Iterator<Record> iter = collector.getRecords().iterator();
+    assertEquals(ImmutableMultimap.of(Fields.MESSAGE, "second"), iter.next().getFields());
+    assertEquals(ImmutableMultimap.of(Fields.MESSAGE, "third"), iter.next().getFields());
+    assertFalse(iter.hasNext());
+  }  
+  
+  @Test
+  public void testReadMultiLine() throws Exception {
+    morphline = createMorphline("test-morphlines/readMultiLine");   
+    InputStream in = new FileInputStream(new File(RESOURCES_DIR + "/test-documents/multiline-stacktrace.log"));
+    Record record = new Record();
+    record.getFields().put(Fields.ATTACHMENT_BODY, in);
+    startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    assertTrue(morphline.process(record));
+    
+    Iterator<Record> iter = collector.getRecords().iterator();
+    assertEquals(ImmutableMultimap.of(Fields.MESSAGE, "juil. 25, 2012 10:49:46 AM hudson.triggers.SafeTimerTask run"), iter.next().getFields());
+    String multiLineEvent = Files.toString(new File(RESOURCES_DIR + "/test-documents/multiline-stacktrace-expected-long-event.log"), Charsets.UTF_8);
+    assertEquals(ImmutableMultimap.of(Fields.MESSAGE, multiLineEvent), iter.next().getFields());
+    assertEquals(ImmutableMultimap.of(Fields.MESSAGE, "juil. 25, 2012 10:49:54 AM hudson.slaves.SlaveComputer tryReconnect"), iter.next().getFields());
+    assertEquals(ImmutableMultimap.of(Fields.MESSAGE, "Infos: Attempting to reconnect CentosVagrant"), iter.next().getFields());
+    assertFalse(iter.hasNext());    
+    in.close();
+  }  
+
   @Test
   public void testJavaHelloWorld() throws Exception {
     morphline = createMorphline("test-morphlines/javaHelloWorld");    

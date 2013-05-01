@@ -99,7 +99,7 @@ public final class UnpackBuilder implements CommandBuilder {
         ArchiveEntry entry = ais.getNextEntry();
         while (entry != null) {
           if (!entry.isDirectory()) {
-            if (!parseEntry(ais, entry, extractor)) {
+            if (!parseEntry(ais, entry, extractor, record)) {
               return false;
             }
           }
@@ -113,10 +113,11 @@ public final class UnpackBuilder implements CommandBuilder {
       return true;
     }
 
-    private boolean parseEntry(ArchiveInputStream archive, ArchiveEntry entry, EmbeddedExtractor extractor) {
+    private boolean parseEntry(ArchiveInputStream archive, ArchiveEntry entry, EmbeddedExtractor extractor, Record record) {
       String name = entry.getName();
       if (archive.canReadEntryData(entry)) {
         Record entrydata = new Record(); // TODO: or pass myself?
+        //Record entrydata = record.copy();
         
         // For detectors to work, we need a mark/reset supporting
         // InputStream, which ArchiveInputStream isn't, so wrap

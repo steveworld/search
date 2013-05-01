@@ -31,6 +31,30 @@ public final class Notifications {
     return notification.get(LIFE_CYLCLE);
   }
   
+  public static void notifyBeginTransaction(Command command) {
+    Record notification = new Record();
+    notification.put(LIFE_CYLCLE, LifeCycleEvent.beginTransaction);
+    command.notify(notification);
+  }
+  
+  public static void notifyCommitTransaction(Command command) {
+    Record notification = new Record();
+    notification.put(LIFE_CYLCLE, LifeCycleEvent.commitTransaction);
+    command.notify(notification);
+  }
+  
+  public static void notifyRollback(Command command) {
+    Record notification = new Record();
+    notification.put(LIFE_CYLCLE, LifeCycleEvent.rollback);
+    command.notify(notification);
+  }
+  
+  public static void notifyShutdown(Command command) {
+    Record notification = new Record();
+    notification.put(LIFE_CYLCLE, LifeCycleEvent.shutdown);
+    command.notify(notification);
+  }
+  
   public static void notifyStartSession(Command command) {
     Record notification = new Record();
     notification.put(LIFE_CYLCLE, LifeCycleEvent.startSession);

@@ -106,7 +106,7 @@ public final class TryRulesBuilder implements CommandBuilder {
       }
       LOG.warn("tryRules command found no matching rule");
       if (throwExceptionIfFoundNoMatchingRule) {
-        throw new MorphlineRuntimeException("tryRules command found no matching rule");
+        throw new MorphlineRuntimeException("tryRules command found no matching rule for record: " + record);
       }
       return false;
     }
