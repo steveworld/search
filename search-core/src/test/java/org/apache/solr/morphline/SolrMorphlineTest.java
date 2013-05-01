@@ -37,7 +37,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.MapSolrParams;
 import org.apache.solr.common.util.DateUtil;
 import org.apache.solr.handler.extraction.SolrContentHandler;
-import org.apache.solr.morphline.solrcell.StripNonCharContentHandlerFactory;
+import org.apache.solr.morphline.solrcell.StripNonCharSolrContentHandlerFactory;
 import org.apache.solr.schema.IndexSchema;
 import org.apache.tika.metadata.Metadata;
 import org.junit.After;
@@ -412,7 +412,7 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
   private Config parse(String file) {
     SolrLocator locator = new SolrLocator(createMorphlineContext());
     locator.setSolrHomeDir(testSolrHome + "/collection1");
-    Config config = Configs.parse(file, locator.asConfig("SOLR_LOCATOR"));
+    Config config = Configs.parse(file, locator.toConfig("SOLR_LOCATOR"));
     config = config.getConfigList("morphlines").get(0);
     return config;
   }
@@ -433,8 +433,8 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
     // load illegal char string into a metadata field and generate a new document,
     // which will cause the ContentHandler to be invoked.
     metadata.set(fieldName, getFoobarWithNonChars());
-    StripNonCharContentHandlerFactory contentHandlerFactory =
-      new StripNonCharContentHandlerFactory(DateUtil.DEFAULT_DATE_FORMATS);
+    StripNonCharSolrContentHandlerFactory contentHandlerFactory =
+      new StripNonCharSolrContentHandlerFactory(DateUtil.DEFAULT_DATE_FORMATS);
     IndexSchema schema = h.getCore().getSchema();
     SolrContentHandler contentHandler =
       contentHandlerFactory.createSolrContentHandler(metadata, new MapSolrParams(new HashMap()), schema);

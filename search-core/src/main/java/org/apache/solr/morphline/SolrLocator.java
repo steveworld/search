@@ -132,10 +132,10 @@ public class SolrLocator {
   
   @Override
   public String toString() {
-    return asConfig(null).root().render(ConfigRenderOptions.concise());
+    return toConfig(null).root().render(ConfigRenderOptions.concise());
   }
   
-  public Config asConfig(String key) {
+  public Config toConfig(String key) {
     String json = "";
     if (key != null) {
       json = toJson(key) + " : ";
@@ -146,13 +146,13 @@ public class SolrLocator {
         " zkHost : " + toJson(zkHost) + ", " +
         " solrUrl : " + toJson(solrUrl) + ", " +
         " solrHomeDir : " + toJson(solrHomeDir) + ", " +
-        " batchSize : " + batchSize + " " +
+        " batchSize : " + toJson(batchSize) + " " +
         "}";
     return ConfigFactory.parseString(json);
   }
   
-  private String toJson(String str) {
-    str = str == null ? "" : str;
+  private String toJson(Object key) {
+    String str = key == null ? "" : key.toString();
     str = ConfigUtil.quoteString(str);
     return str;
   }
