@@ -32,15 +32,22 @@ public final class Configs {
   private static final Object LOCK = new Object();
   
   /** Loads the given config file from the classpath */
-  public static Config parse(String resourceBaseName) {
+  public static Config parse(String resourceBaseName, Config... overrides) {
+//  Config config = ConfigFactory.load(resourceBaseName);
+    Config config = ConfigFactory.parseResources(resourceBaseName);
+    for (Config override : overrides) {
+      config = override.withFallback(config);
+    }
     synchronized (LOCK) {
       ConfigFactory.invalidateCaches();
-      return ConfigFactory.load(resourceBaseName);
+      config = ConfigFactory.load(config);
+      config.checkValid(ConfigFactory.defaultReference()); // eagerly validate aspects of tree config
     }
+    return config;
   }
   
   /** Loads the given config file from the local file system */
-  public static Config parse(File file) throws IOException {
+  public static Config parse(File file, Config... overrides) throws IOException {
     if (!file.exists()) {
       throw new FileNotFoundException("File not found: " + file);
     }
@@ -48,6 +55,10 @@ public final class Configs {
       throw new IOException("Insufficient permissions to read file: " + file);
     }
     Config config = ConfigFactory.parseFile(file);
+    for (Config override : overrides) {
+      config = override.withFallback(config);
+    }
+    
     synchronized (LOCK) {
       ConfigFactory.invalidateCaches();
       config = ConfigFactory.load(config);

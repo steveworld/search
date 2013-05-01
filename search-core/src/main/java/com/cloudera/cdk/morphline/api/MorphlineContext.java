@@ -16,6 +16,7 @@
 package com.cloudera.cdk.morphline.api;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.Collections;
@@ -111,7 +112,11 @@ public class MorphlineContext {
               && iface.isAssignableFrom(clazz) 
               && !clazz.isInterface()
               && !Modifier.isAbstract(clazz.getModifiers())) {
-            classes.put(clazz.getName(), clazz);
+            for (Constructor ctor : clazz.getConstructors()) { // all public ctors
+              if (ctor.getParameterTypes().length == 0) { // is public zero-arg ctor?
+                classes.put(clazz.getName(), clazz);                
+              }
+            }
           }
         }
       }

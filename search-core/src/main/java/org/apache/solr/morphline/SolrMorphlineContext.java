@@ -18,24 +18,20 @@
  */
 package org.apache.solr.morphline;
 
-import org.apache.solr.schema.IndexSchema;
-
 import com.cloudera.cdk.morphline.api.MorphlineContext;
-import com.google.common.base.Preconditions;
 
 /**
- * A context that is specific to Solr, in particular, includes the Solr schema of a Solr collection.
+ * A context that is specific to Solr.
  */
 public class SolrMorphlineContext extends MorphlineContext {
 
-  private IndexSchema schema;
+  private DocumentLoader loader;
   
   /** For public access use {@link Builder#build()} instead */  
   protected SolrMorphlineContext() {}
   
-  public IndexSchema getIndexSchema() {
-    assert schema != null;
-    return schema;
+  public DocumentLoader getDocumentLoader() {    
+    return loader;
   }
 
   
@@ -47,20 +43,18 @@ public class SolrMorphlineContext extends MorphlineContext {
    */
   public static class Builder extends MorphlineContext.Builder {
         
-    private IndexSchema schema;
+    private DocumentLoader loader;
     
     public Builder() {}
 
-    public Builder setIndexSchema(IndexSchema schema) {
-      Preconditions.checkNotNull(schema);
-      this.schema = schema;
+    public Builder setDocumentLoader(DocumentLoader loader) {
+      this.loader = loader;
       return this;
     }    
 
     @Override
     public SolrMorphlineContext build() {
-      Preconditions.checkNotNull(schema, "build() requires a prior call to setIndexSchema()");
-      ((SolrMorphlineContext)context).schema = schema;
+      ((SolrMorphlineContext)context).loader = loader;
       return (SolrMorphlineContext) super.build();
     }
 

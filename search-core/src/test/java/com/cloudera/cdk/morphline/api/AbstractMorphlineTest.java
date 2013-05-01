@@ -63,12 +63,12 @@ public class AbstractMorphlineTest extends Assert {
     collector.reset();
   }
   
-  protected Config parse(String file) throws IOException {
+  protected Config parse(String file, Config... overrides) throws IOException {
     Config config;
     if (useFileAPI) {
-      config = Configs.parse(new File("src/test/resources/" + file + ".conf"));
+      config = Configs.parse(new File("src/test/resources/" + file + ".conf"), overrides);
     } else {
-      config = Configs.parse(file);      
+      config = Configs.parse(file + ".conf", overrides);      
     };
     config = config.getConfigList("morphlines").get(0);
     return config;

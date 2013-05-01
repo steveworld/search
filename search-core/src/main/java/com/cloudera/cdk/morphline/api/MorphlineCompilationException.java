@@ -38,7 +38,7 @@ public class MorphlineCompilationException extends RuntimeException {
   }
 
   private static String render(Config config) {
-    return " near: " + config.root().render();
+    return config == null ? "" : " near: " + config.root().render();
   }
 
 }

@@ -27,8 +27,8 @@ import org.slf4j.LoggerFactory;
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
-import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
+import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.google.common.base.Preconditions;
 import com.typesafe.config.Config;
@@ -75,13 +75,21 @@ public abstract class AbstractCommand implements Command {
   
   @Override
   public void notify(Record notification) {
-    LOG.debug("startSession()");
+    if (LOG.isTraceEnabled()) {    
+      LOG.trace("notify: {}", notification);
+    } else {
+      LOG.debug("notify()");
+    }
     getChild().notify(notification);
   }
 
   @Override
   public boolean process(Record record) {
-    LOG.debug("process()");
+    if (LOG.isTraceEnabled()) {    
+      LOG.trace("process: {}", record);      
+    } else {
+      LOG.debug("process()");      
+    }
     return getChild().process(record);
   }
   

@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import org.apache.commons.compress.compressors.CompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
@@ -40,15 +41,12 @@ import org.apache.solr.common.util.DateUtil;
 import org.apache.solr.handler.extraction.ExtractingParams;
 import org.apache.solr.handler.extraction.SolrContentHandler;
 import org.apache.solr.handler.extraction.SolrContentHandlerFactory;
-import org.apache.solr.morphline.SolrMorphlineContext;
+import org.apache.solr.morphline.SolrLocator;
 import org.apache.solr.schema.IndexSchema;
-import org.apache.solr.tika.ConfigurationException;
-import org.apache.solr.tika.TrimSolrContentHandlerFactory;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.TeeContentHandler;
@@ -62,13 +60,15 @@ import org.xml.sax.SAXException;
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
-import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
+import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.parser.AbstractParser;
 import com.cloudera.cdk.morphline.tika.DetectMimeTypeBuilder;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.io.Closeables;
@@ -79,7 +79,7 @@ import com.typesafe.config.Config;
 /**
  * Command that pipes the first attachment of a record into one of the given Tika parsers, then maps
  * the Tika output back to a record using SolrCell.
- * 
+ * <p>
  * The Tika parser is chosen from the configurable list of parsers, depending on the MIME type
  * specified in the input record. Typically, this requires an upstream {@link DetectMimeTypeBuilder}
  * in a prior command.
@@ -108,7 +108,6 @@ public final class SolrCellBuilder implements CommandBuilder {
     private final List<Parser> parsers = new ArrayList();
     private final SolrContentHandlerFactory solrContentHandlerFactory;
     private final boolean decompressConcatenated; // TODO
-    private AutoDetectParser autoDetectParser;
     
     private final SolrParams solrParams;
     private final Map<MediaType, Parser> mediaTypeToParserMap;
@@ -118,8 +117,15 @@ public final class SolrCellBuilder implements CommandBuilder {
     public static final String ADDITIONAL_SUPPORTED_MIME_TYPES = "additionalSupportedMimeTypes";
     
     public SolrCell(Config config, Command parent, Command child, MorphlineContext context) {
-      super(config, parent, child, context);      
-      this.schema = ((SolrMorphlineContext)context).getIndexSchema();
+      super(config, parent, child, context);
+      
+      Config solrLocatorConfig = Configs.getConfig(config, "solrLocator");
+      SolrLocator locator = new SolrLocator(solrLocatorConfig, context);
+      LOG.debug("solrLocator: {}", locator);
+      this.schema = locator.getIndexSchema();
+      Preconditions.checkNotNull(schema);
+      LOG.trace("Solr schema: \n{}", Joiner.on("\n").join(new TreeMap(schema.getFields()).values()));
+
       ListMultimap<String, String> cellParams = ArrayListMultimap.create();
       if (config.hasPath(ExtractingParams.UNKNOWN_FIELD_PREFIX)) {
         cellParams.put(ExtractingParams.UNKNOWN_FIELD_PREFIX, Configs.getString(config, ExtractingParams.UNKNOWN_FIELD_PREFIX));
@@ -147,7 +153,7 @@ public final class SolrCellBuilder implements CommandBuilder {
       } else {
         xpathExpr = null;
       }
-//      cellParams.put("fmap.content-type", "content_type");
+      
       this.dateFormats = Configs.getStringList(config, "dateFormats", new ArrayList<String>(DateUtil.DEFAULT_DATE_FORMATS));
       this.decompressConcatenated = Configs.getBoolean(config, "decompressConcatenated", false);
       
@@ -156,8 +162,8 @@ public final class SolrCellBuilder implements CommandBuilder {
       try {
         factoryClass = (Class<? extends SolrContentHandlerFactory>)Class.forName(handlerStr);
       } catch (ClassNotFoundException cnfe) {
-        throw new ConfigurationException("Could not find class "
-          + handlerStr + " to use for " + "solrContentHandlerFactory", cnfe);
+        throw new MorphlineCompilationException("Could not find class "
+          + handlerStr + " to use for " + "solrContentHandlerFactory", config, cnfe);
       }
       this.solrContentHandlerFactory = getSolrContentHandlerFactory(factoryClass, dateFormats, config);
 
@@ -204,15 +210,13 @@ public final class SolrCellBuilder implements CommandBuilder {
       }
       //LOG.info("mediaTypeToParserMap="+mediaTypeToParserMap);
 
-      autoDetectParser = new AutoDetectParser(parsers.toArray(new Parser[parsers.size()]));
-
       Map<String, String[]> tmp = new HashMap();
       for (Map.Entry<String,Collection<String>> entry : cellParams.asMap().entrySet()) {
         tmp.put(entry.getKey(), entry.getValue().toArray(new String[entry.getValue().size()]));
       }
       this.solrParams = new MultiMapSolrParams(tmp);
     }
-
+    
     @Override
     public boolean process(Record record, InputStream inputStream) {
       Parser parser = detectParser(record);
@@ -220,7 +224,6 @@ public final class SolrCellBuilder implements CommandBuilder {
         return false;
       }
       
-      //ParseInfo parseInfo = new ParseInfo(record, this, mediaTypeToParserMap, getContext().getMetricsRegistry()); // ParseInfo is more practical than ParseContext
       ParseContext parseContext = new ParseContext();
       
       // necessary for gzipped files or tar files, etc! copied from TikaCLI
@@ -244,14 +247,11 @@ public final class SolrCellBuilder implements CommandBuilder {
           parsingHandler = new TeeContentHandler(parsingHandler, serializer);
         }
 
-        // String xpathExpr =
-        // "/xhtml:html/xhtml:body/xhtml:div/descendant:node()";
+        // String xpathExpr = "/xhtml:html/xhtml:body/xhtml:div/descendant:node()";
         if (xpathExpr != null) {
           Matcher matcher = PARSER.parse(xpathExpr);
           parsingHandler = new MatchingContentHandler(parsingHandler, matcher);
         }
-
-        //info.setSolrContentHandler(handler);
 
         // Standard tika parsers occasionally have trouble with gzip data.
         // To avoid this issue, pass a GZIPInputStream if appropriate.
@@ -274,12 +274,6 @@ public final class SolrCellBuilder implements CommandBuilder {
         }
         
         LOG.trace("debug XML doc: {}", debugWriter);
-        //LOG.trace("debug XML doc: {}", debugWriter);
-
-//          if (info.isMultiDocumentParser()) {
-//            return Collections.EMPTY_LIST; // loads were already handled by multidoc parser
-//          }
-
       } finally {
         if (inputStream != null) {
           Closeables.closeQuietly(inputStream);
@@ -287,11 +281,9 @@ public final class SolrCellBuilder implements CommandBuilder {
       }
       
       SolrInputDocument doc = handler.newDocument();
-      LOG.debug("solr doc: {}", doc);
-      
-//        return Collections.singletonList(doc);
-
-      return getChild().process(toRecord(doc));
+      LOG.debug("solr doc: {}", doc);      
+      Record outputRecord = toRecord(doc);
+      return getChild().process(outputRecord);
     }
 
     private Parser detectParser(Record record) {
@@ -300,7 +292,7 @@ public final class SolrCellBuilder implements CommandBuilder {
       }
       String mediaTypeStr = (String) record.getFirstValue(Fields.ATTACHMENT_MIME_TYPE); //ExtractingParams.STREAM_TYPE);
       assert mediaTypeStr != null;
-//      return autoDetectParser;
+      
       MediaType mediaType = parseMediaType(mediaTypeStr).getBaseType();
       Parser parser = mediaTypeToParserMap.get(mediaType); // fast path
       if (parser != null) {
