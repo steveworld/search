@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A vehicle to load a list of Solr documents into a local or remote {@link SolrServer}.
  */
-class SolrServerDocumentLoader implements DocumentLoader {
+public class SolrServerDocumentLoader implements DocumentLoader {
 
   private final SolrServer server; // proxy to local or remote solr server
   private long numLoadedDocs = 0; // number of documents loaded in the current transaction

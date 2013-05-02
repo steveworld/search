@@ -177,7 +177,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
       morphline.process(record);
       fail();
     } catch (MorphlineRuntimeException e) {
-      assertTrue(e.getMessage().startsWith("tryRules command found no matching rule"));
+      assertTrue(e.getMessage().startsWith("tryRules command found no successful rule for record"));
     }
     assertEquals(expectedList, collector.getRecords());
   }

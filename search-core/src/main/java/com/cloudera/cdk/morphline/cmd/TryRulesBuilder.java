@@ -65,17 +65,17 @@ public final class TryRulesBuilder implements CommandBuilder {
   private static final class TryRules extends AbstractCommand {
 
     private List<Command> childRules = new ArrayList();
-    private boolean throwExceptionIfFoundNoMatchingRule;
+    private boolean throwExceptionIfAllRulesFailed;
+    private boolean catchExceptions;
     
     public TryRules(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
-      this.throwExceptionIfFoundNoMatchingRule = 
-          Configs.getBoolean(config, "throwExceptionIfFoundNoMatchingRule", true);
+      this.throwExceptionIfAllRulesFailed = Configs.getBoolean(config, "throwExceptionIfAllRulesFailed", true);
+      this.catchExceptions = Configs.getBoolean(config, "catchExceptions", false);
       
       List<? extends Config> ruleConfigs = Configs.getConfigList(config, "rules", Collections.EMPTY_LIST);
       for (Config ruleConfig : ruleConfigs) {
-//        LOG.info("ruleConfig {}", ruleConfig);
-        LOG.trace("ruleunwrapped {}", ruleConfig.root().unwrapped());
+        LOG.trace("ruleConfigUnwrapped: {}", ruleConfig.root().unwrapped());
         List<Command> commands = buildCommandChain(ruleConfig, "commands", child, true);
         if (commands.size() > 0) {
           childRules.add(commands.get(0));
@@ -95,18 +95,24 @@ public final class TryRulesBuilder implements CommandBuilder {
     public boolean process(Record record) {
       for (Command childRule : childRules) {
         Record copy = record.copy();
-//        try {
+        if (!catchExceptions) {
           if (childRule.process(copy)) {
             return true; // rule was executed successfully; no need to try the other remaining rules
+          }          
+        } else {
+          try {
+            if (childRule.process(copy)) {
+              return true; // rule was executed successfully; no need to try the other remaining rules
+            }
+          } catch (RuntimeException e) {
+            LOG.warn("tryRules command caught rule exception. Continuing to try other remaining rules", e);
+            // continue and try the other remaining rules
           }
-//        } catch (MorphlineRuntimeException e) {
-//          LOG.warn("tryRules rule exception", e);
-//          // continue and try the other remaining rules
-//        }
+        }
       }
-      LOG.warn("tryRules command found no matching rule");
-      if (throwExceptionIfFoundNoMatchingRule) {
-        throw new MorphlineRuntimeException("tryRules command found no matching rule for record: " + record);
+      LOG.warn("tryRules command found no successful rule");
+      if (throwExceptionIfAllRulesFailed) {
+        throw new MorphlineRuntimeException("tryRules command found no successful rule for record: " + record);
       }
       return false;
     }
