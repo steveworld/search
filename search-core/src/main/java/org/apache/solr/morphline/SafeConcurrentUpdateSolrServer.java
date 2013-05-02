@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
  * ConcurrentUpdateSolrServer that propagates exceptions up to the submitter of
  * requests on blockUntilFinished()
  */
-class SafeConcurrentUpdateSolrServer extends ConcurrentUpdateSolrServer {
+public class SafeConcurrentUpdateSolrServer extends ConcurrentUpdateSolrServer {
 
   private Throwable currentException = null;
   private final Object myLock = new Object();
