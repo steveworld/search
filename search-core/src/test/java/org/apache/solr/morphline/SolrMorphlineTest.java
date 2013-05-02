@@ -23,8 +23,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.avro.util.Utf8;
-import org.apache.commons.io.FileUtils;
 import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
@@ -55,14 +53,15 @@ import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.base.Notifications;
 import com.cloudera.cdk.morphline.cmd.PipeBuilder;
+import com.google.common.io.Files;
 import com.typesafe.config.Config;
 import com.yammer.metrics.core.MetricsRegistry;
 
 public class SolrMorphlineTest extends SolrTestCaseJ4 {
   
-  private IndexSchema schema;
   private Collector collector;
   private Command morphline;
+  private SolrServer solrServer;
   private DocumentLoader testServer;
   
   protected boolean injectUnknownSolrField = false; // to force exceptions
@@ -95,13 +94,6 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
         );    
   }
   
-//  protected Map<String, String> getContext() {
-//    final Map<String, String> context = new HashMap();
-//    //context.put(TikaIndexer.TIKA_CONFIG_LOCATION, RESOURCES_DIR + "/tika-config.xml");
-//    context.put(SolrInspector.SOLR_COLLECTION_LIST + ".testcoll." + SolrInspector.SOLR_CLIENT_HOME, testSolrHome + "/collection1");
-//    return context;
-//  }
-
   @Before
   public void setUp() throws Exception {
     super.setUp();
@@ -125,9 +117,6 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
     expectedRecords.put(path + "/test-documents.zip", 9);
     expectedRecords.put(path + "/multiline-stacktrace.log", 4);
     
-//    final Map<String, String> context = getContext();
-    
-    final SolrServer solrServer;
     if (EXTERNAL_SOLR_SERVER_URL != null) {
       //solrServer = new ConcurrentUpdateSolrServer(EXTERNAL_SOLR_SERVER_URL, 2, 2);
       //solrServer = new SafeConcurrentUpdateSolrServer(EXTERNAL_SOLR_SERVER_URL, 2, 2);
@@ -144,14 +133,13 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
 
     int batchSize = SEQ_NUM2.incrementAndGet() % 2 == 0 ? 100 : 1; //SolrInspector.DEFAULT_SOLR_SERVER_BATCH_SIZE : 1;
     testServer = new SolrServerDocumentLoader(solrServer, batchSize);
-//    Config config = ConfigFactory.parseMap(context);
-//    schema = new SolrInspector().createSolrCollection(config, testServer).getSchema();
     deleteAllDocuments();
   }
   
   @After
   public void tearDown() throws Exception {
     collector = null;
+    solrServer = null;
     super.tearDown();
   }
   
@@ -317,7 +305,7 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
       
       for (String file : files) {
         File f = new File(file);
-        byte[] body = FileUtils.readFileToByteArray(f);
+        byte[] body = Files.toByteArray(f);
         Record event = new Record();
         event.put(Fields.ID, docId++);
         event.getFields().put(Fields.ATTACHMENT_BODY, new ByteArrayInputStream(body));
@@ -367,8 +355,8 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
 //    return collector.getRecords().size();
     try {
       testServer.commitTransaction();
-      ((SolrServerDocumentLoader)testServer).getSolrServer().commit(false, true, true);
-      QueryResponse rsp = ((SolrServerDocumentLoader)testServer).getSolrServer().query(new SolrQuery(query).setRows(Integer.MAX_VALUE));
+      solrServer.commit(false, true, true);
+      QueryResponse rsp = solrServer.query(new SolrQuery(query).setRows(Integer.MAX_VALUE));
       LOGGER.debug("rsp: {}", rsp);
       int i = 0;
       for (SolrDocument doc : rsp.getResults()) {
@@ -383,13 +371,9 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
   
   private void deleteAllDocuments() throws SolrServerException, IOException {
     collector.reset();
-    SolrServer s = ((SolrServerDocumentLoader)testServer).getSolrServer();
+    SolrServer s = solrServer;
     s.deleteByQuery("*:*"); // delete everything!
     s.commit();
-  }
-
-  private static Utf8 str(String str) {
-    return new Utf8(str);
   }
 
   protected Command createMorphline(String file) {
@@ -402,9 +386,9 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
 
   private MorphlineContext createMorphlineContext() {
     return new SolrMorphlineContext.Builder()
-      //.setIndexSchema(schema)
       .setDocumentLoader(testServer)
 //      .setDocumentLoader(new CollectingDocumentLoader(100))
+      .setFaultTolerance(new FaultTolerance(false,  false))
       .setMetricsRegistry(new MetricsRegistry())
       .build();
   }
