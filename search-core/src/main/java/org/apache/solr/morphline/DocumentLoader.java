@@ -19,7 +19,6 @@
 package org.apache.solr.morphline;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.SolrPingResponse;
@@ -35,8 +34,8 @@ public interface DocumentLoader {
   /** Begins a transaction */
   public void beginTransaction();
 
-  /** Loads the given documents into the destination */
-  public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException;
+  /** Loads the given document into the destination */
+  public void load(SolrInputDocument doc) throws IOException, SolrServerException;
 
   /**
    * Sends any outstanding documents to the destination and waits for a positive
@@ -55,12 +54,12 @@ public interface DocumentLoader {
    * Note that this is not a true rollback as in databases. Content you have
    * previously added may have already been committed due to autoCommit, buffer
    * full, other client performing a commit etc. So this is only a best-effort
-   * rollback, not a rollback in a strict 2PC protocol.
+   * rollback.
    * 
    * @throws IOException
    *           If there is a low-level I/O error.
    */
-  public UpdateResponse rollback() throws IOException, SolrServerException;
+  public UpdateResponse rollbackTransaction() throws IOException, SolrServerException;
 
   /** Releases allocated resources */
   public void shutdown() throws IOException, SolrServerException;

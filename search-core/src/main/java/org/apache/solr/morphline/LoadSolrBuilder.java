@@ -84,7 +84,7 @@ public final class LoadSolrBuilder implements CommandBuilder {
         }
         else if (event == Notifications.LifeCycleEvent.rollback) {
           try {
-            loader.rollback();
+            loader.rollbackTransaction();
           } catch (SolrServerException e) {
             throw new MorphlineRuntimeException(e);
           } catch (IOException e) {
@@ -108,7 +108,7 @@ public final class LoadSolrBuilder implements CommandBuilder {
     public boolean process(Record record) {
       SolrInputDocument doc = convert(record);
       try {
-        loader.load(Collections.singletonList(doc));
+        loader.load(doc);
       } catch (IOException e) {
         throw new MorphlineRuntimeException(e);
       } catch (SolrServerException e) {

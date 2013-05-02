@@ -65,15 +65,11 @@ public class SolrServerDocumentLoader implements DocumentLoader {
   }
 
   @Override
-  public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
-    if (docs.size() > 0) {
-      LOGGER.trace("load docs: {}", docs);
-      for (SolrInputDocument doc : docs) {
-        batch.add(doc);
-        if (batch.size() >= batchSize) {
-          loadBatch();
-        }
-      }
+  public void load(SolrInputDocument doc) throws IOException, SolrServerException {
+    LOGGER.trace("load doc: {}", doc);
+    batch.add(doc);
+    if (batch.size() >= batchSize) {
+      loadBatch();
     }
   }
 
@@ -100,7 +96,7 @@ public class SolrServerDocumentLoader implements DocumentLoader {
   }
 
   @Override
-  public UpdateResponse rollback() throws SolrServerException, IOException {
+  public UpdateResponse rollbackTransaction() throws SolrServerException, IOException {
     LOGGER.trace("rollback");
     return server.rollback();
   }

@@ -52,15 +52,11 @@ class CollectingDocumentLoader implements DocumentLoader {
   }
 
   @Override
-  public void load(List<SolrInputDocument> docs) {
-    if (docs.size() > 0) {
-      LOGGER.trace("load docs: {}", docs);
-      for (SolrInputDocument doc : docs) {
-        batch.add(doc);
-        if (batch.size() >= batchSize) {
-          loadBatch();
-        }
-      }
+  public void load(SolrInputDocument doc) {
+    LOGGER.trace("load doc: {}", doc);
+    batch.add(doc);
+    if (batch.size() >= batchSize) {
+      loadBatch();
     }
   }
 
@@ -81,7 +77,7 @@ class CollectingDocumentLoader implements DocumentLoader {
   }
 
   @Override
-  public UpdateResponse rollback() {
+  public UpdateResponse rollbackTransaction() {
     LOGGER.trace("rollback");
     return new UpdateResponse();
   }
