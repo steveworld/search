@@ -119,6 +119,7 @@ public class MorphlineSolrIndexer implements SolrIndexer {
       record.put(Fields.ATTACHMENT_BODY, bytes);
     }    
     try {
+      Notifications.notifyStartSession(morphline);
       morphline.process(record);
     } catch (RuntimeException t) {
       handleException(t, record);
@@ -154,7 +155,7 @@ public class MorphlineSolrIndexer implements SolrIndexer {
 
   @Override
   public void rollbackTransaction() throws IOException, SolrServerException {
-    Notifications.notifyRollback(morphline);            
+    Notifications.notifyRollbackTransaction(morphline);            
   }
 
   @Override

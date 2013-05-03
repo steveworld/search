@@ -43,7 +43,7 @@ public final class Notifications {
     command.notify(notification);
   }
   
-  public static void notifyRollback(Command command) {
+  public static void notifyRollbackTransaction(Command command) {
     Record notification = new Record();
     notification.put(LIFE_CYLCLE, LifeCycleEvent.rollback);
     command.notify(notification);
