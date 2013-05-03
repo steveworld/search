@@ -161,7 +161,7 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
     expected.put(Fields.ID, "id0");
     assertEquals(Arrays.asList(expected), collector.getRecords());
     assertEquals(1, queryResultSetSize("*:*"));
-    Notifications.notifyRollback(morphline);
+    Notifications.notifyRollbackTransaction(morphline);
     Notifications.notifyShutdown(morphline);
   }
     
