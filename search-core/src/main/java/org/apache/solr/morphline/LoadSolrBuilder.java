@@ -71,9 +71,14 @@ public final class LoadSolrBuilder implements CommandBuilder {
     public void notify(Record notification) {
       for (Object event : Notifications.getLifeCycleEvents(notification)) {
         if (event == Notifications.LifeCycleEvent.beginTransaction) {
-          loader.beginTransaction();
-        }
-        else if (event == Notifications.LifeCycleEvent.commitTransaction) {
+          try {
+            loader.beginTransaction();
+          } catch (SolrServerException e) {
+            throw new MorphlineRuntimeException(e);
+          } catch (IOException e) {
+            throw new MorphlineRuntimeException(e);
+          }
+        } else if (event == Notifications.LifeCycleEvent.commitTransaction) {
           try {
             loader.commitTransaction();
           } catch (SolrServerException e) {
