@@ -32,7 +32,7 @@ import org.apache.solr.common.SolrInputDocument;
 public interface DocumentLoader {
 
   /** Begins a transaction */
-  public void beginTransaction();
+  public void beginTransaction() throws IOException, SolrServerException;
 
   /** Loads the given document into the destination */
   public void load(SolrInputDocument doc) throws IOException, SolrServerException;
