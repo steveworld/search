@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
 import com.cloudera.cdk.morphline.api.Configs;
+import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.google.common.base.Preconditions;
@@ -47,6 +48,7 @@ import com.typesafe.config.ConfigUtil;
  */
 public class SolrLocator {
   
+  private Config config;
   private MorphlineContext context;
   private String collectionName;
   private String zkHost;
@@ -65,11 +67,12 @@ public class SolrLocator {
 
   public SolrLocator(Config config, MorphlineContext context) {
     this(context);
-    collectionName = Configs.getString(config, "collection");
-    batchSize = Configs.getInt(config, "batchSize", batchSize);
+    this.config = config;
+    collectionName = Configs.getString(config, "collection", null);
     zkHost = Configs.getString(config, "zkHost", null);
     solrHomeDir = Configs.getString(config, "solrHomeDir", null);
-    solrUrl = Configs.getString(config, "solrUrl", "http://127.0.0.1:8983/solr/" + collectionName);    
+    solrUrl = Configs.getString(config, "solrUrl", null);    
+    batchSize = Configs.getInt(config, "batchSize", batchSize);
     LOG.trace("Constructed solrLocator: {}", this);
   }
   
@@ -79,6 +82,9 @@ public class SolrLocator {
       return loader;
     }
     if (zkHost != null && zkHost.length() > 0) {
+      if (collectionName == null || collectionName.length() == 0) {
+        throw new MorphlineCompilationException("Parameter 'zkHost' requires that you also pass parameter 'collection'", config);
+      }
       try {
         CloudSolrServer cloudSolrServer = new CloudSolrServer(zkHost);
         cloudSolrServer.setDefaultCollection(collectionName);
@@ -88,6 +94,9 @@ public class SolrLocator {
         throw new MorphlineRuntimeException(e);
       }
     } else {
+      if (solrUrl == null || solrUrl.length() == 0) {
+        throw new MorphlineCompilationException("Missing parameter 'solrUrl'", config);
+      }
       int solrServerNumThreads = 2;
       int solrServerQueueLength = solrServerNumThreads;
       SolrServer server = new SafeConcurrentUpdateSolrServer(solrUrl, solrServerQueueLength, solrServerNumThreads);
@@ -99,12 +108,18 @@ public class SolrLocator {
   }
 
   public IndexSchema getIndexSchema() {
+    IndexSchema schema = ((SolrMorphlineContext)context).getIndexSchema();
+    if (schema != null) {
+      return schema;
+    }
+    // TODO: if solrHomeDir isn't defined and zkhost and collectionName are defined 
+    // then download from zk and use that as solrHomeDir
     String oldSolrHomeDir = null;
     if (solrHomeDir != null && solrHomeDir.length() > 0) {
       oldSolrHomeDir = System.setProperty(SOLR_HOME_PROPERTY_NAME, solrHomeDir);
     }
     try {
-      SolrConfig solrConfig = new SolrConfig();
+      SolrConfig solrConfig = new SolrConfig(); // TODO use SolrResourceLoader ala TikaMapper?
       // SolrConfig solrConfig = new SolrConfig("solrconfig.xml");
       // SolrConfig solrConfig = new
       // SolrConfig("/cloud/apache-solr-4.0.0-BETA/example/solr/collection1",

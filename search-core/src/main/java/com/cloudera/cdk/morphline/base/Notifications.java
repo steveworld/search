@@ -33,31 +33,31 @@ public final class Notifications {
   
   public static void notifyBeginTransaction(Command command) {
     Record notification = new Record();
-    notification.put(LIFE_CYLCLE, LifeCycleEvent.beginTransaction);
+    notification.put(LIFE_CYLCLE, LifeCycleEvent.BEGIN_TRANSACTION);
     command.notify(notification);
   }
   
   public static void notifyCommitTransaction(Command command) {
     Record notification = new Record();
-    notification.put(LIFE_CYLCLE, LifeCycleEvent.commitTransaction);
+    notification.put(LIFE_CYLCLE, LifeCycleEvent.COMMIT_TRANSACTION);
     command.notify(notification);
   }
   
   public static void notifyRollbackTransaction(Command command) {
     Record notification = new Record();
-    notification.put(LIFE_CYLCLE, LifeCycleEvent.rollback);
+    notification.put(LIFE_CYLCLE, LifeCycleEvent.ROLLBACK_TRANSACTION);
     command.notify(notification);
   }
   
   public static void notifyShutdown(Command command) {
     Record notification = new Record();
-    notification.put(LIFE_CYLCLE, LifeCycleEvent.shutdown);
+    notification.put(LIFE_CYLCLE, LifeCycleEvent.SHUTDOWN);
     command.notify(notification);
   }
   
   public static void notifyStartSession(Command command) {
     Record notification = new Record();
-    notification.put(LIFE_CYLCLE, LifeCycleEvent.startSession);
+    notification.put(LIFE_CYLCLE, LifeCycleEvent.START_SESSION);
     command.notify(notification);
   }
   
@@ -69,11 +69,11 @@ public final class Notifications {
   // Nested classes:
   ///////////////////////////////////////////////////////////////////////////////
   public static enum LifeCycleEvent {
-    beginTransaction,
-    commitTransaction,
-    rollback,
-    shutdown,
-    startSession;
+    BEGIN_TRANSACTION,
+    COMMIT_TRANSACTION,
+    ROLLBACK_TRANSACTION,
+    SHUTDOWN,
+    START_SESSION;
   }     
 
 }

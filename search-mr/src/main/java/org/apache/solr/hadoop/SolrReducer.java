@@ -26,8 +26,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.hadoop.dedup.NoChangeUpdateConflictResolver;
 import org.apache.solr.hadoop.dedup.RetainMostRecentUpdateConflictResolver;
 import org.apache.solr.hadoop.dedup.UpdateConflictResolver;
-import org.apache.solr.tika.RecoverableSolrException;
-import org.apache.solr.tika.SolrIndexer;
+import org.apache.solr.morphline.FaultTolerance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +43,7 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
 
   private UpdateConflictResolver resolver;
   private HeartBeater heartBeater;
-  private boolean isProductionMode = false;
-  private boolean isIgnoringRecoverableExceptions = false;
+  private FaultTolerance faultTolerance;
   
   public static final String UPDATE_CONFLICT_RESOLVER = SolrReducer.class.getName() + ".updateConflictResolver";
   
@@ -64,8 +62,10 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
      * implements org.apache.hadoop.conf.Configurable
      */
 
-    this.isProductionMode = context.getConfiguration().getBoolean(SolrIndexer.PRODUCTION_MODE, isProductionMode);
-    this.isIgnoringRecoverableExceptions = context.getConfiguration().getBoolean(SolrIndexer.IGNORE_RECOVERABLE_EXCEPTIONS, isIgnoringRecoverableExceptions);
+    this.faultTolerance = new FaultTolerance(
+        context.getConfiguration().getBoolean(FaultTolerance.IS_PRODUCTION_MODE, false), 
+        context.getConfiguration().getBoolean(FaultTolerance.IS_IGNORING_RECOVERABLE_EXCEPTIONS, false));
+    
     this.heartBeater = new HeartBeater(context);
   }
   
@@ -77,7 +77,7 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
     } catch (Exception e) {
       LOG.error("Unable to process key " + key, e);
       context.getCounter(getClass().getName() + ".errors", e.getClass().getName()).increment(1);
-      if (isProductionMode && (!RecoverableSolrException.isRecoverable(e) || isIgnoringRecoverableExceptions)) {
+      if (faultTolerance.isProductionMode() && (!faultTolerance.isRecoverableException(e) || faultTolerance.isIgnoringRecoverableExceptions())) {
         ; // ignore
       } else {
         throw new IllegalArgumentException(e);          

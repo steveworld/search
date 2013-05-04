@@ -675,8 +675,9 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     
     String mapperClass = job.getConfiguration().get(JobContext.MAP_CLASS_ATTR);
     if (mapperClass == null) { // enable customization
-      mapperClass = TikaMapper.class.getName();
-      job.setMapperClass(TikaMapper.class);
+      Class clazz = getDefaultMapperClass();
+      mapperClass = clazz.getName();
+      job.setMapperClass(clazz);
     }
     job.setJobName(getClass().getName() + "/" + Utils.getShortClassName(mapperClass));
     
@@ -809,6 +810,11 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     
     goodbye(job, programStartTime);    
     return 0;
+  }
+  
+  /** Returns the class to be used as Mapper by default */
+  protected Class getDefaultMapperClass() {
+    return TikaMapper.class;
   }
 
   private void calculateNumReducers(Options options, int realMappers) throws IOException {

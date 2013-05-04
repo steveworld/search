@@ -24,8 +24,6 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mrunit.mapreduce.MapReduceDriver;
 import org.apache.hadoop.mrunit.types.Pair;
-import org.apache.solr.hadoop.LineRandomizerMapper;
-import org.apache.solr.hadoop.LineRandomizerReducer;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

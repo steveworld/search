@@ -18,6 +18,8 @@
  */
 package org.apache.solr.morphline;
 
+import org.apache.solr.schema.IndexSchema;
+
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.google.common.base.Preconditions;
 
@@ -27,6 +29,7 @@ import com.google.common.base.Preconditions;
 public class SolrMorphlineContext extends MorphlineContext {
 
   private DocumentLoader loader;
+  private IndexSchema schema;
   private FaultTolerance faultTolerance;
   
   /** For public access use {@link Builder#build()} instead */  
@@ -34,6 +37,10 @@ public class SolrMorphlineContext extends MorphlineContext {
   
   public DocumentLoader getDocumentLoader() {    
     return loader;
+  }
+
+  public IndexSchema getIndexSchema() {    
+    return schema;
   }
 
   public FaultTolerance getFaultTolerance() {    
@@ -50,12 +57,18 @@ public class SolrMorphlineContext extends MorphlineContext {
   public static class Builder extends MorphlineContext.Builder {
         
     private DocumentLoader loader;
+    private IndexSchema schema;
     private FaultTolerance faultTolerance;
     
     public Builder() {}
 
     public Builder setDocumentLoader(DocumentLoader loader) {
       this.loader = loader;
+      return this;
+    }    
+
+    public Builder setIndexSchema(IndexSchema schema) {
+      this.schema = schema;
       return this;
     }    
 
@@ -67,6 +80,7 @@ public class SolrMorphlineContext extends MorphlineContext {
     @Override
     public SolrMorphlineContext build() {
       ((SolrMorphlineContext)context).loader = loader;
+      ((SolrMorphlineContext)context).schema = schema;
       Preconditions.checkNotNull(faultTolerance, "build() requires a prior call to setFaultTolerance()");
       ((SolrMorphlineContext)context).faultTolerance = faultTolerance;
       return (SolrMorphlineContext) super.build();
