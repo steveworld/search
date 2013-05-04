@@ -130,7 +130,7 @@ public final class SanitizeUniqueKeyBuilder implements CommandBuilder {
     
     @Override
     public void notify(Record notification) {
-      if (Notifications.contains(notification, Notifications.LifeCycleEvent.startSession)) {
+      if (Notifications.contains(notification, Notifications.LifeCycleEvent.START_SESSION)) {
         recordCounter = 0; // reset
       }
       super.notify(notification);

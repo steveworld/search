@@ -52,6 +52,9 @@ public class MorphlineSolrIndexer implements SolrIndexer {
   private SolrMorphlineContext morphlineContext;
   private Command morphline;
   
+  public static final String MORPHLINE_FILE_PARAM = "morphlineFile";
+  public static final String MORPHLINE_NAME_PARAM = "morphlineName";
+  
   private static final Logger LOG = LoggerFactory.getLogger(MorphlineSolrIndexer.class);
 
   // For test injection
@@ -61,9 +64,10 @@ public class MorphlineSolrIndexer implements SolrIndexer {
 
   @Override
   public void configure(Context context) {
-    // TODO: also support fetching morphlineFile and schema.xml and solrconfig.xml from zk
-    // e.g. via specifying an optional solrLocator here
-    String morphlineFile = context.getString("morphlineFile");
+    // TODO: also support fetching morphlineFile from zk
+    // e.g. via specifying an optional solrLocator here, 
+    // SolrLocator later downloads schema.xml and solrconfig.xml if has zkhost with collectionname 
+    String morphlineFile = context.getString(MORPHLINE_FILE_PARAM);
     if (morphlineFile == null || morphlineFile.trim().length() == 0) {
       throw new MorphlineCompilationException("Missing morphlineFile parameter", null);
     }
@@ -74,7 +78,7 @@ public class MorphlineSolrIndexer implements SolrIndexer {
       throw new MorphlineCompilationException("Cannot compile morphline: " + morphlineFile, null);
     }
     
-    String morphlineName = context.getString("morphlineName");
+    String morphlineName = context.getString(MORPHLINE_NAME_PARAM);
     if (morphlineName != null) {
       morphlineName = morphlineName.trim();
     }
@@ -96,8 +100,8 @@ public class MorphlineSolrIndexer implements SolrIndexer {
     
     if (morphlineContext == null) {
       FaultTolerance faultTolerance = new FaultTolerance(
-          context.getBoolean("isProductionMode", false), 
-          context.getBoolean("isIgnoringRecoverableExceptions", false));
+          context.getBoolean(FaultTolerance.IS_PRODUCTION_MODE, false), 
+          context.getBoolean(FaultTolerance.IS_IGNORING_RECOVERABLE_EXCEPTIONS, false));
       
       morphlineContext = (SolrMorphlineContext) new SolrMorphlineContext.Builder()
         .setFaultTolerance(faultTolerance)

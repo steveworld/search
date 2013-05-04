@@ -147,7 +147,7 @@ public class TestMorphlineSolrSink extends SolrTestCaseJ4 {
     MorphlineSolrIndexer impl = new MorphlineSolrIndexer();
     impl.setMorphlineContext(solrMorphlineContext);
     
-    class MySolrLocator extends SolrLocator {
+    class MySolrLocator extends SolrLocator { // trick to access protected ctor
       public MySolrLocator(SolrMorphlineContext indexer) {
         super(indexer);
       }

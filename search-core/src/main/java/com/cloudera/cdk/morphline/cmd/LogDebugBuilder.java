@@ -21,6 +21,7 @@ import java.util.Collections;
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
+import com.cloudera.cdk.morphline.api.Record;
 import com.typesafe.config.Config;
 
 /**
@@ -46,6 +47,16 @@ public final class LogDebugBuilder implements CommandBuilder {
     public LogDebug(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
     }
+    
+    @Override
+    public boolean process(Record record) {
+      if (LOG.isDebugEnabled()) {
+        return super.process(record);
+      } else {
+        return getChild().process(record);
+      }
+    }
+
     @Override
     protected void log(String format, Object[] args) {
       LOG.debug(format, args);

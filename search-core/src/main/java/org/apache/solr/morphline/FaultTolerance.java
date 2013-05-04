@@ -35,6 +35,9 @@ public final class FaultTolerance {
     
   private final boolean isProductionMode; 
   private final boolean isIgnoringRecoverableExceptions;
+  
+  public static final String IS_PRODUCTION_MODE = "isProductionMode";
+  public static final String IS_IGNORING_RECOVERABLE_EXCEPTIONS = "isIgnoringRecoverableExceptions";
 
   public FaultTolerance(boolean isProductionMode, boolean isIgnoringRecoverableExceptions) {
     this.isProductionMode = isProductionMode;

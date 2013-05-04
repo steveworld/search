@@ -1,0 +1,79 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.solr.hadoop;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mrunit.mapreduce.MapReduceDriver;
+import org.apache.solr.hadoop.TikaReducerTest.MySolrReducer;
+import org.apache.solr.hadoop.TikaReducerTest.NullInputFormat;
+import org.apache.solr.hadoop.morphline.MorphlineMapper;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+
+@RunWith(value = Parameterized.class)
+public class MorphlineMapperReducerTest extends MRUnitBase {
+
+  private final String inputAvroFile;
+  private final int count;
+
+  @Parameters
+  public static Collection<Object[]> data() {
+    Object[][] data = new Object[][] {
+        { "sample-statuses-20120521-100919.avro", 20 },
+        { "sample-statuses-20120906-141433.avro", 2 } };
+    return Arrays.asList(data);
+  }
+
+  public MorphlineMapperReducerTest(String inputAvroFile, int count) {
+    this.inputAvroFile = inputAvroFile;
+    this.count = count;
+  }
+
+  @Ignore
+  @Test
+  public void testMapReduce() throws IOException {
+    MorphlineMapper mapper = new MorphlineMapper();
+    MySolrReducer myReducer = new MySolrReducer();
+    MapReduceDriver<LongWritable, Text, Text, SolrInputDocumentWritable, Text, SolrInputDocumentWritable> mapReduceDriver;
+    mapReduceDriver = MapReduceDriver.newMapReduceDriver(mapper, myReducer);
+
+    Configuration config = mapReduceDriver.getConfiguration();
+    setupHadoopConfig(config);
+
+    mapReduceDriver.withInput(new LongWritable(0L), new Text(new File(DOCUMENTS_DIR, inputAvroFile).toURI().toString()));
+
+    mapReduceDriver.withCacheArchive(solrHomeZip.getAbsolutePath());
+
+    mapReduceDriver.withOutputFormat(SolrOutputFormat.class, NullInputFormat.class);
+
+    mapReduceDriver.run();
+
+    assertEquals("Invalid counter " + SolrCounters.DOCUMENTS_WRITTEN,
+        count, mapReduceDriver.getCounters().findCounter(SolrCounters.class.getName(), SolrCounters.DOCUMENTS_WRITTEN.toString()).getValue());
+  }
+  
+}

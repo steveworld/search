@@ -70,7 +70,7 @@ public final class LoadSolrBuilder implements CommandBuilder {
     @Override
     public void notify(Record notification) {
       for (Object event : Notifications.getLifeCycleEvents(notification)) {
-        if (event == Notifications.LifeCycleEvent.beginTransaction) {
+        if (event == Notifications.LifeCycleEvent.BEGIN_TRANSACTION) {
           try {
             loader.beginTransaction();
           } catch (SolrServerException e) {
@@ -78,7 +78,7 @@ public final class LoadSolrBuilder implements CommandBuilder {
           } catch (IOException e) {
             throw new MorphlineRuntimeException(e);
           }
-        } else if (event == Notifications.LifeCycleEvent.commitTransaction) {
+        } else if (event == Notifications.LifeCycleEvent.COMMIT_TRANSACTION) {
           try {
             loader.commitTransaction();
           } catch (SolrServerException e) {
@@ -87,7 +87,7 @@ public final class LoadSolrBuilder implements CommandBuilder {
             throw new MorphlineRuntimeException(e);
           }
         }
-        else if (event == Notifications.LifeCycleEvent.rollback) {
+        else if (event == Notifications.LifeCycleEvent.ROLLBACK_TRANSACTION) {
           try {
             loader.rollbackTransaction();
           } catch (SolrServerException e) {
@@ -96,7 +96,7 @@ public final class LoadSolrBuilder implements CommandBuilder {
             throw new MorphlineRuntimeException(e);
           }
         }
-        else if (event == Notifications.LifeCycleEvent.shutdown) {
+        else if (event == Notifications.LifeCycleEvent.SHUTDOWN) {
           try {
             loader.shutdown();
           } catch (SolrServerException e) {

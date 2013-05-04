@@ -31,17 +31,11 @@ import com.typesafe.config.Config;
 final class Pipe extends AbstractCommand {
   
   private final String name;
-  private final boolean productionMode; // TODO
-  private final boolean ignoreRecoverableExceptions;  // TODO
-  private final boolean ignoreLoads;
   private final Command realChild;
 
   public Pipe(Config config, Command parent, Command child, MorphlineContext context) {
     super(config, parent, child, context);
     this.name = Configs.getString(config, "name");
-    this.productionMode = Configs.getBoolean(config, "productionMode", false);
-    this.ignoreRecoverableExceptions = Configs.getBoolean(config, "ignoreRecoverableExceptions", false);
-    this.ignoreLoads = Configs.getBoolean(config, "ignoreLoads", false);
     
     List<String> commandPackagePrefixes = Configs.getStringList(config, "importCommandPackagePrefixes", 
         Arrays.asList("com", "org", "net"));    

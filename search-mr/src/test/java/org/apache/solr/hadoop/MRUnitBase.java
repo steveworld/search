@@ -19,7 +19,7 @@ package org.apache.solr.hadoop;
 import java.io.File;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.solr.tika.TikaIndexer;
+import org.apache.solr.hadoop.morphline.MorphlineMapper;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -43,6 +43,6 @@ public class MRUnitBase extends Assert {
   
   protected void setupHadoopConfig(Configuration config) {
     config.set(SolrOutputFormat.ZIP_NAME, solrHomeZip.getName());
-    config.set(TikaIndexer.TIKA_CONFIG_LOCATION, RESOURCES_DIR + "/tika-config.xml");
+    config.set(MorphlineMapper.MORPHLINE_FILE_PARAM, RESOURCES_DIR + "/test-morphlines/solrCellDocumentTypes.conf");
   }
 }
