@@ -718,8 +718,12 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       // use the config that this collection uses for the SolrHomeCache.
       ZooKeeperInspector zki = new ZooKeeperInspector();
       SolrZkClient zkClient = zki.getZkClient(options.zkHost);
-      String configName = zki.readConfigName(zkClient, options.collection);
-      SolrOutputFormat.setupSolrHomeCache(zki.downloadConfigDir(zkClient, configName), job);
+      try {
+        String configName = zki.readConfigName(zkClient, options.collection);
+        SolrOutputFormat.setupSolrHomeCache(zki.downloadConfigDir(zkClient, configName), job);
+      } finally {
+        zkClient.close();
+      }
     }
     job.setNumReduceTasks(reducers);  
     job.setOutputKeyClass(Text.class);

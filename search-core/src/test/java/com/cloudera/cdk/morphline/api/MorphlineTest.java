@@ -52,7 +52,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     try {
       Config override = ConfigFactory.parseString("SOLR_LOCATOR : { collection : fallback } ");
       Config config = parse("test-morphlines/parseVariables", override);
-      System.out.println(config.root().render());
+      //System.out.println(config.root().render());
     } finally {
       System.clearProperty("ENV_ZK_HOST");
       System.clearProperty("ENV_SOLR_URL");  
@@ -66,7 +66,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     Record record = createBasicRecord();
     startSession();
     assertEquals(1, collector.getNumStartEvents());
-    morphline.process(record);
+    assertTrue(morphline.process(record));
     assertEquals(Arrays.asList(record), collector.getRecords());
     assertSame(record, collector.getRecords().get(0));
   }
@@ -78,7 +78,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     record.getFields().put("first_name", "Nadja");
     startSession();
     assertEquals(1, collector.getNumStartEvents());
-    morphline.process(record);
+    assertTrue(morphline.process(record));
     Record expected = new Record();
     expected.getFields().put("first_name", "Nadja");
     expected.getFields().put("source_type", "text/log");
@@ -107,7 +107,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
 
     startSession();
     assertEquals(1, collector.getNumStartEvents());
-    morphline.process(record);
+    assertTrue(morphline.process(record));
     Record expected = new Record();
     expected.getFields().put("first_name", "Nadja");
     expected.getFields().put("source_type", "text/log");
@@ -135,7 +135,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     }
     startSession();
     assertEquals(1, collector.getNumStartEvents());
-    morphline.process(record);
+    assertTrue(morphline.process(record));
     assertEquals(expectedList, collector.getRecords());
     assertNotSame(record, collector.getRecords().get(0));
   }
@@ -154,7 +154,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     }
     startSession();
     assertEquals(1, collector.getNumStartEvents());
-    morphline.process(record);
+    assertTrue(morphline.process(record));
     assertEquals(expectedList, collector.getRecords());
     assertNotSame(record, collector.getRecords().get(0));
   }
@@ -226,7 +226,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     Record record = createBasicRecord();
     startSession();
     assertEquals(1, collector.getNumStartEvents());
-    morphline.process(record);
+    assertTrue(morphline.process(record));
     assertEquals(Arrays.asList(record), collector.getRecords());
     assertSame(record, collector.getRecords().get(0));
     assertEquals("then1", collector.getRecords().get(0).getFirstValue("state"));
@@ -238,7 +238,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     Record record = createBasicRecord();
     startSession();
     assertEquals(1, collector.getNumStartEvents());
-    morphline.process(record);
+    assertTrue(morphline.process(record));
     assertEquals(Arrays.asList(record), collector.getRecords());
     assertSame(record, collector.getRecords().get(0));
     assertEquals("init1", collector.getRecords().get(0).getFirstValue("state"));
@@ -250,7 +250,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     Record record = createBasicRecord();
     startSession();
     assertEquals(1, collector.getNumStartEvents());
-    morphline.process(record);
+    assertTrue(morphline.process(record));
     assertEquals(Arrays.asList(record), collector.getRecords());
     assertSame(record, collector.getRecords().get(0));
     assertEquals("else1", collector.getRecords().get(0).getFirstValue("state"));
@@ -262,7 +262,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     Record record = createBasicRecord();
     startSession();
     assertEquals(1, collector.getNumStartEvents());
-    morphline.process(record);
+    assertTrue(morphline.process(record));
     assertEquals(Arrays.asList(record), collector.getRecords());
     assertSame(record, collector.getRecords().get(0));
     assertEquals("init1", collector.getRecords().get(0).getFirstValue("state"));

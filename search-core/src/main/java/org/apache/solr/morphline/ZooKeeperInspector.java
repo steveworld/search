@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.solr.hadoop;
+package org.apache.solr.morphline;
 
 import java.io.File;
 import java.io.IOException;
