@@ -539,6 +539,7 @@ public class GoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     return INPATH;
   }
   
+  @Override
   public JettySolrRunner createJetty(File solrHome, String dataDir,
       String shardList, String solrConfigOverride, String schemaOverride)
       throws Exception {

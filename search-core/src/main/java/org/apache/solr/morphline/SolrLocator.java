@@ -18,6 +18,7 @@
  */
 package org.apache.solr.morphline;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 
@@ -25,8 +26,10 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.impl.CloudSolrServer;
+import org.apache.solr.common.cloud.SolrZkClient;
 import org.apache.solr.core.SolrConfig;
 import org.apache.solr.schema.IndexSchema;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -112,12 +115,40 @@ public class SolrLocator {
     if (schema != null) {
       return schema;
     }
-    // TODO: if solrHomeDir isn't defined and zkhost and collectionName are defined 
-    // then download from zk and use that as solrHomeDir
+    
+    // If solrHomeDir isn't defined and zkHost and collectionName are defined 
+    // then download schema.xml and solrconfig.xml, etc from zk and use that as solrHomeDir
     String oldSolrHomeDir = null;
-    if (solrHomeDir != null && solrHomeDir.length() > 0) {
-      oldSolrHomeDir = System.setProperty(SOLR_HOME_PROPERTY_NAME, solrHomeDir);
+    String mySolrHomeDir = solrHomeDir;
+    if (solrHomeDir == null || solrHomeDir.length() == 0) {
+      if (zkHost == null || zkHost.length() == 0) {
+        // TODO: implement download from solrUrl if specified
+        throw new MorphlineCompilationException(
+            "Downloading a Solr schema requires either parameter 'solrHomeDir' or parameters 'zkHost' and 'collection'",
+            config);
+      }
+      if (collectionName == null || collectionName.length() == 0) {
+        throw new MorphlineCompilationException(
+            "Parameter 'zkHost' requires that you also pass parameter 'collection'", config);
+      }
+      ZooKeeperInspector zki = new ZooKeeperInspector();
+      SolrZkClient zkClient = zki.getZkClient(zkHost);
+      try {
+        String configName = zki.readConfigName(zkClient, collectionName);
+        File downloadedSolrHomeDir = zki.downloadConfigDir(zkClient, configName);
+        mySolrHomeDir = downloadedSolrHomeDir.getAbsolutePath();
+      } catch (KeeperException e) {
+        throw new MorphlineCompilationException("Cannot download schema.xml from ZooKeeper", config, e);
+      } catch (InterruptedException e) {
+        throw new MorphlineCompilationException("Cannot download schema.xml from ZooKeeper", config, e);
+      } catch (IOException e) {
+        throw new MorphlineCompilationException("Cannot download schema.xml from ZooKeeper", config, e);
+      } finally {
+        zkClient.close();
+      }
     }
+    
+    oldSolrHomeDir = System.setProperty(SOLR_HOME_PROPERTY_NAME, mySolrHomeDir);
     try {
       SolrConfig solrConfig = new SolrConfig(); // TODO use SolrResourceLoader ala TikaMapper?
       // SolrConfig solrConfig = new SolrConfig("solrconfig.xml");

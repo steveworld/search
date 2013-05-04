@@ -51,8 +51,6 @@ public final class Collector implements Command {
     if (Notifications.contains(notification, Notifications.LifeCycleEvent.START_SESSION)) {
       numStartEvents++;
     }
-//    Preconditions.checkNotNull(parent);
-//    Preconditions.checkNotNull(child);    
   }
 
   @Override
