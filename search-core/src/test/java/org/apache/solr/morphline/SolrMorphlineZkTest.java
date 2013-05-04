@@ -105,32 +105,6 @@ public class SolrMorphlineZkTest extends AbstractFullDistribZkTestBase {
     super.testDistribSearch();
   }
   
-  private Command createMorphline(Config config) {
-    return new PipeBuilder().build(config, null, collector, createMorphlineContext());
-  }
-
-  private MorphlineContext createMorphlineContext() {
-    return new SolrMorphlineContext.Builder()
-      .setFaultTolerance(new FaultTolerance(false,  false))
-      .setMetricsRegistry(new MetricsRegistry())
-      .build();
-  }
-  
-  private Config parse(String file) {
-    SolrLocator locator = new SolrLocator(createMorphlineContext());
-    locator.setCollectionName("collection1");
-    locator.setZkHost(zkServer.getZkAddress());
-    //locator.setServerUrl(cloudJettys.get(0).url); // TODO: download IndexSchema from solrUrl not yet implemented
-    //locator.setSolrHomeDir(SOLR_HOME_DIR.getPath());
-    Config config = Configs.parse(file, locator.toConfig("SOLR_LOCATOR"));
-    config = config.getConfigList("morphlines").get(0);
-    return config;
-  }
-  
-  private void startSession() {
-    Notifications.notifyStartSession(morphline);
-  }
-
   @Override
   public void doTest() throws Exception {
     
@@ -177,6 +151,32 @@ public class SolrMorphlineZkTest extends AbstractFullDistribZkTestBase {
     return record;
   }
   
+  private Config parse(String file) {
+    SolrLocator locator = new SolrLocator(createMorphlineContext());
+    locator.setCollectionName("collection1");
+    locator.setZkHost(zkServer.getZkAddress());
+    //locator.setServerUrl(cloudJettys.get(0).url); // TODO: download IndexSchema from solrUrl not yet implemented
+    //locator.setSolrHomeDir(SOLR_HOME_DIR.getPath());
+    Config config = Configs.parse(file, locator.toConfig("SOLR_LOCATOR"));
+    config = config.getConfigList("morphlines").get(0);
+    return config;
+  }
+  
+  private Command createMorphline(Config config) {
+    return new PipeBuilder().build(config, null, collector, createMorphlineContext());
+  }
+
+  private MorphlineContext createMorphlineContext() {
+    return new SolrMorphlineContext.Builder()
+      .setFaultTolerance(new FaultTolerance(false,  false))
+      .setMetricsRegistry(new MetricsRegistry())
+      .build();
+  }
+  
+  private void startSession() {
+    Notifications.notifyStartSession(morphline);
+  }
+
   @Override
   public JettySolrRunner createJetty(File solrHome, String dataDir,
       String shardList, String solrConfigOverride, String schemaOverride)
