@@ -114,6 +114,8 @@ public class SolrMorphlineZkTest extends AbstractFullDistribZkTestBase {
     morphline = createMorphline(config);
     Record record = new Record();
     record.put(Fields.ID, "id0-innsbruck");
+    record.put("text", "mytext");
+    record.put("user_screen_name", "foo");
     record.put("first_name", "Nadja"); // will be sanitized
     startSession();
     Notifications.notifyBeginTransaction(morphline);
@@ -122,17 +124,21 @@ public class SolrMorphlineZkTest extends AbstractFullDistribZkTestBase {
     Notifications.notifyCommitTransaction(morphline);
     Record expected = new Record();
     expected.put(Fields.ID, "id0-innsbruck");
+    expected.put("text", "mytext");
+    expected.put("user_screen_name", "foo");
     assertEquals(Arrays.asList(expected), collector.getRecords());
-    Notifications.notifyRollbackTransaction(morphline);
-    Notifications.notifyShutdown(morphline);
     
     //cloudClient.commit();
     cloudClient.commit(false, true, true);
+    //Thread.sleep(3000);
     QueryResponse rsp = cloudClient.query(new SolrQuery("*:*"));   
     //System.out.println(rsp);
     Iterator<SolrDocument> iter = rsp.getResults().iterator();
     assertEquals(expected.getFields(), next(iter));
-    assertFalse(iter.hasNext());   
+    assertFalse(iter.hasNext());
+    
+    Notifications.notifyRollbackTransaction(morphline);
+    Notifications.notifyShutdown(morphline);
     cloudClient.shutdown();
   }
 
