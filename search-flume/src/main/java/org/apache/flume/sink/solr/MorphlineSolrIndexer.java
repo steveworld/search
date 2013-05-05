@@ -53,7 +53,7 @@ public class MorphlineSolrIndexer implements SolrIndexer {
   private Command morphline;
   
   public static final String MORPHLINE_FILE_PARAM = "morphlineFile";
-  public static final String MORPHLINE_NAME_PARAM = "morphlineName";
+  public static final String MORPHLINE_ID_PARAM = "morphlineId";
   
   private static final Logger LOG = LoggerFactory.getLogger(MorphlineSolrIndexer.class);
 
@@ -78,7 +78,7 @@ public class MorphlineSolrIndexer implements SolrIndexer {
       throw new MorphlineCompilationException("Cannot compile morphline: " + morphlineFile, null);
     }
     
-    String morphlineName = context.getString(MORPHLINE_NAME_PARAM);
+    String morphlineName = context.getString(MORPHLINE_ID_PARAM);
     if (morphlineName != null) {
       morphlineName = morphlineName.trim();
     }
@@ -90,7 +90,7 @@ public class MorphlineSolrIndexer implements SolrIndexer {
       Preconditions.checkNotNull(config);
     } else {
       for (Config candidate : config.getConfigList("morphlines")) {
-        if (morphlineName.equals(Configs.getString(candidate, "name", null))) {
+        if (morphlineName.equals(Configs.getString(candidate, "id", null))) {
           config = candidate;
           break;
         }
