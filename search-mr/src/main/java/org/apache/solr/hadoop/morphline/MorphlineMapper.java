@@ -83,7 +83,7 @@ public class MorphlineMapper extends SolrMapper<LongWritable, Text> {
   private boolean disableFileOpen;
 
   public static final String MORPHLINE_FILE_PARAM = "morphlineFile";
-  public static final String MORPHLINE_NAME_PARAM = "morphlineName";
+  public static final String MORPHLINE_ID_PARAM = "morphlineId";
   
 
   /**
@@ -161,7 +161,7 @@ public class MorphlineMapper extends SolrMapper<LongWritable, Text> {
       throw new MorphlineCompilationException("Cannot compile morphline: " + morphlineFile, null);
     }
     
-    String morphlineName = context.getConfiguration().get(MORPHLINE_NAME_PARAM);
+    String morphlineName = context.getConfiguration().get(MORPHLINE_ID_PARAM);
     if (morphlineName != null) {
       morphlineName = morphlineName.trim();
     }
@@ -173,7 +173,7 @@ public class MorphlineMapper extends SolrMapper<LongWritable, Text> {
       Preconditions.checkNotNull(config);
     } else {
       for (Config candidate : config.getConfigList("morphlines")) {
-        if (morphlineName.equals(Configs.getString(candidate, "name", null))) {
+        if (morphlineName.equals(Configs.getString(candidate, "id", null))) {
           config = candidate;
           break;
         }

@@ -30,12 +30,12 @@ import com.typesafe.config.Config;
  */
 final class Pipe extends AbstractCommand {
   
-  private final String name;
+  private final String id;
   private final Command realChild;
 
   public Pipe(Config config, Command parent, Command child, MorphlineContext context) {
     super(config, parent, child, context);
-    this.name = Configs.getString(config, "name");
+    this.id = Configs.getString(config, "id");
     
     List<String> commandPackagePrefixes = Configs.getStringList(config, "importCommandPackagePrefixes", 
         Arrays.asList("com", "org", "net"));    
