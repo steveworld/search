@@ -49,7 +49,7 @@ public final class CopyTestCommandBuilder implements CommandBuilder {
     }
     
     @Override
-    public boolean process(Record record) {
+    protected boolean doProcess(Record record) {
       for (int i = 0; i < count; i++) {
         Record next = record.copy();
         next.replaceValues(name, i);

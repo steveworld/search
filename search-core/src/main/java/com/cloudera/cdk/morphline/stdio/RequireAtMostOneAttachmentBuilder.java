@@ -59,11 +59,11 @@ public final class RequireAtMostOneAttachmentBuilder implements CommandBuilder {
     }
     
     @Override
-    public boolean process(Record record) {
+    protected boolean doProcess(Record record) {
       if (!hasAtMostOneAttachment(record, LOG)) {
         return false;
       }
-      return super.process(record);
+      return super.doProcess(record);
     }
 
     private static boolean hasAtMostOneAttachment(Record record, Logger LOG) {

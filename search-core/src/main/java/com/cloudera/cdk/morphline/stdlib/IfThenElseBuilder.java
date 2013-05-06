@@ -110,7 +110,7 @@ public final class IfThenElseBuilder implements CommandBuilder {
     }
       
     @Override
-    public boolean process(Record record) {
+    protected boolean doProcess(Record record) {
       if (conditionChain.process(record)) {
         if (thenChain != null) {
           return thenChain.process(record);
@@ -121,7 +121,7 @@ public final class IfThenElseBuilder implements CommandBuilder {
         }
       }
       
-      return super.process(record); 
+      return super.doProcess(record); 
     }  
   }
   

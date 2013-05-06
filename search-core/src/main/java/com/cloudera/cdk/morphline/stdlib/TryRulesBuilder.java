@@ -92,7 +92,7 @@ public final class TryRulesBuilder implements CommandBuilder {
     }
   
     @Override
-    public boolean process(Record record) {
+    protected boolean doProcess(Record record) {
       for (Command childRule : childRules) {
         Record copy = record.copy();
         if (!catchExceptions) {

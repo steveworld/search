@@ -100,7 +100,7 @@ public final class SanitizeUniqueKeyBuilder implements CommandBuilder {
     }
 
     @Override
-    public boolean process(Record doc) {      
+    protected boolean doProcess(Record doc) {      
       long num = recordCounter++;
       // LOG.debug("record #{} id before sanitizing doc: {}", num, doc);
       if (uniqueKeyName != null && !doc.getFields().containsKey(uniqueKeyName)) {
@@ -125,7 +125,7 @@ public final class SanitizeUniqueKeyBuilder implements CommandBuilder {
 
       LOG.debug("record #{} id sanitized to this: {}", num, doc);
       
-      return super.process(doc);
+      return super.doProcess(doc);
     }
     
     @Override

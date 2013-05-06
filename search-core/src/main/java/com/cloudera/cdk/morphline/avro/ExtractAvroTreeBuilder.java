@@ -91,7 +91,7 @@ public final class ExtractAvroTreeBuilder implements CommandBuilder {
     }
     
     @Override
-    public boolean process(Record inputRecord) {
+    protected boolean doProcess(Record inputRecord) {
 //      Preconditions.checkState(ReadAvroBuilder.AVRO_MEMORY_MIME_TYPE.equals(inputRecord.getFirstValue(Fields.ATTACHMENT_MIME_TYPE)));
       GenericContainer datum = (GenericContainer) inputRecord.getFirstValue(Fields.ATTACHMENT_BODY);
       Preconditions.checkNotNull(datum);

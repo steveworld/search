@@ -110,7 +110,7 @@ public final class LoadSolrBuilder implements CommandBuilder {
     }
     
     @Override
-    public boolean process(Record record) {
+    protected boolean doProcess(Record record) {
       SolrInputDocument doc = convert(record);
       try {
         loader.load(doc);
@@ -119,7 +119,7 @@ public final class LoadSolrBuilder implements CommandBuilder {
       } catch (SolrServerException e) {
         throw new MorphlineRuntimeException(e);
       }
-      return super.process(record);
+      return super.doProcess(record);
     }
     
     private SolrInputDocument convert(Record record) {

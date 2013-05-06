@@ -73,7 +73,7 @@ public final class ReadSequenceFileBuilder implements CommandBuilder {
     }
   
     @Override
-    protected boolean process(Record inputRecord, InputStream in) throws IOException {
+    protected boolean doProcess(Record inputRecord, InputStream in) throws IOException {
       Configuration conf = new Configuration();
       FSDataInputStream fsInputStream = new FSDataInputStream(new ForwardOnlySeekable(in));
       Option opt = SequenceFile.Reader.stream(fsInputStream);

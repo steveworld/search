@@ -132,7 +132,7 @@ public final class DetectMimeTypeBuilder implements CommandBuilder {
     }
     
     @Override
-    public boolean process(Record record) {
+    protected boolean doProcess(Record record) {
       if (record.get(Fields.ATTACHMENT_MIME_TYPE).size() == 0) {
         List attachments = record.get(Fields.ATTACHMENT_BODY);
         if (attachments.size() > 0) {
@@ -170,7 +170,7 @@ public final class DetectMimeTypeBuilder implements CommandBuilder {
           record.replaceValues(Fields.ATTACHMENT_MIME_TYPE, mimeType);
         }  
       }
-      return super.process(record);
+      return super.doProcess(record);
     }
     
     /**

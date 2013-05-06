@@ -94,7 +94,7 @@ public final class ReadMultiLineBuilder implements CommandBuilder {
     }
 
     @Override
-    protected boolean process(Record inputRecord, InputStream stream) throws IOException {
+    protected boolean doProcess(Record inputRecord, InputStream stream) throws IOException {
       String charsetName = detectCharset(inputRecord, charset);  
       Reader reader = new InputStreamReader(stream, charsetName);
       BufferedReader lineReader = new BufferedReader(reader);

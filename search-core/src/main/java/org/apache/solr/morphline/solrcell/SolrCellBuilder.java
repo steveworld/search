@@ -218,7 +218,7 @@ public final class SolrCellBuilder implements CommandBuilder {
     }
     
     @Override
-    public boolean process(Record record, InputStream inputStream) {
+    protected boolean doProcess(Record record, InputStream inputStream) {
       Parser parser = detectParser(record);
       if (parser == null) {
         return false;

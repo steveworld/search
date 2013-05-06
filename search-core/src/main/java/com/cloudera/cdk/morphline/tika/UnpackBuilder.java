@@ -76,7 +76,7 @@ public final class UnpackBuilder implements CommandBuilder {
     }
 
     @Override
-    public boolean process(Record record, InputStream stream) {
+    protected boolean doProcess(Record record, InputStream stream) {
       EmbeddedExtractor extractor = new EmbeddedExtractor();
 
       // At the end we want to close the compression stream to release

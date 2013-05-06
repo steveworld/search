@@ -40,7 +40,7 @@ abstract class AbstractAddValuesCommand extends AbstractCommand {
   }
       
   @Override
-  public boolean process(Record record) { 
+  protected boolean doProcess(Record record) { 
     for (Map.Entry<String, Object> entry : entrySet) {
       String fieldName = entry.getKey();
       prepare(record, fieldName);
@@ -61,7 +61,7 @@ abstract class AbstractAddValuesCommand extends AbstractCommand {
         put(record, fieldName, entryValue);
       }
     }
-    return super.process(record);
+    return super.doProcess(record);
   }
   
   protected void prepare(Record record, String key) {    

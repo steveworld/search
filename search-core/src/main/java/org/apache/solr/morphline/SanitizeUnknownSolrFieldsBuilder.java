@@ -80,7 +80,7 @@ public final class SanitizeUnknownSolrFieldsBuilder implements CommandBuilder {
     }
     
     @Override
-    public boolean process(Record record) {
+    protected boolean doProcess(Record record) {
       Collection<String> keys = new ArrayList<String>(record.getFields().keySet());
       for (String key : keys) {
         if (schema.getFieldOrNull(key) == null) {
@@ -92,7 +92,7 @@ public final class SanitizeUnknownSolrFieldsBuilder implements CommandBuilder {
           record.removeAll(key);
         }
       }
-      return super.process(record);
+      return super.doProcess(record);
     }
     
   }
