@@ -30,6 +30,7 @@ import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
+import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
 import com.cloudera.cdk.morphline.base.Fields;
@@ -68,6 +69,7 @@ public final class SanitizeUniqueKeyBuilder implements CommandBuilder {
   ///////////////////////////////////////////////////////////////////////////////
   private static final class SanitizeUniqueKey extends AbstractCommand {
     
+    private final boolean preserveExisting;
     private final String baseIdFieldName;
     private final String uniqueKeyName;
     private long recordCounter = 0;
@@ -77,7 +79,8 @@ public final class SanitizeUniqueKeyBuilder implements CommandBuilder {
 
     public SanitizeUniqueKey(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
-      this.baseIdFieldName = Configs.getString(config, "baseIdField", Fields.ID);
+      this.baseIdFieldName = Configs.getString(config, "baseIdField", Fields.BASE_ID);
+      this.preserveExisting = Configs.getBoolean(config, "preserveExisting", true);      
       
       Config solrLocatorConfig = Configs.getConfig(config, "solrLocator");
       SolrLocator locator = new SolrLocator(solrLocatorConfig, context);
@@ -103,10 +106,12 @@ public final class SanitizeUniqueKeyBuilder implements CommandBuilder {
     protected boolean doProcess(Record doc) {      
       long num = recordCounter++;
       // LOG.debug("record #{} id before sanitizing doc: {}", num, doc);
-      if (uniqueKeyName != null && !doc.getFields().containsKey(uniqueKeyName)) {
+      if (uniqueKeyName == null || (preserveExisting && doc.getFields().containsKey(uniqueKeyName))) {
+        // we must preserve the existing id
+      } else {
         Object baseId = doc.getFirstValue(baseIdFieldName);
         if (baseId == null) {
-          throw new IllegalStateException("Record field " + baseIdFieldName
+          throw new MorphlineRuntimeException("Record field " + baseIdFieldName
               + " must not be null as it is needed as a basis for a unique key for solr doc: " + doc);
         }
         doc.replaceValues(uniqueKeyName, baseId.toString() + "#" + num);          

@@ -34,7 +34,7 @@ import com.typesafe.config.Config;
  */
 public final class GenerateUUIDBuilder implements CommandBuilder {
 
-  public static final String HEADER_NAME = "headerName";
+  public static final String FIELD_NAME = "field";
   public static final String PRESERVE_EXISTING_NAME = "preserveExisting";
   public static final String PREFIX_NAME = "prefix";
   
@@ -54,23 +54,23 @@ public final class GenerateUUIDBuilder implements CommandBuilder {
   ///////////////////////////////////////////////////////////////////////////////
   private static final class GenerateUUID extends AbstractCommand {
     
-    private String headerName;
+    private String fieldName;
     private boolean preserveExisting;
     private String prefix;
 
     public GenerateUUID(Config config, Command parent, Command child, MorphlineContext context) { 
       super(config, parent, child, context);
-      this.headerName = Configs.getString(config, HEADER_NAME, Fields.ID);
+      this.fieldName = Configs.getString(config, FIELD_NAME, Fields.ID);
       this.preserveExisting = Configs.getBoolean(config, PRESERVE_EXISTING_NAME, true);
       this.prefix = Configs.getString(config, PREFIX_NAME, "");
     }
 
     @Override
     protected boolean doProcess(Record record) {      
-      if (preserveExisting && record.getFields().containsKey(headerName)) {
+      if (preserveExisting && record.getFields().containsKey(fieldName)) {
         // we must preserve the existing id
       } else if (isMatch(record)) {
-        record.replaceValues(headerName, generateUUID());
+        record.replaceValues(fieldName, generateUUID());
       }
       return super.doProcess(record);
     }
