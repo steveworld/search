@@ -64,10 +64,12 @@ import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.solr.common.cloud.SolrZkClient;
 import org.apache.solr.hadoop.dedup.RetainMostRecentUpdateConflictResolver;
+import org.apache.solr.hadoop.morphline.MorphlineMapper;
 import org.apache.solr.hadoop.tika.TikaMapper;
 import org.apache.solr.handler.extraction.ExtractingParams;
 import org.apache.solr.tika.TikaIndexer;
@@ -82,6 +84,10 @@ import org.slf4j.LoggerFactory;
  * flexible, scalable and fault-tolerant manner.
  */
 public class MapReduceIndexerTool extends Configured implements Tool {
+  
+  // TMP testing hack, remove this once morphlines is fully integrated with testing
+  private boolean enableMorphline = "true".equals(System.getProperty("enableMorphline"));  
+  public void enableMorphline() { this.enableMorphline = true; }
   
   Job job; // visible for testing only
   
@@ -288,6 +294,20 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "one URI per line in the file. If '-' is specified, URIs are read from the standard input. " + 
               "Multiple --input-list arguments can be specified.");
         
+      Argument morphlineFileArg = requiredGroup.addArgument("--morphline-file")
+        .metavar("FILE")
+        .type(new FileArgumentType().verifyIsFile().verifyCanRead())
+        //.required(true) // FIXME on integration, also add to requiredGroup instead
+        .help("Relative or absolute path to a local config file that contains one or more morphlines. " +
+        		  "The file must be UTF-8 encoded. Example: /path/to/morphline.conf");
+          
+      Argument morphlineIdArg = parser.addArgument("--morphline-id")
+        .metavar("STRING")
+        .type(String.class)
+        .help("The identifier of the morphline that shall be executed within the morphline config file " +
+        		  "specified by --morphline-file. If the --morphline-id option is ommitted the first (i.e. " +
+        		  "top-most) morphline within the config file is used. Example: 'morphline1'");
+            
       Argument solrHomeDirArg = parser.addArgument("--solr-home-dir")
         .metavar("DIR")
         .type(new FileArgumentType() {
@@ -485,6 +505,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       opts.updateConflictResolver = ns.getString(updateConflictResolverArg.getDest());
       opts.fanout = ns.getInt(fanoutArg.getDest());
       opts.maxSegments = ns.getInt(maxSegmentsArg.getDest());
+      opts.morphlineFile = (File) ns.get(morphlineFileArg.getDest());
+      opts.morphlineId = ns.getString(morphlineIdArg.getDest());
       opts.solrHomeDir = (File) ns.get(solrHomeDirArg.getDest());
       opts.fairSchedulerPool = ns.getString(fairSchedulerPoolArg.getDest());
       opts.isVerbose = ns.getBoolean(verboseArg.getDest());
@@ -551,6 +573,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     int fanout;
     Integer shards;
     int maxSegments;
+    File morphlineFile;
+    String morphlineId;
     File solrHomeDir;
     String fairSchedulerPool;
     boolean isVerbose;
@@ -579,12 +603,10 @@ public class MapReduceIndexerTool extends Configured implements Tool {
   /** API for Java clients; visible for testing; may become a public API eventually */
   int run(Options options) throws Exception {
     if ("local".equals(getConf().get("mapred.job.tracker"))) {
-      if (!new File(TIKA_CONFIG_FILE_NAME).exists()) { // see BasicMiniMRTest
-        throw new IllegalStateException(
-          "Running with LocalJobRunner (i.e. all of Hadoop inside a single JVM) is not supported " +
-          "because LocalJobRunner does not (yet) implement the Hadoop Distributed Cache feature, " +
-          "which is required for passing files via --files and --libjars");
-      }
+      throw new IllegalStateException(
+        "Running with LocalJobRunner (i.e. all of Hadoop inside a single JVM) is not supported " +
+        "because LocalJobRunner does not (yet) implement the Hadoop Distributed Cache feature, " +
+        "which is required for passing files via --files and --libjars");
     }
 
     long programStartTime = System.currentTimeMillis();
@@ -675,7 +697,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     
     String mapperClass = job.getConfiguration().get(JobContext.MAP_CLASS_ATTR);
     if (mapperClass == null) { // enable customization
-      Class clazz = getDefaultMapperClass();
+      Class clazz = enableMorphline ? MorphlineMapper.class : TikaMapper.class;
       mapperClass = clazz.getName();
       job.setMapperClass(clazz);
     }
@@ -709,7 +731,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       job.getConfiguration().set(SolrCloudPartitioner.COLLECTION, options.collection);
     }
     job.getConfiguration().setInt(SolrCloudPartitioner.SHARDS, options.shards);
-    
+
     job.setOutputFormatClass(SolrOutputFormat.class);
     if (options.solrHomeDir != null) {
       SolrOutputFormat.setupSolrHomeCache(options.solrHomeDir, job);
@@ -725,10 +747,35 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         zkClient.close();
       }
     }
+    
+    if (options.morphlineId != null) {
+      job.getConfiguration().set(MorphlineMapper.MORPHLINE_ID_PARAM, options.morphlineId);
+    }
+    if (options.morphlineFile != null) {
+      // do the same as if the user had typed 'hadoop ... --files <morphlinesFile>' 
+      String HADOOP_TMP_FILES = "tmpfiles"; // see Hadoop's GenericOptionsParser
+      job.getConfiguration().set(MorphlineMapper.MORPHLINE_FILE_PARAM, options.morphlineFile.getName());
+      String tmpFiles = job.getConfiguration().get(HADOOP_TMP_FILES, "");
+      if (tmpFiles.length() > 0) { // already present?
+        tmpFiles = tmpFiles + ","; 
+      }
+      GenericOptionsParser parser = new GenericOptionsParser(
+          new Configuration(job.getConfiguration()), 
+          new String[] { "--files", options.morphlineFile.getPath() });
+      String morphlineTmpFiles = parser.getConfiguration().get(HADOOP_TMP_FILES);
+      assert morphlineTmpFiles != null;
+      assert morphlineTmpFiles.length() > 0;
+      tmpFiles += morphlineTmpFiles;
+      job.getConfiguration().set(HADOOP_TMP_FILES, tmpFiles);
+      // TODO: Verify the morphline compiles without error in order to fail fast (i.e. before submitting a job)
+    }
+
     job.setNumReduceTasks(reducers);  
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(SolrInputDocumentWritable.class);
-    job.getConfiguration().set(TikaIndexer.TIKA_CONFIG_LOCATION, TIKA_CONFIG_FILE_NAME);
+    if (!enableMorphline) {
+      job.getConfiguration().set(TikaIndexer.TIKA_CONFIG_LOCATION, TIKA_CONFIG_FILE_NAME); // FIXME: remove as obsolete
+    }
     LOG.info("Indexing {} files using {} real mappers into {} reducers", numFiles, realMappers, reducers);
     startTime = System.currentTimeMillis();
     if (!waitForCompletion(job, options.isVerbose)) {
@@ -816,11 +863,6 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     return 0;
   }
   
-  /** Returns the class to be used as Mapper by default */
-  protected Class getDefaultMapperClass() {
-    return TikaMapper.class;
-  }
-
   private void calculateNumReducers(Options options, int realMappers) throws IOException {
     if (options.shards <= 0) {
       throw new IllegalStateException("Illegal number of shards: " + options.shards);

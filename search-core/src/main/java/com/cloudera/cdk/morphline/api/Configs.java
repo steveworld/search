@@ -15,57 +15,14 @@
  */
 package com.cloudera.cdk.morphline.api;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.List;
 
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 
 /**
- * Helpers to parse HOCON from external resources, and to traverse and read parts of a HOCON data
- * structure.
+ * Helpers to traverse and read parts of a HOCON data structure.
  */
 public final class Configs {
-  
-  private static final Object LOCK = new Object();
-  
-  /** Loads the given config file from the classpath */
-  public static Config parse(String resourceBaseName, Config... overrides) {
-//  Config config = ConfigFactory.load(resourceBaseName);
-    Config config = ConfigFactory.parseResources(resourceBaseName);
-    for (Config override : overrides) {
-      config = override.withFallback(config);
-    }
-    synchronized (LOCK) {
-      ConfigFactory.invalidateCaches();
-      config = ConfigFactory.load(config);
-      config.checkValid(ConfigFactory.defaultReference()); // eagerly validate aspects of tree config
-    }
-    return config;
-  }
-  
-  /** Loads the given config file from the local file system */
-  public static Config parse(File file, Config... overrides) throws IOException {
-    if (!file.exists()) {
-      throw new FileNotFoundException("File not found: " + file);
-    }
-    if (!file.canRead()) {
-      throw new IOException("Insufficient permissions to read file: " + file);
-    }
-    Config config = ConfigFactory.parseFile(file);
-    for (Config override : overrides) {
-      config = override.withFallback(config);
-    }
-    
-    synchronized (LOCK) {
-      ConfigFactory.invalidateCaches();
-      config = ConfigFactory.load(config);
-      config.checkValid(ConfigFactory.defaultReference()); // eagerly validate aspects of tree config
-    }
-    return config;
-  }
   
   public static String getString(Config config, String path, String defaults) {
     if (config.hasPath(path)) {
@@ -163,34 +120,4 @@ public final class Configs {
     return config.getDouble(path);
   }  
 
-//  public static Config parse(File file) throws IOException {
-//    if (!file.exists()) {
-//      throw new FileNotFoundException("File not found: " + file);
-//    }
-//    if (!file.canRead()) {
-//      throw new IOException("Insufficient permissions to read file: " + file);
-//    }
-//    String path = file.getAbsolutePath();
-//    String oldConfigResource = System.clearProperty("config.resource");
-//    String oldConfigFile = System.setProperty("config.file", path);
-//    String oldConfigUrl = System.clearProperty("config.url");
-//    try {
-//      Config config = ConfigFactory.load();
-//      config.checkValid(ConfigFactory.defaultReference()); // eagerly validate aspects of tree config  
-//      return config;
-//    } finally {
-//      setSystemProperty("config.resource", oldConfigResource);
-//      setSystemProperty("config.file", oldConfigFile);
-//      setSystemProperty("config.url", oldConfigUrl);
-//    }
-//  }
-//  
-//  private static String setSystemProperty(String name, String value) {
-//    if (value == null) {
-//      return System.clearProperty(name);
-//    } else {
-//      return System.setProperty(name, value);
-//    }    
-//  }
-  
 }

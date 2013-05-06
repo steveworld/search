@@ -19,19 +19,9 @@ package org.apache.solr.morphline;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 import org.apache.solr.cloud.ZkController;
-import org.apache.solr.common.SolrException;
-import org.apache.solr.common.cloud.DocCollection;
-import org.apache.solr.common.cloud.Replica;
-import org.apache.solr.common.cloud.Slice;
 import org.apache.solr.common.cloud.SolrZkClient;
-import org.apache.solr.common.cloud.ZkCoreNodeProps;
 import org.apache.solr.common.cloud.ZkNodeProps;
 import org.apache.solr.common.cloud.ZkStateReader;
 import org.apache.zookeeper.KeeperException;
@@ -41,57 +31,12 @@ import org.slf4j.LoggerFactory;
 import com.google.common.io.Files;
 
 /**
- * Extracts SolrCloud information from ZooKeeper.
+ * Downloads SolrCloud information from ZooKeeper.
  */
-final class ZooKeeperInspector {
+final class ZooKeeperDownloader {
   
-  private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperInspector.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperDownloader.class);
   
-  public List<List<String>> extractShardUrls(String zkHost, String collection) {
-    DocCollection docCollection = extractDocCollection(zkHost, collection);
-    List<Slice> slices = getSortedSlices(docCollection.getSlices());
-    List<List<String>> solrUrls = new ArrayList<List<String>>(slices.size());
-    for (Slice slice : slices) {
-      if (slice.getLeader() == null) {
-        throw new IllegalArgumentException("Cannot find SolrCloud slice leader. " +
-            "It looks like not all of your shards are registered in ZooKeeper yet");
-      }
-      Collection<Replica> replicas = slice.getReplicas();
-      List<String> urls = new ArrayList<String>(replicas.size());
-      for (Replica replica : replicas) {
-        ZkCoreNodeProps props = new ZkCoreNodeProps(replica);
-        urls.add(props.getCoreUrl());
-      }
-      solrUrls.add(urls);
-
-    }
-    return solrUrls;
-  }
-  
-  public DocCollection extractDocCollection(String zkHost, String collection) {
-    if (collection == null) {
-      throw new IllegalArgumentException("collection must not be null");
-    }
-    SolrZkClient zkClient = getZkClient(zkHost);
-    
-    try {
-      ZkStateReader zkStateReader = new ZkStateReader(zkClient);
-      try {
-        zkStateReader.createClusterStateWatchersAndUpdate();
-      } catch (Exception e) {
-        throw new IllegalArgumentException("Cannot find expected information for SolrCloud in ZooKeeper: " + zkHost, e);
-      }
-      
-      try {
-        return zkStateReader.getClusterState().getCollection(collection);
-      } catch (SolrException e) {
-        throw new IllegalArgumentException("Cannot find collection '" + collection + "' in ZooKeeper: " + zkHost, e);
-      }
-    } finally {
-      zkClient.close();
-    }    
-  }
-
   public SolrZkClient getZkClient(String zkHost) {
     if (zkHost == null) {
       throw new IllegalArgumentException("zkHost must not be null");
@@ -106,17 +51,6 @@ final class ZooKeeperInspector {
     return zkClient;
   }
   
-  public List<Slice> getSortedSlices(Collection<Slice> slices) {
-    List<Slice> sorted = new ArrayList(slices);
-    Collections.sort(sorted, new Comparator<Slice>() {
-      @Override
-      public int compare(Slice slice1, Slice slice2) {
-        return slice1.getName().compareTo(slice2.getName());
-      }      
-    });
-    return sorted;
-  }
-
   /**
    * Returns config value given collection name
    * Borrowed heavily from Solr's ZKController.

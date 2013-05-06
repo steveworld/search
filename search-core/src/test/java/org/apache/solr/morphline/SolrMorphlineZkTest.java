@@ -42,9 +42,9 @@ import com.carrotsearch.randomizedtesting.annotations.ThreadLeakZombies;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakZombies.Consequence;
 import com.cloudera.cdk.morphline.api.Collector;
 import com.cloudera.cdk.morphline.api.Command;
-import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
+import com.cloudera.cdk.morphline.base.Compiler;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.base.Notifications;
 import com.cloudera.cdk.morphline.cmd.PipeBuilder;
@@ -163,7 +163,7 @@ public class SolrMorphlineZkTest extends AbstractFullDistribZkTestBase {
     locator.setZkHost(zkServer.getZkAddress());
     //locator.setServerUrl(cloudJettys.get(0).url); // TODO: download IndexSchema from solrUrl not yet implemented
     //locator.setSolrHomeDir(SOLR_HOME_DIR.getPath());
-    Config config = Configs.parse(file, locator.toConfig("SOLR_LOCATOR"));
+    Config config = new Compiler().parse(file, locator.toConfig("SOLR_LOCATOR"));
     config = config.getConfigList("morphlines").get(0);
     return config;
   }

@@ -47,9 +47,9 @@ import org.slf4j.LoggerFactory;
 
 import com.cloudera.cdk.morphline.api.Collector;
 import com.cloudera.cdk.morphline.api.Command;
-import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
+import com.cloudera.cdk.morphline.base.Compiler;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.base.Notifications;
 import com.cloudera.cdk.morphline.cmd.PipeBuilder;
@@ -396,7 +396,7 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
   private Config parse(String file) {
     SolrLocator locator = new SolrLocator(createMorphlineContext());
     locator.setSolrHomeDir(testSolrHome + "/collection1");
-    Config config = Configs.parse(file, locator.toConfig("SOLR_LOCATOR"));
+    Config config = new Compiler().parse(file, locator.toConfig("SOLR_LOCATOR"));
     config = config.getConfigList("morphlines").get(0);
     return config;
   }

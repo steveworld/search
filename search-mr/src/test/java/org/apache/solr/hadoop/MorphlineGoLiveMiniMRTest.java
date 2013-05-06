@@ -298,9 +298,11 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
   
   private String[] prependInitialArgs(String[] args) {
     String[] head = new String[] {
-        "--files", RESOURCES_DIR + "/test-morphlines/solrCellDocumentTypes.conf", 
-        //    + "," + RESOURCES_DIR + "/org/apache/tika/mime/custom-mimetypes.xml",
-        "-D", "morphlineFile=solrCellDocumentTypes.conf",
+//        "--files", RESOURCES_DIR + "/test-morphlines/solrCellDocumentTypes.conf", 
+//        //    + "," + RESOURCES_DIR + "/org/apache/tika/mime/custom-mimetypes.xml",
+//        "-D", "morphlineFile=solrCellDocumentTypes.conf",
+        "--morphline-file=" + RESOURCES_DIR + "/test-morphlines/solrCellDocumentTypes.conf",
+        "--morphline-id=morphline1",
     };
     return concat(head, args); 
   }
@@ -352,7 +354,8 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     args = prependInitialArgs(args);
     
     if (true) {
-      tool = new MorphlineMapReduceIndexerTool();
+      tool = new MapReduceIndexerTool();
+      tool.enableMorphline();
       res = ToolRunner.run(jobConf, tool, args);
       assertEquals(0, res);
       assertTrue(tool.job.isComplete());
@@ -379,7 +382,8 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     args = prependInitialArgs(args);
     
     if (true) {
-      tool = new MorphlineMapReduceIndexerTool();
+      tool = new MapReduceIndexerTool();
+      tool.enableMorphline();
       res = ToolRunner.run(jobConf, tool, args);
       assertEquals(0, res);
       assertTrue(tool.job.isComplete());
@@ -409,7 +413,8 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     args = prependInitialArgs(args);
 
     if (true) {
-      tool = new MorphlineMapReduceIndexerTool();
+      tool = new MapReduceIndexerTool();
+      tool.enableMorphline();
       res = ToolRunner.run(jobConf, tool, args);
       assertEquals(0, res);
       assertTrue(tool.job.isComplete());
@@ -444,7 +449,8 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     args = prependInitialArgs(args);
     
     if (true) {
-      tool = new MorphlineMapReduceIndexerTool();
+      tool = new MapReduceIndexerTool();
+      tool.enableMorphline();
       res = ToolRunner.run(jobConf, tool, args);
       assertEquals(0, res);
       assertTrue(tool.job.isComplete());
@@ -480,7 +486,8 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     args = concat(args, argList.toArray(new String[0]));
     
     if (true) {
-      tool = new MorphlineMapReduceIndexerTool();
+      tool = new MapReduceIndexerTool();
+      tool.enableMorphline();
       res = ToolRunner.run(jobConf, tool, args);
       assertEquals(0, res);
       assertTrue(tool.job.isComplete());
