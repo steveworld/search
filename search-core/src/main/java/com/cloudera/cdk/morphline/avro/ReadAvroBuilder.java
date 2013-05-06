@@ -115,7 +115,7 @@ public final class ReadAvroBuilder implements CommandBuilder {
     }
 
     @Override
-    protected boolean process(Record inputRecord, InputStream in) throws IOException {
+    protected boolean doProcess(Record inputRecord, InputStream in) throws IOException {
       Schema schema = getSchema(null);
       Preconditions.checkNotNull(schema, "Avro schema must not be null");
       

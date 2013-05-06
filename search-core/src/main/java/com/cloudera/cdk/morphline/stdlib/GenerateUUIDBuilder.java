@@ -66,13 +66,13 @@ public final class GenerateUUIDBuilder implements CommandBuilder {
     }
 
     @Override
-    public boolean process(Record record) {      
+    protected boolean doProcess(Record record) {      
       if (preserveExisting && record.getFields().containsKey(headerName)) {
         // we must preserve the existing id
       } else if (isMatch(record)) {
         record.replaceValues(headerName, generateUUID());
       }
-      return super.process(record);
+      return super.doProcess(record);
     }
 
     protected String getPrefix() {

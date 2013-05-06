@@ -55,9 +55,9 @@ public final class IsTrueBuilder implements CommandBuilder {
     }
 
     @Override
-    public boolean process(Record record) {
+    protected boolean doProcess(Record record) {
       if (doContinue) {
-        return super.process(record);
+        return super.doProcess(record);
       } else {
         return false;
       }

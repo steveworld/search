@@ -75,7 +75,7 @@ public final class DecompressBuilder implements CommandBuilder {
     }
  
     @Override
-    public boolean process(Record record, InputStream stream) {
+    protected boolean doProcess(Record record, InputStream stream) {
       EmbeddedExtractor extractor = new EmbeddedExtractor();
 
       String name = (String) record.getFirstValue(Fields.ATTACHMENT_NAME);

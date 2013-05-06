@@ -49,9 +49,9 @@ public final class LogTraceBuilder implements CommandBuilder {
     }
     
     @Override
-    public boolean process(Record record) {
+    protected boolean doProcess(Record record) {
       if (LOG.isTraceEnabled()) {
-        return super.process(record);
+        return super.doProcess(record);
       } else {
         return getChild().process(record);
       }

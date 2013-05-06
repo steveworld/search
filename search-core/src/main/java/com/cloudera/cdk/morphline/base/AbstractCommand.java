@@ -85,11 +85,22 @@ public abstract class AbstractCommand implements Command {
 
   @Override
   public boolean process(Record record) {
-    if (LOG.isTraceEnabled()) {    
-      LOG.trace("process: {}", record);      
-    } else {
-      LOG.debug("process()");      
+    if (!beforeProcess(record)) {
+      return false;
     }
+    return doProcess(record);
+  }
+  
+  protected boolean beforeProcess(Record record) {
+    if (LOG.isTraceEnabled()) {    
+      LOG.trace("beforeProcess: {}", record);      
+    } else {
+      LOG.debug("beforeProcess()");      
+    }
+    return true;
+  }
+  
+  protected boolean doProcess(Record record) {
     return getChild().process(record);
   }
   

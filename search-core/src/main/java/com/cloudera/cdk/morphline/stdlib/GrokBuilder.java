@@ -188,7 +188,7 @@ public final class GrokBuilder implements CommandBuilder {
     }
     
     @Override
-    public boolean process(Record record) {
+    protected boolean doProcess(Record record) {
       Record outputRecord = ((extractInPlace || !extract) ? record : record.copy());
       if (extractInPlace) {
         // Ensure that we mutate the record inplace only if *all* expressions match.
@@ -208,7 +208,7 @@ public final class GrokBuilder implements CommandBuilder {
       if (!doMatch(record, outputRecord, extract)) {
         return false;
       }
-      return super.process(outputRecord);
+      return super.doProcess(outputRecord);
     }
 
     private boolean doMatch(Record record, Record outputRecord, boolean doExtract) {

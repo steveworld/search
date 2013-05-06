@@ -65,7 +65,7 @@ public abstract class AbstractParser extends AbstractCommand {
   }
 
   @Override
-  public boolean process(Record record) {
+  protected boolean doProcess(Record record) {
     if (!hasAtLeastOneAttachment(record)) {
       return false;
     }
@@ -78,7 +78,7 @@ public abstract class AbstractParser extends AbstractCommand {
 
     InputStream stream = createAttachmentInputStream(record);
     try {
-      return process(record, stream);
+      return doProcess(record, stream);
     } catch (IOException e) {
       throw new MorphlineRuntimeException(e);
     } finally {
@@ -86,7 +86,7 @@ public abstract class AbstractParser extends AbstractCommand {
     }
   }
   
-  protected abstract boolean process(Record record, InputStream stream) throws IOException;
+  protected abstract boolean doProcess(Record record, InputStream stream) throws IOException;
 
   private boolean isMimeTypeSupported(String mediaTypeStr, Record record) {
     if (supportedMimeTypes == null) {

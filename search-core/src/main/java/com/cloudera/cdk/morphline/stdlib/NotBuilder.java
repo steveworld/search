@@ -59,8 +59,8 @@ public final class NotBuilder implements CommandBuilder {
     }
 
     @Override
-    public boolean process(Record record) {
-      return !super.process(record);
+    protected boolean doProcess(Record record) {
+      return !super.doProcess(record);
     }
   }
   

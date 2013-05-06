@@ -81,7 +81,7 @@ public final class ReadJsonTestTweetsBuilder implements CommandBuilder {
     }
 
     @Override
-    public boolean process(Record record, InputStream in) throws IOException {
+    protected boolean doProcess(Record record, InputStream in) throws IOException {
       long numRecords = 0;
       ObjectMapper mapper = new ObjectMapper();
       BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));

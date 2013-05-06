@@ -102,7 +102,7 @@ public final class JavaBuilder implements CommandBuilder {
     }
         
     @Override
-    public boolean process(Record record) { 
+    protected boolean doProcess(Record record) { 
       try {
         return script.evaluate(record, getConfig(), this, getChild(), getContext(), LOG);
       } catch (ScriptException e) {
