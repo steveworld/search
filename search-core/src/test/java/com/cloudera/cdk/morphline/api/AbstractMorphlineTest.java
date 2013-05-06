@@ -24,7 +24,7 @@ import org.junit.Before;
 
 import com.cloudera.cdk.morphline.base.Compiler;
 import com.cloudera.cdk.morphline.base.Notifications;
-import com.cloudera.cdk.morphline.cmd.PipeBuilder;
+import com.cloudera.cdk.morphline.stdlib.PipeBuilder;
 import com.typesafe.config.Config;
 import com.yammer.metrics.core.MetricsRegistry;
 

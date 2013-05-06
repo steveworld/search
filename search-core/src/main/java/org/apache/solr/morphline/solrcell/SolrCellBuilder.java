@@ -65,7 +65,7 @@ import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Fields;
-import com.cloudera.cdk.morphline.parser.AbstractParser;
+import com.cloudera.cdk.morphline.stdio.AbstractParser;
 import com.cloudera.cdk.morphline.tika.DetectMimeTypeBuilder;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
