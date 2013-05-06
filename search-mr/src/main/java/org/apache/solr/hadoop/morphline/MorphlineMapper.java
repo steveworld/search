@@ -48,16 +48,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudera.cdk.morphline.api.Command;
-import com.cloudera.cdk.morphline.api.Configs;
-import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
 import com.cloudera.cdk.morphline.api.Record;
+import com.cloudera.cdk.morphline.base.Compiler;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.base.Notifications;
-import com.cloudera.cdk.morphline.cmd.DropRecordBuilder;
-import com.cloudera.cdk.morphline.cmd.PipeBuilder;
 import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.typesafe.config.Config;
 import com.yammer.metrics.core.Counter;
 import com.yammer.metrics.core.Metric;
 import com.yammer.metrics.core.MetricName;
@@ -151,38 +146,8 @@ public class MorphlineMapper extends SolrMapper<LongWritable, Text> {
       .build();
 
     String morphlineFile = context.getConfiguration().get(MORPHLINE_FILE_PARAM);
-    if (morphlineFile == null || morphlineFile.trim().length() == 0) {
-      throw new MorphlineCompilationException("Missing morphlineFile parameter", null);
-    }
-    Config config;
-    try {
-      config = Configs.parse(new File(morphlineFile));
-    } catch (IOException e) {
-      throw new MorphlineCompilationException("Cannot compile morphline: " + morphlineFile, null);
-    }
-    
-    String morphlineName = context.getConfiguration().get(MORPHLINE_ID_PARAM);
-    if (morphlineName != null) {
-      morphlineName = morphlineName.trim();
-    }
-    if (morphlineName != null && morphlineName.length() == 0) {
-      morphlineName = null;
-    }
-    if (morphlineName == null) {
-      config = config.getConfigList("morphlines").get(0);
-      Preconditions.checkNotNull(config);
-    } else {
-      for (Config candidate : config.getConfigList("morphlines")) {
-        if (morphlineName.equals(Configs.getString(candidate, "id", null))) {
-          config = candidate;
-          break;
-        }
-      }
-      Preconditions.checkNotNull(config);
-    }
-    
-    Command dropRecord = new DropRecordBuilder().build(null, null,  null, morphlineContext);
-    morphline = new PipeBuilder().build(config, null, dropRecord, morphlineContext);
+    String morphlineId = context.getConfiguration().get(MORPHLINE_ID_PARAM);
+    morphline = new Compiler().compile(new File(morphlineFile), morphlineId, morphlineContext);
 
     disableFileOpen = context.getConfiguration().getBoolean(DISABLE_FILE_OPEN, false);
     LOG.debug("disableFileOpen: {}", disableFileOpen);

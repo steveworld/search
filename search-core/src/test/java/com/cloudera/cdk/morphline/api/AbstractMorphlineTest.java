@@ -22,6 +22,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 
+import com.cloudera.cdk.morphline.base.Compiler;
 import com.cloudera.cdk.morphline.base.Notifications;
 import com.cloudera.cdk.morphline.cmd.PipeBuilder;
 import com.typesafe.config.Config;
@@ -66,9 +67,9 @@ public class AbstractMorphlineTest extends Assert {
   protected Config parse(String file, Config... overrides) throws IOException {
     Config config;
     if (useFileAPI) {
-      config = Configs.parse(new File("src/test/resources/" + file + ".conf"), overrides);
+      config = new Compiler().parse(new File("src/test/resources/" + file + ".conf"), overrides);
     } else {
-      config = Configs.parse(file + ".conf", overrides);      
+      config = new Compiler().parse(file + ".conf", overrides);      
     };
     config = config.getConfigList("morphlines").get(0);
     return config;

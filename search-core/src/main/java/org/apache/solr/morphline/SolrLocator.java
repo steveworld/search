@@ -131,7 +131,7 @@ public class SolrLocator {
         throw new MorphlineCompilationException(
             "Parameter 'zkHost' requires that you also pass parameter 'collection'", config);
       }
-      ZooKeeperInspector zki = new ZooKeeperInspector();
+      ZooKeeperDownloader zki = new ZooKeeperDownloader();
       SolrZkClient zkClient = zki.getZkClient(zkHost);
       try {
         String configName = zki.readConfigName(zkClient, collectionName);
