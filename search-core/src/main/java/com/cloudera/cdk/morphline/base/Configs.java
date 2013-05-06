@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudera.cdk.morphline.api;
+package com.cloudera.cdk.morphline.base;
 
 import java.util.List;
 

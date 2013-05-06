@@ -28,10 +28,10 @@ import org.apache.solr.schema.IndexSchema;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
-import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
+import com.cloudera.cdk.morphline.base.Configs;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.typesafe.config.Config;

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.flume.sink.solr;
+package org.apache.flume.sink.solr.morphline;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,6 +39,9 @@ import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.sink.solr.morphline.MorphlineSolrIndexer;
+import org.apache.flume.sink.solr.morphline.MorphlineSolrSink;
+import org.apache.flume.sink.solr.morphline.UUIDInterceptor;
 import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
