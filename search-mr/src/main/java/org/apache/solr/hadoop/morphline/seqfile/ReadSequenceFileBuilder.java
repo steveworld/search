@@ -46,7 +46,7 @@ import com.typesafe.config.Config;
  */
 public final class ReadSequenceFileBuilder implements CommandBuilder {
 
-  public static final String MEDIA_TYPE = "application/seq";
+  public static final String OUTPUT_MEDIA_TYPE = "application/java-sequence-file-record";
   public static final String SEQUENCE_FILE_META_DATA = "sequenceFileMetaData";
   
   @Override
@@ -92,7 +92,7 @@ public final class ReadSequenceFileBuilder implements CommandBuilder {
             removeAttachments(outputRecord);
             outputRecord.put(Fields.ATTACHMENT_NAME, key);
             outputRecord.put(Fields.ATTACHMENT_BODY, val);
-            outputRecord.put(Fields.ATTACHMENT_MIME_TYPE, MEDIA_TYPE);
+            outputRecord.put(Fields.ATTACHMENT_MIME_TYPE, OUTPUT_MEDIA_TYPE);
             if (includeMetaData && sequenceFileMetaData != null) {
               outputRecord.put(SEQUENCE_FILE_META_DATA, sequenceFileMetaData);
             }
