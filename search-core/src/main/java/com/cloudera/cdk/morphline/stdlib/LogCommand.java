@@ -22,10 +22,10 @@ import java.util.Collections;
 import java.util.List;
 
 import com.cloudera.cdk.morphline.api.Command;
-import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
+import com.cloudera.cdk.morphline.base.Configs;
 import com.cloudera.cdk.morphline.base.FieldExpression;
 import com.typesafe.config.Config;
 

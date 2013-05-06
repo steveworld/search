@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.List;
 
 import com.cloudera.cdk.morphline.api.Command;
-import com.cloudera.cdk.morphline.api.Configs;
 import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.stdlib.DropRecordBuilder;

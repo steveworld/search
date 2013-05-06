@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import com.cloudera.cdk.morphline.base.AbstractCommand;
+import com.cloudera.cdk.morphline.base.Configs;
 import com.typesafe.config.Config;
 
 public final class CopyTestCommandBuilder implements CommandBuilder {
