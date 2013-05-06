@@ -48,7 +48,8 @@ import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 
 /**
- * This is script engine for Java programming language.
+ * This is a fast script engine for Java programming language - I modified JSR
+ * 223 Java Scripting a little for some 100x less overhead for invoking "static" methods.
  */
 public class FastJavaScriptEngine extends AbstractScriptEngine implements Compilable {
 
