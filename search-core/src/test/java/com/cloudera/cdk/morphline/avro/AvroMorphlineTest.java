@@ -47,7 +47,7 @@ import com.cloudera.cdk.morphline.api.AbstractMorphlineTest;
 import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Fields;
-import com.cloudera.cdk.morphline.parser.AbstractParser;
+import com.cloudera.cdk.morphline.stdio.AbstractParser;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 
