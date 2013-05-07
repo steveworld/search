@@ -66,9 +66,9 @@ public final class MorphlineMapRunner {
 
   /**
    * Headers, including MIME types, can also explicitly be passed by force from the CLI to Morphline, e.g:
-   * hadoop ... -D org.apache.solr.hadoop.morphline.MorphlineMapper.header._attachment_mimetype=text/comma-separated-values
+   * hadoop ... -D org.apache.solr.hadoop.morphline.MorphlineMapRunner.field._attachment_mimetype=text/csv
    */
-  public static final String MORPHLINE_HEADER_PREFIX = MorphlineMapRunner.class.getName() + ".header.";
+  public static final String MORPHLINE_HEADER_PREFIX = MorphlineMapRunner.class.getName() + ".field.";
   
   /**
    * Flag to disable reading of file contents if indexing just file metadata is sufficient. 

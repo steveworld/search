@@ -42,6 +42,8 @@ public class MorphlineTest extends AbstractMorphlineTest {
   @Test
   public void testParseComplexConfig() throws Exception {
     parse("test-morphlines/parseComplexConfig");
+    parse("test-morphlines/tutorialReadAvroContainer");
+    parse("test-morphlines/tutorialReadJsonTestTweets");
   }
   
   @Test

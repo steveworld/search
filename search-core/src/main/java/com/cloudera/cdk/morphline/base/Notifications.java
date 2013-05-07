@@ -62,7 +62,7 @@ public final class Notifications {
   }
   
   public static boolean contains(Record notification, LifeCycleEvent directive) {
-    return notification.get(LIFE_CYLCLE).contains(directive);
+    return getLifeCycleEvents(notification).contains(directive);
   }
   
   ///////////////////////////////////////////////////////////////////////////////

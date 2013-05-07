@@ -78,6 +78,8 @@ import org.apache.solr.tika.parser.NullParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.cdk.morphline.base.Fields;
+
 
 /**
  * Public API for a MapReduce batch job driver that creates a set of Solr index
@@ -139,24 +141,23 @@ public class MapReduceIndexerTool extends Configured implements Tool {
           "2) Mapper phase: This (parallel) phase takes the input files, extracts the relevant content, transforms it " +
           "and hands SolrInputDocuments to a set of reducers. " +
           "The ETL functionality is flexible and " +
-          "customizable. Parsers for a set of standard data formats such as Avro, CSV, Text, HTML, XML, " +
-          "PDF, Word, Excel, etc. are provided out of the box, and additional custom parsers for additional " +
-          "file or data formats can be added as Apache Tika plugins. " +
-          "This is done by implementing a simple Java interface that consumes a file in the form of an InputStream " +
-          "plus some headers plus contextual metadata, and generates as output zero or more SolrInputDocuments. " + 
+          "customizable using chains of arbitrary morphline commands that pipe records from one transformation command to another. " + 
+          "Commands to parse and transform a set of standard data formats such as Avro, CSV, Text, HTML, XML, " +
+          "PDF, Word, Excel, etc. are provided out of the box, and additional custom commands and parsers for additional " +
+          "file or data formats can be added as morphline plugins. " +
+          "This is done by implementing a simple Java interface that consumes a record (e.g. a file in the form of an InputStream " +
+          "plus some headers plus contextual metadata) and generates as output zero or more records. " + 
           "Any kind of data format can be indexed and any Solr documents for any kind of Solr schema can be generated, " +
           "and any custom ETL logic can be registered and executed.\n" +
-          "Input files are mapped to MIME types via the standard Tika configuration mechanism, i.e. by passing on the " +
-          "classpath the config files org/apache/tika/mime/tika-mimetypes.xml (which already ships embedded in " +
+          "Optionally, rich input files can be mapped to MIME types via the detectMimeType morphline command, i.e. by specifying to include " +
+          "the Tika defaultMimeTypes config file (which already ships embedded in " +
           "tika-core.jar - see " +
           "http://github.com/apache/tika/blob/trunk/tika-core/src/main/resources/org/apache/tika/mime/tika-mimetypes.xml) " +
-          "and optionally also the config file org/apache/tika/mime/custom-mimetypes.xml, which extends and overrides " +
-          "the settings in tika-mimetypes.xml with custom directives.\n" +
-          "Headers, including MIME types, can also explicitly be passed by force from the CLI to Tika, for example: " +
-          "hadoop ... -D " + TikaMapper.TIKA_HEADER_PREFIX + ExtractingParams.STREAM_TYPE + "=" + NullParser.MEDIA_TYPE + "\n" +
-          "Next, MIME types are mapped to Tika parsers (Java classes) via the standard Tika configuration mechanism, " +
-          "i.e. by passing the config file tika-config.xml. This config file lists which Java parser classes are " +
-          "invoked for which MIME types." +
+          "and optionally also one or more custom-mimetypes.xml configs (either as a file or embedded XML fragment), which extends and overrides " +
+          "the Tika defaultMimeTypes with custom directives.\n" +
+          "Morphline commands can use MIME types to determine how to interpret the input data. \n" +
+          "Fields, including MIME types, can also explicitly be passed by force from the CLI to the morphline, for example: " +
+          "hadoop ... -D " + MorphlineMapRunner.MORPHLINE_HEADER_PREFIX + Fields.ATTACHMENT_MIME_TYPE + "=text/csv" +
           "\n\n" +
           "3) Reducer phase: This (parallel) phase loads the mapper's SolrInputDocuments into one EmbeddedSolrServer per reducer. " +
           "Each such reducer and Solr server can be seen as a (micro) shard. The Solr servers store their " +
@@ -187,7 +188,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
             System.out.println(
               "Examples: \n\n" + 
 
-              "# Prepare a config jar file containing org/apache/tika/mime/custom-mimetypes.xml and custom mylog4j.properties:\n" +
+              "# Prepare a config jar file containing a custom mylog4j.properties:\n" +
               "rm -fr myconfig; mkdir myconfig\n" + 
               "cp src/test/resources/log4j.properties myconfig/mylog4j.properties\n" + 
               "cp -r src/test/resources/org myconfig/\n" + 
@@ -197,10 +198,10 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "sudo -u hdfs hadoop \\\n" + 
               "  --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
               "  jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
-              "  --files src/test/resources/tika-config.xml \\\n" + 
               "  --libjars myconfig.jar \\\n" + 
               "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "  --morphline-file src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \\\n" + 
               "  --solr-home-dir src/test/resources/solr/minimr \\\n" +
               "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
               "  --shards 1 \\\n" + 
@@ -222,10 +223,10 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "| sudo -u hdfs hadoop \\\n" + 
               "  --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" + 
               "  jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
-              "  --files src/test/resources/tika-config.xml \\\n" + 
-              "  --libjars myconfig.jar,../search-contrib/target/search-contrib-*-SNAPSHOT.jar \\\n" + 
+              "  --libjars myconfig.jar \\\n" + 
               "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "  --morphline-file src/test/resources/test-morphlines/tutorialReadJsonTestTweets.conf \\\n" + 
               "  --solr-home-dir src/test/resources/solr/minimr \\\n" + 
               "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
               "  --shards 100 \\\n" + 
@@ -236,10 +237,10 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "sudo -u hdfs hadoop \\\n" + 
               "  --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
               "  jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
-              "  --files src/test/resources/tika-config.xml \\\n" + 
               "  --libjars myconfig.jar \\\n" + 
               "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "  --morphline-file src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \\\n" + 
               "  --solr-home-dir src/test/resources/solr/minimr \\\n" + 
               "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
               "  --shard-url http://solr001.mycompany.com:8983/solr/collection1 \\\n" + 
@@ -252,10 +253,10 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "sudo -u hdfs hadoop \\\n" + 
               "  --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
               "  jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
-              "  --files src/test/resources/tika-config.xml \\\n" + 
               "  --libjars myconfig.jar \\\n" + 
               "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "  --morphline-file src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \\\n" + 
               "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
               "  --zk-host zk01.mycompany.com:2181/solr \\\n" + 
               "  --collection collection1 \\\n" + 
@@ -306,7 +307,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .type(String.class)
         .help("The identifier of the morphline that shall be executed within the morphline config file " +
         		  "specified by --morphline-file. If the --morphline-id option is ommitted the first (i.e. " +
-        		  "top-most) morphline within the config file is used. Example: 'morphline1'");
+        		  "top-most) morphline within the config file is used. Example: morphline1");
             
       Argument solrHomeDirArg = parser.addArgument("--solr-home-dir")
         .metavar("DIR")
@@ -402,7 +403,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       Argument dryRunArg = parser.addArgument("--dryrun")
         .action(Arguments.storeTrue())
         .help("Run in local mode and print documents to stdout instead of loading them into Solr. This executes " +
-              "the morphline in the current process (without submitting a job to MR) for quicker turnaround during " +
+              "the morphline in the client process (without submitting a job to MR) for quicker turnaround during " +
               "early trial & debug sessions.");
     
       Argument verboseArg = parser.addArgument("--verbose", "-v")
