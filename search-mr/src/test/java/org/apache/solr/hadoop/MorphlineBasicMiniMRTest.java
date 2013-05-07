@@ -68,9 +68,7 @@ public class MorphlineBasicMiniMRTest extends Assert {
   private final int count;
   
   protected MapReduceIndexerTool createTool() {
-    MapReduceIndexerTool tool = new MapReduceIndexerTool();
-    tool.enableMorphline();
-    return tool;
+    return new MapReduceIndexerTool();
   }
 
   @Parameters
@@ -291,6 +289,7 @@ public class MorphlineBasicMiniMRTest extends Assert {
 //        "--files", RESOURCES_DIR + "/test-morphlines/solrCellDocumentTypes.conf", 
 //        //    + "," + RESOURCES_DIR + "/org/apache/tika/mime/custom-mimetypes.xml",
 //        "-D", "morphlineFile=solrCellDocumentTypes.conf",
+        "-D", "enableMorphline=true",
         "--morphline-file=" + RESOURCES_DIR + "/test-morphlines/solrCellDocumentTypes.conf",
         "--morphline-id=morphline1",
         "--solr-home-dir=" + MINIMR_CONF_DIR.getAbsolutePath(),
@@ -329,6 +328,13 @@ public class MorphlineBasicMiniMRTest extends Assert {
     System.out.println("outputfiles:" + Arrays.toString(outputFiles));
 
     TestUtils.validateSolrServerDocumentCount(MINIMR_CONF_DIR, fs, outDir, count, shards);
+    
+    // run again with --dryrun mode:
+    tool = createTool();
+    args = concat(args, new String[] {"--dryrun"});
+    res = ToolRunner.run(jobConf, tool, args);
+    assertEquals(0, res);
+
     numRuns++;
   }
   

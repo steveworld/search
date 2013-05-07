@@ -301,6 +301,7 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
 //        "--files", RESOURCES_DIR + "/test-morphlines/solrCellDocumentTypes.conf", 
 //        //    + "," + RESOURCES_DIR + "/org/apache/tika/mime/custom-mimetypes.xml",
 //        "-D", "morphlineFile=solrCellDocumentTypes.conf",
+        "-D", "enableMorphline=true",
         "--morphline-file=" + RESOURCES_DIR + "/test-morphlines/solrCellDocumentTypes.conf",
         "--morphline-id=morphline1",
     };
@@ -355,7 +356,6 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     
     if (true) {
       tool = new MapReduceIndexerTool();
-      tool.enableMorphline();
       res = ToolRunner.run(jobConf, tool, args);
       assertEquals(0, res);
       assertTrue(tool.job.isComplete());
@@ -383,7 +383,6 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     
     if (true) {
       tool = new MapReduceIndexerTool();
-      tool.enableMorphline();
       res = ToolRunner.run(jobConf, tool, args);
       assertEquals(0, res);
       assertTrue(tool.job.isComplete());
@@ -414,7 +413,6 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
 
     if (true) {
       tool = new MapReduceIndexerTool();
-      tool.enableMorphline();
       res = ToolRunner.run(jobConf, tool, args);
       assertEquals(0, res);
       assertTrue(tool.job.isComplete());
@@ -450,7 +448,6 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     
     if (true) {
       tool = new MapReduceIndexerTool();
-      tool.enableMorphline();
       res = ToolRunner.run(jobConf, tool, args);
       assertEquals(0, res);
       assertTrue(tool.job.isComplete());
@@ -487,7 +484,6 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     
     if (true) {
       tool = new MapReduceIndexerTool();
-      tool.enableMorphline();
       res = ToolRunner.run(jobConf, tool, args);
       assertEquals(0, res);
       assertTrue(tool.job.isComplete());

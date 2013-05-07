@@ -69,6 +69,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.solr.common.cloud.SolrZkClient;
 import org.apache.solr.hadoop.dedup.RetainMostRecentUpdateConflictResolver;
+import org.apache.solr.hadoop.morphline.MorphlineMapRunner;
 import org.apache.solr.hadoop.morphline.MorphlineMapper;
 import org.apache.solr.hadoop.tika.TikaMapper;
 import org.apache.solr.handler.extraction.ExtractingParams;
@@ -86,8 +87,7 @@ import org.slf4j.LoggerFactory;
 public class MapReduceIndexerTool extends Configured implements Tool {
   
   // TMP testing hack, remove this once morphlines is fully integrated with testing
-  private boolean enableMorphline = "true".equals(System.getProperty("enableMorphline"));  
-  public void enableMorphline() { this.enableMorphline = true; }
+  private boolean enableMorphline = false;
   
   Job job; // visible for testing only
   
@@ -399,6 +399,12 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "job priorities - the priorities are used as weights to determine the fraction of total compute time " +
               "that each job gets.");
   
+      Argument dryRunArg = parser.addArgument("--dryrun")
+        .action(Arguments.storeTrue())
+        .help("Run in local mode and print documents to stdout instead of loading them into Solr. This executes " +
+              "the morphline in the current process (without submitting a job to MR) for quicker turnaround during " +
+              "early trial & debug sessions.");
+    
       Argument verboseArg = parser.addArgument("--verbose", "-v")
         .action(Arguments.storeTrue())
         .help("Turn on verbose output.");
@@ -509,6 +515,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       opts.morphlineId = ns.getString(morphlineIdArg.getDest());
       opts.solrHomeDir = (File) ns.get(solrHomeDirArg.getDest());
       opts.fairSchedulerPool = ns.getString(fairSchedulerPoolArg.getDest());
+      opts.isDryRun = ns.getBoolean(dryRunArg.getDest());
       opts.isVerbose = ns.getBoolean(verboseArg.getDest());
       opts.zkHost = ns.getString(zkServerAddressArg.getDest());
       opts.shards = ns.getInt(shardsArg.getDest());
@@ -577,6 +584,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     String morphlineId;
     File solrHomeDir;
     String fairSchedulerPool;
+    boolean isDryRun;
     boolean isVerbose;
   }
   // END OF INNER CLASS  
@@ -602,6 +610,9 @@ public class MapReduceIndexerTool extends Configured implements Tool {
   
   /** API for Java clients; visible for testing; may become a public API eventually */
   int run(Options options) throws Exception {
+    if ("true".equals(getConf().get("enableMorphline"))) {
+      enableMorphline = true;
+    }
     if ("local".equals(getConf().get("mapred.job.tracker"))) {
       throw new IllegalStateException(
         "Running with LocalJobRunner (i.e. all of Hadoop inside a single JVM) is not supported " +
@@ -742,19 +753,21 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       SolrZkClient zkClient = zki.getZkClient(options.zkHost);
       try {
         String configName = zki.readConfigName(zkClient, options.collection);
-        SolrOutputFormat.setupSolrHomeCache(zki.downloadConfigDir(zkClient, configName), job);
+        File tmpSolrHomeDir = zki.downloadConfigDir(zkClient, configName);
+        SolrOutputFormat.setupSolrHomeCache(tmpSolrHomeDir, job);
+        options.solrHomeDir = tmpSolrHomeDir;
       } finally {
         zkClient.close();
       }
     }
     
     if (options.morphlineId != null) {
-      job.getConfiguration().set(MorphlineMapper.MORPHLINE_ID_PARAM, options.morphlineId);
+      job.getConfiguration().set(MorphlineMapRunner.MORPHLINE_ID_PARAM, options.morphlineId);
     }
     if (options.morphlineFile != null) {
       // do the same as if the user had typed 'hadoop ... --files <morphlinesFile>' 
       String HADOOP_TMP_FILES = "tmpfiles"; // see Hadoop's GenericOptionsParser
-      job.getConfiguration().set(MorphlineMapper.MORPHLINE_FILE_PARAM, options.morphlineFile.getName());
+      job.getConfiguration().set(MorphlineMapRunner.MORPHLINE_FILE_PARAM, options.morphlineFile.getPath());
       String tmpFiles = job.getConfiguration().get(HADOOP_TMP_FILES, "");
       if (tmpFiles.length() > 0) { // already present?
         tmpFiles = tmpFiles + ","; 
@@ -767,7 +780,23 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       assert morphlineTmpFiles.length() > 0;
       tmpFiles += morphlineTmpFiles;
       job.getConfiguration().set(HADOOP_TMP_FILES, tmpFiles);
-      // TODO: Verify the morphline compiles without error in order to fail fast (i.e. before submitting a job)
+      
+      // Verify that the morphline compiles without error (i.e. fail fast even before submitting a job) 
+      MorphlineMapRunner runner = new MorphlineMapRunner(
+          job.getConfiguration(), new DryRunDocumentLoader(), options.solrHomeDir.getPath());
+
+      if (options.isDryRun) {
+        LOG.info("Indexing {} files in dryrun mode", numFiles);
+        startTime = System.currentTimeMillis();
+        dryRun(runner, fs, fullInputList);
+        secs = (System.currentTimeMillis() - startTime) / 1000.0f;
+        LOG.info("Done. Indexing {} files in dryrun mode took {} secs", numFiles, secs);
+        goodbye(null, programStartTime);
+        return 0;
+      }      
+      
+      job.getConfiguration().set(MorphlineMapRunner.MORPHLINE_FILE_PARAM,
+          options.isDryRun ? options.morphlineFile.getPath() : options.morphlineFile.getName());
     }
 
     job.setNumReduceTasks(reducers);  
@@ -862,7 +891,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     goodbye(job, programStartTime);    
     return 0;
   }
-  
+
   private void calculateNumReducers(Options options, int realMappers) throws IOException {
     if (options.shards <= 0) {
       throw new IllegalStateException("Illegal number of shards: " + options.shards);
@@ -1042,6 +1071,23 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     return job2;
   }
 
+  /*
+   * Executes the morphline in the current process (without submitting a job to MR) for quicker
+   * turnaround during trial & debug sessions
+   */
+  private void dryRun(MorphlineMapRunner runner, FileSystem fs, Path fullInputList) throws IOException {    
+    BufferedReader reader = new BufferedReader(new InputStreamReader(fs.open(fullInputList), "UTF-8"));
+    try {
+      String line;
+      while ((line = reader.readLine()) != null) {
+        runner.map(line, job.getConfiguration(), null);
+      }
+      runner.cleanup();
+    } finally {
+      reader.close();
+    }
+  }
+  
   private int createTreeMergeInputDirList(Path outputReduceDir, FileSystem fs, Path fullInputList)
       throws FileNotFoundException, IOException {
     
@@ -1154,7 +1200,9 @@ public class MapReduceIndexerTool extends Configured implements Tool {
 
   private void goodbye(Job job, long startTime) {
     float secs = (System.currentTimeMillis() - startTime) / 1000.0f;
-    LOG.info("Succeeded with job: " + getJobInfo(job));
+    if (job != null) {
+      LOG.info("Succeeded with job: " + getJobInfo(job));
+    }
     LOG.info("Success. Done. Program took {} secs. Goodbye.", secs);
   }
 
@@ -1193,5 +1241,5 @@ public class MapReduceIndexerTool extends Configured implements Tool {
   private double log(double base, double value) {
     return Math.log(value) / Math.log(base);
   }
-  
+
 }

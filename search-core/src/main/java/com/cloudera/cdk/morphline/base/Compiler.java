@@ -129,7 +129,7 @@ public final class Compiler {
     try {
       config = parse(morphlineFile, overrides);
     } catch (IOException e) {
-      throw new MorphlineCompilationException("Cannot parse morphline file: " + morphlineFile, null);
+      throw new MorphlineCompilationException("Cannot parse morphline file: " + morphlineFile, null, e);
     }
     Config morphlineConfig = find(morphlineId, config, morphlineFile.getPath());
     return compile(morphlineConfig, morphlineContext);
