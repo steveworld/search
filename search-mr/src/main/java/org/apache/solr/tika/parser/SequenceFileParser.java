@@ -26,7 +26,7 @@ import org.apache.tika.mime.MediaType;
  * and loads them into Solr.
  */
 public class SequenceFileParser extends ReentrantParser {
-  private static final MediaType MEDIA_TYPE = MediaType.parse("application/seq");
+  private static final MediaType MEDIA_TYPE = MediaType.parse("application/hadoop-sequence-file");
 
   @Override
   protected StreamingSequenceFileParser createInstance() {
