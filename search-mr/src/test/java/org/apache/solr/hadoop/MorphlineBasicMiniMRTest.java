@@ -329,7 +329,7 @@ public class MorphlineBasicMiniMRTest extends Assert {
 
     TestUtils.validateSolrServerDocumentCount(MINIMR_CONF_DIR, fs, outDir, count, shards);
     
-    // run again with --dryrun mode:
+    // run again with --dryrun mode:  
     tool = createTool();
     args = concat(args, new String[] {"--dryrun"});
     res = ToolRunner.run(jobConf, tool, args);
