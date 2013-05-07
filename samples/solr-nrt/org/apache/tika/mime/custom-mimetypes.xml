@@ -28,5 +28,11 @@
       <match value="[0-9]+(\r)?\n\\{&quot;" type="regex" offset="0:16"/>       
     </magic>
   </mime-type>
-
+  
+  <mime-type type="application/hadoop-sequence-file">
+    <magic priority="50">
+      <match value="SEQ[\0-\6]" type="regex" offset="0"/>
+    </magic>
+  </mime-type>
+  
 </mime-info>
