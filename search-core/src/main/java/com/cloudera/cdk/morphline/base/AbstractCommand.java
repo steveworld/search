@@ -83,7 +83,7 @@ public abstract class AbstractCommand implements Command {
   }
 
   @Override
-  public boolean process(Record record) {
+  public final boolean process(Record record) {
     if (!beforeProcess(record)) {
       return false;
     }
