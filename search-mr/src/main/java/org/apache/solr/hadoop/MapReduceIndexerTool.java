@@ -72,9 +72,7 @@ import org.apache.solr.hadoop.dedup.RetainMostRecentUpdateConflictResolver;
 import org.apache.solr.hadoop.morphline.MorphlineMapRunner;
 import org.apache.solr.hadoop.morphline.MorphlineMapper;
 import org.apache.solr.hadoop.tika.TikaMapper;
-import org.apache.solr.handler.extraction.ExtractingParams;
 import org.apache.solr.tika.TikaIndexer;
-import org.apache.solr.tika.parser.NullParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -201,7 +199,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "  --libjars myconfig.jar \\\n" + 
               "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
 //              "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-              "  --morphline-file src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \\\n" + 
+              "  --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \\\n" + 
               "  --solr-home-dir src/test/resources/solr/minimr \\\n" +
               "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
               "  --shards 1 \\\n" + 
@@ -226,7 +224,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "  --libjars myconfig.jar \\\n" + 
               "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
 //              "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-              "  --morphline-file src/test/resources/test-morphlines/tutorialReadJsonTestTweets.conf \\\n" + 
+              "  --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadJsonTestTweets.conf \\\n" + 
               "  --solr-home-dir src/test/resources/solr/minimr \\\n" + 
               "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
               "  --shards 100 \\\n" + 
@@ -240,7 +238,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "  --libjars myconfig.jar \\\n" + 
               "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
 //              "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-              "  --morphline-file src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \\\n" + 
+              "  --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \\\n" + 
               "  --solr-home-dir src/test/resources/solr/minimr \\\n" + 
               "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
               "  --shard-url http://solr001.mycompany.com:8983/solr/collection1 \\\n" + 
@@ -256,7 +254,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "  --libjars myconfig.jar \\\n" + 
               "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
 //              "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-              "  --morphline-file src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \\\n" + 
+              "  --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \\\n" + 
               "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
               "  --zk-host zk01.mycompany.com:2181/solr \\\n" + 
               "  --collection collection1 \\\n" + 
@@ -768,6 +766,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     if (options.morphlineFile != null) {
       // do the same as if the user had typed 'hadoop ... --files <morphlinesFile>' 
       String HADOOP_TMP_FILES = "tmpfiles"; // see Hadoop's GenericOptionsParser
+      options.morphlineFile = options.morphlineFile.getCanonicalFile();
       job.getConfiguration().set(MorphlineMapRunner.MORPHLINE_FILE_PARAM, options.morphlineFile.getPath());
       String tmpFiles = job.getConfiguration().get(HADOOP_TMP_FILES, "");
       if (tmpFiles.length() > 0) { // already present?
