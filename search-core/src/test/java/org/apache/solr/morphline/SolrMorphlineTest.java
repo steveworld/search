@@ -32,7 +32,6 @@ import org.junit.Test;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.base.Notifications;
-import com.typesafe.config.Config;
 
 public class SolrMorphlineTest extends SolrMorphlineTestBase {
 
@@ -64,9 +63,8 @@ public class SolrMorphlineTest extends SolrMorphlineTestBase {
   @Test
   public void testLoadSolrBasic() throws Exception {
     //System.setProperty("ENV_SOLR_HOME", testSolrHome + "/collection1");
-    Config config = parse("test-morphlines/loadSolrBasic");    
+    morphline = createMorphline("test-morphlines/loadSolrBasic");    
     //System.clearProperty("ENV_SOLR_HOME");
-    morphline = createMorphline(config);
     Record record = new Record();
     record.put(Fields.ID, "id0");
     record.put("first_name", "Nadja"); // will be sanitized
@@ -85,8 +83,7 @@ public class SolrMorphlineTest extends SolrMorphlineTestBase {
     
   @Test
   public void testSolrCellJPGCompressed() throws Exception {
-    Config config = parse("test-morphlines/solrCellJPGCompressed");    
-    morphline = createMorphline(config); 
+    morphline = createMorphline("test-morphlines/solrCellJPGCompressed");    
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
         path + "/testJPEG_EXIF.jpg",
@@ -98,8 +95,7 @@ public class SolrMorphlineTest extends SolrMorphlineTestBase {
 
   @Test
   public void testSolrCellDocumentTypes() throws Exception {
-    Config config = parse("test-morphlines/solrCellDocumentTypes");    
-    morphline = createMorphline(config); 
+    morphline = createMorphline("test-morphlines/solrCellDocumentTypes");    
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
         path + "/testBMPfp.txt",
@@ -126,8 +122,7 @@ public class SolrMorphlineTest extends SolrMorphlineTestBase {
   
   @Test
   public void testSolrCellDocumentTypes2() throws Exception {
-    Config config = parse("test-morphlines/solrCellDocumentTypes");    
-    morphline = createMorphline(config); 
+    morphline = createMorphline("test-morphlines/solrCellDocumentTypes");    
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
         path + "/testPPT_various.ppt",

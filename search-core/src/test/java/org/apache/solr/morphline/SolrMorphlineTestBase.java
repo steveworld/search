@@ -231,10 +231,6 @@ public class SolrMorphlineTestBase extends SolrTestCaseJ4 {
     return new PipeBuilder().build(parse(file), null, collector, createMorphlineContext());
   }
 
-  protected Command createMorphline(Config config) {
-    return new PipeBuilder().build(config, null, collector, createMorphlineContext());
-  }
-
   private MorphlineContext createMorphlineContext() {
     return new SolrMorphlineContext.Builder()
       .setDocumentLoader(testServer)
@@ -244,7 +240,7 @@ public class SolrMorphlineTestBase extends SolrTestCaseJ4 {
       .build();
   }
   
-  protected Config parse(String file) throws IOException {
+  private Config parse(String file) throws IOException {
     SolrLocator locator = new SolrLocator(createMorphlineContext());
     locator.setSolrHomeDir(testSolrHome + "/collection1");
     Config config = new Compiler().parse(new File("src/test/resources/" + file + ".conf"), locator.toConfig("SOLR_LOCATOR"));
