@@ -153,6 +153,34 @@
        </executions>
       </plugin>
       
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>${maven.antrun.plugin.version}</version>
+        <executions>
+          <execution>
+            <id>copy-test-env</id>
+            <phase>process-test-resources</phase>
+            <configuration>
+              <target>
+                <copy todir="${basedir}/../samples/solr-nrt/test-morphlines">
+                  <fileset dir="${basedir}/src/test/resources/test-morphlines"/>
+                </copy>
+                <copy todir="${basedir}/../samples/solr-nrt/grok-dictionaries">
+                  <fileset dir="${basedir}/src/test/resources/grok-dictionaries"/>
+                </copy>
+                <copy todir="${basedir}/../samples/solr-nrt"
+                  file="${basedir}/src/test/resources/custom-mimetypes.xml" 
+                />
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    
     </plugins>  
   </build>
 </project>
