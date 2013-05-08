@@ -27,48 +27,44 @@ public final class Notifications {
 
   public static final String LIFE_CYLCLE = "lifecycle";
   
-  public static List getLifeCycleEvents(Record notification) {
+  public static List getLifecycleEvents(Record notification) {
     return notification.get(LIFE_CYLCLE);
   }
   
   public static void notifyBeginTransaction(Command command) {
-    Record notification = new Record();
-    notification.put(LIFE_CYLCLE, LifeCycleEvent.BEGIN_TRANSACTION);
-    command.notify(notification);
+    notify(command, LifecycleEvent.BEGIN_TRANSACTION);
   }
   
   public static void notifyCommitTransaction(Command command) {
-    Record notification = new Record();
-    notification.put(LIFE_CYLCLE, LifeCycleEvent.COMMIT_TRANSACTION);
-    command.notify(notification);
+    notify(command, LifecycleEvent.COMMIT_TRANSACTION);
   }
   
   public static void notifyRollbackTransaction(Command command) {
-    Record notification = new Record();
-    notification.put(LIFE_CYLCLE, LifeCycleEvent.ROLLBACK_TRANSACTION);
-    command.notify(notification);
+    notify(command, LifecycleEvent.ROLLBACK_TRANSACTION);
   }
   
   public static void notifyShutdown(Command command) {
-    Record notification = new Record();
-    notification.put(LIFE_CYLCLE, LifeCycleEvent.SHUTDOWN);
-    command.notify(notification);
+    notify(command, LifecycleEvent.SHUTDOWN);
   }
   
   public static void notifyStartSession(Command command) {
+    notify(command, LifecycleEvent.START_SESSION);
+  }
+  
+  private static void notify(Command command, LifecycleEvent event) {
     Record notification = new Record();
-    notification.put(LIFE_CYLCLE, LifeCycleEvent.START_SESSION);
+    notification.put(LIFE_CYLCLE, event);
     command.notify(notification);
   }
   
-  public static boolean contains(Record notification, LifeCycleEvent directive) {
-    return getLifeCycleEvents(notification).contains(directive);
+  public static boolean containsLifecycleEvent(Record notification, LifecycleEvent event) {
+    return getLifecycleEvents(notification).contains(event);
   }
   
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
   ///////////////////////////////////////////////////////////////////////////////
-  public static enum LifeCycleEvent {
+  public static enum LifecycleEvent {
     BEGIN_TRANSACTION,
     COMMIT_TRANSACTION,
     ROLLBACK_TRANSACTION,

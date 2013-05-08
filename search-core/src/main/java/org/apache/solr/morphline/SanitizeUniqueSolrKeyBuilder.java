@@ -135,7 +135,7 @@ public final class SanitizeUniqueSolrKeyBuilder implements CommandBuilder {
     
     @Override
     public void notify(Record notification) {
-      if (Notifications.contains(notification, Notifications.LifeCycleEvent.START_SESSION)) {
+      if (Notifications.containsLifecycleEvent(notification, Notifications.LifecycleEvent.START_SESSION)) {
         recordCounter = 0; // reset
       }
       super.notify(notification);

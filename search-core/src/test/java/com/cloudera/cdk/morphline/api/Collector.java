@@ -48,7 +48,7 @@ public final class Collector implements Command {
   
   @Override
   public void notify(Record notification) {
-    if (Notifications.contains(notification, Notifications.LifeCycleEvent.START_SESSION)) {
+    if (Notifications.containsLifecycleEvent(notification, Notifications.LifecycleEvent.START_SESSION)) {
       numStartEvents++;
     }
   }
