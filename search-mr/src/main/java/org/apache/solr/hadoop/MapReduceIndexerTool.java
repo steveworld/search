@@ -195,10 +195,10 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "# (Re)index an Avro based Twitter tweet file:\n" +
               "sudo -u hdfs hadoop \\\n" + 
               "  --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
-              "  jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
+              "  jar target/search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
               "  --libjars myconfig.jar \\\n" + 
               "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-//              "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+//            "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "  --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \\\n" + 
               "  --solr-home-dir src/test/resources/solr/minimr \\\n" +
               "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
@@ -220,10 +220,10 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "  -size +1000000c \\\n" + 
               "| sudo -u hdfs hadoop \\\n" + 
               "  --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" + 
-              "  jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
+              "  jar target/search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
               "  --libjars myconfig.jar \\\n" + 
               "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-//              "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+//            "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "  --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadJsonTestTweets.conf \\\n" + 
               "  --solr-home-dir src/test/resources/solr/minimr \\\n" + 
               "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
@@ -234,10 +234,10 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "# (explicitly specify Solr URLs - for a SolrCloud cluster see next example):\n" +
               "sudo -u hdfs hadoop \\\n" + 
               "  --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
-              "  jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
+              "  jar target/search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
               "  --libjars myconfig.jar \\\n" + 
               "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-//              "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+//            "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "  --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \\\n" + 
               "  --solr-home-dir src/test/resources/solr/minimr \\\n" + 
               "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
@@ -250,10 +250,10 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "# (discover shards and Solr URLs through ZooKeeper):\n" +
               "sudo -u hdfs hadoop \\\n" + 
               "  --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
-              "  jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
+              "  jar target/search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
               "  --libjars myconfig.jar \\\n" + 
               "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-//              "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+//            "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
               "  --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \\\n" + 
               "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
               "  --zk-host zk01.mycompany.com:2181/solr \\\n" + 
