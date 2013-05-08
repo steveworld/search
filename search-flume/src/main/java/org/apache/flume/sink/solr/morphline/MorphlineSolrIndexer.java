@@ -86,7 +86,7 @@ public class MorphlineSolrIndexer implements SolrIndexer {
       record.put(entry.getKey(), entry.getValue());
     }
     byte[] bytes = event.getBody();
-    if (bytes != null) {
+    if (bytes != null && bytes.length > 0) {
       record.put(Fields.ATTACHMENT_BODY, bytes);
     }    
     try {
