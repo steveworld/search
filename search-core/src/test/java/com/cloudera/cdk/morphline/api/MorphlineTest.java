@@ -77,19 +77,19 @@ public class MorphlineTest extends AbstractMorphlineTest {
   public void testAddValues() throws Exception {
     morphline = createMorphline("test-morphlines/addValues");    
     Record record = new Record();
-    record.getFields().put("first_name", "Nadja");
+    record.put("first_name", "Nadja");
     startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     Record expected = new Record();
-    expected.getFields().put("first_name", "Nadja");
-    expected.getFields().put("source_type", "text/log");
-    expected.getFields().put("source_type", "text/log2");
-    expected.getFields().put("source_host", 123);
-    expected.getFields().put("name", "Nadja");
-    expected.getFields().put("names", "Nadja");
-    expected.getFields().put("pids", 456);
-    expected.getFields().put("pids", "hello");
+    expected.put("first_name", "Nadja");
+    expected.put("source_type", "text/log");
+    expected.put("source_type", "text/log2");
+    expected.put("source_host", 123);
+    expected.put("name", "Nadja");
+    expected.put("names", "Nadja");
+    expected.put("pids", 456);
+    expected.put("pids", "hello");
     assertEquals(Arrays.asList(expected), collector.getRecords());
     assertSame(record, collector.getRecords().get(0));
   }
@@ -98,27 +98,27 @@ public class MorphlineTest extends AbstractMorphlineTest {
   public void testSetValues() throws Exception {
     morphline = createMorphline("test-morphlines/setValues");    
     Record record = new Record();
-    record.getFields().put("first_name", "Nadja");
-    record.getFields().put("source_type", "XXXX");
-    record.getFields().put("source_type", "XXXX");
-    record.getFields().put("source_host", 999);
-    record.getFields().put("name", "XXXX");
-    record.getFields().put("names", "XXXX");
-    record.getFields().put("pids", 789);
-    record.getFields().put("pids", "YYYY");
+    record.put("first_name", "Nadja");
+    record.put("source_type", "XXXX");
+    record.put("source_type", "XXXX");
+    record.put("source_host", 999);
+    record.put("name", "XXXX");
+    record.put("names", "XXXX");
+    record.put("pids", 789);
+    record.put("pids", "YYYY");
 
     startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     Record expected = new Record();
-    expected.getFields().put("first_name", "Nadja");
-    expected.getFields().put("source_type", "text/log");
-    expected.getFields().put("source_type", "text/log2");
-    expected.getFields().put("source_host", 123);
-    expected.getFields().put("name", "Nadja");
-    expected.getFields().put("names", "Nadja");
-    expected.getFields().put("pids", 456);
-    expected.getFields().put("pids", "hello");
+    expected.put("first_name", "Nadja");
+    expected.put("source_type", "text/log");
+    expected.put("source_type", "text/log2");
+    expected.put("source_host", 123);
+    expected.put("name", "Nadja");
+    expected.put("names", "Nadja");
+    expected.put("pids", 456);
+    expected.put("pids", "hello");
     assertEquals(Arrays.asList(expected), collector.getRecords());
     assertSame(record, collector.getRecords().get(0));
   }
@@ -127,12 +127,12 @@ public class MorphlineTest extends AbstractMorphlineTest {
   public void testTryRulesPass() throws Exception {
     morphline = createMorphline("test-morphlines/tryRulesPass");    
     Record record = new Record();
-    record.getFields().put("first_name", "Nadja");
+    record.put("first_name", "Nadja");
     List<Record> expectedList = new ArrayList();
     for (int i = 0; i < 2; i++) {
       Record expected = record.copy();
-      expected.getFields().put("foo", "bar");
-      expected.getFields().replaceValues("iter", Arrays.asList(i));
+      expected.put("foo", "bar");
+      expected.replaceValues("iter", i);
       expectedList.add(expected);
     }
     startSession();
@@ -146,12 +146,12 @@ public class MorphlineTest extends AbstractMorphlineTest {
   public void testTryRulesFail() throws Exception {
     morphline = createMorphline("test-morphlines/tryRulesFail");    
     Record record = new Record();
-    record.getFields().put("first_name", "Nadja");
+    record.put("first_name", "Nadja");
     List<Record> expectedList = new ArrayList();
     for (int i = 0; i < 2; i++) {
       Record expected = record.copy();
-      expected.getFields().put("foo2", "bar2");
-      expected.getFields().replaceValues("iter2", Arrays.asList(i));
+      expected.put("foo2", "bar2");
+      expected.replaceValues("iter2", i);
       expectedList.add(expected);
     }
     startSession();
@@ -165,7 +165,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
   public void testTryRulesFailTwice() throws Exception {
     morphline = createMorphline("test-morphlines/tryRulesFailTwice");    
     Record record = new Record();
-    record.getFields().put("first_name", "Nadja");
+    record.put("first_name", "Nadja");
     List<Record> expectedList = new ArrayList();
     startSession();
     assertEquals(1, collector.getNumStartEvents());
@@ -291,12 +291,12 @@ public class MorphlineTest extends AbstractMorphlineTest {
     morphline = createMorphline("test-morphlines/readClob");    
     Record record = new Record();
     String msg = "foo";
-    record.getFields().put(Fields.ATTACHMENT_BODY, msg.getBytes("UTF-8"));
+    record.put(Fields.ATTACHMENT_BODY, msg.getBytes("UTF-8"));
     startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     Record expected = new Record();
-    expected.getFields().put(Fields.MESSAGE, msg);
+    expected.put(Fields.MESSAGE, msg);
     assertEquals(Arrays.asList(expected), collector.getRecords());
     assertNotSame(record, collector.getRecords().get(0));
   }
@@ -306,7 +306,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     morphline = createMorphline("test-morphlines/readCSV");    
     InputStream in = new FileInputStream(new File(RESOURCES_DIR + "/test-documents/cars.csv"));
     Record record = new Record();
-    record.getFields().put(Fields.ATTACHMENT_BODY, in);
+    record.put(Fields.ATTACHMENT_BODY, in);
     startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
@@ -334,7 +334,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     byte[] in = threeLines.getBytes("UTF-8");
     morphline = createMorphline("test-morphlines/readLine"); // uses ignoreFirstLine : true
     Record record = new Record();
-    record.getFields().put(Fields.ATTACHMENT_BODY, in);
+    record.put(Fields.ATTACHMENT_BODY, in);
     startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
@@ -350,7 +350,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     morphline = createMorphline("test-morphlines/readMultiLine");   
     InputStream in = new FileInputStream(new File(RESOURCES_DIR + "/test-documents/multiline-stacktrace.log"));
     Record record = new Record();
-    record.getFields().put(Fields.ATTACHMENT_BODY, in);
+    record.put(Fields.ATTACHMENT_BODY, in);
     startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
@@ -369,13 +369,13 @@ public class MorphlineTest extends AbstractMorphlineTest {
   public void testJavaHelloWorld() throws Exception {
     morphline = createMorphline("test-morphlines/javaHelloWorld");    
     Record record = new Record();
-    record.getFields().put("tags", "hello");
+    record.put("tags", "hello");
     startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     Record expected = new Record();
-    expected.getFields().put("tags", "hello");
-    expected.getFields().put("tags", "world");
+    expected.put("tags", "hello");
+    expected.put("tags", "world");
     assertEquals(Arrays.asList(expected), collector.getRecords());
     assertSame(record, collector.getRecords().get(0));
   }
@@ -430,21 +430,21 @@ public class MorphlineTest extends AbstractMorphlineTest {
         + "");
     Record record = new Record();
     String msg = "<164>Feb  4 10:46:14 syslog sshd[607]: Server listening on 0.0.0.0 port 22.";
-    record.getFields().put(Fields.MESSAGE, msg);
+    record.put(Fields.MESSAGE, msg);
     String id = "myid";
-    record.getFields().put(Fields.ID, id);
+    record.put(Fields.ID, id);
     startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     Record expected = new Record();
-    expected.getFields().put(Fields.MESSAGE, msg);
-    expected.getFields().put(Fields.ID, id);
-    expected.getFields().put("syslog_pri", "164");
-    expected.getFields().put("syslog_timestamp", "Feb  4 10:46:14");
-    expected.getFields().put("syslog_hostname", "syslog");
-    expected.getFields().put("syslog_program", "sshd");
-    expected.getFields().put("syslog_pid", "607");
-    expected.getFields().put("syslog_message", "Server listening on 0.0.0.0 port 22.");
+    expected.put(Fields.MESSAGE, msg);
+    expected.put(Fields.ID, id);
+    expected.put("syslog_pri", "164");
+    expected.put("syslog_timestamp", "Feb  4 10:46:14");
+    expected.put("syslog_hostname", "syslog");
+    expected.put("syslog_program", "sshd");
+    expected.put("syslog_pid", "607");
+    expected.put("syslog_message", "Server listening on 0.0.0.0 port 22.");
     assertEquals(Arrays.asList(expected), collector.getRecords());
     if (inplace) {
       assertSame(record, collector.getRecords().get(0));
@@ -455,7 +455,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
     // mismatch
     collector.reset();
     record = new Record();
-    record.getFields().put(Fields.MESSAGE, "foo" + msg);
+    record.put(Fields.MESSAGE, "foo" + msg);
     startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertFalse(morphline.process(record));
@@ -464,16 +464,16 @@ public class MorphlineTest extends AbstractMorphlineTest {
     // double match
     collector.reset();
     record = new Record();
-    record.getFields().put(Fields.MESSAGE, msg);
-    record.getFields().put(Fields.MESSAGE, msg);
-    record.getFields().put(Fields.ID, id);
-    record.getFields().put(Fields.ID, id);
+    record.put(Fields.MESSAGE, msg);
+    record.put(Fields.MESSAGE, msg);
+    record.put(Fields.ID, id);
+    record.put(Fields.ID, id);
     startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     Record tmp = expected.copy();
     for (Map.Entry<String, Object> entry : tmp.getFields().entries()) {
-      expected.getFields().put(entry.getKey(), entry.getValue());
+      expected.put(entry.getKey(), entry.getValue());
     }        
     assertEquals(Arrays.asList(expected), collector.getRecords());
     if (inplace) {
@@ -507,18 +507,18 @@ public class MorphlineTest extends AbstractMorphlineTest {
         + "");
     Record record = new Record();
     String msg = "hello\t\tworld\tfoo";
-    record.getFields().put(Fields.MESSAGE, msg);
+    record.put(Fields.MESSAGE, msg);
     String id = "myid";
-    record.getFields().put(Fields.ID, id);
+    record.put(Fields.ID, id);
     startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     Record expected = new Record();
-    expected.getFields().put(Fields.MESSAGE, msg);
-    expected.getFields().put(Fields.ID, id);
-    expected.getFields().put("word", "hello");
-    expected.getFields().put("word", "world");
-    expected.getFields().put("word", "foo");
+    expected.put(Fields.MESSAGE, msg);
+    expected.put(Fields.ID, id);
+    expected.put("word", "hello");
+    expected.put("word", "world");
+    expected.put("word", "foo");
     assertEquals(Arrays.asList(expected), collector.getRecords());
     if (inplace) {
       assertSame(record, collector.getRecords().get(0));
@@ -529,8 +529,8 @@ public class MorphlineTest extends AbstractMorphlineTest {
     // mismatch
     collector.reset();
     record = new Record();
-    record.getFields().put(Fields.MESSAGE, "");
-    record.getFields().put(Fields.ID, id);
+    record.put(Fields.MESSAGE, "");
+    record.put(Fields.ID, id);
     startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertFalse(morphline.process(record));
@@ -554,16 +554,16 @@ public class MorphlineTest extends AbstractMorphlineTest {
   public void testConvertTimestamp() throws Exception {
     morphline = createMorphline("test-morphlines/convertTimestamp");    
     Record record = new Record();
-    record.getFields().put("ts1", "2011-09-06T14:14:34.789Z"); // "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
-    record.getFields().put("ts1", "2012-09-06T14:14:34"); 
-    record.getFields().put("ts1", "2013-09-06");
+    record.put("ts1", "2011-09-06T14:14:34.789Z"); // "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+    record.put("ts1", "2012-09-06T14:14:34"); 
+    record.put("ts1", "2013-09-06");
     startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     Record expected = new Record();
-    expected.getFields().put("ts1", "2011-09-06T07:14:34.789-0700");
-    expected.getFields().put("ts1", "2012-09-06T07:14:34.000-0700");
-    expected.getFields().put("ts1", "2013-09-05T17:00:00.000-0700");
+    expected.put("ts1", "2011-09-06T07:14:34.789-0700");
+    expected.put("ts1", "2012-09-06T07:14:34.000-0700");
+    expected.put("ts1", "2013-09-05T17:00:00.000-0700");
     assertEquals(Arrays.asList(expected), collector.getRecords());
     assertSame(record, collector.getRecords().get(0));
   }
@@ -584,7 +584,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
   public void testConvertTimestampBad() throws Exception {
     morphline = createMorphline("test-morphlines/convertTimestamp");
     Record record = new Record();
-    record.getFields().put("ts1", "this is an invalid timestamp");
+    record.put("ts1", "this is an invalid timestamp");
     startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertFalse(morphline.process(record));
@@ -595,16 +595,16 @@ public class MorphlineTest extends AbstractMorphlineTest {
   public void testConvertTimestampWithDefaults() throws Exception {
     morphline = createMorphline("test-morphlines/convertTimestampWithDefaults");    
     Record record = new Record();
-    record.getFields().put(Fields.TIMESTAMP, "2011-09-06T14:14:34.789Z");
-    record.getFields().put(Fields.TIMESTAMP, "2012-09-06T14:14:34"); 
-    record.getFields().put(Fields.TIMESTAMP, "2013-09-06");
+    record.put(Fields.TIMESTAMP, "2011-09-06T14:14:34.789Z");
+    record.put(Fields.TIMESTAMP, "2012-09-06T14:14:34"); 
+    record.put(Fields.TIMESTAMP, "2013-09-06");
     startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));
     Record expected = new Record();
-    expected.getFields().put(Fields.TIMESTAMP, "2011-09-06T14:14:34.789Z");
-    expected.getFields().put(Fields.TIMESTAMP, "2012-09-06T14:14:34.000Z");
-    expected.getFields().put(Fields.TIMESTAMP, "2013-09-06T00:00:00.000Z");
+    expected.put(Fields.TIMESTAMP, "2011-09-06T14:14:34.789Z");
+    expected.put(Fields.TIMESTAMP, "2012-09-06T14:14:34.000Z");
+    expected.put(Fields.TIMESTAMP, "2013-09-06T00:00:00.000Z");
     assertEquals(Arrays.asList(expected), collector.getRecords());
     assertSame(record, collector.getRecords().get(0));
   }
@@ -635,11 +635,11 @@ public class MorphlineTest extends AbstractMorphlineTest {
   
   private Record createBasicRecord() {
     Record record = new Record();
-    record.getFields().put("first_name", "Nadja");
-    record.getFields().put("age", 8);
-    record.getFields().put("tags", "one");
-    record.getFields().put("tags", 2);
-    record.getFields().put("tags", "three");
+    record.put("first_name", "Nadja");
+    record.put("age", 8);
+    record.put("tags", "one");
+    record.put("tags", 2);
+    record.put("tags", "three");
     return record;
   }
 
