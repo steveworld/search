@@ -35,7 +35,7 @@ public interface CommandBuilder {
    * Creates and returns a command rooted at the given morphline config.
    * 
    * The command will feed records into child. The command will have parent as it's parent.
-   * Additional paramters can be passed via the context.
+   * Additional parameters can be passed via the morphline context.
    */
   Command build(Config config, Command parent, Command child, MorphlineContext context);
 
