@@ -28,8 +28,6 @@ import org.apache.solr.schema.IndexSchema;
 import org.apache.tika.metadata.Metadata;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Fields;
@@ -37,7 +35,6 @@ import com.cloudera.cdk.morphline.base.Notifications;
 import com.typesafe.config.Config;
 
 public class SolrMorphlineTest extends SolrMorphlineTestBase {
-  private static final Logger LOGGER = LoggerFactory.getLogger(SolrMorphlineTest.class);
 
   private Map<String,Integer> expectedRecords = new HashMap();
 
