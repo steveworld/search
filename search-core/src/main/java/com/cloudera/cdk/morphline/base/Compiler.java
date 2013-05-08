@@ -40,6 +40,22 @@ public final class Compiler {
   
   public Compiler() {}
   
+  /**
+   * Parses the given morphlineFile, then finds the morphline with the given morphlineId within,
+   * then compiles the morphline and returns the corresponding morphline command.
+   */
+  public Command compile(File morphlineFile, String morphlineId, MorphlineContext morphlineContext, Config... overrides) {
+    Config config;
+    try {
+      config = parse(morphlineFile, overrides);
+    } catch (IOException e) {
+      throw new MorphlineCompilationException("Cannot parse morphline file: " + morphlineFile, null, e);
+    }
+    Config morphlineConfig = find(morphlineId, config, morphlineFile.getPath());
+    Command morphlineCommand = compile(morphlineConfig, morphlineContext);
+    return morphlineCommand;
+  }
+  
   /** Loads the given config file from the local file system */
   public Config parse(File file, Config... overrides) throws IOException {
     if (file == null || file.getPath().trim().length() == 0) {
@@ -105,19 +121,4 @@ public final class Compiler {
     return new PipeBuilder().build(morphlineConfig, null, dropRecord, morphlineContext);
   }
 
-  /**
-   * Parses the given morphlineFile, then finds the morphline with the given morphlineId within,
-   * then compiles the morphline and returns the corresponding morphline command.
-   */
-  public Command compile(File morphlineFile, String morphlineId, MorphlineContext morphlineContext, Config... overrides) {
-    Config config;
-    try {
-      config = parse(morphlineFile, overrides);
-    } catch (IOException e) {
-      throw new MorphlineCompilationException("Cannot parse morphline file: " + morphlineFile, null, e);
-    }
-    Config morphlineConfig = find(morphlineId, config, morphlineFile.getPath());
-    return compile(morphlineConfig, morphlineContext);
-  }
-  
 }
