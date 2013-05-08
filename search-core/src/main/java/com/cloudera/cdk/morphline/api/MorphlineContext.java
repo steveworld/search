@@ -66,7 +66,7 @@ public class MorphlineContext {
         try {
           CommandBuilder builder = builderClass.newInstance();
           for (String builderName : builder.getNames()) {
-            LOG.info("Importing command: {} for class: {}", builderName, builderClass.getName());
+            LOG.info("Importing command: {} from class: {}", builderName, builderClass.getName());
             if (builderName.contains(".")) {
               LOG.warn("Command name should not contain a period character: " + builderName);
             }
