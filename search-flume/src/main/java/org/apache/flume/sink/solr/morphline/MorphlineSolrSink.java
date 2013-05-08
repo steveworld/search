@@ -95,11 +95,7 @@ public class MorphlineSolrSink extends AbstractSink implements Configurable {
     LOGGER.info("Starting Solr sink {} ...", this);
     sinkCounter.start();
     if (indexer == null) {
-      //Config config = ConfigFactory.parseMap(context.getParameters());
-      //SolrCollection solrCollection = new SolrInspector().createSolrCollection(config);
       try {
-        //Constructor ctor = Class.forName(indexerClass).getConstructor(SolrCollection.class, Config.class, MetricsRegistry.class);
-        //indexer = (SolrIndexer2) ctor.newInstance();
         indexer = (SolrIndexer) Class.forName(indexerClass).newInstance();
       } catch (Exception e) {
         throw new ConfigurationException(e);

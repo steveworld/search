@@ -167,12 +167,6 @@ public class MorphlineTest extends AbstractMorphlineTest {
     Record record = new Record();
     record.getFields().put("first_name", "Nadja");
     List<Record> expectedList = new ArrayList();
-//    for (int i = 0; i < 2; i++) {
-//      Record expected = new Record(record);
-//      expected.getFields().put("foo2", "bar2");
-//      expected.getFields().replaceValues("iter2", Arrays.asList(i));
-//      expectedList.add(expected);
-//    }
     startSession();
     assertEquals(1, collector.getNumStartEvents());
     try {
@@ -635,9 +629,6 @@ public class MorphlineTest extends AbstractMorphlineTest {
         packagePrefixes, CommandBuilder.class)) {
       System.out.println("found " + clazz);
     }
-//    for (Class cmd : new Reflections("com", "org").getSubTypesOf(CommandBuilder.class)) {
-//      System.out.println(cmd);
-//    }
     float secs = (System.currentTimeMillis() - start) / 1000.0f;
     System.out.println("secs=" + secs);
   }

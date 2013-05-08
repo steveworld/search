@@ -18,6 +18,7 @@
 package org.apache.solr.morphline;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -110,7 +111,7 @@ public class SolrMorphlineZkTest extends AbstractFullDistribZkTestBase {
     
     waitForRecoveriesToFinish(false);
     
-    Config config = parse("test-morphlines/loadSolrBasic.conf");    
+    Config config = parse("test-morphlines/loadSolrBasic");    
     morphline = createMorphline(config);
     Record record = new Record();
     record.put(Fields.ID, "id0-innsbruck");
@@ -157,13 +158,13 @@ public class SolrMorphlineZkTest extends AbstractFullDistribZkTestBase {
     return record;
   }
   
-  private Config parse(String file) {
+  private Config parse(String file) throws IOException {
     SolrLocator locator = new SolrLocator(createMorphlineContext());
     locator.setCollectionName("collection1");
     locator.setZkHost(zkServer.getZkAddress());
     //locator.setServerUrl(cloudJettys.get(0).url); // TODO: download IndexSchema from solrUrl not yet implemented
     //locator.setSolrHomeDir(SOLR_HOME_DIR.getPath());
-    Config config = new Compiler().parse(file, locator.toConfig("SOLR_LOCATOR"));
+    Config config = new Compiler().parse(new File("src/test/resources/" + file + ".conf"), locator.toConfig("SOLR_LOCATOR"));
     config = config.getConfigList("morphlines").get(0);
     return config;
   }
