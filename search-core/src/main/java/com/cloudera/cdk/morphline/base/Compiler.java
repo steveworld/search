@@ -64,21 +64,6 @@ public final class Compiler {
     return config;
   }
 
-  /** Loads the given config file from the classpath */
-  public Config parse(String resourceBaseName, Config... overrides) {
-//  Config config = ConfigFactory.load(resourceBaseName);
-    Config config = ConfigFactory.parseResources(resourceBaseName);
-    for (Config override : overrides) {
-      config = override.withFallback(config);
-    }
-    synchronized (LOCK) {
-      ConfigFactory.invalidateCaches();
-      config = ConfigFactory.load(config);
-      config.checkValid(ConfigFactory.defaultReference()); // eagerly validate aspects of tree config
-    }
-    return config;
-  }
-    
   /**
    * Finds the given morphline id within the given morphline config, using the given nameForErrorMsg
    * for error reporting
@@ -89,13 +74,13 @@ public final class Compiler {
       throw new MorphlineCompilationException(
           "Morphline file must contain at least one morphline: " + nameForErrorMsg, null);
     }
-    Config morphlineConfig = null;
     if (morphlineId != null) {
       morphlineId = morphlineId.trim();
     }
     if (morphlineId != null && morphlineId.length() == 0) {
       morphlineId = null;
     }
+    Config morphlineConfig = null;
     if (morphlineId == null) {
       morphlineConfig = morphlineConfigs.get(0);
       Preconditions.checkNotNull(morphlineConfig);

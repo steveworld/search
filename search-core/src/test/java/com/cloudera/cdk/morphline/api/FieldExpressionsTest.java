@@ -146,7 +146,7 @@ public class FieldExpressionsTest extends Assert {
   private static final Pattern PATTERN = Pattern.compile("@\\{.*?\\}");
   
   // TODO: optimize by not using regexes
-  List resolveReference(String reference, Record record, Config config) {
+  private List resolveReference(String reference, Record record, Config config) {
     Matcher matcher = PATTERN.matcher(reference);
     if (!matcher.matches()) {
       throw new MorphlineCompilationException("Invalid variable reference", config);
@@ -157,7 +157,7 @@ public class FieldExpressionsTest extends Assert {
   }
 
   // TODO: optimize by not using regexes
-  String resolveExpressionSimple(String expr, Record record) {
+  private String resolveExpressionSimple(String expr, Record record) {
     Matcher matcher = PATTERN.matcher(expr);    
     StringBuilder buf = new StringBuilder();
     int from = 0;

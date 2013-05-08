@@ -146,7 +146,7 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
   @Test
   public void testLoadSolrBasic() throws Exception {
     //System.setProperty("ENV_SOLR_HOME", testSolrHome + "/collection1");
-    Config config = parse("test-morphlines/loadSolrBasic.conf");    
+    Config config = parse("test-morphlines/loadSolrBasic");    
     //System.clearProperty("ENV_SOLR_HOME");
     morphline = createMorphline(config);
     Record record = new Record();
@@ -167,7 +167,7 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
     
   @Test
   public void testSolrCellJPGCompressed() throws Exception {
-    Config config = parse("test-morphlines/solrCellJPGCompressed.conf");    
+    Config config = parse("test-morphlines/solrCellJPGCompressed");    
     morphline = createMorphline(config); 
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
@@ -180,7 +180,7 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
 
   @Test
   public void testSolrCellDocumentTypes() throws Exception {
-    Config config = parse("test-morphlines/solrCellDocumentTypes.conf");    
+    Config config = parse("test-morphlines/solrCellDocumentTypes");    
     morphline = createMorphline(config); 
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
@@ -208,7 +208,7 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
   
   @Test
   public void testSolrCellDocumentTypes2() throws Exception {
-    Config config = parse("test-morphlines/solrCellDocumentTypes.conf");    
+    Config config = parse("test-morphlines/solrCellDocumentTypes");    
     morphline = createMorphline(config); 
     String path = RESOURCES_DIR + "/test-documents";
     String[] files = new String[] {
@@ -376,7 +376,7 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
     s.commit();
   }
 
-  protected Command createMorphline(String file) {
+  protected Command createMorphline(String file) throws IOException {
     return new PipeBuilder().build(parse(file), null, collector, createMorphlineContext());
   }
 
@@ -393,10 +393,10 @@ public class SolrMorphlineTest extends SolrTestCaseJ4 {
       .build();
   }
   
-  private Config parse(String file) {
+  private Config parse(String file) throws IOException {
     SolrLocator locator = new SolrLocator(createMorphlineContext());
     locator.setSolrHomeDir(testSolrHome + "/collection1");
-    Config config = new Compiler().parse(file, locator.toConfig("SOLR_LOCATOR"));
+    Config config = new Compiler().parse(new File("src/test/resources/" + file + ".conf"), locator.toConfig("SOLR_LOCATOR"));
     config = config.getConfigList("morphlines").get(0);
     return config;
   }
