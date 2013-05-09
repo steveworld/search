@@ -180,18 +180,6 @@ public class MorphlineTest extends AbstractMorphlineTest {
   
   @Test
   public void testIsTrue() throws Exception {
-    boolean oldUseFileAPI = useFileAPI;
-    try {
-      useFileAPI = false;
-      testIsTrueInternal();
-      useFileAPI = true;      
-      testIsTrueInternal();
-    } finally {
-      useFileAPI = oldUseFileAPI;
-    }
-  }
-  
-  private void testIsTrueInternal() throws Exception {    
     System.setProperty("MY_VARIABLE", "true");
     morphline = createMorphline("test-morphlines/isTrue");    
     Record record = createBasicRecord();
