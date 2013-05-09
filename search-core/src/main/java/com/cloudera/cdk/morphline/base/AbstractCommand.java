@@ -112,18 +112,19 @@ public abstract class AbstractCommand implements Command {
    * Factory method to create the chain of commands rooted at the given rootConfig. The last command
    * in the chain will feed records into finalChild.
    * 
-   * @param isRule
-   *          if true indicates don't forward startSession() at the end of the chain of commands of a
-   *          rule.
+   * @param ignoreNotifications
+   *          if true indicates don't forward notifications at the end of the chain of commands.
+   *          This is a feature that multi-branch commands like tryRules and ifThenElse need to
+   *          avoid sending a notification multiple times to finalChild, once from each branch.
    */
-  protected List<Command> buildCommandChain(Config rootConfig, String configKey, Command finalChild, boolean isRule) {    
+  protected List<Command> buildCommandChain(Config rootConfig, String configKey, Command finalChild, boolean ignoreNotifications) {    
     List<? extends Config> commandConfigs = Configs.getConfigList(rootConfig, configKey, Collections.EMPTY_LIST);
     List<Command> commands = new ArrayList();
     Command currentParent = this;
     Connector lastConnector = null;        
     for (int i = 0; i < commandConfigs.size(); i++) {
       boolean isLast = (i == commandConfigs.size() - 1);
-      Connector connector = new Connector(isRule && isLast);
+      Connector connector = new Connector(ignoreNotifications && isLast);
       if (isLast) {
         connector.setChild(finalChild);
       }
