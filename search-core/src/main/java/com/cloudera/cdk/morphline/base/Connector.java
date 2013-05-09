@@ -15,9 +15,6 @@
  */
 package com.cloudera.cdk.morphline.base;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.Record;
 import com.google.common.base.Preconditions;
@@ -30,8 +27,6 @@ final class Connector implements Command {
   private Command parent;
   private Command child;
   private boolean ignoreNotifications;
-  
-  private static final Logger LOG = LoggerFactory.getLogger(Connector.class);
   
   public Connector() {
     this(false);
@@ -66,7 +61,6 @@ final class Connector implements Command {
   @Override
   public boolean process(Record record) {
     Preconditions.checkNotNull(record);
-    LOG.trace("Processing record {}", record);
     return child.process(record);
   }
 
