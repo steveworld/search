@@ -163,6 +163,9 @@
             <phase>process-test-resources</phase>
             <configuration>
               <target>
+                <copy todir="${basedir}/../samples/test-documents">
+                  <fileset dir="${basedir}/src/test/resources/test-documents"/>
+                </copy>
                 <copy todir="${basedir}/../samples/solr-nrt/test-morphlines">
                   <fileset dir="${basedir}/src/test/resources/test-morphlines"/>
                 </copy>
