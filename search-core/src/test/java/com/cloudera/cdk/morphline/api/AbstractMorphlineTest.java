@@ -55,14 +55,6 @@ public class AbstractMorphlineTest extends Assert {
     return new PipeBuilder().build(config, null, collector, createMorphlineContext());
   }
   
-  protected void startSession() {
-    Notifications.notifyStartSession(morphline);
-  }
-
-  protected void deleteAllDocuments() {
-    collector.reset();
-  }
-  
   protected Config parse(String file, Config... overrides) throws IOException {
     Config config = new Compiler().parse(new File("src/test/resources/" + file + ".conf"), overrides);
     config = config.getConfigList("morphlines").get(0);
@@ -74,4 +66,12 @@ public class AbstractMorphlineTest extends Assert {
     return new MorphlineContext.Builder().setMetricsRegistry(new MetricsRegistry()).build();
   }
   
+  protected void deleteAllDocuments() {
+    collector.reset();
+  }
+  
+  protected void startSession() {
+    Notifications.notifyStartSession(morphline);
+  }
+
 }
