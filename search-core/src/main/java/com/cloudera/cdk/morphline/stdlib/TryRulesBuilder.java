@@ -84,11 +84,11 @@ public final class TryRulesBuilder implements CommandBuilder {
     }
     
     @Override
-    public void notify(Record notification) {
+    protected void doNotify(Record notification) {
       for (Command childRule : childRules) {
         childRule.notify(notification);
       }
-      getChild().notify(notification);
+      super.doNotify(notification);
     }
   
     @Override

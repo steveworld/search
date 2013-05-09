@@ -98,7 +98,7 @@ public final class IfThenElseBuilder implements CommandBuilder {
     }
     
     @Override
-    public void notify(Record notification) {
+    protected void doNotify(Record notification) {
       conditionChain.notify(notification);
       if (thenChain != null) {
         thenChain.notify(notification);
@@ -106,7 +106,7 @@ public final class IfThenElseBuilder implements CommandBuilder {
       if (elseChain != null) {
         elseChain.notify(notification);
       }
-      super.notify(notification);
+      super.doNotify(notification);
     }
       
     @Override

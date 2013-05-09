@@ -73,15 +73,23 @@ public abstract class AbstractCommand implements Command {
   }
   
   @Override
-  public void notify(Record notification) {
-    if (LOG.isTraceEnabled()) {    
-      LOG.trace("notify: {}", notification);
-    } else {
-      LOG.debug("notify()");
-    }
-    getChild().notify(notification);
+  public final void notify(Record notification) {
+    beforeNotify(notification);
+    doNotify(notification);
   }
 
+  private void beforeNotify(Record notification) {
+    if (LOG.isTraceEnabled()) {    
+      LOG.trace("beforeNotify: {}", notification);
+    } else {
+      LOG.debug("beforeNotify()");
+    }
+  }
+
+  protected void doNotify(Record notification) {
+    getChild().notify(notification);
+  }
+  
   @Override
   public final boolean process(Record record) {
     beforeProcess(record);
