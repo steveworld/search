@@ -25,6 +25,7 @@ import org.junit.Before;
 import com.cloudera.cdk.morphline.base.Compiler;
 import com.cloudera.cdk.morphline.base.Notifications;
 import com.cloudera.cdk.morphline.stdlib.PipeBuilder;
+import com.google.common.base.Preconditions;
 import com.typesafe.config.Config;
 import com.yammer.metrics.core.MetricsRegistry;
 
@@ -47,7 +48,7 @@ public class AbstractMorphlineTest extends Assert {
   }
     
   protected Command createMorphline(String file) throws IOException {
-    return new PipeBuilder().build(parse(file), null, collector, createMorphlineContext());
+    return createMorphline(parse(file));
   }
 
   protected Command createMorphline(Config config) {
@@ -65,6 +66,7 @@ public class AbstractMorphlineTest extends Assert {
   protected Config parse(String file, Config... overrides) throws IOException {
     Config config = new Compiler().parse(new File("src/test/resources/" + file + ".conf"), overrides);
     config = config.getConfigList("morphlines").get(0);
+    Preconditions.checkNotNull(config);
     return config;
   }
   
