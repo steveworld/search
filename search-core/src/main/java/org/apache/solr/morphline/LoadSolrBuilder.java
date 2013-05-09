@@ -68,7 +68,7 @@ public final class LoadSolrBuilder implements CommandBuilder {
     }
 
     @Override
-    public void notify(Record notification) {
+    protected void doNotify(Record notification) {
       for (Object event : Notifications.getLifecycleEvents(notification)) {
         if (event == Notifications.LifecycleEvent.BEGIN_TRANSACTION) {
           try {
@@ -106,7 +106,7 @@ public final class LoadSolrBuilder implements CommandBuilder {
           }
         }
       }
-      super.notify(notification);
+      super.doNotify(notification);
     }
     
     @Override

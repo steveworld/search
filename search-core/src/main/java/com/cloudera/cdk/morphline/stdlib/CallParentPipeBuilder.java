@@ -52,7 +52,7 @@ public final class CallParentPipeBuilder implements CommandBuilder {
     }
     
     @Override
-    public void notify(Record notification) {
+    protected void doNotify(Record notification) {
       ; // don't forward to avoid endless loops
     }
     
