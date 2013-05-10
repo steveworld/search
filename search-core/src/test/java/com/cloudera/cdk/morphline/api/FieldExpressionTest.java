@@ -28,7 +28,7 @@ import com.google.common.base.Joiner;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
-public class FieldExpressionsTest extends Assert {
+public class FieldExpressionTest extends Assert {
   
   @Test
   public void testSimplePatterns() throws Exception {
