@@ -308,6 +308,9 @@ public final class GrokBuilder implements CommandBuilder {
     }
     
     private void loadDictionaryFile(File fileOrDir) throws IOException {
+      if (!fileOrDir.canRead()) {
+        throw new IOException("Insufficient permissions to read file: " + fileOrDir);
+      }
       if (fileOrDir.isDirectory()) {
         File[] files = fileOrDir.listFiles();
         Arrays.sort(files);
