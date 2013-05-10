@@ -287,13 +287,16 @@ public final class ClassPath {
   private static void browseDirectory(
       File directory, ClassLoader classloader, String packagePrefix,
       ImmutableSet.Builder<ResourceInfo> resources) {
-    for (File f : directory.listFiles()) {
-      String name = f.getName();
-      if (f.isDirectory()) {
-        browseDirectory(f, classloader, packagePrefix + name + "/", resources);
-      } else {
-        String resourceName = packagePrefix + name;
-        resources.add(ResourceInfo.of(resourceName, classloader));
+    File [] fileList = directory.listFiles();
+    if (fileList != null) {
+      for (File f : fileList) {
+        String name = f.getName();
+        if (f.isDirectory()) {
+          browseDirectory(f, classloader, packagePrefix + name + "/", resources);
+        } else {
+          String resourceName = packagePrefix + name;
+          resources.add(ResourceInfo.of(resourceName, classloader));
+        }
       }
     }
   }
