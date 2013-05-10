@@ -48,6 +48,8 @@ public final class ReadSequenceFileBuilder implements CommandBuilder {
 
   public static final String OUTPUT_MEDIA_TYPE = "application/java-sequence-file-record";
   public static final String SEQUENCE_FILE_META_DATA = "sequenceFileMetaData";
+  public static final String CONFIG_KEY_FIELD = "keyField";
+  public static final String CONFIG_VALUE_FIELD = "valueField";
   
   @Override
   public Collection<String> getNames() {
@@ -66,10 +68,14 @@ public final class ReadSequenceFileBuilder implements CommandBuilder {
   private static final class ReadSequenceFile extends AbstractParser {
 
     private final boolean includeMetaData;
+    private final String keyField;
+    private final String valueField;
   
     public ReadSequenceFile(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
       this.includeMetaData = Configs.getBoolean(config, "includeMetaData", true);
+      this.keyField = Configs.getString(config, CONFIG_KEY_FIELD, Fields.ATTACHMENT_NAME);
+      this.valueField = Configs.getString(config, CONFIG_VALUE_FIELD, Fields.ATTACHMENT_BODY);
     }
   
     @Override
@@ -90,8 +96,8 @@ public final class ReadSequenceFileBuilder implements CommandBuilder {
           while (reader.next(key, val)) {
             Record outputRecord = inputRecord.copy();
             removeAttachments(outputRecord);
-            outputRecord.put(Fields.ATTACHMENT_NAME, key);
-            outputRecord.put(Fields.ATTACHMENT_BODY, val);
+            outputRecord.put(this.keyField, key);
+            outputRecord.put(this.valueField, val);
             outputRecord.put(Fields.ATTACHMENT_MIME_TYPE, OUTPUT_MEDIA_TYPE);
             if (includeMetaData && sequenceFileMetaData != null) {
               outputRecord.put(SEQUENCE_FILE_META_DATA, sequenceFileMetaData);
