@@ -42,9 +42,10 @@ public final class Compiler {
   
   /**
    * Parses the given morphlineFile, then finds the morphline with the given morphlineId within,
-   * then compiles the morphline and returns the corresponding morphline command.
+   * then compiles the morphline and returns the corresponding morphline command. The returned
+   * command will feed records into finalChild.
    */
-  public Command compile(File morphlineFile, String morphlineId, MorphlineContext morphlineContext, Config... overrides) {
+  public Command compile(File morphlineFile, String morphlineId, MorphlineContext morphlineContext, Command finalChild, Config... overrides) {
     Config config;
     try {
       config = parse(morphlineFile, overrides);
@@ -52,7 +53,7 @@ public final class Compiler {
       throw new MorphlineCompilationException("Cannot parse morphline file: " + morphlineFile, null, e);
     }
     Config morphlineConfig = find(morphlineId, config, morphlineFile.getPath());
-    Command morphlineCommand = compile(morphlineConfig, morphlineContext);
+    Command morphlineCommand = compile(morphlineConfig, morphlineContext, finalChild);
     return morphlineCommand;
   }
   
@@ -82,7 +83,7 @@ public final class Compiler {
 
   /**
    * Finds the given morphline id within the given morphline config, using the given nameForErrorMsg
-   * for error reporting
+   * for error reporting.
    */
   public Config find(String morphlineId, Config config, String nameForErrorMsg) {
     List<? extends Config> morphlineConfigs = config.getConfigList("morphlines");
@@ -115,10 +116,15 @@ public final class Compiler {
     return morphlineConfig; 
   }
   
-  /** Compiles the given morphline config using the given morphline context */
-  public Command compile(Config morphlineConfig, MorphlineContext morphlineContext) {
-    Command dropRecord = new DropRecordBuilder().build(null, null,  null, morphlineContext);
-    return new PipeBuilder().build(morphlineConfig, null, dropRecord, morphlineContext);
+  /**
+   * Compiles the given morphline config using the given morphline context. The returned command
+   * will feed records into finalChild or into /dev/null if finalChild is null.
+   */
+  public Command compile(Config morphlineConfig, MorphlineContext morphlineContext, Command finalChild) {
+    if (finalChild == null) {
+      finalChild = new DropRecordBuilder().build(null, null,  null, morphlineContext);
+    }
+    return new PipeBuilder().build(morphlineConfig, null, finalChild, morphlineContext);
   }
 
 }
