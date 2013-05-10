@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.flume.sink.solr;
+package org.apache.flume.sink.solr.morphline;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -36,6 +36,7 @@ import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.sink.DefaultSinkProcessor;
 import org.apache.flume.sink.LoggerSink;
+import org.apache.flume.sink.solr.morphline.TwitterSource;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.BeforeClass;
