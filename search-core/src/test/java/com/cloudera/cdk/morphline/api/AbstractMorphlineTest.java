@@ -47,8 +47,8 @@ public class AbstractMorphlineTest extends Assert {
     morphline = null;
   }
     
-  protected Command createMorphline(String file) throws IOException {
-    return createMorphline(parse(file));
+  protected Command createMorphline(String file, Config... overrides) throws IOException {
+    return createMorphline(parse(file, overrides));
   }
 
   protected Command createMorphline(Config config) {

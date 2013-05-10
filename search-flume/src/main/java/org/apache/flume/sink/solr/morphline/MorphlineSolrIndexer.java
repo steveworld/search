@@ -47,6 +47,7 @@ public class MorphlineSolrIndexer implements SolrIndexer {
 
   private SolrMorphlineContext morphlineContext;
   private Command morphline;
+  private Command finalChild;
   
   public static final String MORPHLINE_FILE_PARAM = "morphlineFile";
   public static final String MORPHLINE_ID_PARAM = "morphlineId";
@@ -54,15 +55,18 @@ public class MorphlineSolrIndexer implements SolrIndexer {
   private static final Logger LOG = LoggerFactory.getLogger(MorphlineSolrIndexer.class);
 
   // For test injection
-  protected void setMorphlineContext(SolrMorphlineContext morphlineContext) {
+  void setMorphlineContext(SolrMorphlineContext morphlineContext) {
     this.morphlineContext = morphlineContext;
+  }
+
+  // for interceptor
+  void setFinalChild(Command finalChild) {
+    this.finalChild = finalChild;
   }
 
   @Override
   public void configure(Context context) {
-    // TODO: also support fetching morphlineFile from zk
-    // e.g. via specifying an optional solrLocator here, 
-    // SolrLocator later downloads schema.xml and solrconfig.xml if has zkhost with collectionname 
+    // TODO: maybe also support fetching morphlineFile from zk? (in addition to fetching it from local disk)
     if (morphlineContext == null) {
       FaultTolerance faultTolerance = new FaultTolerance(
           context.getBoolean(FaultTolerance.IS_PRODUCTION_MODE, false), 
@@ -76,7 +80,7 @@ public class MorphlineSolrIndexer implements SolrIndexer {
     
     String morphlineFile = context.getString(MORPHLINE_FILE_PARAM);
     String morphlineId = context.getString(MORPHLINE_ID_PARAM);    
-    morphline = new Compiler().compile(new File(morphlineFile), morphlineId, morphlineContext);
+    morphline = new Compiler().compile(new File(morphlineFile), morphlineId, morphlineContext, finalChild);
   }
 
   @Override

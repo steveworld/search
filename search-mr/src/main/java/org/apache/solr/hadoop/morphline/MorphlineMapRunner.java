@@ -126,7 +126,7 @@ public final class MorphlineMapRunner {
 
     String morphlineFile = configuration.get(MORPHLINE_FILE_PARAM);
     String morphlineId = configuration.get(MORPHLINE_ID_PARAM);
-    morphline = new Compiler().compile(new File(morphlineFile), morphlineId, morphlineContext);
+    morphline = new Compiler().compile(new File(morphlineFile), morphlineId, morphlineContext, null);
 
     disableFileOpen = configuration.getBoolean(DISABLE_FILE_OPEN, false);
     LOG.debug("disableFileOpen: {}", disableFileOpen);
