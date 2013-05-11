@@ -27,12 +27,10 @@ import org.apache.flume.Event;
 import org.apache.flume.sink.solr.SolrIndexer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.morphline.FaultTolerance;
-import org.apache.solr.morphline.SolrMorphlineContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.cloudera.cdk.morphline.api.Command;
-import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
+import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
+import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Compiler;
 import com.cloudera.cdk.morphline.base.Fields;
@@ -45,17 +43,15 @@ import com.yammer.metrics.core.MetricsRegistry;
  */
 public class MorphlineSolrIndexer implements SolrIndexer {
 
-  private SolrMorphlineContext morphlineContext;
+  private MorphlineContext morphlineContext;
   private Command morphline;
   private Command finalChild;
   
   public static final String MORPHLINE_FILE_PARAM = "morphlineFile";
   public static final String MORPHLINE_ID_PARAM = "morphlineId";
   
-  private static final Logger LOG = LoggerFactory.getLogger(MorphlineSolrIndexer.class);
-
   // For test injection
-  void setMorphlineContext(SolrMorphlineContext morphlineContext) {
+  void setMorphlineContext(MorphlineContext morphlineContext) {
     this.morphlineContext = morphlineContext;
   }
 
@@ -72,14 +68,17 @@ public class MorphlineSolrIndexer implements SolrIndexer {
           context.getBoolean(FaultTolerance.IS_PRODUCTION_MODE, false), 
           context.getBoolean(FaultTolerance.IS_IGNORING_RECOVERABLE_EXCEPTIONS, false));
       
-      morphlineContext = (SolrMorphlineContext) new SolrMorphlineContext.Builder()
-        .setFaultTolerance(faultTolerance)
+      morphlineContext = new MorphlineContext.Builder()
+        .setExceptionHandler(faultTolerance)
         .setMetricsRegistry(new MetricsRegistry())
         .build();
     }
     
     String morphlineFile = context.getString(MORPHLINE_FILE_PARAM);
-    String morphlineId = context.getString(MORPHLINE_ID_PARAM);    
+    String morphlineId = context.getString(MORPHLINE_ID_PARAM);
+    if (morphlineFile == null || morphlineFile.trim().length() == 0) {
+      throw new MorphlineCompilationException("Missing parameter: " + MORPHLINE_FILE_PARAM, null);
+    }
     morphline = new Compiler().compile(new File(morphlineFile), morphlineId, morphlineContext, finalChild);
   }
 
@@ -97,27 +96,10 @@ public class MorphlineSolrIndexer implements SolrIndexer {
       Notifications.notifyStartSession(morphline);
       morphline.process(record);
     } catch (RuntimeException t) {
-      handleException(t, record);
+      morphlineContext.getExceptionHandler().handleException(t, record);
     }
   }
 
-  private void handleException(Throwable t, Record event) {
-    if (t instanceof Error) {
-      throw (Error) t; // never ignore errors
-    }
-    FaultTolerance faultTolerance = morphlineContext.getFaultTolerance();
-    if (faultTolerance.isProductionMode()) {
-      if (!faultTolerance.isRecoverableException(t)) {
-        LOG.warn("Ignoring unrecoverable exception in production mode for event: " + event, t);
-        return;
-      } else if (faultTolerance.isIgnoringRecoverableExceptions()) {
-        LOG.warn("Ignoring recoverable exception in production mode for event: " + event, t);
-        return;
-      }
-    }
-    throw new MorphlineRuntimeException(t);
-  }
-  
   @Override
   public void beginTransaction() throws IOException, SolrServerException {
     Notifications.notifyBeginTransaction(morphline);      

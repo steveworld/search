@@ -80,10 +80,13 @@ public class SolrLocator {
   }
   
   public DocumentLoader getLoader() {
-    DocumentLoader loader = ((SolrMorphlineContext)context).getDocumentLoader();
-    if (loader != null) {
-      return loader;
+    if (context instanceof SolrMorphlineContext) {
+      DocumentLoader loader = ((SolrMorphlineContext)context).getDocumentLoader();
+      if (loader != null) {
+        return loader;
+      }
     }
+    
     if (zkHost != null && zkHost.length() > 0) {
       if (collectionName == null || collectionName.length() == 0) {
         throw new MorphlineCompilationException("Parameter 'zkHost' requires that you also pass parameter 'collection'", config);
@@ -111,9 +114,11 @@ public class SolrLocator {
   }
 
   public IndexSchema getIndexSchema() {
-    IndexSchema schema = ((SolrMorphlineContext)context).getIndexSchema();
-    if (schema != null) {
-      return schema;
+    if (context instanceof SolrMorphlineContext) {    
+      IndexSchema schema = ((SolrMorphlineContext)context).getIndexSchema();
+      if (schema != null) {
+        return schema;
+      }
     }
     
     // If solrHomeDir isn't defined and zkHost and collectionName are defined 

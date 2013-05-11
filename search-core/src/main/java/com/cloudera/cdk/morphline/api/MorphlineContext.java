@@ -37,6 +37,7 @@ import com.yammer.metrics.core.MetricsRegistry;
  */
 public class MorphlineContext {
 
+  private ExceptionHandler exceptionHandler;
   private MetricsRegistry metricsRegistry;
   private Map<String, Class<CommandBuilder>> commandBuilders = Collections.EMPTY_MAP;
 
@@ -44,7 +45,13 @@ public class MorphlineContext {
 
   /** For public access use {@link Builder#build()} instead */  
   protected MorphlineContext() {}
-  
+
+
+  public ExceptionHandler getExceptionHandler() {    
+    assert exceptionHandler != null;
+    return exceptionHandler;
+  }
+
   public MetricsRegistry getMetricsRegistry() {
     assert metricsRegistry != null;
     return metricsRegistry;
@@ -152,9 +159,16 @@ public class MorphlineContext {
   public static class Builder {
     
     protected MorphlineContext context = create();
+    private ExceptionHandler exceptionHandler = new DefaultExceptionHandler();
     private MetricsRegistry metricsRegistry;
     
     public Builder() {}
+
+    public Builder setExceptionHandler(ExceptionHandler exceptionHandler) {
+      Preconditions.checkNotNull(exceptionHandler);
+      this.exceptionHandler = exceptionHandler;
+      return this;
+    }    
 
     public Builder setMetricsRegistry(MetricsRegistry metricsRegistry) {
       Preconditions.checkNotNull(metricsRegistry);
@@ -163,6 +177,7 @@ public class MorphlineContext {
     }
 
     public MorphlineContext build() {
+      context.exceptionHandler = exceptionHandler;
       Preconditions.checkNotNull(metricsRegistry, "build() requires a prior call to setMetricsRegistry()");
       context.metricsRegistry = metricsRegistry;
       return context;
@@ -174,4 +189,18 @@ public class MorphlineContext {
     
   }
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Nested classes:
+  ///////////////////////////////////////////////////////////////////////////////
+  private static final class DefaultExceptionHandler implements ExceptionHandler {
+    
+    @Override
+    public void handleException(Throwable t, Record record) {
+      if (t instanceof Error) {
+        throw (Error) t;
+      }
+      throw new MorphlineRuntimeException(t);
+    }
+    
+  }
 }

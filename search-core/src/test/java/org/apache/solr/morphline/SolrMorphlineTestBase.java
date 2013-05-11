@@ -235,7 +235,7 @@ public class SolrMorphlineTestBase extends SolrTestCaseJ4 {
     return new SolrMorphlineContext.Builder()
       .setDocumentLoader(testServer)
 //      .setDocumentLoader(new CollectingDocumentLoader(100))
-      .setFaultTolerance(new FaultTolerance(false,  false))
+      .setExceptionHandler(new FaultTolerance(false,  false))
       .setMetricsRegistry(new MetricsRegistry())
       .build();
   }
