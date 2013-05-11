@@ -69,7 +69,7 @@
     <flume.version>${cdh.flume-ng.version}</flume.version>
     <avro.version>${cdh.avro.version}</avro.version>
     <tika.version>1.3</tika.version>
-    <jackson.version>2.1.4</jackson.version>
+    <jackson.version>2.2.1</jackson.version>
     <httpclient.version>4.2.3</httpclient.version>
     <slf4j.version>1.7.2</slf4j.version>
     <typesafe.config.version>1.0.0</typesafe.config.version>
