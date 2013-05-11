@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.solr.morphline.solrcell;
+package org.apache.solr.morphline.test;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -22,13 +22,17 @@ import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.Locale;
 import java.util.Random;
+import java.util.zip.GZIPInputStream;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Configs;
+import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.stdio.AbstractParser;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -64,14 +68,18 @@ public final class ReadJsonTestTweetsBuilder implements CommandBuilder {
   ///////////////////////////////////////////////////////////////////////////////
   private static final class ReadJsonTestTweets extends AbstractParser {
     
+    private final boolean isLengthDelimited;
     private String idPrefix;
+    private final ObjectMapper mapper = new ObjectMapper();
     
     // Fri May 14 02:52:55 +0000 2010
-    private SimpleDateFormat formatterFrom = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy");
-    private SimpleDateFormat formatterTo = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+    private SimpleDateFormat formatterFrom = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.US);
+    private SimpleDateFormat formatterTo = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
 
     public ReadJsonTestTweets(Config config, Command parent, Command child, MorphlineContext context) { 
       super(config, parent, child, context);
+      
+      this.isLengthDelimited = Configs.getBoolean(config, "isLengthDelimited", true);
       this.idPrefix = Configs.getString(config, "idPrefix", null);
       if ("random".equals(idPrefix)) {
         idPrefix = String.valueOf(new Random().nextInt());
@@ -82,26 +90,43 @@ public final class ReadJsonTestTweetsBuilder implements CommandBuilder {
 
     @Override
     protected boolean doProcess(Record record, InputStream in) throws IOException {
+      String name = (String) record.getFirstValue(Fields.ATTACHMENT_NAME);
+      if (name != null && name.endsWith(".gz")) {
+        in = new GZIPInputStream(in, 64 * 1024);
+      }
       long numRecords = 0;
-      ObjectMapper mapper = new ObjectMapper();
-      BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+      BufferedReader reader = null;
+      Iterator<JsonNode> iter = null;
+      if (isLengthDelimited) {
+        reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));        
+      } else {
+        iter = mapper.reader(JsonNode.class).readValues(in);
+      }
+      
       try {
         while (true) {
-          String json = nextLine(reader);
-          if (json == null) {
-            break;
-          }
-    
           JsonNode rootNode;
-          try {
-            // src can be a File, URL, InputStream, etc
-            rootNode = mapper.readValue(json, JsonNode.class); 
-          } catch (JsonParseException e) {
-            LOG.info("json parse exception after " + numRecords + " records");
-            LOG.debug("json parse exception after " + numRecords + " records", e);
-            break;
-          }
+          if (isLengthDelimited) {
+            String json = nextLine(reader);
+            if (json == null) {
+              break;
+            }
       
+            try {
+              // src can be a File, URL, InputStream, etc
+              rootNode = mapper.readValue(json, JsonNode.class); 
+            } catch (JsonParseException e) {
+              LOG.info("json parse exception after " + numRecords + " records");
+              LOG.debug("json parse exception after " + numRecords + " records", e);
+              break;
+            }
+          } else {
+            if (!iter.hasNext()) {
+              break;
+            }
+            rootNode = iter.next();
+          }
+        
           Record doc = new Record();
           JsonNode user = rootNode.get("user");
           JsonNode idNode = rootNode.get("id_str");
@@ -110,7 +135,7 @@ public final class ReadJsonTestTweetsBuilder implements CommandBuilder {
           }
       
           doc.put("id", idPrefix + idNode.textValue());
-          tryAddDate(doc, "created_at", rootNode.get("created_at"));
+          tryAddDate(doc, "created_at", rootNode.get("created_at"));          
           tryAddString(doc, "source", rootNode.get("source"));
           tryAddString(doc, "text", rootNode.get("text"));
           tryAddInt(doc, "retweet_count", rootNode.get("retweet_count"));
@@ -135,12 +160,15 @@ public final class ReadJsonTestTweetsBuilder implements CommandBuilder {
           numRecords++;
         }
       } finally {
-        LOG.info("processed {} records", numRecords);
+        LOG.debug("processed {} records", numRecords);
       }
       return true;
     }
   
     private String nextLine(BufferedReader reader) throws IOException {
+      if (!isLengthDelimited) {
+        return reader.readLine();
+      }
       String line;
       while ((line = reader.readLine()) != null) {
         if (line.length() > 0)
