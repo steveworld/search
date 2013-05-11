@@ -66,12 +66,6 @@ public class MorphlineContext {
     importCommandBuilderClasses(getTopLevelClasses(importSpecs, CommandBuilder.class));
   }
 
-  // FIXME remove as obsolete after migration phase
-  public void importCommandBuilderPackagePrefixes(Collection<String> commandPackagePrefixes) {
-    importCommandBuilderClasses(
-        getTopLevelClassesRecursive(commandPackagePrefixes, CommandBuilder.class));
-  }
-
   private void importCommandBuilderClasses(Collection<Class<CommandBuilder>> builderClasses) {
     if (commandBuilders == Collections.EMPTY_MAP) {
       commandBuilders = new HashMap();
@@ -162,45 +156,6 @@ public class MorphlineContext {
     }    
   }
 
-  // FIXME remove as obsolete after migration
-  <T> Collection<Class<T>> getTopLevelClassesRecursive(Iterable<String> packageNamePrefixes, Class<T> iface) {    
-    HashMap<String,Class<T>> classes = new LinkedHashMap();
-    for (ClassLoader loader : getClassLoaders()) {
-      ClassPath classPath;
-      try {
-        classPath = ClassPath.from(loader);
-      } catch (IOException e) {
-        continue;
-      }
-      for (String packageNamePrefix : packageNamePrefixes) {
-        for (ClassInfo info : classPath.getTopLevelClassesRecursive(packageNamePrefix)) {
-          Class clazz;
-          try {
-            clazz = info.load();
-//            clazz = Class.forName(info.getName());
-          } catch (NoClassDefFoundError e) {
-            continue;
-          } catch (ExceptionInInitializerError e) {
-            continue;
-          } catch (UnsatisfiedLinkError e) {
-            continue;
-          }
-          if (!classes.containsKey(clazz.getName()) 
-              && iface.isAssignableFrom(clazz) 
-              && !clazz.isInterface()
-              && !Modifier.isAbstract(clazz.getModifiers())) {
-            for (Constructor ctor : clazz.getConstructors()) { // all public ctors
-              if (ctor.getParameterTypes().length == 0) { // is public zero-arg ctor?
-                classes.put(clazz.getName(), clazz);                
-              }
-            }
-          }
-        }
-      }
-    }    
-    return classes.values();
-  }
-  
   private ClassLoader[] getClassLoaders() {
     ClassLoader contextLoader = Thread.currentThread().getContextClassLoader();
     ClassLoader myLoader = getClass().getClassLoader();
