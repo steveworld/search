@@ -41,11 +41,6 @@ final class Pipe extends AbstractCommand {
         Arrays.asList("com.**", "org.**", "net.**"));    
     context.importCommandBuilders(importCommandSpecs);
 
-    // FIXME: remove this as obsolete once the migration is finished
-    List<String> commandPackagePrefixes = Configs.getStringList(config, "importCommandPackagePrefixes", 
-        Arrays.asList("com", "org", "net"));    
-    context.importCommandBuilderPackagePrefixes(commandPackagePrefixes);
-    
     List<Command> childCommands = buildCommandChain(config, "commands", child, false);
     if (childCommands.size() > 0) {
       this.realChild = childCommands.get(0);
