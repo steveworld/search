@@ -85,7 +85,6 @@
   <modules>
     <module>search-core</module>
     <module>search-flume</module>
-    <module>search-warc-parser</module>
     <module>search-contrib</module>
     <module>search-mr</module>
   </modules>
