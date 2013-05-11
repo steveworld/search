@@ -166,9 +166,6 @@ public final class ReadJsonTestTweetsBuilder implements CommandBuilder {
     }
   
     private String nextLine(BufferedReader reader) throws IOException {
-      if (!isLengthDelimited) {
-        return reader.readLine();
-      }
       String line;
       while ((line = reader.readLine()) != null) {
         if (line.length() > 0)
