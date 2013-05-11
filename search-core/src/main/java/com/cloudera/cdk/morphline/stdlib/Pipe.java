@@ -36,7 +36,12 @@ final class Pipe extends AbstractCommand {
   public Pipe(Config config, Command parent, Command child, MorphlineContext context) {
     super(config, parent, child, context);
     this.id = Configs.getString(config, "id");
-    
+
+    List<String> importCommandSpecs = Configs.getStringList(config, "importCommands", 
+        Arrays.asList("com.**", "org.**", "net.**"));    
+    context.importCommandBuilders(importCommandSpecs);
+
+    // FIXME: remove this as obsolete once the migration is finished
     List<String> commandPackagePrefixes = Configs.getStringList(config, "importCommandPackagePrefixes", 
         Arrays.asList("com", "org", "net"));    
     context.importCommandBuilderPackagePrefixes(commandPackagePrefixes);

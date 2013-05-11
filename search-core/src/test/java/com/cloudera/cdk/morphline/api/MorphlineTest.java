@@ -609,12 +609,19 @@ public class MorphlineTest extends AbstractMorphlineTest {
   }
   
   @Test
+  public void testImportSpecs() {
+    List<String> importSpecs = Arrays.asList("com.cloudera.**", "org.apache.solr.**", "net.*", getClass().getName());
+    for (Class clazz : new MorphlineContext().getTopLevelClasses(importSpecs, CommandBuilder.class)) {
+      System.out.println("found " + clazz);
+    }
+  }
+  
+  @Test
   @Ignore
-  public void testReflection() {
+  public void testHugeImportSpecs() {
     long start = System.currentTimeMillis();
-    List<String> packagePrefixes = Arrays.asList("com", "org", "net");
-    for (Class clazz : new MorphlineContext().getTopLevelClassesRecursive(
-        packagePrefixes, CommandBuilder.class)) {
+    List<String> importSpecs = Arrays.asList("com.**", "org.**", "net.*", getClass().getName());
+    for (Class clazz : new MorphlineContext().getTopLevelClasses(importSpecs, CommandBuilder.class)) {
       System.out.println("found " + clazz);
     }
     float secs = (System.currentTimeMillis() - start) / 1000.0f;
