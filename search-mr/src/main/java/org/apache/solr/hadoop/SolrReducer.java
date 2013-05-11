@@ -30,6 +30,8 @@ import org.apache.solr.morphline.FaultTolerance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.cdk.morphline.api.ExceptionHandler;
+
 /**
  * This class loads the mapper's SolrInputDocuments into one EmbeddedSolrServer
  * per reducer. Each such reducer and Solr server can be seen as a (micro)
@@ -43,7 +45,7 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
 
   private UpdateConflictResolver resolver;
   private HeartBeater heartBeater;
-  private FaultTolerance faultTolerance;
+  private ExceptionHandler exceptionHandler;
   
   public static final String UPDATE_CONFLICT_RESOLVER = SolrReducer.class.getName() + ".updateConflictResolver";
   
@@ -62,7 +64,7 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
      * implements org.apache.hadoop.conf.Configurable
      */
 
-    this.faultTolerance = new FaultTolerance(
+    this.exceptionHandler = new FaultTolerance(
         context.getConfiguration().getBoolean(FaultTolerance.IS_PRODUCTION_MODE, false), 
         context.getConfiguration().getBoolean(FaultTolerance.IS_IGNORING_RECOVERABLE_EXCEPTIONS, false));
     
@@ -77,11 +79,7 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
     } catch (Exception e) {
       LOG.error("Unable to process key " + key, e);
       context.getCounter(getClass().getName() + ".errors", e.getClass().getName()).increment(1);
-      if (faultTolerance.isProductionMode() && (!faultTolerance.isRecoverableException(e) || faultTolerance.isIgnoringRecoverableExceptions())) {
-        ; // ignore
-      } else {
-        throw new IllegalArgumentException(e);          
-      }
+      exceptionHandler.handleException(e, null);
     } finally {
       heartBeater.cancelHeartBeat();
     }

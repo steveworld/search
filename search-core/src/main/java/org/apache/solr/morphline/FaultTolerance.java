@@ -16,7 +16,12 @@
 package org.apache.solr.morphline;
 
 import org.apache.solr.client.solrj.SolrServerException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.cloudera.cdk.morphline.api.ExceptionHandler;
+import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
+import com.cloudera.cdk.morphline.api.Record;
 import com.google.common.annotations.Beta;
 
 /**
@@ -31,7 +36,7 @@ import com.google.common.annotations.Beta;
  * has been identified.
  */
 @Beta
-public final class FaultTolerance {
+public final class FaultTolerance implements ExceptionHandler {
     
   private final boolean isProductionMode; 
   private final boolean isIgnoringRecoverableExceptions;
@@ -39,21 +44,39 @@ public final class FaultTolerance {
   public static final String IS_PRODUCTION_MODE = "isProductionMode";
   public static final String IS_IGNORING_RECOVERABLE_EXCEPTIONS = "isIgnoringRecoverableExceptions";
 
+  private static final Logger LOG = LoggerFactory.getLogger(FaultTolerance.class);
+
   public FaultTolerance(boolean isProductionMode, boolean isIgnoringRecoverableExceptions) {
     this.isProductionMode = isProductionMode;
     this.isIgnoringRecoverableExceptions = isIgnoringRecoverableExceptions;
   }
   
-  public boolean isProductionMode() {
+  @Override
+  public void handleException(Throwable t, Record record) {
+    if (t instanceof Error) {
+      throw (Error) t; // never ignore errors
+    }
+    if (isProductionMode()) {
+      if (!isRecoverableException(t)) {
+        LOG.warn("Ignoring unrecoverable exception in production mode for record: " + record, t);
+        return;
+      } else if (isIgnoringRecoverableExceptions()) {
+        LOG.warn("Ignoring recoverable exception in production mode for record: " + record, t);
+        return;
+      }
+    }
+    throw new MorphlineRuntimeException(t);
+  }
+
+  private boolean isProductionMode() {
     return isProductionMode;
   }
   
-  public boolean isIgnoringRecoverableExceptions() {
+  private boolean isIgnoringRecoverableExceptions() {
     return isIgnoringRecoverableExceptions;
   }
   
-  @Beta
-  public boolean isRecoverableException(Throwable t) {
+  private boolean isRecoverableException(Throwable t) {
     while (true) {
       if (t instanceof SolrServerException) {
         return true;

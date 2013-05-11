@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudera.cdk.morphline.api.Command;
+import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Compiler;
 import com.cloudera.cdk.morphline.base.Fields;
@@ -54,7 +55,7 @@ import com.yammer.metrics.core.MetricsRegistry;
 @Beta
 public final class MorphlineMapRunner {
 
-  private SolrMorphlineContext morphlineContext;
+  private MorphlineContext morphlineContext;
   private Command morphline;
   private IndexSchema schema;
   private Map<String, String> commandLineMorphlineHeaders;
@@ -78,11 +79,11 @@ public final class MorphlineMapRunner {
   
   private static final Logger LOG = LoggerFactory.getLogger(MorphlineMapRunner.class);
   
-  public SolrMorphlineContext getMorphlineContext() {
+  MorphlineContext getMorphlineContext() {
     return morphlineContext;
   }
   
-  protected IndexSchema getSchema() {
+  IndexSchema getSchema() {
     return schema;
   }
 
@@ -100,14 +101,14 @@ public final class MorphlineMapRunner {
         configuration.getBoolean(FaultTolerance.IS_PRODUCTION_MODE, false), 
         configuration.getBoolean(FaultTolerance.IS_IGNORING_RECOVERABLE_EXCEPTIONS, false));
     
-    morphlineContext = (SolrMorphlineContext) new SolrMorphlineContext.Builder()
+    morphlineContext = new SolrMorphlineContext.Builder()
       .setDocumentLoader(loader)
-      .setFaultTolerance(faultTolerance)
+      .setExceptionHandler(faultTolerance)
       .setMetricsRegistry(new MetricsRegistry())
       .build();
 
     class MySolrLocator extends SolrLocator { // trick to access protected ctor
-      public MySolrLocator(SolrMorphlineContext ctx) {
+      public MySolrLocator(MorphlineContext ctx) {
         super(ctx);
       }
     }
@@ -117,10 +118,10 @@ public final class MorphlineMapRunner {
     schema = locator.getIndexSchema();
 
     // rebuild context, now with schema
-    morphlineContext = (SolrMorphlineContext) new SolrMorphlineContext.Builder()
+    morphlineContext = new SolrMorphlineContext.Builder()
       .setIndexSchema(schema)
-      .setDocumentLoader(morphlineContext.getDocumentLoader())
-      .setFaultTolerance(faultTolerance)
+      .setDocumentLoader(loader)
+      .setExceptionHandler(faultTolerance)
       .setMetricsRegistry(morphlineContext.getMetricsRegistry())
       .build();
 
@@ -148,9 +149,10 @@ public final class MorphlineMapRunner {
   public void map(String value, Configuration configuration, Context context) throws IOException {
     LOG.info("Processing file {}", value);
     InputStream in = null;
+    Record record = null;
     try {
       PathParts parts = new PathParts(value.toString(), configuration);
-      Record record = getRecord(parts);
+      record = getRecord(parts);
       if (record == null) {
         return; // ignore
       }
@@ -175,12 +177,7 @@ public final class MorphlineMapRunner {
       if (context != null) {
         context.getCounter(getClass().getName() + ".errors", e.getClass().getName()).increment(1);
       }
-      FaultTolerance faultTolerance = morphlineContext.getFaultTolerance();
-      if (faultTolerance.isProductionMode() && (!faultTolerance.isRecoverableException(e) || faultTolerance.isIgnoringRecoverableExceptions())) {
-        ; // ignore
-      } else {
-        throw new IllegalArgumentException(e);          
-      }
+      morphlineContext.getExceptionHandler().handleException(e, record);
     } finally {
       if (in != null) {
         in.close();

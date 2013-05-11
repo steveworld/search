@@ -174,8 +174,8 @@ public class SolrMorphlineZkTest extends AbstractFullDistribZkTestBase {
   }
 
   private MorphlineContext createMorphlineContext() {
-    return new SolrMorphlineContext.Builder()
-      .setFaultTolerance(new FaultTolerance(false,  false))
+    return new MorphlineContext.Builder()
+      .setExceptionHandler(new FaultTolerance(false,  false))
       .setMetricsRegistry(new MetricsRegistry())
       .build();
   }

@@ -39,9 +39,6 @@ import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
-import org.apache.flume.sink.solr.morphline.MorphlineSolrIndexer;
-import org.apache.flume.sink.solr.morphline.MorphlineSolrSink;
-import org.apache.flume.sink.solr.morphline.UUIDInterceptor;
 import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
@@ -62,6 +59,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.google.common.base.Charsets;
@@ -142,16 +140,16 @@ public class TestMorphlineSolrSink extends SolrTestCaseJ4 {
     
     int batchSize = SEQ_NUM2.incrementAndGet() % 2 == 0 ? 100 : 1;
     DocumentLoader testServer = new SolrServerDocumentLoader(solrServer, batchSize);
-    SolrMorphlineContext solrMorphlineContext = (SolrMorphlineContext) new SolrMorphlineContext.Builder()
+    MorphlineContext solrMorphlineContext = new SolrMorphlineContext.Builder()
       .setDocumentLoader(testServer)
-      .setFaultTolerance(new FaultTolerance(false, false))
+      .setExceptionHandler(new FaultTolerance(false, false))
       .setMetricsRegistry(new MetricsRegistry()).build();
     
     MorphlineSolrIndexer impl = new MorphlineSolrIndexer();
     impl.setMorphlineContext(solrMorphlineContext);
     
     class MySolrLocator extends SolrLocator { // trick to access protected ctor
-      public MySolrLocator(SolrMorphlineContext indexer) {
+      public MySolrLocator(MorphlineContext indexer) {
         super(indexer);
       }
     }
