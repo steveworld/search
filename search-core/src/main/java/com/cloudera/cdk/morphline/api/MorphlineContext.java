@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,12 +62,17 @@ public class MorphlineContext {
     return commandBuilders.get(builderName);
   }
 
+  public void importCommandBuilders(Collection<String> importSpecs) {
+    importCommandBuilderClasses(getTopLevelClasses(importSpecs, CommandBuilder.class));
+  }
+
+  // FIXME remove as obsolete after migration phase
   public void importCommandBuilderPackagePrefixes(Collection<String> commandPackagePrefixes) {
-    importCommandBuilders(
+    importCommandBuilderClasses(
         getTopLevelClassesRecursive(commandPackagePrefixes, CommandBuilder.class));
   }
 
-  public void importCommandBuilders(Collection<Class<CommandBuilder>> builderClasses) {
+  private void importCommandBuilderClasses(Collection<Class<CommandBuilder>> builderClasses) {
     if (commandBuilders == Collections.EMPTY_MAP) {
       commandBuilders = new HashMap();
       for (Class<CommandBuilder> builderClass : builderClasses) {
@@ -87,12 +93,76 @@ public class MorphlineContext {
   }
 
   /**
-   * Returns all classes that implement the given interface and are contained in a Java package with
-   * the given prefix.
+   * Returns all classes that implement the given interface and are contained in a Java package or
+   * its subpackages (importSpec ends with ".**"), or are contained in the given Java package
+   * (importSpec ends with ".*"), or are a Java class with the given fully qualified class name
+   * (importSpec ends otherwise).
    * 
-   * Uses a shaded version of com.google.guava.reflect-14.0.1 to enable running with prior
-   * versions of guava without issues.
+   * Uses a shaded version of com.google.guava.reflect-14.0.1 to enable running with prior versions
+   * of guava without issues.
    */
+  <T> Collection<Class<T>> getTopLevelClasses(Iterable<String> importSpecs, Class<T> iface) {    
+    HashMap<String,Class<T>> classes = new LinkedHashMap();
+    for (ClassLoader loader : getClassLoaders()) {
+      ClassPath classPath;
+      try {
+        classPath = ClassPath.from(loader);
+      } catch (IOException e) {
+        continue;
+      }
+      for (String importSpec : importSpecs) {
+        Set<ClassInfo> classInfos = null;
+        if (importSpec.endsWith(".**")) {
+          String packageName = importSpec.substring(0, importSpec.length() - ".**".length());
+          classInfos = classPath.getTopLevelClassesRecursive(packageName);
+        } else if (importSpec.endsWith(".*")) {
+          String packageName = importSpec.substring(0, importSpec.length() - ".*".length());
+          classInfos = classPath.getTopLevelClasses(packageName);
+        } else { // importSpec is assumed to be a fully qualified class name
+          Class clazz;
+          try {
+            //clazz = Class.forName(importSpec, true, loader);
+            clazz = loader.loadClass(importSpec);
+          } catch (ClassNotFoundException e) {
+            continue;
+          }
+          addClass(clazz, classes, iface);
+          continue;
+        }
+        
+        for (ClassInfo info : classInfos) {
+          Class clazz;
+          try {
+            clazz = info.load();
+//            clazz = Class.forName(info.getName());
+          } catch (NoClassDefFoundError e) {
+            continue;
+          } catch (ExceptionInInitializerError e) {
+            continue;
+          } catch (UnsatisfiedLinkError e) {
+            continue;
+          }
+          addClass(clazz, classes, iface);
+        }
+      }
+    }    
+    return classes.values();
+  }
+  
+  private <T> void addClass(Class clazz, HashMap<String,Class<T>> classes, Class<T> iface) {
+    if (!classes.containsKey(clazz.getName()) 
+        && iface.isAssignableFrom(clazz) 
+        && !clazz.isInterface()
+        && !Modifier.isAbstract(clazz.getModifiers())) {
+      for (Constructor ctor : clazz.getConstructors()) { // all public ctors
+        if (ctor.getParameterTypes().length == 0) { // is public zero-arg ctor?
+          classes.put(clazz.getName(), clazz);                
+        }
+      }
+    }    
+  }
+
+  // FIXME remove as obsolete after migration
   <T> Collection<Class<T>> getTopLevelClassesRecursive(Iterable<String> packageNamePrefixes, Class<T> iface) {    
     HashMap<String,Class<T>> classes = new LinkedHashMap();
     for (ClassLoader loader : getClassLoaders()) {
