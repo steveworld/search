@@ -387,7 +387,6 @@ public class MorphlineTest extends AbstractMorphlineTest {
     // verify counters
     boolean foundCounter = false;
     for (Map.Entry<String, Counter> entry : morphContext.getMetricRegistry().getCounters().entrySet()) {
-      System.out.println("counterentry=" + entry.getKey());
       if (entry.getKey().equals("ReadLine." + Metrics.NUM_RECORDS)) {
         assertEquals(2, entry.getValue().getCount());
         foundCounter = true;
