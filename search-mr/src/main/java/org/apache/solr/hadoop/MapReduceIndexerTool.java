@@ -398,7 +398,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "job priorities - the priorities are used as weights to determine the fraction of total compute time " +
               "that each job gets.");
   
-      Argument dryRunArg = parser.addArgument("--dryrun")
+      Argument dryRunArg = parser.addArgument("--dry-run", "--dryrun")
         .action(Arguments.storeTrue())
         .help("Run in local mode and print documents to stdout instead of loading them into Solr. This executes " +
               "the morphline in the client process (without submitting a job to MR) for quicker turnaround during " +
