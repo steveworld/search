@@ -149,6 +149,42 @@ public class MorphlineTest extends AbstractMorphlineTest {
   }
 
   @Test
+  public void testSplitAttachments() throws Exception {
+    morphline = createMorphline("test-morphlines/splitAttachments");    
+    Record record = new Record();
+    record.put(Fields.ATTACHMENT_BODY, "a_foo");
+    record.put(Fields.ATTACHMENT_BODY, "a_bar");
+    record.put(Fields.ATTACHMENT_BODY, "a_baz");
+    
+    record.put(Fields.ATTACHMENT_MIME_TYPE, "m_foo");
+    record.put(Fields.ATTACHMENT_MIME_TYPE, "m_bar");
+
+    record.put(Fields.ATTACHMENT_CHARSET, "c_foo");
+    
+    record.put(Fields.ATTACHMENT_NAME, "n_foo");
+
+    record.put("first_name", "Nadja");
+    
+    startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    assertTrue(morphline.process(record));
+    
+    ImmutableMultimap expected;
+    Iterator<Record> iter = collector.getRecords().iterator();
+    
+    expected = ImmutableMultimap.of("first_name", "Nadja", Fields.ATTACHMENT_BODY, "a_foo", Fields.ATTACHMENT_MIME_TYPE, "m_foo", Fields.ATTACHMENT_CHARSET, "c_foo", Fields.ATTACHMENT_NAME, "n_foo");
+    assertEquals(expected, iter.next().getFields());
+
+    expected = ImmutableMultimap.of("first_name", "Nadja", Fields.ATTACHMENT_BODY, "a_bar", Fields.ATTACHMENT_MIME_TYPE, "m_bar");
+    assertEquals(expected, iter.next().getFields());
+
+    expected = ImmutableMultimap.of("first_name", "Nadja", Fields.ATTACHMENT_BODY, "a_baz");
+    assertEquals(expected, iter.next().getFields());
+    
+    assertFalse(iter.hasNext());
+  }
+
+  @Test
   public void testTryRulesPass() throws Exception {
     morphline = createMorphline("test-morphlines/tryRulesPass");    
     Record record = new Record();
