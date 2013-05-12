@@ -63,13 +63,13 @@ public final class DecompressBuilder implements CommandBuilder {
   ///////////////////////////////////////////////////////////////////////////////
   private static final class Decompress extends AbstractParser {
     
-    private boolean decompressConcatenated;    
+    private boolean decompressConcatenated; // TODO remove as obsolete
     
     public Decompress(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);      
       if (!config.hasPath(SUPPORTED_MIME_TYPES)) {
         for (MediaType mediaType : new CompressorParser().getSupportedTypes(new ParseContext())) {
-          addSupportedMimeType(mediaType);
+          addSupportedMimeType(mediaType.toString());
         }
       }
     }

@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -66,7 +67,7 @@ public final class ReadCSVBuilder implements CommandBuilder {
 
     private final char separatorChar;
     private final List<String> columnNames;
-    private final String charset;
+    private final Charset charset;
     private final boolean ignoreFirstLine;
     private final boolean trim;
     private final char commentChar = '#';
@@ -81,15 +82,15 @@ public final class ReadCSVBuilder implements CommandBuilder {
       }
       this.separatorChar = separator.charAt(0);
       this.columnNames = Configs.getStringList(config, "columns");
-      this.charset = Configs.getString(config, "charset", null);
+      this.charset = Configs.getCharset(config, "charset", null);
       this.ignoreFirstLine = Configs.getBoolean(config, "ignoreFirstLine", false);
       this.trim = Configs.getBoolean(config, "trim", true);      
     }
   
     @Override
     protected boolean doProcess(Record inputRecord, InputStream stream) throws IOException {
-      String charsetName = detectCharset(inputRecord, charset);  
-      Reader reader = new InputStreamReader(stream, charsetName);
+      Charset detectedCharset = detectCharset(inputRecord, charset);  
+      Reader reader = new InputStreamReader(stream, detectedCharset);
       CSVReader<String[]> csvReader = createCSVReader(reader);      
       String[] columnValues;
       

@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -53,13 +54,13 @@ public final class ReadLineBuilder implements CommandBuilder {
   ///////////////////////////////////////////////////////////////////////////////
   private static final class ReadLine extends AbstractParser {
 
-    private final String charset;
+    private final Charset charset;
     private final boolean ignoreFirstLine;
     private final String commentPrefix;
   
     public ReadLine(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
-      this.charset = Configs.getString(config, "charset", null);
+      this.charset = Configs.getCharset(config, "charset", null);
       this.ignoreFirstLine = Configs.getBoolean(config, "ignoreFirstLine", false);
       String cprefix = Configs.getString(config, "commentPrefix", "");
       if (cprefix.length() > 1) {
@@ -70,8 +71,8 @@ public final class ReadLineBuilder implements CommandBuilder {
   
     @Override
     protected boolean doProcess(Record inputRecord, InputStream stream) throws IOException {
-      String charsetName = detectCharset(inputRecord, charset);  
-      Reader reader = new InputStreamReader(stream, charsetName);
+      Charset detectedCharset = detectCharset(inputRecord, charset);  
+      Reader reader = new InputStreamReader(stream, detectedCharset);
       BufferedReader lineReader = new BufferedReader(reader);
       boolean isFirst = true;
       String line;
