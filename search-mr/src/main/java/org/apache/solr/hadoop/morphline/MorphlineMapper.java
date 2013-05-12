@@ -101,7 +101,8 @@ public class MorphlineMapper extends SolrMapper<LongWritable, Text> {
     }
     for (Map.Entry<String, Timer> entry : metricRegistry.getTimers().entrySet()) {
       String metricName = entry.getKey();
-      context.getCounter("morphline", metricName).increment(entry.getValue().getCount());
+      long nanosPerSec = 1000 * 1000 * 1000L;
+      context.getCounter("morphline", metricName).increment(entry.getValue().getCount() / nanosPerSec);
     }
   }
   
