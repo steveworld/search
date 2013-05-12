@@ -15,9 +15,11 @@
  */
 package com.cloudera.cdk.morphline.api;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -314,7 +316,56 @@ public class MorphlineTest extends AbstractMorphlineTest {
     assertFalse(iter.hasNext());
     in.close();
   }  
-  
+
+  @Test
+  public void testReadCSVDetail() throws Exception {
+    morphline = createMorphline("test-morphlines/readCSVDetails");    
+    InputStream in = new FileInputStream(new File(RESOURCES_DIR + "/test-documents/csvdata.csv"));
+    Record record = new Record();
+    record.put(Fields.ATTACHMENT_BODY, in);
+    startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    assertTrue(morphline.process(record));
+    Iterator<Record> iter = collector.getRecords().iterator();
+    
+    File expectedValuesFile = new File(RESOURCES_DIR + "/test-documents/csvdata-expected-values.txt"); 
+    BufferedReader expectedReader = new BufferedReader(new InputStreamReader(new FileInputStream(expectedValuesFile), "UTF-8"));
+    String line;
+    long recNum = 0;
+    while ((line = expectedReader.readLine()) != null) {
+      String[] expectedCols = line.split(":");
+      if (line.endsWith(":")) {
+        expectedCols = concat(expectedCols, new String[]{""});
+      }
+      assertTrue("cols.length: " + expectedCols.length, expectedCols.length >= 1);
+      if (expectedCols[0].startsWith("#")) {
+        continue;
+      }
+      int expectedRecNum = Integer.parseInt(expectedCols[0]);
+      expectedCols = Arrays.copyOfRange(expectedCols, 1, expectedCols.length);
+      Record expectedRecord = new Record();
+      for (int i = 0; i < expectedCols.length; i++) {
+        expectedCols[i] = expectedCols[i].replace("\\n", "\n");
+        expectedCols[i] = expectedCols[i].replace("\\r", "\r");
+        expectedRecord.put("column" + i, expectedCols[i]);
+      }
+      
+      while (iter.hasNext()) {
+        Record actualRecord = iter.next();
+        recNum++;
+        //System.out.println("recNum:" + recNum + ":" + actualRecord);
+        if (recNum == expectedRecNum) {
+          //System.out.println("expect="+expectedRecord);
+          //System.out.println("actual="+actualRecord);
+          assertEquals(expectedRecord, actualRecord);
+          break;
+        }
+      }
+    }
+    assertEquals(30, recNum);
+    expectedReader.close();
+  }
+
   @Test
   public void testReadLine() throws Exception {
     morphline = createMorphline("test-morphlines/readCSV");
@@ -612,7 +663,7 @@ public class MorphlineTest extends AbstractMorphlineTest {
   public void testImportSpecs() {
     List<String> importSpecs = Arrays.asList("com.cloudera.**", "org.apache.solr.**", "net.*", getClass().getName());
     for (Class clazz : new MorphlineContext().getTopLevelClasses(importSpecs, CommandBuilder.class)) {
-      System.out.println("found " + clazz);
+      //System.out.println("found " + clazz);
     }
   }
   
