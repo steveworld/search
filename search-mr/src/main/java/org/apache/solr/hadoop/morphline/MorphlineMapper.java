@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 
 /**
  * This class takes the input files, extracts the relevant content, transforms
@@ -95,10 +96,12 @@ public class MorphlineMapper extends SolrMapper<LongWritable, Text> {
 
   private void addMetricsToMRCounters(MetricRegistry metricRegistry, Context context) {
     for (Map.Entry<String, Counter> entry : metricRegistry.getCounters().entrySet()) {
-      // only add counter metrics
-      Counter c = entry.getValue();
       String metricName = entry.getKey();
-      context.getCounter("morphline", metricName).increment(c.getCount());
+      context.getCounter("morphline", metricName).increment(entry.getValue().getCount());
+    }
+    for (Map.Entry<String, Timer> entry : metricRegistry.getTimers().entrySet()) {
+      String metricName = entry.getKey();
+      context.getCounter("morphline", metricName).increment(entry.getValue().getCount());
     }
   }
   

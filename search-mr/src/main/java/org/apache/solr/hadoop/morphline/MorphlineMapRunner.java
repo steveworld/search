@@ -30,6 +30,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.solr.hadoop.HdfsFileFieldNames;
 import org.apache.solr.hadoop.PathParts;
+import org.apache.solr.hadoop.Utils;
 import org.apache.solr.morphline.DocumentLoader;
 import org.apache.solr.morphline.FaultTolerance;
 import org.apache.solr.morphline.SolrLocator;
@@ -43,8 +44,10 @@ import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Compiler;
 import com.cloudera.cdk.morphline.base.Fields;
+import com.cloudera.cdk.morphline.base.Metrics;
 import com.cloudera.cdk.morphline.base.Notifications;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import com.google.common.annotations.Beta;
 import com.google.common.base.Joiner;
 
@@ -60,7 +63,8 @@ public final class MorphlineMapRunner {
   private IndexSchema schema;
   private Map<String, String> commandLineMorphlineHeaders;
   private boolean disableFileOpen;
-
+  private final Timer elapsedTime;   
+  
   public static final String MORPHLINE_FILE_PARAM = "morphlineFile";
   public static final String MORPHLINE_ID_PARAM = "morphlineId";
   
@@ -139,7 +143,9 @@ public final class MorphlineMapRunner {
       }
     }
     LOG.debug("Headers, including MIME types, passed by force from the CLI to morphline: {}", commandLineMorphlineHeaders);
-    
+
+    String metricName = MetricRegistry.name(Utils.getShortClassName(getClass()), Metrics.ELAPSED_TIME);
+    this.elapsedTime = morphlineContext.getMetricRegistry().timer(metricName);
     Notifications.notifyBeginTransaction(morphline);
   }
 
@@ -150,6 +156,7 @@ public final class MorphlineMapRunner {
     LOG.info("Processing file {}", value);
     InputStream in = null;
     Record record = null;
+    Timer.Context timerContext = elapsedTime.time();
     try {
       PathParts parts = new PathParts(value.toString(), configuration);
       record = getRecord(parts);
@@ -179,6 +186,7 @@ public final class MorphlineMapRunner {
       }
       morphlineContext.getExceptionHandler().handleException(e, record);
     } finally {
+      timerContext.stop();
       if (in != null) {
         in.close();
       }

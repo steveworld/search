@@ -33,7 +33,9 @@ import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
 import com.cloudera.cdk.morphline.base.Configs;
+import com.cloudera.cdk.morphline.base.Metrics;
 import com.cloudera.cdk.morphline.base.Notifications;
+import com.codahale.metrics.Timer;
 import com.typesafe.config.Config;
 
 /**
@@ -58,13 +60,15 @@ public final class LoadSolrBuilder implements CommandBuilder {
   private static final class LoadSolr extends AbstractCommand {
     
     private final DocumentLoader loader;
-
+    private final Timer elapsedTime;    
+    
     public LoadSolr(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
       Config solrLocatorConfig = Configs.getConfig(config, "solrLocator");
       SolrLocator locator = new SolrLocator(solrLocatorConfig, context);
       LOG.debug("solrLocator: {}", locator);
       this.loader = locator.getLoader();
+      this.elapsedTime = getTimer(Metrics.ELAPSED_TIME);
     }
 
     @Override
@@ -111,6 +115,7 @@ public final class LoadSolrBuilder implements CommandBuilder {
     
     @Override
     protected boolean doProcess(Record record) {
+      Timer.Context timerContext = elapsedTime.time();
       SolrInputDocument doc = convert(record);
       try {
         loader.load(doc);
@@ -118,6 +123,8 @@ public final class LoadSolrBuilder implements CommandBuilder {
         throw new MorphlineRuntimeException(e);
       } catch (SolrServerException e) {
         throw new MorphlineRuntimeException(e);
+      } finally {
+        timerContext.stop();
       }
       return super.doProcess(record);
     }
