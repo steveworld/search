@@ -21,6 +21,8 @@ package com.cloudera.cdk.morphline.base;
  */
 public final class Metrics {
 
+  public static final String NUM_PROCESS_CALLS = "numProcessCalls";
+  public static final String NUM_NOTIFY_CALLS = "numNotifyCalls";
   public static final String NUM_RECORDS = "numRecords";
   
 }
