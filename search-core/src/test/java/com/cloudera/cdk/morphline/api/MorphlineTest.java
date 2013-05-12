@@ -128,6 +128,27 @@ public class MorphlineTest extends AbstractMorphlineTest {
   }
 
   @Test
+  public void testToString() throws Exception {
+    morphline = createMorphline("test-morphlines/toString");    
+    Record record = new Record();
+    record.put("first_name", "Nadja");
+    startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    assertTrue(morphline.process(record));
+    Record expected = new Record();
+    expected.put("first_name", "Nadja");
+    expected.put("source_type", "text/log");
+    expected.put("source_type", "text/log2");
+    expected.put("source_host", "123");
+    expected.put("name", "Nadja");
+    expected.put("names", "Nadja");
+    expected.put("pids", "456");
+    expected.put("pids", "hello");
+    assertEquals(Arrays.asList(expected), collector.getRecords());
+    assertSame(record, collector.getRecords().get(0));
+  }
+
+  @Test
   public void testTryRulesPass() throws Exception {
     morphline = createMorphline("test-morphlines/tryRulesPass");    
     Record record = new Record();
