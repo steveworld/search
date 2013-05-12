@@ -31,6 +31,7 @@ import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import com.google.common.base.Preconditions;
 import com.typesafe.config.Config;
 
@@ -117,8 +118,15 @@ public abstract class AbstractCommand implements Command {
   }
   
   protected Counter getCounter(String... names) {
-    String name = MetricRegistry.name(getShortClassName(getClass()), names);
-    return getContext().getMetricRegistry().counter(name);
+    return getContext().getMetricRegistry().counter(getMetricName(names));
+  }
+  
+  protected Timer getTimer(String... names) {
+    return getContext().getMetricRegistry().timer(getMetricName(names));
+  }
+  
+  private String getMetricName(String... names) {
+    return MetricRegistry.name(getShortClassName(getClass()), names);
   }
   
   private String getShortClassName(Class clazz) {
