@@ -36,10 +36,12 @@ import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
 import com.cloudera.cdk.morphline.base.Configs;
+import com.cloudera.cdk.morphline.base.Metrics;
 import com.cloudera.cdk.morphline.base.Validator;
 import com.cloudera.cdk.morphline.shaded.com.google.code.regexp.GroupInfo;
 import com.cloudera.cdk.morphline.shaded.com.google.code.regexp.Matcher;
 import com.cloudera.cdk.morphline.shaded.com.google.code.regexp.Pattern;
+import com.codahale.metrics.Timer;
 import com.google.common.base.Joiner;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
@@ -145,7 +147,8 @@ public final class GrokBuilder implements CommandBuilder {
     private final NumRequiredMatches numRequiredMatches;
     private final boolean findSubstrings;
     private final boolean addEmptyStrings;
-    
+    private final Timer elapsedTime;    
+
     private static final boolean ENABLE_FAST_EXTRACTION_PATH = true;
     
     public Grok(Config config, Command parent, Command child, MorphlineContext context) throws IOException {
@@ -185,28 +188,35 @@ public final class GrokBuilder implements CommandBuilder {
           NumRequiredMatches.class);
       this.findSubstrings = Configs.getBoolean(config, "findSubstrings", false);
       this.addEmptyStrings = Configs.getBoolean(config, "addEmptyStrings", false);
+      this.elapsedTime = getTimer(Metrics.ELAPSED_TIME);
     }
     
     @Override
     protected boolean doProcess(Record record) {
-      Record outputRecord = ((extractInPlace || !extract) ? record : record.copy());
-      if (extractInPlace) {
-        // Ensure that we mutate the record inplace only if *all* expressions match.
-        // To ensure this we potentially run doMatch() twice: the first time to check, the second
-        // time to mutate
-        if (regexes.size() > 1 || numRequiredMatches != NumRequiredMatches.atLeastOnce) {
-          if (!doMatch(record, outputRecord, false)) {
-            return false;
+      Record outputRecord;
+      Timer.Context timerContext = elapsedTime.time();
+      try {
+        outputRecord = ((extractInPlace || !extract) ? record : record.copy());
+        if (extractInPlace) {
+          // Ensure that we mutate the record inplace only if *all* expressions match.
+          // To ensure this we potentially run doMatch() twice: the first time to check, the second
+          // time to mutate
+          if (regexes.size() > 1 || numRequiredMatches != NumRequiredMatches.atLeastOnce) {
+            if (!doMatch(record, outputRecord, false)) {
+              return false;
+            }
+          } else {
+            ; // no need to do anything
+            // This is a performance enhancement for "atLeastOnce" case with a single expression:
+            // By the time we find a regex match we know that the whole command will succeed,
+            // so there's really no need to run doMatch() twice.
           }
-        } else {
-          ; // no need to do anything
-          // This is a performance enhancement for "atLeastOnce" case with a single expression:
-          // By the time we find a regex match we know that the whole command will succeed,
-          // so there's really no need to run doMatch() twice.
         }
-      }
-      if (!doMatch(record, outputRecord, extract)) {
-        return false;
+        if (!doMatch(record, outputRecord, extract)) {
+          return false;
+        }
+      } finally {
+        timerContext.stop();
       }
       return super.doProcess(outputRecord);
     }

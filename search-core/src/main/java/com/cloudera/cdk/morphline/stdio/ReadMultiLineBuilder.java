@@ -32,7 +32,9 @@ import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Configs;
 import com.cloudera.cdk.morphline.base.Fields;
+import com.cloudera.cdk.morphline.base.Metrics;
 import com.cloudera.cdk.morphline.base.Validator;
+import com.codahale.metrics.Timer;
 import com.typesafe.config.Config;
 
 /**
@@ -82,6 +84,7 @@ public final class ReadMultiLineBuilder implements CommandBuilder {
     private final boolean negate;
     private final What what;
     private final Charset charset;
+    private final Timer elapsedTime;    
   
     public ReadMultiLine(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
@@ -92,10 +95,12 @@ public final class ReadMultiLineBuilder implements CommandBuilder {
           config,
           Configs.getString(config, "numRequiredMatches", What.previous.toString()),
           What.class);
+      this.elapsedTime = getTimer(Metrics.ELAPSED_TIME);
     }
 
     @Override
     protected boolean doProcess(Record inputRecord, InputStream stream) throws IOException {
+      Timer.Context timerContext = elapsedTime.time();
       Charset detectedCharset = detectCharset(inputRecord, charset);  
       Reader reader = new InputStreamReader(stream, detectedCharset);
       BufferedReader lineReader = new BufferedReader(reader);
@@ -126,24 +131,26 @@ public final class ReadMultiLineBuilder implements CommandBuilder {
             lines.append('\n');
             lines.append(line);
           } else {          // do next
-            if (lines.length() > 0 && !flushRecord(inputRecord, lines.toString())) {
+            if (lines.length() > 0 && !flushRecord(inputRecord, lines.toString(), timerContext)) {
               return false;
             }
+            timerContext = elapsedTime.time();
             lines.setLength(0);
             lines.append(line);              
           }
         }          
       }
       if (lines != null && lines.length() > 0) {
-        return flushRecord(inputRecord, lines.toString());
+        return flushRecord(inputRecord, lines.toString(), timerContext);
       }
       return true;
     }
 
-    private boolean flushRecord(Record inputRecord, String lines) {
+    private boolean flushRecord(Record inputRecord, String lines, Timer.Context timerContext) {
       Record outputRecord = inputRecord.copy();
       removeAttachments(outputRecord);
       outputRecord.replaceValues(Fields.MESSAGE, lines);
+      timerContext.stop();
       numRecordsCounter.inc();
       
       // pass record to next command in chain:
