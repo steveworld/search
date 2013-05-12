@@ -17,6 +17,7 @@ package com.cloudera.cdk.morphline.api;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -72,6 +73,23 @@ public class AbstractMorphlineTest extends Assert {
   
   protected void startSession() {
     Notifications.notifyStartSession(morphline);
+  }
+
+  protected static <T> T[] concat(T[]... arrays) {    
+    if (arrays.length == 0) throw new IllegalArgumentException();
+    Class clazz = null;
+    int length = 0;
+    for (T[] array : arrays) {
+      clazz = array.getClass();
+      length += array.length;
+    }
+    T[] result = (T[]) Array.newInstance(clazz.getComponentType(), length);
+    int pos = 0;
+    for (T[] array : arrays) {
+      System.arraycopy(array, 0, result, pos, array.length);
+      pos += array.length;
+    }
+    return result;
   }
 
 }
