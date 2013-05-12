@@ -32,8 +32,6 @@ import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
 import com.cloudera.cdk.morphline.base.Configs;
 import com.cloudera.cdk.morphline.base.Fields;
-import com.cloudera.cdk.morphline.base.Metrics;
-import com.codahale.metrics.Counter;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Closeables;
 import com.typesafe.config.Config;
@@ -43,7 +41,6 @@ import com.typesafe.config.Config;
  */
 public abstract class AbstractParser extends AbstractCommand {
 
-  protected final Counter numRecordsCounter;
   private Set<MediaType> supportedMimeTypes = null;
 
   public static final String SUPPORTED_MIME_TYPES = "supportedMimeTypes";
@@ -56,7 +53,6 @@ public abstract class AbstractParser extends AbstractCommand {
         addSupportedMimeType(streamMediaType);
       }
     }
-    this.numRecordsCounter = getCounter(Metrics.NUM_RECORDS);
   }
 
   protected void addSupportedMimeType(String mediaType) {
