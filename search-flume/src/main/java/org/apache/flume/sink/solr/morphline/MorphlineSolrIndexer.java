@@ -35,7 +35,7 @@ import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Compiler;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.base.Notifications;
-import com.yammer.metrics.core.MetricsRegistry;
+import com.codahale.metrics.MetricRegistry;
 
 /**
  * A {@link SolrIndexer} that processes it's events using a morphline {@link Command} chain in order
@@ -70,7 +70,7 @@ public class MorphlineSolrIndexer implements SolrIndexer {
       
       morphlineContext = new MorphlineContext.Builder()
         .setExceptionHandler(faultTolerance)
-        .setMetricsRegistry(new MetricsRegistry())
+        .setMetricRegistry(new MetricRegistry())
         .build();
     }
     

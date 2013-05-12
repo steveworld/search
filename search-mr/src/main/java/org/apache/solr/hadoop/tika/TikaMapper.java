@@ -68,10 +68,9 @@ import org.xml.sax.SAXException;
 import com.google.common.base.Joiner;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import com.yammer.metrics.core.Counter;
-import com.yammer.metrics.core.Metric;
-import com.yammer.metrics.core.MetricName;
-import com.yammer.metrics.core.MetricsRegistry;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Metric;
+import com.codahale.metrics.MetricRegistry;
 
 /**
  * This class takes the input files, extracts the relevant content, transforms
@@ -221,7 +220,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
       throw new ConfigurationException(e);
     }
 
-    return new TikaIndexer(collection, config, new MetricsRegistry());
+    return new TikaIndexer(collection, config, new MetricRegistry());
   }
 
   /**
@@ -308,7 +307,7 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
   @Override
   protected void cleanup(Context context) throws IOException, InterruptedException {
     heartBeater.close();
-    addMetricsToMRCounters(indexer.getMetricsRegistry(), context);
+    addMetricsToMRCounters(indexer.getMetricRegistry(), context);
     super.cleanup(context);
     try {
       indexer.commitTransaction();
@@ -318,15 +317,12 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     indexer.stop();
   }
 
-  private void addMetricsToMRCounters(MetricsRegistry metricsRegistry, Context context) {
-    for (Map.Entry<MetricName, Metric> entry : metricsRegistry.allMetrics().entrySet()) {
+  private void addMetricsToMRCounters(MetricRegistry metricRegistry, Context context) {
+    for (Map.Entry<String, Counter> entry : metricRegistry.getCounters().entrySet()) {
       // only add counter metrics
-      if (entry.getValue() instanceof Counter) {
-        Counter c = (Counter)entry.getValue();
-        MetricName metricName = entry.getKey();
-        context.getCounter(metricName.getGroup() + "." + metricName.getType(),
-          metricName.getName()).increment(c.count());
-      }
+      Counter c = entry.getValue();
+      String metricName = entry.getKey();
+      context.getCounter("TikaMapper", metricName).increment(c.getCount());
     }
   }
   

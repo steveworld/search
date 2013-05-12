@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package org.apache.solr.morphline;
+package org.apache.solr.hadoop.morphline.seqfile;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -27,13 +27,15 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
+import org.apache.solr.morphline.SolrMorphlineTest;
+import org.apache.solr.morphline.SolrMorphlineTestBase;
 import org.apache.zookeeper.common.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TestSequenceFileMorphline extends SolrMorphlineTestBase {
+public class ReadSequenceFileTest extends SolrMorphlineTestBase {
   private static final Logger LOGGER = LoggerFactory.getLogger(SolrMorphlineTest.class);
 
   private Map<String,Integer> expectedRecords = new HashMap();

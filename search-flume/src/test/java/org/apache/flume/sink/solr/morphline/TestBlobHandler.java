@@ -22,7 +22,6 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.flume.Event;
-import org.apache.flume.sink.solr.morphline.BlobHandler;
 import org.apache.flume.source.http.HTTPSourceHandler;
 import org.junit.Assert;
 import org.junit.Before;

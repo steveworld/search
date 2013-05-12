@@ -62,11 +62,11 @@ import org.slf4j.LoggerFactory;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Fields;
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.io.Files;
-import com.yammer.metrics.core.MetricsRegistry;
 
 public class TestMorphlineSolrSink extends SolrTestCaseJ4 {
 
@@ -143,7 +143,7 @@ public class TestMorphlineSolrSink extends SolrTestCaseJ4 {
     MorphlineContext solrMorphlineContext = new SolrMorphlineContext.Builder()
       .setDocumentLoader(testServer)
       .setExceptionHandler(new FaultTolerance(false, false))
-      .setMetricsRegistry(new MetricsRegistry()).build();
+      .setMetricRegistry(new MetricRegistry()).build();
     
     MorphlineSolrIndexer impl = new MorphlineSolrIndexer();
     impl.setMorphlineContext(solrMorphlineContext);

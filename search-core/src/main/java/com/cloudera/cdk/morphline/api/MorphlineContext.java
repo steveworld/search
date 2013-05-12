@@ -30,8 +30,8 @@ import org.slf4j.LoggerFactory;
 
 import com.cloudera.cdk.morphline.shaded.com.google.common.reflect.ClassPath;
 import com.cloudera.cdk.morphline.shaded.com.google.common.reflect.ClassPath.ClassInfo;
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Preconditions;
-import com.yammer.metrics.core.MetricsRegistry;
 
 /**
  * Additional user defined parameters that will be passed to all morphline commands.
@@ -39,7 +39,7 @@ import com.yammer.metrics.core.MetricsRegistry;
 public class MorphlineContext {
 
   private ExceptionHandler exceptionHandler;
-  private MetricsRegistry metricsRegistry;
+  private MetricRegistry metricRegistry;
   private Map<String, Class<CommandBuilder>> commandBuilders = Collections.EMPTY_MAP;
 
   private static final Logger LOG = LoggerFactory.getLogger(MorphlineContext.class);
@@ -48,14 +48,14 @@ public class MorphlineContext {
   protected MorphlineContext() {}
 
 
-  public ExceptionHandler getExceptionHandler() {    
+  public ExceptionHandler getExceptionHandler() {
     assert exceptionHandler != null;
     return exceptionHandler;
   }
 
-  public MetricsRegistry getMetricsRegistry() {
-    assert metricsRegistry != null;
-    return metricsRegistry;
+  public MetricRegistry getMetricRegistry() {
+    assert metricRegistry != null;
+    return metricRegistry;
   }
 
   public Class<CommandBuilder> getCommandBuilder(String builderName) {
@@ -178,14 +178,14 @@ public class MorphlineContext {
    * Example usage: 
    * 
    * <pre>
-   * MorphlineContext context = new MorphlineContext.Builder().setMetricsRegistry(new MetricsRegistry()).build();
+   * MorphlineContext context = new MorphlineContext.Builder().setMetricRegistry(new MetricRegistry()).build();
    * </pre>
    */
   public static class Builder {
     
     protected MorphlineContext context = create();
     private ExceptionHandler exceptionHandler = new DefaultExceptionHandler();
-    private MetricsRegistry metricsRegistry;
+    private MetricRegistry metricRegistry;
     
     public Builder() {}
 
@@ -195,16 +195,16 @@ public class MorphlineContext {
       return this;
     }    
 
-    public Builder setMetricsRegistry(MetricsRegistry metricsRegistry) {
-      Preconditions.checkNotNull(metricsRegistry);
-      this.metricsRegistry = metricsRegistry;
+    public Builder setMetricRegistry(MetricRegistry metricRegistry) {
+      Preconditions.checkNotNull(metricRegistry);
+      this.metricRegistry = metricRegistry;
       return this;
     }
 
     public MorphlineContext build() {
       context.exceptionHandler = exceptionHandler;
-      Preconditions.checkNotNull(metricsRegistry, "build() requires a prior call to setMetricsRegistry()");
-      context.metricsRegistry = metricsRegistry;
+      Preconditions.checkNotNull(metricRegistry, "build() requires a prior call to setMetricRegistry()");
+      context.metricRegistry = metricRegistry;
       return context;
     }
 

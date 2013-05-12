@@ -35,10 +35,8 @@ import org.apache.solr.schema.IndexSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.yammer.metrics.core.Counter;
-import com.yammer.metrics.core.Metric;
-import com.yammer.metrics.core.MetricName;
-import com.yammer.metrics.core.MetricsRegistry;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricRegistry;
 
 /**
  * This class takes the input files, extracts the relevant content, transforms
@@ -91,19 +89,16 @@ public class MorphlineMapper extends SolrMapper<LongWritable, Text> {
   protected void cleanup(Context context) throws IOException, InterruptedException {
     heartBeater.close();
     runner.cleanup();
-    addMetricsToMRCounters(runner.getMorphlineContext().getMetricsRegistry(), context);
+    addMetricsToMRCounters(runner.getMorphlineContext().getMetricRegistry(), context);
     super.cleanup(context);
   }
 
-  private void addMetricsToMRCounters(MetricsRegistry metricsRegistry, Context context) {
-    for (Map.Entry<MetricName, Metric> entry : metricsRegistry.allMetrics().entrySet()) {
+  private void addMetricsToMRCounters(MetricRegistry metricRegistry, Context context) {
+    for (Map.Entry<String, Counter> entry : metricRegistry.getCounters().entrySet()) {
       // only add counter metrics
-      if (entry.getValue() instanceof Counter) {
-        Counter c = (Counter)entry.getValue();
-        MetricName metricName = entry.getKey();
-        context.getCounter(metricName.getGroup() + "." + metricName.getType(),
-          metricName.getName()).increment(c.count());
-      }
+      Counter c = entry.getValue();
+      String metricName = entry.getKey();
+      context.getCounter("morphline", metricName).increment(c.getCount());
     }
   }
   

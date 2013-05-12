@@ -144,6 +144,7 @@ public final class ReadMultiLineBuilder implements CommandBuilder {
       Record outputRecord = inputRecord.copy();
       removeAttachments(outputRecord);
       outputRecord.replaceValues(Fields.MESSAGE, lines);
+      numRecordsCounter.inc();
       
       // pass record to next command in chain:
       return getChild().process(outputRecord);

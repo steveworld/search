@@ -60,7 +60,6 @@ import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
-import org.apache.solr.SolrJettyTestBase;
 import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
@@ -76,7 +75,6 @@ import org.apache.solr.tika.SolrCollection;
 import org.apache.solr.tika.SolrInspector;
 import org.apache.solr.tika.SolrServerDocumentLoader;
 import org.apache.solr.tika.TestEmbeddedSolrServer;
-import org.apache.solr.tika.TestSolrServer;
 import org.apache.solr.tika.TikaIndexer;
 import org.apache.solr.tika.parser.StreamingAvroContainerParser.ForwardOnlySeekableInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -87,9 +85,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.MetricRegistry;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import com.yammer.metrics.core.MetricsRegistry;
 
 public class TestTikaSolrSink extends SolrTestCaseJ4 {
 
@@ -157,7 +155,7 @@ public class TestTikaSolrSink extends SolrTestCaseJ4 {
     int batchSize = SEQ_NUM2.incrementAndGet() % 2 == 0 ? SolrInspector.DEFAULT_SOLR_SERVER_BATCH_SIZE : 1;
     DocumentLoader testServer = new SolrServerDocumentLoader(solrServer, batchSize);
     Config config = ConfigFactory.parseMap(context);
-    sink = new MySolrSink(new TikaIndexer(new SolrInspector().createSolrCollection(config, testServer), config, new MetricsRegistry()));
+    sink = new MySolrSink(new TikaIndexer(new SolrInspector().createSolrCollection(config, testServer), config, new MetricRegistry()));
     sink.setName(sink.getClass().getName() + SEQ_NUM.getAndIncrement());
     sink.configure(new Context(context));
     sink.setChannel(channel);
