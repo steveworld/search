@@ -91,12 +91,6 @@
       <version>${jackson.version}</version>
     </dependency>
 
-    <dependency> <!-- see http://code.google.com/p/jcsv -->
-      <groupId>com.googlecode.jcsv</groupId>
-      <artifactId>jcsv</artifactId>
-      <version>1.4.0</version>
-    </dependency>
-    
     <dependency> <!-- see https://github.com/typesafehub/config -->
       <groupId>com.typesafe</groupId>
       <artifactId>config</artifactId>
