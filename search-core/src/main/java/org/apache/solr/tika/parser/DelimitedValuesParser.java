@@ -41,10 +41,10 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import com.googlecode.jcsv.CSVStrategy;
-import com.googlecode.jcsv.reader.CSVReader;
-import com.googlecode.jcsv.reader.internal.CSVReaderBuilder;
-import com.googlecode.jcsv.reader.internal.DefaultCSVEntryParser;
+import com.cloudera.cdk.morphline.shaded.com.googlecode.jcsv.CSVStrategy;
+import com.cloudera.cdk.morphline.shaded.com.googlecode.jcsv.reader.CSVReader;
+import com.cloudera.cdk.morphline.shaded.com.googlecode.jcsv.reader.internal.CSVReaderBuilder;
+import com.cloudera.cdk.morphline.shaded.com.googlecode.jcsv.reader.internal.DefaultCSVEntryParser;
 
 /**
  * Comma separated values parser that extracts search documents from CSV records

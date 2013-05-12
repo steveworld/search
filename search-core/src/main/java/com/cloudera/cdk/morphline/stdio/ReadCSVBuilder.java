@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudera.cdk.morphline.csv;
+package com.cloudera.cdk.morphline.stdio;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,11 +29,10 @@ import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Configs;
-import com.cloudera.cdk.morphline.stdio.AbstractParser;
-import com.googlecode.jcsv.CSVStrategy;
-import com.googlecode.jcsv.reader.CSVReader;
-import com.googlecode.jcsv.reader.internal.CSVReaderBuilder;
-import com.googlecode.jcsv.reader.internal.DefaultCSVEntryParser;
+import com.cloudera.cdk.morphline.shaded.com.googlecode.jcsv.CSVStrategy;
+import com.cloudera.cdk.morphline.shaded.com.googlecode.jcsv.reader.CSVReader;
+import com.cloudera.cdk.morphline.shaded.com.googlecode.jcsv.reader.internal.CSVReaderBuilder;
+import com.cloudera.cdk.morphline.shaded.com.googlecode.jcsv.reader.internal.DefaultCSVEntryParser;
 import com.typesafe.config.Config;
 
 /**
@@ -121,6 +120,7 @@ public final class ReadCSVBuilder implements CommandBuilder {
       return trim ? str.trim() : str;
     }
   
+    // Uses a shaded version of com.google.guava.reflect-14.0.1 to reduce the potential for dependency conflicts
     // TODO: consider replacing impl with http://github.com/FasterXML/jackson-dataformat-csv
     // or http://supercsv.sourceforge.net/release_notes.html
     private CSVReader createCSVReader(Reader reader) {

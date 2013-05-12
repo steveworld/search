@@ -29,10 +29,10 @@ import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.googlecode.jcsv.CSVStrategy;
-import com.googlecode.jcsv.reader.CSVReader;
-import com.googlecode.jcsv.reader.internal.CSVReaderBuilder;
-import com.googlecode.jcsv.reader.internal.DefaultCSVEntryParser;
+import com.cloudera.cdk.morphline.shaded.com.googlecode.jcsv.CSVStrategy;
+import com.cloudera.cdk.morphline.shaded.com.googlecode.jcsv.reader.CSVReader;
+import com.cloudera.cdk.morphline.shaded.com.googlecode.jcsv.reader.internal.CSVReaderBuilder;
+import com.cloudera.cdk.morphline.shaded.com.googlecode.jcsv.reader.internal.DefaultCSVEntryParser;
 
 public class TestCSVParser extends Assert {
   
