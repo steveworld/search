@@ -39,11 +39,12 @@ import com.typesafe.config.Config;
  */
 public abstract class AbstractCommand implements Command {
   
-  private Config config;
-  private Command parent;
-  private Command child;
-  private MorphlineContext context;
-  protected final Counter numRecordsCounter;
+  private final Config config;
+  private final Command parent;
+  private final Command child;
+  private final MorphlineContext context;
+  private final Counter numProcessCallsCounter;
+  private final Counter numNotifyCallsCounter;
 
   protected final Logger LOG = LoggerFactory.getLogger(getClass());
       
@@ -56,7 +57,8 @@ public abstract class AbstractCommand implements Command {
     this.parent = parent;
     this.child = child;
     this.context = context;
-    this.numRecordsCounter = getCounter(Metrics.NUM_RECORDS);
+    this.numProcessCallsCounter = getCounter(Metrics.NUM_PROCESS_CALLS);
+    this.numNotifyCallsCounter = getCounter(Metrics.NUM_NOTIFY_CALLS);
   }
   
   @Override
@@ -78,6 +80,7 @@ public abstract class AbstractCommand implements Command {
   
   @Override
   public final void notify(Record notification) {
+    numNotifyCallsCounter.inc();
     beforeNotify(notification);
     doNotify(notification);
   }
@@ -96,6 +99,7 @@ public abstract class AbstractCommand implements Command {
   
   @Override
   public final boolean process(Record record) {
+    numProcessCallsCounter.inc();
     beforeProcess(record);
     return doProcess(record);
   }
