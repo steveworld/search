@@ -32,7 +32,7 @@ import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
 import com.cloudera.cdk.morphline.base.Configs;
 import com.cloudera.cdk.morphline.base.Fields;
-import com.cloudera.cdk.morphline.scriptevaluator.ScriptEvaluator;
+import com.cloudera.cdk.morphline.scriptengine.java.ScriptEvaluator;
 import com.typesafe.config.Config;
 
 /**

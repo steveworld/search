@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudera.cdk.morphline.scriptevaluator;
+package com.cloudera.cdk.morphline.api;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.cloudera.cdk.morphline.api.Record;
+import com.cloudera.cdk.morphline.scriptengine.java.ScriptEvaluator;
 import com.google.common.collect.ArrayListMultimap;
 
 
