@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudera.cdk.morphline.scriptevaluator;
+package com.cloudera.cdk.morphline.scriptengine.java;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -25,7 +25,6 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
-import com.cloudera.cdk.morphline.scriptengine.java.FastJavaScriptEngine;
 
 /**
  * Creates and compiles the given Java code block, wrapped into a Java method with the given return
