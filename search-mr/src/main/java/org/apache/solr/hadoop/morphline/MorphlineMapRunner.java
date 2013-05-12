@@ -44,9 +44,9 @@ import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Compiler;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.base.Notifications;
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.annotations.Beta;
 import com.google.common.base.Joiner;
-import com.yammer.metrics.core.MetricsRegistry;
 
 /**
  * Internal helper for {@link MorphlineMapper} and dryRun mode; This API is for *INTERNAL* use only
@@ -104,7 +104,7 @@ public final class MorphlineMapRunner {
     morphlineContext = new SolrMorphlineContext.Builder()
       .setDocumentLoader(loader)
       .setExceptionHandler(faultTolerance)
-      .setMetricsRegistry(new MetricsRegistry())
+      .setMetricRegistry(new MetricRegistry())
       .build();
 
     class MySolrLocator extends SolrLocator { // trick to access protected ctor
@@ -122,7 +122,7 @@ public final class MorphlineMapRunner {
       .setIndexSchema(schema)
       .setDocumentLoader(loader)
       .setExceptionHandler(faultTolerance)
-      .setMetricsRegistry(morphlineContext.getMetricsRegistry())
+      .setMetricRegistry(morphlineContext.getMetricRegistry())
       .build();
 
     String morphlineFile = configuration.get(MORPHLINE_FILE_PARAM);

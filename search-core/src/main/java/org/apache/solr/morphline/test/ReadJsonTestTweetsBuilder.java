@@ -71,7 +71,7 @@ public final class ReadJsonTestTweetsBuilder implements CommandBuilder {
     private final boolean isLengthDelimited;
     private String idPrefix;
     private final ObjectMapper mapper = new ObjectMapper();
-    
+
     // Fri May 14 02:52:55 +0000 2010
     private SimpleDateFormat formatterFrom = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.US);
     private SimpleDateFormat formatterTo = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
@@ -153,6 +153,7 @@ public final class ReadJsonTestTweetsBuilder implements CommandBuilder {
           tryAddString(doc, "user_screen_name", user.get("screen_name"));
           tryAddString(doc, "user_name", user.get("name"));
           
+          numRecordsCounter.inc();
           LOG.debug("tweetdoc: {}", doc);
           if (!getChild().process(doc)) {
             return false;

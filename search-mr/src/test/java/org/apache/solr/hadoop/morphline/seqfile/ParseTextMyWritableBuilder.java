@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package org.apache.solr.morphline;
+package org.apache.solr.hadoop.morphline.seqfile;
 
 import java.io.DataInput;
 import java.io.DataOutput;

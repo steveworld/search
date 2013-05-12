@@ -29,6 +29,8 @@ import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Preconditions;
 import com.typesafe.config.Config;
 
@@ -106,6 +108,18 @@ public abstract class AbstractCommand implements Command {
   
   protected boolean doProcess(Record record) {
     return getChild().process(record);
+  }
+  
+  protected Counter getCounter(String... names) {
+    String name = MetricRegistry.name(getShortClassName(getClass()), names);
+    return getContext().getMetricRegistry().counter(name);
+  }
+  
+  private String getShortClassName(Class clazz) {
+    String className = clazz.getName();
+    int i = className.lastIndexOf('.'); // regular class
+    int j = className.lastIndexOf('$'); // inner class
+    return className.substring(1 + Math.max(i, j));
   }
   
   /**

@@ -23,8 +23,6 @@ import java.util.UUID;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.SimpleEvent;
-import org.apache.flume.sink.solr.morphline.ParanoidUUIDInterceptor;
-import org.apache.flume.sink.solr.morphline.UUIDInterceptor;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -49,9 +49,9 @@ import com.cloudera.cdk.morphline.base.Compiler;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.base.Notifications;
 import com.cloudera.cdk.morphline.stdlib.PipeBuilder;
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ListMultimap;
 import com.typesafe.config.Config;
-import com.yammer.metrics.core.MetricsRegistry;
 
 @ThreadLeakAction({Action.WARN})
 @ThreadLeakLingering(linger = 0)
@@ -176,7 +176,7 @@ public class SolrMorphlineZkTest extends AbstractFullDistribZkTestBase {
   private MorphlineContext createMorphlineContext() {
     return new MorphlineContext.Builder()
       .setExceptionHandler(new FaultTolerance(false,  false))
-      .setMetricsRegistry(new MetricsRegistry())
+      .setMetricRegistry(new MetricRegistry())
       .build();
   }
   

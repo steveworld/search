@@ -25,7 +25,6 @@ import org.apache.flume.Event;
 import org.apache.flume.serialization.EventDeserializer;
 import org.apache.flume.serialization.EventDeserializerFactory;
 import org.apache.flume.serialization.ResettableInputStream;
-import org.apache.flume.sink.solr.morphline.BlobDeserializer;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

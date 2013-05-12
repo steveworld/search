@@ -52,10 +52,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import com.typesafe.config.Config;
-import com.yammer.metrics.core.Counter;
-import com.yammer.metrics.core.Metric;
-import com.yammer.metrics.core.MetricName;
-import com.yammer.metrics.core.MetricsRegistry;
+import com.codahale.metrics.MetricRegistry;
 
 public class StreamingSequenceFileParser extends AbstractStreamingParser {
 
@@ -111,13 +108,13 @@ public class StreamingSequenceFileParser extends AbstractStreamingParser {
   }
 
   private void incrementCounter(SequenceFileParserCounter counter, long amount) {
-    ParseInfo info = getParseInfo();
-    MetricsRegistry metricsRegistry = info.getMetricsRegistry();
-    Metric m = metricsRegistry.allMetrics().get(new MetricName(SequenceFileParserCounter.class, counter.toString()));
-    if (m != null) {
-      Counter c = (Counter)m;
-      c.inc(amount);
-    }
+//    ParseInfo info = getParseInfo();
+//    MetricRegistry metricRegistry = info.getMetricRegistry();
+//    Metric m = metricRegistry.allMetrics().get(new MetricName(SequenceFileParserCounter.class, counter.toString()));
+//    if (m != null) {
+//      Counter c = (Counter)m;
+//      c.inc(amount);
+//    }
   }
 
   @Override

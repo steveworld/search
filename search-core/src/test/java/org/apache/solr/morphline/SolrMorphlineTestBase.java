@@ -48,9 +48,9 @@ import com.cloudera.cdk.morphline.base.Compiler;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.base.Notifications;
 import com.cloudera.cdk.morphline.stdlib.PipeBuilder;
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.io.Files;
 import com.typesafe.config.Config;
-import com.yammer.metrics.core.MetricsRegistry;
 
 public class SolrMorphlineTestBase extends SolrTestCaseJ4 {
 
@@ -236,7 +236,7 @@ public class SolrMorphlineTestBase extends SolrTestCaseJ4 {
       .setDocumentLoader(testServer)
 //      .setDocumentLoader(new CollectingDocumentLoader(100))
       .setExceptionHandler(new FaultTolerance(false,  false))
-      .setMetricsRegistry(new MetricsRegistry())
+      .setMetricRegistry(new MetricRegistry())
       .build();
   }
   

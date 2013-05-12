@@ -92,12 +92,14 @@ public final class ReadSequenceFileBuilder implements CommandBuilder {
         }
         Writable key = (Writable)ReflectionUtils.newInstance(reader.getKeyClass(), conf);
         Writable val = (Writable)ReflectionUtils.newInstance(reader.getValueClass(), conf);
+        Record template = inputRecord.copy();
+        removeAttachments(template);
         try {
           while (reader.next(key, val)) {
-            Record outputRecord = inputRecord.copy();
-            removeAttachments(outputRecord);
-            outputRecord.put(this.keyField, key);
-            outputRecord.put(this.valueField, val);
+            numRecordsCounter.inc();
+            Record outputRecord = template.copy();
+            outputRecord.put(keyField, key);
+            outputRecord.put(valueField, val);
             outputRecord.put(Fields.ATTACHMENT_MIME_TYPE, OUTPUT_MEDIA_TYPE);
             if (includeMetaData && sequenceFileMetaData != null) {
               outputRecord.put(SEQUENCE_FILE_META_DATA, sequenceFileMetaData);

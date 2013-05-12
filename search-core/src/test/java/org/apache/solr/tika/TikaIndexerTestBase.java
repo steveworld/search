@@ -44,14 +44,13 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
+import com.codahale.metrics.MetricRegistry;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import com.yammer.metrics.core.MetricsRegistry;
 
 /**
  * Base type for TikaIndexer tests.
@@ -113,7 +112,7 @@ public class TikaIndexerTestBase extends SolrTestCaseJ4 {
     int batchSize = SEQ_NUM2.incrementAndGet() % 2 == 0 ? SolrInspector.DEFAULT_SOLR_SERVER_BATCH_SIZE : 1;
     DocumentLoader testServer = new SolrServerDocumentLoader(solrServer, batchSize);
     Config config = ConfigFactory.parseMap(context);
-    indexer = new TikaIndexer(new SolrInspector().createSolrCollection(config, testServer), config, new MetricsRegistry()) {
+    indexer = new TikaIndexer(new SolrInspector().createSolrCollection(config, testServer), config, new MetricRegistry()) {
       @Override
       public void load(List<SolrInputDocument> docs) throws IOException, SolrServerException {
         for (SolrInputDocument doc : docs) {
@@ -152,7 +151,7 @@ public class TikaIndexerTestBase extends SolrTestCaseJ4 {
     Config config = ConfigFactory.parseMap(context);
    
     SolrIndexer solrIndexer =
-      new TikaIndexer(new SolrInspector().createSolrCollection(config, indexer.getSolrCollection().getDocumentLoader()), config, new MetricsRegistry());
+      new TikaIndexer(new SolrInspector().createSolrCollection(config, indexer.getSolrCollection().getDocumentLoader()), config, new MetricRegistry());
     deleteAllDocuments(solrIndexer);
     return solrIndexer;
   }

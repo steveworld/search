@@ -26,14 +26,15 @@ import org.junit.Before;
 import com.cloudera.cdk.morphline.base.Compiler;
 import com.cloudera.cdk.morphline.base.Notifications;
 import com.cloudera.cdk.morphline.stdlib.PipeBuilder;
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Preconditions;
 import com.typesafe.config.Config;
-import com.yammer.metrics.core.MetricsRegistry;
 
 public class AbstractMorphlineTest extends Assert {
   
   protected Collector collector;
   protected Command morphline;
+  protected MorphlineContext morphContext;
   
   protected static final String RESOURCES_DIR = "target/test-classes";
   
@@ -46,6 +47,7 @@ public class AbstractMorphlineTest extends Assert {
   public void tearDown() throws Exception {
     collector = null;
     morphline = null;
+    morphContext = null;
   }
     
   protected Command createMorphline(String file, Config... overrides) throws IOException {
@@ -53,7 +55,8 @@ public class AbstractMorphlineTest extends Assert {
   }
 
   protected Command createMorphline(Config config) {
-    return new PipeBuilder().build(config, null, collector, createMorphlineContext());
+    morphContext = createMorphlineContext();
+    return new PipeBuilder().build(config, null, collector, morphContext);
   }
   
   protected Config parse(String file, Config... overrides) throws IOException {
@@ -64,7 +67,7 @@ public class AbstractMorphlineTest extends Assert {
   }
   
   private MorphlineContext createMorphlineContext() {
-    return new MorphlineContext.Builder().setMetricsRegistry(new MetricsRegistry()).build();
+    return new MorphlineContext.Builder().setMetricRegistry(new MetricRegistry()).build();
   }
   
   protected void deleteAllDocuments() {

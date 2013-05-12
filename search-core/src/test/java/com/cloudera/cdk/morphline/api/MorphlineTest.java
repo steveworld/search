@@ -30,8 +30,10 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.cloudera.cdk.morphline.base.Fields;
+import com.cloudera.cdk.morphline.base.Metrics;
 import com.cloudera.cdk.morphline.shaded.com.google.code.regexp.Matcher;
 import com.cloudera.cdk.morphline.shaded.com.google.code.regexp.Pattern;
+import com.codahale.metrics.Counter;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.io.Files;
@@ -368,7 +370,6 @@ public class MorphlineTest extends AbstractMorphlineTest {
 
   @Test
   public void testReadLine() throws Exception {
-    morphline = createMorphline("test-morphlines/readCSV");
     String threeLines = "first\nsecond\nthird";
     byte[] in = threeLines.getBytes("UTF-8");
     morphline = createMorphline("test-morphlines/readLine"); // uses ignoreFirstLine : true
@@ -382,6 +383,17 @@ public class MorphlineTest extends AbstractMorphlineTest {
     assertEquals(ImmutableMultimap.of(Fields.MESSAGE, "second"), iter.next().getFields());
     assertEquals(ImmutableMultimap.of(Fields.MESSAGE, "third"), iter.next().getFields());
     assertFalse(iter.hasNext());
+    
+    // verify counters
+    boolean foundCounter = false;
+    for (Map.Entry<String, Counter> entry : morphContext.getMetricRegistry().getCounters().entrySet()) {
+      System.out.println("counterentry=" + entry.getKey());
+      if (entry.getKey().equals("ReadLine." + Metrics.NUM_RECORDS)) {
+        assertEquals(2, entry.getValue().getCount());
+        foundCounter = true;
+      }
+    }
+    assertTrue(foundCounter);
   }  
   
   @Test

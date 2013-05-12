@@ -95,6 +95,7 @@ public final class ReadCSVBuilder implements CommandBuilder {
       String[] columnValues;
       
       while ((columnValues = csvReader.readNext()) != null) {
+        numRecordsCounter.inc();
         Record outputRecord = inputRecord.copy();
         removeAttachments(outputRecord);
         for (int i = 0; i < columnValues.length; i++) {
@@ -106,7 +107,7 @@ public final class ReadCSVBuilder implements CommandBuilder {
           if (columnName.length() > 0) { // empty column name indicates omit this field on output
             outputRecord.put(columnName, trim(columnValues[i]));
           }
-        }
+        }        
         
         // pass record to next command in chain:
         if (!getChild().process(outputRecord)) {
