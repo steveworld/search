@@ -120,7 +120,8 @@ public final class ReadCSVBuilder implements CommandBuilder {
       return trim ? str.trim() : str;
     }
   
-    // Uses a shaded version of com.google.guava.reflect-14.0.1 to reduce the potential for dependency conflicts
+    // Uses a shaded version of jcsv-1.4.0 (https://code.google.com/p/jcsv/) 
+    // to reduce the potential for dependency conflicts.
     // TODO: consider replacing impl with http://github.com/FasterXML/jackson-dataformat-csv
     // or http://supercsv.sourceforge.net/release_notes.html
     private CSVReader createCSVReader(Reader reader) {
