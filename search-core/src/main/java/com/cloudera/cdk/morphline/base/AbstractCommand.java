@@ -43,7 +43,8 @@ public abstract class AbstractCommand implements Command {
   private Command parent;
   private Command child;
   private MorphlineContext context;
-  
+  protected final Counter numRecordsCounter;
+
   protected final Logger LOG = LoggerFactory.getLogger(getClass());
       
   public AbstractCommand(Config config, Command parent, Command child, MorphlineContext context) {
@@ -55,6 +56,7 @@ public abstract class AbstractCommand implements Command {
     this.parent = parent;
     this.child = child;
     this.context = context;
+    this.numRecordsCounter = getCounter(Metrics.NUM_RECORDS);
   }
   
   @Override
