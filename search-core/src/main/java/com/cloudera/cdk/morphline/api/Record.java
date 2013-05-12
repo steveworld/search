@@ -17,6 +17,7 @@ package com.cloudera.cdk.morphline.api;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.TreeMap;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
@@ -93,8 +94,8 @@ public final class Record {
   }
   
   @Override
-  public String toString() {
-    return fields.toString();
+  public String toString() { // print fields sorted by key for better human readability
+    return new TreeMap(fields.asMap()).toString();
   }
 
   private static ListMultimap<String, Object> create() {
