@@ -63,13 +63,13 @@ public final class UnpackBuilder implements CommandBuilder {
   ///////////////////////////////////////////////////////////////////////////////
   private static final class Unpack extends AbstractParser {
     
-    private static final MediaType GTAR = MediaType.application("x-gtar");
+    private static final String GTAR = "application/x-gtar";
 
     public Unpack(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);      
       if (!config.hasPath(SUPPORTED_MIME_TYPES)) {
         for (MediaType mediaType : new PackageParser().getSupportedTypes(new ParseContext())) {
-          addSupportedMimeType(mediaType);
+          addSupportedMimeType(mediaType.toString());
         }
         addSupportedMimeType(GTAR); // apparently not already included in PackageParser.getSupportedTypes()
       }

@@ -18,13 +18,12 @@ package com.cloudera.cdk.morphline.stdio;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-
-import org.apache.tika.mime.MediaType;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
@@ -42,7 +41,6 @@ import com.typesafe.config.Config;
  */
 public abstract class AbstractParser extends AbstractCommand {
 
-  // TODO: replace tika MediaType with guava MediaType to avoid needing to depend on tika-core
   private Set<MediaType> supportedMimeTypes = null;
 
   public static final String SUPPORTED_MIME_TYPES = "supportedMimeTypes";
@@ -52,16 +50,16 @@ public abstract class AbstractParser extends AbstractCommand {
     if (config.hasPath(SUPPORTED_MIME_TYPES)) {
       List<String> mimeTypes = Configs.getStringList(config, SUPPORTED_MIME_TYPES, Collections.EMPTY_LIST);
       for (String streamMediaType : mimeTypes) {
-        addSupportedMimeType(parseMediaType(streamMediaType).getBaseType());
+        addSupportedMimeType(streamMediaType);
       }
     }
   }
 
-  protected void addSupportedMimeType(MediaType mediaType) {
+  protected void addSupportedMimeType(String mediaType) {
     if (supportedMimeTypes == null) {
       supportedMimeTypes = new HashSet();
     }
-    supportedMimeTypes.add(mediaType.getBaseType());
+    supportedMimeTypes.add(parseMimeType(mediaType));
   }
 
   @Override
@@ -76,7 +74,7 @@ public abstract class AbstractParser extends AbstractCommand {
       return false;
     }
 
-    InputStream stream = createAttachmentInputStream(record);
+    InputStream stream = getAttachmentInputStream(record);
     try {
       return doProcess(record, stream);
     } catch (IOException e) {
@@ -95,13 +93,13 @@ public abstract class AbstractParser extends AbstractCommand {
     if (!hasAtLeastOneMimeType(record)) {
       return false;
     }
-    MediaType mediaType = parseMediaType(mediaTypeStr).getBaseType();
+    MediaType mediaType = parseMimeType(mediaTypeStr);
     if (supportedMimeTypes.contains(mediaType)) {
       return true; // fast path
     }
     // wildcard matching
     for (MediaType rangePattern : supportedMimeTypes) {      
-      if (isMediaTypeMatch(mediaType, rangePattern)) {
+      if (isMimeTypeMatch(mediaType, rangePattern)) {
         return true;
       }
     }
@@ -111,12 +109,13 @@ public abstract class AbstractParser extends AbstractCommand {
     return false;
   }
 
-  protected MediaType parseMediaType(String mediaTypeStr) {
-    return MediaType.parse(mediaTypeStr.trim().toLowerCase(Locale.ROOT));
+  private MediaType parseMimeType(String mediaTypeStr) {
+    MediaType mediaType = MediaType.parse(mediaTypeStr.trim().toLowerCase(Locale.ROOT));
+    return mediaType.getBaseType();
   };
       
   /** Returns true if mediaType falls withing the given range (pattern), false otherwise */
-  protected boolean isMediaTypeMatch(MediaType mediaType, MediaType rangePattern) {
+  private boolean isMimeTypeMatch(MediaType mediaType, MediaType rangePattern) {
     String WILDCARD = "*";
     String rangePatternType = rangePattern.getType();
     String rangePatternSubtype = rangePattern.getSubtype();
@@ -124,7 +123,7 @@ public abstract class AbstractParser extends AbstractCommand {
         && (rangePatternSubtype.equals(WILDCARD) || rangePatternSubtype.equals(mediaType.getSubtype()));
   }
 
-  protected String detectCharset(Record record, String charset) {
+  protected Charset detectCharset(Record record, Charset charset) {
     if (charset != null) {
       return charset;
     }
@@ -134,31 +133,26 @@ public abstract class AbstractParser extends AbstractCommand {
       throw new MorphlineRuntimeException("Missing charset for record: " + record); 
     }
     String charsetName = (String) charsets.get(0);        
-    return charsetName;
+    return Charset.forName(charsetName);
   }
 
-  protected boolean hasAtLeastOneAttachment(Record record) {
-    List attachments = record.get(Fields.ATTACHMENT_BODY);
-    if (attachments.size() == 0) {
+  private boolean hasAtLeastOneAttachment(Record record) {
+    if (!record.getFields().containsKey(Fields.ATTACHMENT_BODY)) {
       LOG.debug("Command failed because of missing attachment for record: {}", record);
       return false;
     }
-
-    Preconditions.checkNotNull(attachments.get(0));    
     return true;
   }
   
-  protected boolean hasAtLeastOneMimeType(Record record) {
-    List mimeTypes = record.get(Fields.ATTACHMENT_MIME_TYPE);
-    if (mimeTypes.size() == 0) {
+  private boolean hasAtLeastOneMimeType(Record record) {
+    if (!record.getFields().containsKey(Fields.ATTACHMENT_MIME_TYPE)) {
       LOG.debug("Command failed because of missing MIME type for record: {}", record);
       return false;
-    }
-  
+    }  
     return true;
   }
 
-  protected InputStream createAttachmentInputStream(Record record) {
+  private InputStream getAttachmentInputStream(Record record) {
     Object body = record.getFirstValue(Fields.ATTACHMENT_BODY);
     Preconditions.checkNotNull(body);
     if (body instanceof byte[]) {
@@ -175,13 +169,13 @@ public abstract class AbstractParser extends AbstractCommand {
     outputRecord.removeAll(Fields.ATTACHMENT_NAME);
   }
 
-//public static XMediaType toGuavaMediaType(MediaType tika) {
+//public static XMediaType toGuavaMediaType(TMediaType tika) {
 //return XMediaType.create(tika.getType(), tika.getSubtype()).withParameters(Multimaps.forMap(tika.getParameters()));
 //}
 //
-//public static List<XMediaType> toGuavaMediaType(Iterable<MediaType> tikaCollection) {
+//public static List<XMediaType> toGuavaMediaType(Iterable<TMediaType> tikaCollection) {
 //List<XMediaType> list = new ArrayList();
-//for (MediaType tika : tikaCollection) {
+//for (TMediaType tika : tikaCollection) {
 //  list.add(toGuavaMediaType(tika));
 //}
 //return list;

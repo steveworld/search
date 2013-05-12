@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -53,17 +54,17 @@ public final class ReadClobBuilder implements CommandBuilder {
   ///////////////////////////////////////////////////////////////////////////////
   private static final class ReadClob extends AbstractParser {
 
-    private final String charset;
+    private final Charset charset;
   
     public ReadClob(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
-      this.charset = Configs.getString(config, "charset", null);
+      this.charset = Configs.getCharset(config, "charset", null);
     }
   
     @Override
     protected boolean doProcess(Record inputRecord, InputStream stream) throws IOException {
-      String charsetName = detectCharset(inputRecord, charset);  
-      Reader reader = new InputStreamReader(stream, charsetName);
+      Charset detectedCharset = detectCharset(inputRecord, charset);  
+      Reader reader = new InputStreamReader(stream, detectedCharset);
       String clob = CharStreams.toString(reader);
       Record outputRecord = inputRecord.copy();
       removeAttachments(outputRecord);

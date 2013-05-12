@@ -15,6 +15,7 @@
  */
 package com.cloudera.cdk.morphline.base;
 
+import java.nio.charset.Charset;
 import java.util.List;
 
 import com.typesafe.config.Config;
@@ -118,6 +119,12 @@ public final class Configs {
   
   public static double getDouble(Config config, String path) {
     return config.getDouble(path);
+  }  
+
+  public static Charset getCharset(Config config, String path, Charset defaults) {
+    String charsetName = getString(config, path, defaults == null ? null : defaults.name());
+    Charset charset = charsetName == null ? null : Charset.forName(charsetName);
+    return charset;
   }  
 
 }

@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -189,21 +190,21 @@ public final class SolrCellBuilder implements CommandBuilder {
 
         List<String> mediaTypes = Configs.getStringList(parserConfig, SUPPORTED_MIME_TYPES, Collections.EMPTY_LIST);
         for (String mediaTypeStr : mediaTypes) {
-          MediaType mediaType = parseMediaType(mediaTypeStr).getBaseType();
-          addSupportedMimeType(mediaType);
+          MediaType mediaType = parseMediaType(mediaTypeStr);
+          addSupportedMimeType(mediaTypeStr);
           this.mediaTypeToParserMap.put(mediaType, parser);
         }
         
         if (!parserConfig.hasPath(SUPPORTED_MIME_TYPES)) {
           for (MediaType mediaType : parser.getSupportedTypes(new ParseContext())) {
             mediaType = mediaType.getBaseType();
-            addSupportedMimeType(mediaType);
+            addSupportedMimeType(mediaType.toString());
             this.mediaTypeToParserMap.put(mediaType, parser);
           }        
           List<String> extras = Configs.getStringList(parserConfig, ADDITIONAL_SUPPORTED_MIME_TYPES, Collections.EMPTY_LIST);
           for (String mediaTypeStr : extras) {
-            MediaType mediaType = parseMediaType(mediaTypeStr).getBaseType();
-            addSupportedMimeType(mediaType);
+            MediaType mediaType = parseMediaType(mediaTypeStr);
+            addSupportedMimeType(mediaTypeStr);
             this.mediaTypeToParserMap.put(mediaType, parser);            
           }
         }
@@ -308,6 +309,28 @@ public final class SolrCellBuilder implements CommandBuilder {
         LOG.debug("No supported MIME type parser found for " + Fields.ATTACHMENT_MIME_TYPE + "=" + mediaTypeStr);
       }
       return null;
+    }
+    
+    private boolean hasAtLeastOneMimeType(Record record) {
+      if (!record.getFields().containsKey(Fields.ATTACHMENT_MIME_TYPE)) {
+        LOG.debug("Command failed because of missing MIME type for record: {}", record);
+        return false;
+      }  
+      return true;
+    }
+
+    private MediaType parseMediaType(String mediaTypeStr) {
+      MediaType mediaType = MediaType.parse(mediaTypeStr.trim().toLowerCase(Locale.ROOT));
+      return mediaType.getBaseType();
+    };
+        
+    /** Returns true if mediaType falls withing the given range (pattern), false otherwise */
+    private boolean isMediaTypeMatch(MediaType mediaType, MediaType rangePattern) {
+      String WILDCARD = "*";
+      String rangePatternType = rangePattern.getType();
+      String rangePatternSubtype = rangePattern.getSubtype();
+      return (rangePatternType.equals(WILDCARD) || rangePatternType.equals(mediaType.getType()))
+          && (rangePatternSubtype.equals(WILDCARD) || rangePatternSubtype.equals(mediaType.getSubtype()));
     }
     
     private static SolrContentHandlerFactory getSolrContentHandlerFactory(

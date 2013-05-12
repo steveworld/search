@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.regex.Matcher;
@@ -80,13 +81,13 @@ public final class ReadMultiLineBuilder implements CommandBuilder {
     private final Pattern regex;
     private final boolean negate;
     private final What what;
-    private final String charset;
+    private final Charset charset;
   
     public ReadMultiLine(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
       this.regex = Pattern.compile(Configs.getString(config, "regex"));
       this.negate = Configs.getBoolean(config, "negate", false);
-      this.charset = Configs.getString(config, "charset", null);
+      this.charset = Configs.getCharset(config, "charset", null);
       this.what = new Validator<What>().validateEnum(
           config,
           Configs.getString(config, "numRequiredMatches", What.previous.toString()),
@@ -95,8 +96,8 @@ public final class ReadMultiLineBuilder implements CommandBuilder {
 
     @Override
     protected boolean doProcess(Record inputRecord, InputStream stream) throws IOException {
-      String charsetName = detectCharset(inputRecord, charset);  
-      Reader reader = new InputStreamReader(stream, charsetName);
+      Charset detectedCharset = detectCharset(inputRecord, charset);  
+      Reader reader = new InputStreamReader(stream, detectedCharset);
       BufferedReader lineReader = new BufferedReader(reader);
       Matcher matcher = regex.matcher("");
       StringBuilder lines = null;
