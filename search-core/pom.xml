@@ -36,10 +36,6 @@
       <version>${tika.version}</version>      
       <exclusions>
         <exclusion>
-          <groupId>commons-logging</groupId> 
-          <artifactId>commons-logging</artifactId> <!-- needed by pdfbox but solr-core replaces it with jcl-over-slf4j -->
-        </exclusion>
-        <exclusion>
           <groupId>org.apache.geronimo.specs</groupId> 
           <artifactId>geronimo-stax-api_1.0_spec</artifactId> <!-- needed by tika-parsers but already provided by JDK -->
         </exclusion>
