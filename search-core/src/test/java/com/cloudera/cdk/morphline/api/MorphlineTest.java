@@ -180,6 +180,30 @@ public class MorphlineTest extends AbstractMorphlineTest {
   }
 
   @Test
+  public void testContainsSuccess() throws Exception {
+    morphline = createMorphline("test-morphlines/contains");    
+    Record record = new Record();
+    record.put("food", "veggies");
+    record.put("food", "cookie");    
+    startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    assertTrue(morphline.process(record));
+    assertSame(record, collector.getFirstRecord());
+  }
+
+  @Test
+  public void testContainsFailure() throws Exception {
+    morphline = createMorphline("test-morphlines/contains");    
+    Record record = new Record();
+    record.put("food", "veggies");
+    record.put("food", "xxxxxxxxxxxxxx");    
+    startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    assertFalse(morphline.process(record));
+    assertEquals(0, collector.getRecords().size());
+  }
+
+  @Test
   public void testSplitAttachments() throws Exception {
     morphline = createMorphline("test-morphlines/splitAttachments");    
     Record record = new Record();
