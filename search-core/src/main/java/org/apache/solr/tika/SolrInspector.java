@@ -18,6 +18,7 @@
 package org.apache.solr.tika;
 
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Collection;
@@ -40,11 +41,14 @@ import org.apache.solr.common.util.DateUtil;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.PluginInfo;
 import org.apache.solr.core.SolrConfig;
+import org.apache.solr.core.SolrResourceLoader;
+import org.apache.solr.util.SystemIdResolver;
 import org.apache.solr.handler.extraction.ExtractingRequestHandler;
 import org.apache.solr.request.SolrRequestHandler;
 import org.apache.solr.schema.IndexSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import com.typesafe.config.Config;
@@ -56,7 +60,7 @@ import com.typesafe.config.ConfigValue;
  * WARNING: This API is not stable and NOT CONSIDERED PUBLIC. It is subject to change without notice!
  */
 public class SolrInspector {
-  
+
   public static final String SOLR_COLLECTION_LIST = "collection";
   public static final String SOLR_CLIENT_HOME = "solr.home";
   public static final String ZK_HOST = "zkHost";
@@ -138,7 +142,13 @@ public class SolrInspector {
       // SolrConfig solrConfig = new
       // SolrConfig("/cloud/apache-solr-4.0.0-BETA/example/solr/collection1/conf/solrconfig.xml");
 
-      schema = new IndexSchema(solrConfig, null, null);
+      SolrResourceLoader loader = solrConfig.getResourceLoader();
+ 
+      InputSource is = new InputSource(loader.openSchema("schema.xml"));
+          is.setSystemId(SystemIdResolver.createSystemIdFromResourceName("schema.xml"));
+        
+      schema = new IndexSchema(solrConfig, "schema.xml", is);
+     
       // schema = new IndexSchema(solrConfig, "schema.xml", null);
       // schema = new IndexSchema(solrConfig,
       // "/cloud/apache-solr-4.0.0-BETA/example/solr/collection1/conf/schema.xml",

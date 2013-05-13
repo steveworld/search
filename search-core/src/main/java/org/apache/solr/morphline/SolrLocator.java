@@ -18,6 +18,7 @@
  */
 package org.apache.solr.morphline;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -28,10 +29,14 @@ import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.impl.CloudSolrServer;
 import org.apache.solr.common.cloud.SolrZkClient;
 import org.apache.solr.core.SolrConfig;
+import org.apache.solr.core.SolrResourceLoader;
 import org.apache.solr.schema.IndexSchema;
+import org.apache.solr.tika.SolrInspector;
+import org.apache.solr.util.SystemIdResolver;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
@@ -162,8 +167,12 @@ public class SolrLocator {
       // "solrconfig.xml", null);
       // SolrConfig solrConfig = new
       // SolrConfig("/cloud/apache-solr-4.0.0-BETA/example/solr/collection1/conf/solrconfig.xml");
-
-      return new IndexSchema(solrConfig, null, null);
+      SolrResourceLoader loader = solrConfig.getResourceLoader();
+      
+      InputSource is = new InputSource(loader.openSchema("schema.xml"));
+          is.setSystemId(SystemIdResolver.createSystemIdFromResourceName("schema.xml"));
+        
+      return new IndexSchema(solrConfig, "schema.xml", is);
     } catch (ParserConfigurationException e) {
       throw new MorphlineRuntimeException(e);
     } catch (IOException e) {

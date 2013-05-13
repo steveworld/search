@@ -44,9 +44,9 @@ public class TestEnvironment extends Assert {
     System.out.println("Running test suite with solr-spec-version: " + p.getSpecificationVersion()
         + ", solr-impl-version: " + p.getImplementationVersion());
     if (EXPECTED_SOLR_VERSION != null) {
-      assertTrue("unexpected version: " + p.getSpecificationVersion(),
-          p.getSpecificationVersion().startsWith(EXPECTED_SOLR_VERSION + "."));
-      assertTrue("unexpected version: " + p.getImplementationVersion(),
+      assertTrue("unexpected version: " + p.getSpecificationVersion() + " expected:" + EXPECTED_SOLR_VERSION,
+          p.getSpecificationVersion().startsWith(EXPECTED_SOLR_VERSION + "-cdh"));
+      assertTrue("unexpected version: " + p.getImplementationVersion() + " expected:" + EXPECTED_SOLR_VERSION,
           p.getImplementationVersion().startsWith(EXPECTED_SOLR_VERSION + "-cdh"));
     }
     
