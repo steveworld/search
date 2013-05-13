@@ -45,7 +45,7 @@ public class EnvironmentTest extends Assert {
         + ", solr-impl-version: " + p.getImplementationVersion());
     if (EXPECTED_SOLR_VERSION != null) {
       assertTrue("unexpected version: " + p.getSpecificationVersion(),
-          p.getSpecificationVersion().startsWith(EXPECTED_SOLR_VERSION + "."));
+          p.getSpecificationVersion().startsWith(EXPECTED_SOLR_VERSION + "-cdh"));
       assertTrue("unexpected version: " + p.getImplementationVersion(),
           p.getImplementationVersion().startsWith(EXPECTED_SOLR_VERSION + "-cdh"));
     }
