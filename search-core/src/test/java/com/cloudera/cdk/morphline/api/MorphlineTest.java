@@ -89,9 +89,9 @@ public class MorphlineTest extends AbstractMorphlineTest {
     expected.put("first_name", "Nadja");
     expected.put("source_type", "text/log");
     expected.put("source_type", "text/log2");
-    expected.put("source_host", 123);
+    expected.put("source_host", "123");
     expected.put("name", "Nadja");
-    expected.put("names", "Nadja");
+    expected.put("names", "@{first_name}");
     expected.put("pids", 456);
     expected.put("pids", "hello");
     assertEquals(Arrays.asList(expected), collector.getRecords());
@@ -118,9 +118,9 @@ public class MorphlineTest extends AbstractMorphlineTest {
     expected.put("first_name", "Nadja");
     expected.put("source_type", "text/log");
     expected.put("source_type", "text/log2");
-    expected.put("source_host", 123);
+    expected.put("source_host", "123");
     expected.put("name", "Nadja");
-    expected.put("names", "Nadja");
+    expected.put("names", "@{first_name}");
     expected.put("pids", 456);
     expected.put("pids", "hello");
     assertEquals(Arrays.asList(expected), collector.getRecords());
@@ -141,11 +141,42 @@ public class MorphlineTest extends AbstractMorphlineTest {
     expected.put("source_type", "text/log2");
     expected.put("source_host", "123");
     expected.put("name", "Nadja");
-    expected.put("names", "Nadja");
+    expected.put("names", "@{first_name}");
     expected.put("pids", "456");
     expected.put("pids", "hello");
     assertEquals(Arrays.asList(expected), collector.getRecords());
     assertSame(record, collector.getRecords().get(0));
+  }
+
+  @Test
+  public void testEqualsSuccess() throws Exception {
+    morphline = createMorphline("test-morphlines/equalsSuccess");    
+    Record record = new Record();
+    record.put("first_name", "Nadja");
+//    record.put("field0", null);
+    record.put("field1", "true");
+//    record.put("field2", 123);
+    record.put("field3", "123");
+    record.put("field4", "123");
+    record.put("field4", 456);
+    record.put("field5", "Nadja");
+    
+    startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    assertTrue(morphline.process(record));
+    assertSame(record, collector.getFirstRecord());
+  }
+
+  @Test
+  /* Fails because Boolean.TRUE is not equals to the String "true" */
+  public void testEqualsFailure() throws Exception {
+    morphline = createMorphline("test-morphlines/equalsFailure");    
+    Record record = new Record();
+    record.put("field0", true);    
+    startSession();
+    assertEquals(1, collector.getNumStartEvents());
+    assertFalse(morphline.process(record));
+    assertEquals(0, collector.getRecords().size());
   }
 
   @Test
@@ -243,7 +274,8 @@ public class MorphlineTest extends AbstractMorphlineTest {
   public void testIsTrue() throws Exception {
     System.setProperty("MY_VARIABLE", "true");
     morphline = createMorphline("test-morphlines/isTrue");    
-    Record record = createBasicRecord();
+    Record record = new Record();
+    record.put("isTooYoung", "true");
     startSession();
     assertEquals(1, collector.getNumStartEvents());
     assertTrue(morphline.process(record));

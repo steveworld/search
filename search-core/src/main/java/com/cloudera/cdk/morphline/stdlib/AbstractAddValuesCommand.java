@@ -45,21 +45,13 @@ abstract class AbstractAddValuesCommand extends AbstractCommand {
       String fieldName = entry.getKey();
       prepare(record, fieldName);
       Object entryValue = entry.getValue();
-      if (entryValue instanceof String) {
-        List results = new FieldExpression((String) entryValue, getConfig()).evaluate(record);
-        putAll(record, fieldName, results);
-      } else if (entryValue instanceof List) {
-        for (Object value : (List)entryValue) {
-          if (value instanceof String) {
-            List results = new FieldExpression((String) value, getConfig()).evaluate(record);
-            putAll(record, fieldName, results);
-          } else {
-            put(record, fieldName, value);
-          }
-        }
+      Collection results;
+      if (entryValue instanceof Collection) {
+        results = (Collection)entryValue;
       } else {
-        put(record, fieldName, entryValue);
+        results = new FieldExpression(entryValue.toString(), getConfig()).evaluate(record);
       }
+      putAll(record, fieldName, results);
     }
     return super.doProcess(record);
   }
