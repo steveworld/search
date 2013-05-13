@@ -17,52 +17,66 @@ package com.cloudera.cdk.morphline.stdlib;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
-import com.cloudera.cdk.morphline.base.Configs;
+import com.cloudera.cdk.morphline.base.FieldExpression;
 import com.typesafe.config.Config;
 
 /**
- * Command that fails unless the (static) "value" parameter evaluates to true.
- **/
-public final class IsTrueBuilder implements CommandBuilder {
+ * Command that succeeds if all field values of the given named fields are equal to the the given
+ * values, and fails otherwise.
+ */
+public final class EqualsBuilder implements CommandBuilder {
 
   @Override
   public Collection<String> getNames() {
-    return Collections.singletonList("isTrue");
+    return Collections.singletonList("equals");
   }
 
   @Override
   public Command build(Config config, Command parent, Command child, MorphlineContext context) {
-    return new IsTrue(config, parent, child, context);
+    return new Equals(config, parent, child, context);
   }
   
   
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
   ///////////////////////////////////////////////////////////////////////////////
-  private static final class IsTrue extends AbstractCommand {
-    
-    private final boolean doContinue;
-    
-    public IsTrue(Config config, Command parent, Command child, MorphlineContext context) { 
-      super(config, parent, child, context);
-      this.doContinue = Configs.getBoolean(config, "value");
-    }
+  private static final class Equals extends AbstractCommand {
 
+    private final Set<Map.Entry<String, Object>> entrySet;
+    
+    public Equals(Config config, Command parent, Command child, MorphlineContext context) {
+      super(config, parent, child, context);      
+      entrySet = config.root().unwrapped().entrySet();
+    }
+        
     @Override
     protected boolean doProcess(Record record) {
-      if (doContinue) {
-        return super.doProcess(record);
-      } else {
-        return false;
+      for (Map.Entry<String, Object> entry : entrySet) {
+        String fieldName = entry.getKey();
+        List values = record.get(fieldName);
+        Object entryValue = entry.getValue();
+        Collection results;
+        if (entryValue instanceof Collection) {
+          results = (Collection)entryValue;
+        } else {
+          results = new FieldExpression(entryValue.toString(), getConfig()).evaluate(record);
+        }
+        if (!values.equals(results)) {
+          return false;
+        }
       }
+      return super.doProcess(record);
     }
-
+    
   }
-
+  
 }
