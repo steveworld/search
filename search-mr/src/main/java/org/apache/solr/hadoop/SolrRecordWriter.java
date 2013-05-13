@@ -182,7 +182,7 @@ class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
 
     CoreContainer container = new CoreContainer(loader) {
       // workaround since we don't call container#load
-      {initShardHandler(null);}
+      {initShardHandler();}
     };
     CoreDescriptor descr = new CoreDescriptor(container, "core1",
         solrHomeDir.toString());
