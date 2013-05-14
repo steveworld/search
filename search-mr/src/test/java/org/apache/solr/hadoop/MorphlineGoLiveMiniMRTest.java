@@ -298,10 +298,6 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
   
   private String[] prependInitialArgs(String[] args) {
     String[] head = new String[] {
-//        "--files", RESOURCES_DIR + "/test-morphlines/solrCellDocumentTypes.conf", 
-//        //    + "," + RESOURCES_DIR + "/org/apache/tika/mime/custom-mimetypes.xml",
-//        "-D", "morphlineFile=solrCellDocumentTypes.conf",
-        "-D", "enableMorphline=true",
         "--morphline-file=" + RESOURCES_DIR + "/test-morphlines/solrCellDocumentTypes.conf",
         "--morphline-id=morphline1",
     };
