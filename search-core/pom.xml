@@ -24,26 +24,11 @@
   <name>Search Core Indexer</name>
 
   <dependencies>
-    <dependency> <!-- see http://avro.apache.org -->
-      <groupId>org.apache.avro</groupId>
-      <artifactId>avro</artifactId>
-      <version>${avro.version}</version>
-    </dependency>    
 
-    <dependency> <!-- see http://tika.apache.org -->
-      <groupId>org.apache.tika</groupId>
-      <artifactId>tika-xmp</artifactId>
-      <version>${tika.version}</version>      
-      <exclusions>
-        <exclusion>
-          <groupId>org.apache.geronimo.specs</groupId> 
-          <artifactId>geronimo-stax-api_1.0_spec</artifactId> <!-- needed by tika-parsers but already provided by JDK -->
-        </exclusion>
-        <exclusion>
-          <groupId>xerces</groupId>
-          <artifactId>xercesImpl</artifactId> <!-- used by com.drewnoakes:metadata-extractor:jar but replacing built-in XML parser with legacy xerces is scary and probably don't need it -->
-        </exclusion>
-      </exclusions>
+    <dependency>
+      <groupId>com.cloudera.search</groupId>
+      <artifactId>cdk-morphlines-core</artifactId>
+      <version>${project.parent.version}</version>
     </dependency>
     
     <dependency> <!-- see http://lucene.apache.org/solr -->
@@ -65,32 +50,12 @@
       </exclusions>        
     </dependency>
 
-    <dependency> <!-- see http://lucene.apache.org/solr -->
-      <groupId>org.apache.solr</groupId>
-      <artifactId>solr-cell</artifactId>
-      <version>${solr.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>xerces</groupId>
-          <artifactId>xercesImpl</artifactId> <!-- used by ExtractingDocumentLoader but we never call it -->
-        </exclusion>
-        <exclusion>
-          <groupId>com.ibm.icu</groupId>
-          <artifactId>icu4j</artifactId> <!-- nothing in solr-cell is using this -->
-        </exclusion>
-      </exclusions>                  
-    </dependency>
-    
-    <dependency> <!-- see http://wiki.fasterxml.com/JacksonHome -->
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>${jackson.version}</version>
-    </dependency>
-
-    <dependency> <!-- see https://github.com/typesafehub/config -->
-      <groupId>com.typesafe</groupId>
-      <artifactId>config</artifactId>
-      <version>${typesafe.config.version}</version>
+    <dependency>
+      <groupId>com.cloudera.search</groupId>
+      <artifactId>cdk-morphlines-core</artifactId>
+      <version>${project.parent.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -102,15 +67,9 @@
 
     <dependency> <!-- see http://www.slf4j.org -->
       <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
+      <artifactId>slf4j-jcl</artifactId>
       <version>${slf4j.version}</version>
       <scope>test</scope>
-    </dependency>
-
-    <dependency> <!-- see http://metrics.codahale.com -->
-      <groupId>com.codahale.metrics</groupId>
-      <artifactId>metrics-core</artifactId>
-      <version>${codahale.metrics.version}</version>
     </dependency>
 
   </dependencies>
@@ -148,6 +107,22 @@
         <artifactId>maven-antrun-plugin</artifactId>
         <version>${maven.antrun.plugin.version}</version>
         <executions>
+          <execution>
+            <id>copy-srctest-env</id>
+            <phase>compile</phase>
+            <configuration>
+              <target> 
+                <!-- this sorta helps to stay in sync until we spin-off cdk-morphlines into another repo -->
+                <copy todir="${basedir}/src/test/resources">
+                  <fileset dir="${basedir}/../cdk-morphlines/cdk-morphlines-core/src/test/resources"/>
+                </copy>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+          
           <execution>
             <id>copy-test-env</id>
             <phase>process-test-resources</phase>

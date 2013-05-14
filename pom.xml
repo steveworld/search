@@ -84,7 +84,9 @@
   </properties>
 
   <modules>
+    <module>cdk-morphlines</module>
     <module>search-core</module>
+    <module>search-solrcell</module>
     <module>search-flume</module>
     <module>search-contrib</module>
     <module>search-mr</module>
