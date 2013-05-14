@@ -79,7 +79,7 @@
     <maven.antrun.plugin.version>1.7</maven.antrun.plugin.version>
     <build.helper.maven.plugin.version>1.7</build.helper.maven.plugin.version>    
     <apache.rat.version>0.7</apache.rat.version>
-    <codahale.metrics.version>3.0.0-BETA2</codahale.metrics.version>
+    <codahale.metrics.version>3.0.0-BETA3</codahale.metrics.version>
     <yammer.metrics.version>2.2.0</yammer.metrics.version>
   </properties>
 
