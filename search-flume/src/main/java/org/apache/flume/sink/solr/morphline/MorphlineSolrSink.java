@@ -112,10 +112,6 @@ public class MorphlineSolrSink extends AbstractSink implements Configurable {
       indexer.stop();
       sinkCounter.stop();
       LOGGER.info("Solr sink {} stopped. Metrics: {}, {}", getName(), sinkCounter);
-    } catch (IOException e) {
-      throw new FlumeException(e);
-    } catch (SolrServerException e) {
-      throw new FlumeException(e);
     } finally {
       super.stop();
     }

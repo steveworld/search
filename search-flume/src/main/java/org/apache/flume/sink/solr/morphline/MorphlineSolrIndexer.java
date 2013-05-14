@@ -19,12 +19,10 @@
 package org.apache.flume.sink.solr.morphline;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Map.Entry;
 
 import org.apache.flume.Context;
 import org.apache.flume.Event;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.morphline.FaultTolerance;
 
 import com.cloudera.cdk.morphline.api.Command;
@@ -82,7 +80,7 @@ public class MorphlineSolrIndexer implements SolrIndexer {
   }
 
   @Override
-  public void process(Event event) throws IOException, SolrServerException {
+  public void process(Event event) {
     Record record = new Record();
     for (Entry<String, String> entry : event.getHeaders().entrySet()) {
       record.put(entry.getKey(), entry.getValue());
@@ -100,17 +98,17 @@ public class MorphlineSolrIndexer implements SolrIndexer {
   }
 
   @Override
-  public void beginTransaction() throws IOException, SolrServerException {
+  public void beginTransaction() {
     Notifications.notifyBeginTransaction(morphline);      
   }
 
   @Override
-  public void commitTransaction() throws IOException, SolrServerException {
+  public void commitTransaction() {
     Notifications.notifyCommitTransaction(morphline);      
   }
 
   @Override
-  public void rollbackTransaction() throws IOException, SolrServerException {
+  public void rollbackTransaction() {
     Notifications.notifyRollbackTransaction(morphline);            
   }
 

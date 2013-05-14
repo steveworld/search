@@ -22,7 +22,6 @@ import java.io.IOException;
 
 import org.apache.flume.Event;
 import org.apache.flume.conf.Configurable;
-import org.apache.solr.client.solrj.SolrServerException;
 
 /**
  * Interface to load Flume events into Solr
@@ -30,10 +29,10 @@ import org.apache.solr.client.solrj.SolrServerException;
 public interface SolrIndexer extends Configurable {
 
   /** Begins a transaction */
-  public void beginTransaction() throws IOException, SolrServerException;
+  public void beginTransaction();
 
   /** Loads the given event into Solr */
-  public void process(Event event) throws IOException, SolrServerException;
+  public void process(Event event);
 
   /**
    * Sends any outstanding documents to Solr and waits for a positive
@@ -44,7 +43,7 @@ public interface SolrIndexer extends Configurable {
    * @throws IOException
    *           If there is a low-level I/O error.
    */
-  public void commitTransaction() throws IOException, SolrServerException;
+  public void commitTransaction();
 
   /**
    * Performs a rollback of all non-committed documents pending.
@@ -56,10 +55,10 @@ public interface SolrIndexer extends Configurable {
    * @throws IOException
    *           If there is a low-level I/O error.
    */
-  public void rollbackTransaction() throws IOException, SolrServerException;
+  public void rollbackTransaction();
 
   /** Releases allocated resources */
-  public void stop() throws IOException, SolrServerException;
+  public void stop();
 
 
 }

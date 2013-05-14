@@ -31,7 +31,6 @@ import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.interceptor.Interceptor;
-import org.apache.solr.client.solrj.SolrServerException;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.Record;
@@ -81,13 +80,7 @@ public class MorphlineInterceptor implements Interceptor {
   @Override
   public Event intercept(Event event) {
     collector.reset();
-    try {
-      morphline.process(event);
-    } catch (IOException e) {
-      throw new FlumeException(e);
-    } catch (SolrServerException e) {
-      throw new FlumeException(e);
-    }
+    morphline.process(event);
     List<Record> results = collector.getRecords();
     if (results.size() == 0) {
       return null;
