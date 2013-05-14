@@ -31,7 +31,7 @@ import com.fasterxml.uuid.impl.TimeBasedGenerator;
  * on all events that are intercepted. By default this event header is named
  * "id".
  */
-public class ParanoidUUIDInterceptor extends UUIDInterceptor {
+class ParanoidUUIDInterceptor extends UUIDInterceptor {
 
   private final RandomBasedGenerator randomBasedUuidGenerator = Generators.randomBasedGenerator();
   private final TimeBasedGenerator timeBasedUuidGenerator = Generators.timeBasedGenerator(EthernetAddress
