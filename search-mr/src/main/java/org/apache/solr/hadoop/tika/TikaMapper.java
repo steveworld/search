@@ -60,9 +60,11 @@ import org.apache.solr.tika.SolrCollection;
 import org.apache.solr.tika.SolrIndexer;
 import org.apache.solr.tika.StreamEvent;
 import org.apache.solr.tika.TikaIndexer;
+import org.apache.solr.util.SystemIdResolver;
 import org.apache.tika.metadata.Metadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import com.google.common.base.Joiner;
@@ -170,7 +172,11 @@ public class TikaMapper extends SolrMapper<LongWritable, Text> {
     try {
       SolrResourceLoader loader = new SolrResourceLoader(getSolrHomeDir().toString());
       SolrConfig solrConfig = new SolrConfig(loader, "solrconfig.xml", null);
-      IndexSchema mySchema = new IndexSchema(solrConfig, null, null);
+ 
+      InputSource is = new InputSource(loader.openSchema("schema.xml"));
+          is.setSystemId(SystemIdResolver.createSystemIdFromResourceName("schema.xml"));
+        
+      IndexSchema mySchema = new IndexSchema(solrConfig, "schema.xml", is);
 
       SolrParams params = new MapSolrParams(new HashMap<String,String>());
       Collection<String> dateFormats = DateUtil.DEFAULT_DATE_FORMATS;
