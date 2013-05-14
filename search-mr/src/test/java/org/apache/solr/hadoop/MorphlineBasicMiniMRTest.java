@@ -316,7 +316,7 @@ public class MorphlineBasicMiniMRTest extends Assert {
     
     // run again with --dryrun mode:  
     tool = createTool();
-    args = concat(args, new String[] {"--dryrun"});
+    args = concat(args, new String[] {"--dry-run"});
     res = ToolRunner.run(jobConf, tool, args);
     assertEquals(0, res);
 
