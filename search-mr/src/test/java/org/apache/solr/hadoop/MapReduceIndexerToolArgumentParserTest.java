@@ -32,8 +32,11 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MapReduceIndexerToolArgumentParserTest extends Assert {
+  
   private Configuration conf; 
   private MapReduceIndexerTool.MyArgumentParser parser;
   private MapReduceIndexerTool.Options opts;
@@ -42,8 +45,12 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   private ByteArrayOutputStream bout;
   private ByteArrayOutputStream berr;
   
+  private static final String RESOURCES_DIR = "target/test-classes";  
   private static final String SOLR_HOME_DIR = "target/test-classes/solr/minimr";
-  
+  private static final String MORPHLINE_FILE = RESOURCES_DIR + "/test-morphlines/solrCellDocumentTypes.conf";
+    
+  private static final Logger LOG = LoggerFactory.getLogger(MapReduceIndexerToolArgumentParserTest.class);
+
   @Before
   public void setUp() throws IOException {
     conf = new Configuration();
@@ -67,8 +74,10 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testArgsParserTypicalUse() {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
+        "--morphline-file", MORPHLINE_FILE,
+        "--morphline-id", "morphline_xyz",
         "--output-dir", "file:/tmp/foo",
-        "--solr-home-dir", SOLR_HOME_DIR, 
+        "--solr-home-dir", SOLR_HOME_DIR,
         "--mappers", "10", 
         "--reducers", "9", 
         "--fanout", "8", 
@@ -92,6 +101,8 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
     assertTrue(opts.isVerbose);
     assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), opts.inputFiles);
     assertEquals(RetainMostRecentUpdateConflictResolver.class.getName(), opts.updateConflictResolver);
+    assertEquals(MORPHLINE_FILE, opts.morphlineFile.getPath());
+    assertEquals("morphline_xyz", opts.morphlineId);
     assertEmptySystemErrAndEmptySystemOut();
   }
 
@@ -100,6 +111,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
         "--input-list", "file:///",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
         "--solr-home-dir", SOLR_HOME_DIR, 
         "--shards", "1",
@@ -118,6 +130,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testArgsParserTypicalUseWithEqualsSign() {
     String[] args = new String[] { 
         "--input-list=file:///tmp",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir=file:/tmp/foo",
         "--solr-home-dir=" + SOLR_HOME_DIR, 
         "--mappers=10", 
@@ -143,6 +156,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
     String[] args = new String[] { 
         "--input-list=file:///tmp",
         "--input-list=file:///",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir=file:/tmp/foo",
         "--solr-home-dir=" + SOLR_HOME_DIR, 
         "--shards", "1",
@@ -171,6 +185,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testArgsParserOk() {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
         "--solr-home-dir", SOLR_HOME_DIR, 
         "--shards", "1",
@@ -184,6 +199,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testArgsParserUpdateConflictResolver() {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
         "--solr-home-dir", SOLR_HOME_DIR, 
         "--shards", "1",
@@ -198,6 +214,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testArgsParserUnknownArgName() {
     String[] args = new String[] { 
         "--xxxxxxxxinputlist", "file:///tmp",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
         "--solr-home-dir", SOLR_HOME_DIR, 
         "--shards", "1",
@@ -209,6 +226,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testArgsParserFileNotFound1() {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/fileNotFound/foo",
         "--solr-home-dir", SOLR_HOME_DIR, 
         "--shards", "1",
@@ -220,6 +238,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testArgsParserFileNotFound2() {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
         "--solr-home-dir", "/fileNotFound", 
         "--shards", "1",
@@ -231,6 +250,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testArgsParserIntOutOfRange() {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
         "--solr-home-dir", SOLR_HOME_DIR, 
         "--shards", "1",
@@ -243,6 +263,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testArgsParserIllegalFanout() {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
         "--solr-home-dir", SOLR_HOME_DIR, 
         "--shards", "1",
@@ -255,6 +276,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testArgsParserSolrHomeMustContainSolrConfigFile() {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
         "--shards", "1",
         "--solr-home-dir", "/",
@@ -266,6 +288,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testArgsShardUrlOk() {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
         "--solr-home-dir", SOLR_HOME_DIR, 
         "--shard-url", "http://localhost:8983/solr/collection1",
@@ -284,6 +307,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testArgsShardUrlMustHaveAParam() {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
         "--solr-home-dir", SOLR_HOME_DIR, 
         "--shard-url",
@@ -295,6 +319,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testArgsShardUrlAndShardsSucceeds() {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
         "--solr-home-dir", SOLR_HOME_DIR, 
         "--shards", "1", 
@@ -308,6 +333,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testArgsShardUrlNoGoLive() {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
         "--solr-home-dir", SOLR_HOME_DIR, 
         "--shard-url", "http://localhost:8983/solr/collection1"
@@ -321,6 +347,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testArgsShardUrlsAndZkhostAreMutuallyExclusive() {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
         "--solr-home-dir", SOLR_HOME_DIR, 
         "--shard-url", "http://localhost:8983/solr/collection1",
@@ -335,6 +362,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testArgsGoLiveAndSolrUrl() {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
         "--solr-home-dir", SOLR_HOME_DIR, 
         "--shard-url", "http://localhost:8983/solr/collection1",
@@ -350,6 +378,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testArgsZkHostNoGoLive() {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
         "--solr-home-dir", SOLR_HOME_DIR, 
         "--zk-host", "http://localhost:2185",
@@ -361,6 +390,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testArgsGoLiveZkHostNoCollection() {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
         "--solr-home-dir", SOLR_HOME_DIR, 
         "--zk-host", "http://localhost:2185",
@@ -373,6 +403,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testArgsGoLiveNoZkHostOrSolrUrl() {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
         "--solr-home-dir", SOLR_HOME_DIR, 
         "--go-live"
@@ -384,6 +415,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testNoSolrHomeDirOrZKHost() {
     String[] args = new String[] {
         "--input-list", "file:///tmp",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
         "--shards", "1",
         };
@@ -394,6 +426,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testZKHostNoSolrHomeDirOk() {
     String[] args = new String[] {
         "--input-list", "file:///tmp",
+        "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
         "--zk-host", "http://localhost:2185",
         "--collection", "collection1",

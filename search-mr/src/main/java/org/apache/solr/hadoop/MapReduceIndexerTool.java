@@ -289,7 +289,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       Argument morphlineFileArg = requiredGroup.addArgument("--morphline-file")
         .metavar("FILE")
         .type(new FileArgumentType().verifyIsFile().verifyCanRead())
-        //.required(true) // FIXME on integration, also add to requiredGroup instead
+        .required(true)
         .help("Relative or absolute path to a local config file that contains one or more morphlines. " +
         		  "The file must be UTF-8 encoded. Example: /path/to/morphline.conf");
           
@@ -391,7 +391,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "job priorities - the priorities are used as weights to determine the fraction of total compute time " +
               "that each job gets.");
   
-      Argument dryRunArg = parser.addArgument("--dry-run", "--dryrun")
+      Argument dryRunArg = parser.addArgument("--dry-run")
         .action(Arguments.storeTrue())
         .help("Run in local mode and print documents to stdout instead of loading them into Solr. This executes " +
               "the morphline in the client process (without submitting a job to MR) for quicker turnaround during " +
