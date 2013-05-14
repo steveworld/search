@@ -24,7 +24,6 @@ import java.util.Map.Entry;
 
 import org.apache.flume.Context;
 import org.apache.flume.Event;
-import org.apache.flume.sink.solr.SolrIndexer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.morphline.FaultTolerance;
 

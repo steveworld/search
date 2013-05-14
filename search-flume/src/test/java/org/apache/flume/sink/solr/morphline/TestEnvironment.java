@@ -18,10 +18,11 @@ package org.apache.flume.sink.solr.morphline;
 
 import java.net.UnknownHostException;
 
+import org.apache.solr.morphline.EnvironmentTest;
 import org.junit.Test;
 
 /** Print and verify some info about the environment in which the unit tests are running */
-public class TestEnvironment extends org.apache.solr.tika.TestEnvironment {
+public class TestEnvironment extends EnvironmentTest {
 
   @Test
   public void testEnvironment() throws UnknownHostException {

@@ -71,8 +71,6 @@ import org.apache.solr.common.cloud.SolrZkClient;
 import org.apache.solr.hadoop.dedup.RetainMostRecentUpdateConflictResolver;
 import org.apache.solr.hadoop.morphline.MorphlineMapRunner;
 import org.apache.solr.hadoop.morphline.MorphlineMapper;
-import org.apache.solr.hadoop.tika.TikaMapper;
-import org.apache.solr.tika.TikaIndexer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -707,7 +705,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     
     String mapperClass = job.getConfiguration().get(JobContext.MAP_CLASS_ATTR);
     if (mapperClass == null) { // enable customization
-      Class clazz = enableMorphline ? MorphlineMapper.class : TikaMapper.class;
+      Class clazz = MorphlineMapper.class;
       mapperClass = clazz.getName();
       job.setMapperClass(clazz);
     }
@@ -802,9 +800,6 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     job.setNumReduceTasks(reducers);  
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(SolrInputDocumentWritable.class);
-    if (!enableMorphline) {
-      job.getConfiguration().set(TikaIndexer.TIKA_CONFIG_LOCATION, TIKA_CONFIG_FILE_NAME); // FIXME: remove as obsolete
-    }
     LOG.info("Indexing {} files using {} real mappers into {} reducers", numFiles, realMappers, reducers);
     startTime = System.currentTimeMillis();
     if (!waitForCompletion(job, options.isVerbose)) {

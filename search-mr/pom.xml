@@ -92,10 +92,38 @@
 
     <dependency>
       <groupId>com.cloudera.search</groupId>
-      <artifactId>search-core</artifactId>
+      <artifactId>search-solrcell</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>com.cloudera.search</groupId>
+      <artifactId>cdk-morphlines-avro</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
+  
+    <dependency>
+      <groupId>com.cloudera.search</groupId>
+      <artifactId>cdk-morphlines-tika</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
+  
+    <dependency> <!-- see http://tika.apache.org -->
+      <groupId>org.apache.tika</groupId>
+      <artifactId>tika-xmp</artifactId>
+      <version>${tika.version}</version>      
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.geronimo.specs</groupId> 
+          <artifactId>geronimo-stax-api_1.0_spec</artifactId> <!-- needed by tika-parsers but already provided by JDK -->
+        </exclusion>
+        <exclusion>
+          <groupId>xerces</groupId>
+          <artifactId>xercesImpl</artifactId> <!-- used by com.drewnoakes:metadata-extractor:jar but replacing built-in XML parser with legacy xerces is scary and probably don't need it -->
+        </exclusion>
+      </exclusions>
+    </dependency>
+    
     <dependency>
       <groupId>com.cloudera.search</groupId>
       <artifactId>search-core</artifactId>
@@ -104,6 +132,14 @@
       <scope>test</scope>
     </dependency>
     
+    <dependency>
+      <groupId>com.cloudera.search</groupId>
+      <artifactId>cdk-morphlines-core</artifactId>
+      <version>${project.parent.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+        
     <dependency> <!-- see http://argparse4j.sourceforge.net -->
       <groupId>net.sourceforge.argparse4j</groupId>
       <artifactId>argparse4j</artifactId>
@@ -159,12 +195,6 @@
       <scope>test</scope>
     </dependency>
 
-    <dependency> <!-- see http://metrics.codahale.com -->
-      <groupId>com.codahale.metrics</groupId>
-      <artifactId>metrics-core</artifactId>
-      <version>${codahale.metrics.version}</version>
-    </dependency>
-    
   </dependencies>
 
   <build>
