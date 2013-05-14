@@ -26,7 +26,6 @@ import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
@@ -56,7 +55,6 @@ public class MorphlineBasicMiniMRTest extends Assert {
   private static final String RESOURCES_DIR = "target/test-classes";
   private static final String DOCUMENTS_DIR = RESOURCES_DIR + "/test-documents";
   private static final File MINIMR_CONF_DIR = new File(RESOURCES_DIR + "/solr/minimr");
-  private static final String TIKA_CONFIG_FILE_NAME = MapReduceIndexerTool.TIKA_CONFIG_FILE_NAME;
   
   private static final String SEARCH_ARCHIVES_JAR = JarFinder.getJar(MapReduceIndexerTool.class);
 
@@ -139,12 +137,6 @@ public class MorphlineBasicMiniMRTest extends Assert {
   
   @After
   public void tearDown() {
-    if (ENABLE_LOCAL_JOB_RUNNER) {
-      File tikaConfigFile = new File(TIKA_CONFIG_FILE_NAME);
-      if (tikaConfigFile.exists()) {
-        assertTrue(tikaConfigFile.delete());
-      }
-    }
   }
 
   private JobConf getJobConf() {
@@ -267,9 +259,6 @@ public class MorphlineBasicMiniMRTest extends Assert {
     JobConf jobConf = getJobConf();
     if (ENABLE_LOCAL_JOB_RUNNER) { // enable Hadoop LocalJobRunner; this enables to run in debugger and set breakpoints
       jobConf.set("mapred.job.tracker", "local");
-      
-      // this is necessary because LocalJobRunner does not seem to implement Hadoop distributed cache feature 
-      FileUtils.copyFile(new File(RESOURCES_DIR + File.separator + TIKA_CONFIG_FILE_NAME), new File(TIKA_CONFIG_FILE_NAME)); 
     }
     jobConf.setMaxMapAttempts(1);
     jobConf.setMaxReduceAttempts(1);
@@ -286,10 +275,6 @@ public class MorphlineBasicMiniMRTest extends Assert {
     }
     
     String[] args = new String[] {
-//        "--files", RESOURCES_DIR + "/test-morphlines/solrCellDocumentTypes.conf", 
-//        //    + "," + RESOURCES_DIR + "/org/apache/tika/mime/custom-mimetypes.xml",
-//        "-D", "morphlineFile=solrCellDocumentTypes.conf",
-        "-D", "enableMorphline=true",
         "--morphline-file=" + RESOURCES_DIR + "/test-morphlines/solrCellDocumentTypes.conf",
         "--morphline-id=morphline1",
         "--solr-home-dir=" + MINIMR_CONF_DIR.getAbsolutePath(),

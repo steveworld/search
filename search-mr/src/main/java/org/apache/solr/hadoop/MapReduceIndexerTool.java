@@ -84,17 +84,12 @@ import com.cloudera.cdk.morphline.base.Fields;
  */
 public class MapReduceIndexerTool extends Configured implements Tool {
   
-  // TMP testing hack, remove this once morphlines is fully integrated with testing
-  private boolean enableMorphline = false;
-  
   Job job; // visible for testing only
   
   public static final String RESULTS_DIR = "results";
 
   static final String MAIN_MEMORY_RANDOMIZATION_THRESHOLD = 
       MapReduceIndexerTool.class.getName() + ".mainMemoryRandomizationThreshold";
-  
-  static final String TIKA_CONFIG_FILE_NAME = "tika-config.xml";
   
   private static final String FULL_INPUT_LIST = "full-input-list.txt";
   
@@ -607,9 +602,6 @@ public class MapReduceIndexerTool extends Configured implements Tool {
   
   /** API for Java clients; visible for testing; may become a public API eventually */
   int run(Options options) throws Exception {
-    if ("true".equals(getConf().get("enableMorphline"))) {
-      enableMorphline = true;
-    }
     if ("local".equals(getConf().get("mapred.job.tracker"))) {
       throw new IllegalStateException(
         "Running with LocalJobRunner (i.e. all of Hadoop inside a single JVM) is not supported " +
