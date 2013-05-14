@@ -1,3 +1,3 @@
-# Cloudera Search - Core
+# Cloudera Search - SolrCell
 
-Core library that higher level modules such as search-mr and search-flume depend on for indexing.
+Morphline commands for using SolrCell with Tika parsers.
