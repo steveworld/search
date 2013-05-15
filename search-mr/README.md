@@ -3,22 +3,12 @@
 Flexible, scalable, fault tolerant, batch oriented system for processing large numbers of records contained in files 
 that are stored on HDFS into search indexes stored on HDFS; Uses a morphline.
 
-# Building
+## Getting Started
 
-This step builds the software from source.
-
-<pre>
-git clone git@github.com:cloudera/search.git
-cd search
-#git checkout master
-mvn clean package
-cd search-mr
-ls target/*.jar
-</pre>
-
+The steps below assume you have already [built the software](../README.md).
 In addition, below we assume a working MapReduce cluster, for example as installed by Cloudera Manager.
 
-# MapReduceIndexerTool
+## MapReduceIndexerTool
 
 MapReduce batch job driver that creates a set of Solr index shards from a set of input files and writes the indexes  into  HDFS, in a flexible, scalable and fault-tolerant manner. 
 It also supports merging the output shards into a set of live customer facing Solr servers, typically a SolrCloud.
@@ -388,7 +378,7 @@ sudo -u hdfs hadoop \
   hdfs:///user/foo/indir
 </pre>
 
-# HdfsFindTool
+## HdfsFindTool
 
 HdfsFindTool is essentially the HDFS version of the Linux file system 'find' command. 
 The command walks one or more HDFS directory trees and finds all HDFS files that match the specified expression and applies selected actions to them. 
