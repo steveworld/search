@@ -161,7 +161,7 @@ optional arguments:
                          segments to be contained  on  output in the index
                          of each reducer shard. After  a reducer has built
                          its output index  it  applies  a  merge policy to
-                         merge segments  until  there  are  <= maxSegments
+                         merge segments  until  there  are  <\= maxSegments
                          lucene  segments  left  in  this  index.  Merging
                          segments involves reading and  rewriting all data
                          in all these segment  files, potentially multiple
@@ -286,7 +286,7 @@ Go live arguments:
 Generic options supported are
   --conf <configuration file>
                          specify an application configuration file
-  -D <property=value>    use value for given property
+  -D <property\=value>    use value for given property
   --fs <local|namenode:port>
                          specify a namenode
   --jt <local|jobtracker:port>
