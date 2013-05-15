@@ -522,13 +522,13 @@ Usage: hadoop fs [generic options]
     is specified.
 
 Generic options supported are
--conf <configuration file>     specify an application configuration file
--D <property=value>            use value for given property
--fs <local|namenode:port>      specify a namenode
--jt <local|jobtracker:port>    specify a job tracker
--files <comma separated list of files>    specify comma separated files to be copied to the map reduce cluster
--libjars <comma separated list of jars>    specify comma separated jar files to include in the classpath.
--archives <comma separated list of archives>    specify comma separated archives to be unarchived on the compute machines.
+-conf &lt;configuration file&gt;     specify an application configuration file
+-D &lt;property=value&gt;            use value for given property
+-fs &lt;local|namenode:port&gt;      specify a namenode
+-jt &lt;local|jobtracker:port&gt;    specify a job tracker
+-files &lt;comma separated list of files&gt;    specify comma separated files to be copied to the map reduce cluster
+-libjars &lt;comma separated list of jars&gt;    specify comma separated jar files to include in the classpath.
+-archives &lt;comma separated list of archives&gt;    specify comma separated archives to be unarchived on the compute machines.
 
 The general command line syntax is
 bin/hadoop command [genericOptions] [commandOptions]
