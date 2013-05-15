@@ -8,7 +8,7 @@ The sub-directories contain:
 * search-core: Morphline commands for Solr that higher level modules such as search-solrcell and search-mr and search-flume depend on for indexing
 * search-solrcell: Morphline commands for using SolrCell with Tika parsers
 * search-flume: Flume sink that extracts search documents from Apache Flume events (using a morphline), transforms them and loads them into Apache Solr 
-* search-mr: Flexible, scalable, fault tolerant, batch oriented system for processing large numbers of records contained in files that are stored on HDFS into search indexes stored on HDFS.
+* search-mr: Flexible, scalable, fault tolerant, batch oriented system for processing large numbers of records contained in files that are stored on HDFS into search indexes stored on HDFS; Uses a morphline
 * search-contrib: additional sources to help with search
 * samples: example configurations and test data files
 

@@ -1,7 +1,7 @@
 # Cloudera Search - MapReduce
 
 Flexible, scalable, fault tolerant, batch oriented system for processing large numbers of records contained in files 
-that are stored on HDFS into search indexes stored on HDFS.
+that are stored on HDFS into search indexes stored on HDFS; Uses a morphline.
 
 # Building
 
