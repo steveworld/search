@@ -623,6 +623,9 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     job = Job.getInstance(getConf());
     job.setJarByClass(getClass());
 
+    if (options.morphlineFile == null) {
+      throw new ArgumentParserException("Argument --morphline-file is required", null);
+    }
     verifyGoLiveArgs(options, null);
     verifyZKStructure(options, null);
 
@@ -750,44 +753,19 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       }
     }
     
-    if (options.morphlineId != null) {
-      job.getConfiguration().set(MorphlineMapRunner.MORPHLINE_ID_PARAM, options.morphlineId);
-    }
-    if (options.morphlineFile != null) {
-      // do the same as if the user had typed 'hadoop ... --files <morphlinesFile>' 
-      String HADOOP_TMP_FILES = "tmpfiles"; // see Hadoop's GenericOptionsParser
-      options.morphlineFile = options.morphlineFile.getCanonicalFile();
-      job.getConfiguration().set(MorphlineMapRunner.MORPHLINE_FILE_PARAM, options.morphlineFile.getPath());
-      String tmpFiles = job.getConfiguration().get(HADOOP_TMP_FILES, "");
-      if (tmpFiles.length() > 0) { // already present?
-        tmpFiles = tmpFiles + ","; 
-      }
-      GenericOptionsParser parser = new GenericOptionsParser(
-          new Configuration(job.getConfiguration()), 
-          new String[] { "--files", options.morphlineFile.getPath() });
-      String morphlineTmpFiles = parser.getConfiguration().get(HADOOP_TMP_FILES);
-      assert morphlineTmpFiles != null;
-      assert morphlineTmpFiles.length() > 0;
-      tmpFiles += morphlineTmpFiles;
-      job.getConfiguration().set(HADOOP_TMP_FILES, tmpFiles);
-      
-      // Verify that the morphline compiles without error (i.e. fail fast even before submitting a job) 
-      MorphlineMapRunner runner = new MorphlineMapRunner(
-          job.getConfiguration(), new DryRunDocumentLoader(), options.solrHomeDir.getPath());
-
-      if (options.isDryRun) {
-        LOG.info("Indexing {} files in dryrun mode", numFiles);
-        startTime = System.currentTimeMillis();
-        dryRun(runner, fs, fullInputList);
-        secs = (System.currentTimeMillis() - startTime) / 1000.0f;
-        LOG.info("Done. Indexing {} files in dryrun mode took {} secs", numFiles, secs);
-        goodbye(null, programStartTime);
-        return 0;
-      }      
-      
-      job.getConfiguration().set(MorphlineMapRunner.MORPHLINE_FILE_PARAM,
-          options.isDryRun ? options.morphlineFile.getPath() : options.morphlineFile.getName());
-    }
+    MorphlineMapRunner runner = setupMorphline(options);
+    if (options.isDryRun) {
+      LOG.info("Indexing {} files in dryrun mode", numFiles);
+      startTime = System.currentTimeMillis();
+      dryRun(runner, fs, fullInputList);
+      secs = (System.currentTimeMillis() - startTime) / 1000.0f;
+      LOG.info("Done. Indexing {} files in dryrun mode took {} secs", numFiles, secs);
+      goodbye(null, programStartTime);
+      return 0;
+    }      
+    
+    job.getConfiguration().set(MorphlineMapRunner.MORPHLINE_FILE_PARAM,
+        options.isDryRun ? options.morphlineFile.getPath() : options.morphlineFile.getName());
 
     job.setNumReduceTasks(reducers);  
     job.setOutputKeyClass(Text.class);
@@ -1058,6 +1036,35 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     return job2;
   }
 
+  private MorphlineMapRunner setupMorphline(Options options) throws IOException {
+    if (options.morphlineId != null) {
+      job.getConfiguration().set(MorphlineMapRunner.MORPHLINE_ID_PARAM, options.morphlineId);
+    }
+    
+    // do the same as if the user had typed 'hadoop ... --files <morphlinesFile>' 
+    String HADOOP_TMP_FILES = "tmpfiles"; // see Hadoop's GenericOptionsParser
+    options.morphlineFile = options.morphlineFile.getCanonicalFile();
+    job.getConfiguration().set(MorphlineMapRunner.MORPHLINE_FILE_PARAM, options.morphlineFile.getPath());
+    String tmpFiles = job.getConfiguration().get(HADOOP_TMP_FILES, "");
+    if (tmpFiles.length() > 0) { // already present?
+      tmpFiles = tmpFiles + ","; 
+    }
+    GenericOptionsParser parser = new GenericOptionsParser(
+        new Configuration(job.getConfiguration()), 
+        new String[] { "--files", options.morphlineFile.getPath() });
+    String morphlineTmpFiles = parser.getConfiguration().get(HADOOP_TMP_FILES);
+    assert morphlineTmpFiles != null;
+    assert morphlineTmpFiles.length() > 0;
+    tmpFiles += morphlineTmpFiles;
+    job.getConfiguration().set(HADOOP_TMP_FILES, tmpFiles);
+    
+    // Verify that the morphline compiles without error (i.e. fail fast even before submitting a job) 
+    MorphlineMapRunner runner = new MorphlineMapRunner(
+        job.getConfiguration(), new DryRunDocumentLoader(), options.solrHomeDir.getPath());
+
+    return runner;
+  }
+  
   /*
    * Executes the morphline in the current process (without submitting a job to MR) for quicker
    * turnaround during trial & debug sessions
