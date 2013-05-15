@@ -68,8 +68,8 @@ find . -name '*.jar'
 cd search
 mvn test -DskipTests eclipse:eclipse
 </pre>
-* `mvn eclipse:eclipse` creates several Eclipse projects, one for each maven submodule.It will also
-download and attach the jars of all transitive dependencies and their source code to the eclipse 
+* `mvn test -DskipTests eclipse:eclipse` creates several Eclipse projects, one for each maven submodule. 
+It will also download and attach the jars of all transitive dependencies and their source code to the eclipse 
 projects, so you can readily browse around the source of the entire call stack.
 * Then in eclipse do Menu `File/Import/Maven/Existing Maven Project/` on the root parent 
 directory `~/search` and select all submodules, then "Next" and "Finish". 
@@ -79,9 +79,10 @@ the maven "Nature" by clicking on the project in the browser, right clicking on 
 `Maven/Disable Maven Nature`. This way you get all the niceties of the maven dependency management 
 without the hassle of the (current) maven eclipse plugin, everything compiles fine from within 
 Eclipse, and junit works and passes from within Eclipse as well. 
-* When a pom changes simply rerun mvn eclipse:eclipse and then run Menu Eclipse/Refresh Project. 
-No need to disable the Maven "Nature" again and again.
+* When a pom changes simply rerun `mvn test -DskipTests eclipse:eclipse` and 
+then run Menu `Eclipse/Refresh Project`. No need to disable the Maven "Nature" again and again.
 * To run junit tests from within eclipse click on the project (e.g. `search-core` or `search-mr`, etc)
 in the eclipse project explorer, right click, `Run As/JUnit Test`, and, for `search-mr`, additionally 
 make sure to give it the following VM arguments: 
+
     -ea -Xmx512m -XX:MaxDirectMemorySize=256m -XX:MaxPermSize=128M
