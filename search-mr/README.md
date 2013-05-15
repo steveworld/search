@@ -284,20 +284,20 @@ Go live arguments:
                          (default: 1000)
 
 Generic options supported are
-  --conf <configuration file>
+  --conf \<configuration file\>
                          specify an application configuration file
-  -D <property=value>    use value for given property
-  --fs <local|namenode:port>
+  -D \<property\=value\>    use value for given property
+  --fs \<local|namenode:port\>
                          specify a namenode
-  --jt <local|jobtracker:port>
+  --jt \<local|jobtracker:port\>
                          specify a job tracker
-  --files <comma separated list of files>
+  --files \<comma separated list of files\>
                          specify comma separated  files  to  be  copied to
                          the map reduce cluster
-  --libjars <comma separated list of jars>
+  --libjars \<comma separated list of jars\>
                          specify comma separated jar  files  to include in
                          the classpath.
-  --archives <comma separated list of archives>
+  --archives \<comma separated list of archives\>
                          specify   comma   separated    archives   to   be
                          unarchived on the compute machines.
 
