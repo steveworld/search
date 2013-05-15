@@ -161,7 +161,7 @@ optional arguments:
                          segments to be contained  on  output in the index
                          of each reducer shard. After  a reducer has built
                          its output index  it  applies  a  merge policy to
-                         merge segments  until  there  are  less than or equal to maxSegments
+                         merge segments  until  there  are  &lt;= maxSegments
                          lucene  segments  left  in  this  index.  Merging
                          segments involves reading and  rewriting all data
                          in all these segment  files, potentially multiple
@@ -287,17 +287,17 @@ Generic options supported are
   --conf &lt;configuration file&gt;
                          specify an application configuration file
   -D &lt;property=value&gt;    use value for given property
-  --fs \<local|namenode:port\>
+  --fs &lt;local|namenode:port&gt;
                          specify a namenode
-  --jt \<local|jobtracker:port\>
+  --jt &lt;local|jobtracker:port&gt;
                          specify a job tracker
-  --files \<comma separated list of files\>
+  --files &lt;comma separated list of files&gt;
                          specify comma separated  files  to  be  copied to
                          the map reduce cluster
-  --libjars \<comma separated list of jars\>
+  --libjars &lt;comma separated list of jars&gt;
                          specify comma separated jar  files  to include in
                          the classpath.
-  --archives \<comma separated list of archives\>
+  --archives &lt;comma separated list of archives&gt;
                          specify   comma   separated    archives   to   be
                          unarchived on the compute machines.
 
