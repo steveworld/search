@@ -3,46 +3,53 @@
 Cloudera Search is [Apache Solr](http://lucene.apache.org/solr/) integrated with CDH, including Apache Lucene, Apache SolrCloud, Apache Flume, Apache Hadoop MapReduce and Apache Tika. 
 Cloudera Search also includes valuable integrations that make searching more scalable, easy to use, and optimized for both near-real-time and batch-oriented indexing.
 
-The sub-directories contain:
+## Modules
 
-## cdk-morphlines-core
+The following modules currently exist:
+
+### cdk-morphlines-core
 
 Morphline runtime and standard library that higher level modules such as cdk-morphlines-avro and cdk-morphlines-tika depend on.
 
-## cdk-morphlines-avro
+### cdk-morphlines-avro
 
 Morphline commands for reading, extracting and transforming Avro files and Avro objects.
 
-## cdk-morphlines-tika
+### cdk-morphlines-tika
 
 Morphline commands for auto-detecting MIME types, as well as decompressing and unpacking files. Depends on Apache Tika.
 
-## search-core
+### search-core
 
 Morphline commands for Solr that higher level modules such as search-solrcell and search-mr and search-flume depend on for indexing.
 
-## search-solrcell
+### search-solrcell
 
 Morphline commands for using SolrCell with Tika parsers.
 
-## search-flume
+### search-flume
 
 Flume sink that extracts search documents from Apache Flume events (using a morphline), transforms them and loads them into Apache Solr.
 
-## search-mr
+### search-mr
 
 Flexible, scalable, fault tolerant, batch oriented system for processing large numbers of records contained in files that are stored on HDFS into search indexes stored on HDFS; Uses a morphline.
 
-## search-contrib
+### search-contrib
 
 Additional sources to help with search.
 
-## samples
+### samples
 
 Example configurations and test data files.
 
 
-# Building
+## License
+
+Cloudera Search is provided under the Apache Software License 2.0. See the file
+`LICENSE.txt` for more information.
+
+## Building
 
 This step builds the software from source.
 
@@ -54,7 +61,7 @@ mvn clean package
 find . -name '*.jar'
 </pre>
 
-# How to integrate the codeline with Eclipse
+## How to integrate the codeline with Eclipse
 
 * Build the software as described above. Then create Eclipse projects like this:
 <pre>
