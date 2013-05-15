@@ -54,7 +54,7 @@ Morphline commands for using SolrCell with Tika parsers.
 
 ### search-flume
 
-Flume sink that extracts search documents from Apache Flume events (using a morphline), transforms them and loads them into Apache Solr.
+Flume sink that extracts search documents from Apache Flume events (using a morphline), transforms them and loads them in Near Real Time into Apache Solr.
 
 ### search-mr
 
