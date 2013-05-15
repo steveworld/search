@@ -3,9 +3,9 @@
 Cloudera Search is [Apache Solr](http://lucene.apache.org/solr/) integrated with CDH, including Apache Lucene, Apache SolrCloud, Apache Flume, Apache Hadoop MapReduce and Apache Tika. 
 Cloudera Search also includes valuable integrations that make searching more scalable, easy to use, and optimized for both near-real-time and batch-oriented indexing.
 
-## Modules
+## Maven Modules
 
-The following modules currently exist:
+The following maven modules currently exist:
 
 ### cdk-morphlines-core
 
@@ -61,8 +61,9 @@ mvn clean package
 find . -name '*.jar'
 </pre>
 
-## How to integrate the codeline with Eclipse
+## Integrating with Eclipse
 
+* This section describes how to integrate the codeline with Eclipse.
 * Build the software as described above. Then create Eclipse projects like this:
 <pre>
 cd search
