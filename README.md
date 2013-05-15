@@ -32,7 +32,7 @@ Cloudera ships a high performance runtime that processes all commands of a given
 same thread, and adds no artificial overheads. For high scalability, a large number of morphline 
 instances can be deployed on a cluster in a large number of Flume agents and MapReduce tasks. 
 
-### [cdk-morphlines-core](cdk-morphlines/cdk-morphlines-core/README.md)
+### cdk-morphlines-core
 
 Morphline runtime and standard library that higher level modules such as `cdk-morphlines-avro` and `cdk-morphlines-tika` depend on.
 
