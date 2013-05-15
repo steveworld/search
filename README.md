@@ -1,5 +1,8 @@
 # Cloudera Search
 
+Cloudera Search is [Apache Solr](http://lucene.apache.org/solr/) integrated with CDH, including Apache Lucene, Apache SolrCloud, Apache Flume, Apache Hadoop MapReduce and Apache Tika. 
+Cloudera Search also includes valuable integrations that make searching more scalable, easy to use, and optimized for both near-real-time and batch-oriented indexing.
+
 The sub-directories contain:
 
 ## cdk-morphlines-core
