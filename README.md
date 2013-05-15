@@ -84,5 +84,6 @@ then run Menu `Eclipse/Refresh Project`. No need to disable the Maven "Nature" a
 * To run junit tests from within eclipse click on the project (e.g. `search-core` or `search-mr`, etc)
 in the eclipse project explorer, right click, `Run As/JUnit Test`, and, for `search-mr`, additionally 
 make sure to give it the following VM arguments: 
-
-    -ea -Xmx512m -XX:MaxDirectMemorySize=256m -XX:MaxPermSize=128M
+<pre>
+-ea -Xmx512m -XX:MaxDirectMemorySize=256m -XX:MaxPermSize=128M
+</pre>
