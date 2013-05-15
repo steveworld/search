@@ -284,9 +284,9 @@ Go live arguments:
                          (default: 1000)
 
 Generic options supported are
-  --conf \<configuration file\>
+  --conf &lt;configuration file&gt;
                          specify an application configuration file
-  -D \<property\=value\>    use value for given property
+  -D &lt;property=value&gt;    use value for given property
   --fs \<local|namenode:port\>
                          specify a namenode
   --jt \<local|jobtracker:port\>
