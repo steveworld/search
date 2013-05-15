@@ -1,3 +1,3 @@
 # Cloudera Search - Core
 
-Core library that higher level modules such as search-mr and search-flume depend on for indexing.
+Morphline commands for Solr that higher level modules such as search-solrcell and search-mr and search-flume depend on for indexing.
