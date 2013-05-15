@@ -18,13 +18,6 @@ ls target/*.jar
 
 In addition, below we assume a working MapReduce cluster, for example as installed by Cloudera Manager.
 
-# Configuration
-
-* optionally edit mimetype -> Java parser class mapping in [src/test/resources/tika-config.xml](search-mr/src/test/resources/tika-config.xml)
-* optionally edit file -> mimetype mapping in [src/test/resources/org/apache/tika/mime/custom-mimetypes.xml](search-mr/src/test/resources/org/apache/tika/mime/custom-mimetypes.xml)
-** this file extends and overrides the mappings in the tika-mimetypes.xml file contained in tika-core.jar - [online version](http://github.com/apache/tika/blob/trunk/tika-core/src/main/resources/org/apache/tika/mime/tika-mimetypes.xml)
-* optionally edit log levels in src/test/resources/log4j.properties
-
 # MapReduceIndexerTool
 
 MapReduce batch job driver that creates a set of Solr index shards from a set of input files and writes the indexes  into  HDFS, in a flexible, scalable and fault-tolerant manner. 
@@ -35,12 +28,14 @@ More details are available through the extensive command line help:
 $ hadoop jar target/search-mr-*-job.jar org.apache.solr.hadoop.MapReduceIndexerTool --help
 
 usage: hadoop [GenericOptions]... jar search-mr-*-job.jar org.apache.solr.hadoop.MapReduceIndexerTool
-       [--help] [--input-list URI] --output-dir HDFS_URI
-       --solr-home-dir DIR [--update-conflict-resolver FQCN]
-       [--mappers INTEGER] [--reducers INTEGER] [--max-segments INTEGER]
-       [--fair-scheduler-pool STRING] [--verbose] [--go-live]
-       [--collection STRING] [--go-live-threads INTEGER] (--shard-url URL
-       | --zk-host STRING | --shards INTEGER) [HDFS_URI [HDFS_URI ...]]
+       [--help] --output-dir HDFS_URI [--input-list URI]
+       --morphline-file FILE [--morphline-id STRING] [--solr-home-dir DIR]
+       [--update-conflict-resolver FQCN] [--mappers INTEGER]
+       [--reducers INTEGER] [--max-segments INTEGER]
+       [--fair-scheduler-pool STRING] [--dry-run] [--verbose]
+       [--shard-url URL] [--zk-host STRING] [--shards INTEGER] [--go-live]
+       [--collection STRING] [--go-live-threads INTEGER]
+       [HDFS_URI [HDFS_URI ...]]
 
 MapReduce batch job driver that creates a  set of Solr index shards from a
 set of input files  and  writes  the  indexes  into  HDFS,  in a flexible,
@@ -55,31 +50,31 @@ mappers of the subsequent phase.
 
 2) Mapper phase: This  (parallel)  phase  takes  the input files, extracts
 the relevant content, transforms it and  hands SolrInputDocuments to a set
-of reducers. The ETL functionality  is  flexible and customizable. Parsers
-for a set of standard data  formats  such  as  Avro, CSV, Text, HTML, XML,
-PDF, Word, Excel, etc. are provided out  of the box, and additional custom
-parsers for additional file or data  formats  can  be added as Apache Tika
+of reducers. The  ETL  functionality  is  flexible  and customizable using
+chains  of  arbitrary  morphline  commands  that  pipe  records  from  one
+transformation command to another. Commands  to  parse and transform a set
+of standard data formats such as  Avro,  CSV,  Text, HTML, XML, PDF, Word,
+Excel, etc. are provided out  of  the  box, and additional custom commands
+and parsers for additional file or data  formats can be added as morphline
 plugins. This  is  done  by  implementing  a  simple  Java  interface that
-consumes a file in  the  form  of  an  InputStream  plus some headers plus
-contextual   metadata,   and   generates   as    output   zero   or   more
-SolrInputDocuments. Any kind of data  format  can  be indexed and any Solr
-documents for any kind of  Solr  schema  can  be generated, and any custom
-ETL logic can be registered and executed.
-Input files are mapped to MIME  types  via the standard Tika configuration
-mechanism,  i.e.  by   passing   on   the   classpath   the  config  files
-org/apache/tika/mime/tika-mimetypes.xml (which already  ships  embedded in
-tika-core.jar   -    see    http://github.com/apache/tika/blob/trunk/tika-
+consumes a record (e.g. a file  in  the  form  of an InputStream plus some
+headers plus contextual metadata)  and  generates  as  output zero or more
+records. Any kind of data  format  can  be  indexed and any Solr documents
+for any kind of Solr schema  can  be  generated,  and any custom ETL logic
+can be registered and executed.
+Optionally, rich  input  files  can  be  mapped  to  MIME  types  via  the
+detectMimeType morphline command, i.e. by  specifying  to include the Tika
+defaultMimeTypes config file (which  already  ships embedded in tika-core.
+jar       -       see       http://github.com/apache/tika/blob/trunk/tika-
 core/src/main/resources/org/apache/tika/mime/tika-mimetypes.xml)       and
-optionally also  the  config  file  org/apache/tika/mime/custom-mimetypes.
-xml, which extends and overrides  the  settings in tika-mimetypes.xml with
-custom directives.
-Headers, including MIME types,  can  also  explicitly  be  passed by force
-from the CLI to Tika,  for  example: hadoop ... -D org.apache.solr.hadoop.
-tika.TikaMapper.header.stream.type=application/null-tika-parser
-Next, MIME types  are  mapped  to  Tika  parsers  (Java  classes)  via the
-standard Tika configuration mechanism,  i.e.  by  passing  the config file
-tika-config.xml. This config  file  lists  which  Java  parser classes are
-invoked for which MIME types.
+optionally also one  or  more  custom-mimetypes.xml  configs  (either as a
+file or embedded  XML  fragment),  which  extends  and  overrides the Tika
+defaultMimeTypes with custom directives.
+Morphline commands can use MIME  types  to  determine how to interpret the
+input data. 
+Fields, including MIME types, can also  explicitly be passed by force from
+the CLI to the  morphline,  for  example:  hadoop  ... -D org.apache.solr.
+hadoop.morphline.MorphlineMapRunner.field._attachment_mimetype=text/csv
 
 3)   Reducer   phase:   This   (parallel)   phase   loads   the   mapper's
 SolrInputDocuments into  one  EmbeddedSolrServer  per  reducer.  Each such
@@ -113,10 +108,12 @@ optional arguments:
                          per line in the file.  If  '-' is specified, URIs
                          are read from  the  standard  input.  Multiple --
                          input-list arguments can be specified.
-  --output-dir HDFS_URI  HDFS directory to write  Solr  indexes to. Inside
-                         there one  output  directory  per  shard  will be
-                         generated.    Example:    hdfs://c2202.mycompany.
-                         com/user/$USER/test
+  --morphline-id STRING  The identifier of  the  morphline  that  shall be
+                         executed  within   the   morphline   config  file
+                         specified  by   --morphline-file.   If   the   --
+                         morphline-id option is  ommitted  the first (i.e.
+                         top-most) morphline  within  the  config  file is
+                         used. Example: morphline1
   --solr-home-dir DIR    Relative  or  absolute  path   to   a  local  dir
                          containing  Solr  conf/  dir  and  in  particular
                          conf/solrconfig.xml  and  optionally   also  lib/
@@ -209,15 +206,32 @@ optional arguments:
                          priorities - the priorities  are  used as weights
                          to determine the fraction  of  total compute time
                          that each job gets.
+  --dry-run              Run in local mode  and  print documents to stdout
+                         instead of loading them  into Solr. This executes
+                         the morphline  in  the  client  process  (without
+                         submitting a job  to  MR)  for quicker turnaround
+                         during early trial  &  debug  sessions. (default:
+                         false)
   --verbose, -v          Turn on verbose output. (default: false)
 
+Required arguments:
+  --output-dir HDFS_URI  HDFS directory to write  Solr  indexes to. Inside
+                         there one  output  directory  per  shard  will be
+                         generated.    Example:    hdfs://c2202.mycompany.
+                         com/user/$USER/test
+  --morphline-file FILE  Relative or absolute path to  a local config file
+                         that contains one  or  more  morphlines. The file
+                         must     be      UTF-8      encoded.     Example:
+                         /path/to/morphline.conf
+
 Cluster arguments:
-  Mutually exclusive arguments that  provide  information  about your Solr
-  cluster. If you are not using  --go-live, pass the --shards argument. If
-  you are building shards for  a  Non-SolrCloud cluster, pass the --shard-
-  url argument one  or  more  times.  If  you  are  building  shards for a
-  SolrCloud  cluster,  pass  the   --zk-host   argument.  Using  --go-live
-  requires either --shard-url or --zk-host.
+  Arguments that provide information about  your  Solr cluster. If you are
+  not using --go-live, pass  the  --shards  argument.  If you are building
+  shards for a Non-SolrCloud  cluster,  pass  the --shard-url argument one
+  or more times. To build indexes  for  a replicated cluster with --shard-
+  url, pass replica urls consecutively and  also pass --shards. If you are
+  building shards for a  SolrCloud  cluster,  pass the --zk-host argument.
+  Using --go-live requires either --shard-url or --zk-host.
 
   --shard-url URL        Solr URL to merge  resulting  shard into if using
                          --go-live. Example: http://solr001.mycompany.com:
@@ -253,6 +267,10 @@ Cluster arguments:
                          getting/setting/etc...  '/foo/bar'  would  result
                          in operations being run  on '/solr/foo/bar' (from
                          the server perspective).
+                         
+                         If --solr-home-dir  is  not  specified,  the Solr
+                         home  directory  for   the   collection  will  be
+                         downloaded from this ZooKeeper ensemble.
   --shards INTEGER       Number of output shards to generate.
 
 Go live arguments:
@@ -298,7 +316,7 @@ bin/hadoop command [genericOptions] [commandOptions]
 
 Examples: 
 
-# Prepare a config jar file containing org/apache/tika/mime/custom-mimetypes.xml and custom mylog4j.properties:
+# Prepare a config jar file containing a custom mylog4j.properties:
 rm -fr myconfig; mkdir myconfig
 cp src/test/resources/log4j.properties myconfig/mylog4j.properties
 cp -r src/test/resources/org myconfig/
@@ -307,11 +325,10 @@ jar -cMvf myconfig.jar -C myconfig .
 # (Re)index an Avro based Twitter tweet file:
 sudo -u hdfs hadoop \
   --config /etc/hadoop/conf.cloudera.mapreduce1 \
-  jar search-mr-*-job.jar org.apache.solr.hadoop.MapReduceIndexerTool \
-  --files src/test/resources/tika-config.xml \
+  jar target/search-mr-*-job.jar org.apache.solr.hadoop.MapReduceIndexerTool \
   --libjars myconfig.jar \
   -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \
-  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \
+  --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \
   --solr-home-dir src/test/resources/solr/minimr \
   --output-dir hdfs://c2202.mycompany.com/user/$USER/test \
   --shards 1 \
@@ -332,11 +349,10 @@ hadoop jar target/search-mr-*-job.jar org.apache.solr.hadoop.HdfsFindTool \
   -size +1000000c \
 | sudo -u hdfs hadoop \
   --config /etc/hadoop/conf.cloudera.mapreduce1 \
-  jar search-mr-*-job.jar org.apache.solr.hadoop.MapReduceIndexerTool \
-  --files src/test/resources/tika-config.xml \
-  --libjars myconfig.jar,../search-contrib/target/search-contrib-*-SNAPSHOT.jar \
+  jar target/search-mr-*-job.jar org.apache.solr.hadoop.MapReduceIndexerTool \
+  --libjars myconfig.jar \
   -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \
-  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \
+  --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadJsonTestTweets.conf \
   --solr-home-dir src/test/resources/solr/minimr \
   --output-dir hdfs://c2202.mycompany.com/user/$USER/test \
   --shards 100 \
@@ -346,11 +362,10 @@ hadoop jar target/search-mr-*-job.jar org.apache.solr.hadoop.HdfsFindTool \
 # (explicitly specify Solr URLs - for a SolrCloud cluster see next example):
 sudo -u hdfs hadoop \
   --config /etc/hadoop/conf.cloudera.mapreduce1 \
-  jar search-mr-*-job.jar org.apache.solr.hadoop.MapReduceIndexerTool \
-  --files src/test/resources/tika-config.xml \
+  jar target/search-mr-*-job.jar org.apache.solr.hadoop.MapReduceIndexerTool \
   --libjars myconfig.jar \
   -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \
-  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \
+  --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \
   --solr-home-dir src/test/resources/solr/minimr \
   --output-dir hdfs://c2202.mycompany.com/user/$USER/test \
   --shard-url http://solr001.mycompany.com:8983/solr/collection1 \
@@ -362,12 +377,10 @@ sudo -u hdfs hadoop \
 # (discover shards and Solr URLs through ZooKeeper):
 sudo -u hdfs hadoop \
   --config /etc/hadoop/conf.cloudera.mapreduce1 \
-  jar search-mr-*-job.jar org.apache.solr.hadoop.MapReduceIndexerTool \
-  --files src/test/resources/tika-config.xml \
+  jar target/search-mr-*-job.jar org.apache.solr.hadoop.MapReduceIndexerTool \
   --libjars myconfig.jar \
   -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \
-  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \
-  --solr-home-dir src/test/resources/solr/minimr \
+  --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \
   --output-dir hdfs://c2202.mycompany.com/user/$USER/test \
   --zk-host zk01.mycompany.com:2181/solr \
   --collection collection1 \
