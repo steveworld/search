@@ -73,7 +73,7 @@ public final class ReadSequenceFileBuilder implements CommandBuilder {
   
     public ReadSequenceFile(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
-      this.includeMetaData = Configs.getBoolean(config, "includeMetaData", true);
+      this.includeMetaData = Configs.getBoolean(config, "includeMetaData", false);
       this.keyField = Configs.getString(config, CONFIG_KEY_FIELD, Fields.ATTACHMENT_NAME);
       this.valueField = Configs.getString(config, CONFIG_VALUE_FIELD, Fields.ATTACHMENT_BODY);
     }
