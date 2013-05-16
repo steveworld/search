@@ -15,7 +15,6 @@
  */
 package org.apache.solr.morphline.solrcell;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,15 +23,10 @@ import org.apache.solr.common.params.MapSolrParams;
 import org.apache.solr.common.util.DateUtil;
 import org.apache.solr.handler.extraction.SolrContentHandler;
 import org.apache.solr.morphline.AbstractSolrMorphlineTest;
-import org.apache.solr.morphline.solrcell.StripNonCharSolrContentHandlerFactory;
 import org.apache.solr.schema.IndexSchema;
 import org.apache.tika.metadata.Metadata;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.cloudera.cdk.morphline.api.Record;
-import com.cloudera.cdk.morphline.base.Fields;
-import com.cloudera.cdk.morphline.base.Notifications;
 
 public class SolrCellMorphlineTest extends AbstractSolrMorphlineTest {
 
