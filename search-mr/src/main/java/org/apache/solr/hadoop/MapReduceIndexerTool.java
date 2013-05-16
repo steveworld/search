@@ -121,7 +121,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .newArgumentParser("hadoop [GenericOptions]... jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName(), false)
         .defaultHelp(true)
         .description(
-          "MapReduce batch job driver that creates a set of Solr index shards from a set of input files " +
+          "MapReduce batch job driver that takes a morphline and creates a set of Solr index shards from a set of input files " +
           "and writes the indexes into HDFS, in a flexible, scalable and fault-tolerant manner. " +
           "It also supports merging the output shards into a set of live customer facing Solr servers, " +
           "typically a SolrCloud. The program proceeds in several consecutive MapReduce based phases, as follows:" +

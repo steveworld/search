@@ -1,7 +1,9 @@
 # Cloudera Search
 
-Cloudera Search is [Apache Solr](http://lucene.apache.org/solr/) integrated with CDH, including Apache Lucene, Apache SolrCloud, Apache Flume, Apache Hadoop MapReduce and Apache Tika. 
-Cloudera Search also includes valuable integrations that make searching more scalable, easy to use, and optimized for both near-real-time and batch-oriented indexing.
+Cloudera Search is [Apache Solr](http://lucene.apache.org/solr/) integrated with CDH, 
+including Apache Lucene, Apache SolrCloud, Apache Flume, Apache Hadoop MapReduce & HDFS, 
+and Apache Tika. Cloudera Search also includes valuable integrations that make searching 
+more scalable, easy to use, and optimized for both near-real-time and batch-oriented indexing.
 
 ## Maven Modules
 
@@ -28,13 +30,15 @@ manner.
 This enables rapid prototyping of Hadoop ETL applications, complex stream and event 
 processing in real time, flexible Log File Analysis, integration of multiple heterogeneous input 
 schemas and file formats, as well as reuse of ETL logic building blocks across Search applications.
-Cloudera ships a high performance runtime that processes all commands of a given morphline in the 
-same thread, and adds no artificial overheads. For high scalability, a large number of morphline 
-instances can be deployed on a cluster in a large number of Flume agents and MapReduce tasks. 
+Cloudera ships a high performance runtime that compiles a morphline on the fly and processes all 
+commands of a given morphline in the same thread, and adds no artificial overheads. 
+For high scalability, a large number of morphline instances can be deployed on a cluster in a 
+large number of Flume agents and MapReduce tasks. 
 
 ### cdk-morphlines-core
 
-Morphline runtime and standard library that higher level modules such as `cdk-morphlines-avro` and `cdk-morphlines-tika` depend on.
+Morphline compiler, runtime and standard library of commands that higher level modules such as 
+`cdk-morphlines-avro` and `cdk-morphlines-tika` depend on.
 
 ### cdk-morphlines-avro
 
@@ -42,23 +46,37 @@ Morphline commands for reading, extracting and transforming Avro files and Avro 
 
 ### cdk-morphlines-tika
 
-Morphline commands for auto-detecting MIME types, as well as decompressing and unpacking files. Depends on Apache Tika.
+Morphline commands for auto-detecting MIME types from binary data, as well as decompressing and 
+unpacking files. Depends on Apache Tika.
 
 ### search-core
 
-Morphline commands for Solr that higher level modules such as `search-solrcell` and `search-mr` and `search-flume` depend on for indexing.
+Morphline commands for Solr that higher level modules such as `search-solrcell` and `search-mr` 
+and `search-flume` depend on for indexing.
 
 ### search-solrcell
 
-Morphline commands for using SolrCell with Tika parsers.
+Morphline commands for using SolrCell with Tika parsers. This includes support for Text, HTML, 
+XML, PDF, Word, Excel, Audio, Video, etc. 
 
 ### search-flume
 
-Flume sink that extracts search documents from Apache Flume events (using a morphline), transforms them and loads them in Near Real Time into Apache Solr.
+Flume Morphline Solr Sink that extracts search documents from Apache Flume events, transforms 
+them and loads them in Near Real Time into Apache Solr, typically a SolrCloud.
+
+Also includes a Flume MorphlineInterceptor that can be used to implement software defined network
+routing policies in a Flume network topology, or to ignore certain events or alter or insert 
+certain event headers via regular expression based pattern matching, etc.
 
 ### search-mr
 
-Flexible, scalable, fault tolerant, batch oriented system for processing large numbers of records contained in files that are stored on HDFS into search indexes stored on HDFS; Uses a morphline.
+Flexible, scalable, fault tolerant, batch oriented system for processing large numbers of records 
+contained in files that are stored on HDFS into search indexes stored on HDFS.
+
+`MapReduceIndexerTool` is a MapReduce batch job driver that takes a morphline and creates a set of Solr 
+index shards from a set of input files and writes the indexes into HDFS in a flexible, scalable, 
+and fault-tolerant manner. It also supports merging the output shards into a set of live 
+customer-facing Solr servers, typically a SolrCloud.
 
 ### search-contrib
 
