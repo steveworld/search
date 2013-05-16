@@ -24,7 +24,6 @@ import java.util.Collections;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
-import org.apache.solr.hadoop.morphline.seqfile.ReadSequenceFileBuilder;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
