@@ -29,12 +29,12 @@ usage: hadoop [GenericOptions]... jar search-mr-*-job.jar org.apache.solr.hadoop
        [--collection STRING] [--go-live-threads INTEGER]
        [HDFS_URI [HDFS_URI ...]]
 
-MapReduce batch job driver that creates a  set of Solr index shards from a
-set of input files  and  writes  the  indexes  into  HDFS,  in a flexible,
-scalable and fault-tolerant manner.  It  also  supports merging the output
-shards into a  set  of  live  customer  facing  Solr  servers, typically a
-SolrCloud. The program  proceeds  in  several  consecutive MapReduce based
-phases, as follows:
+MapReduce batch job driver that  takes  a  morphline  and creates a set of
+Solr index shards from a set  of  input  files and writes the indexes into
+HDFS, in a flexible, scalable and  fault-tolerant manner. It also supports
+merging the  output  shards  into  a  set  of  live  customer  facing Solr
+servers,  typically  a  SolrCloud.   The   program   proceeds  in  several
+consecutive MapReduce based phases, as follows:
 
 1) Randomization phase:  This  (parallel)  phase  randomizes  the  list of
 input files in  order  to  spread  indexing  load  more  evenly  among the
