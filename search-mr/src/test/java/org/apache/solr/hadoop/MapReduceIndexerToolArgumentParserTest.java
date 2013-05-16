@@ -176,7 +176,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
     String[] args = new String[] { "--help" };
     assertEquals(new Integer(0), parser.parseArgs(args, conf, opts));
     String helpText = new String(bout.toByteArray(), "UTF-8");
-    assertTrue(helpText.contains("MapReduce batch job driver that creates "));
+    assertTrue(helpText.contains("MapReduce batch job driver that "));
     assertTrue(helpText.contains("bin/hadoop command"));
     assertEquals(0, berr.toByteArray().length);
   }
