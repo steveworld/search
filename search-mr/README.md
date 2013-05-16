@@ -1,7 +1,7 @@
 # Cloudera Search - MapReduce
 
 Flexible, scalable, fault tolerant, batch oriented system for processing large numbers of records contained in files 
-that are stored on HDFS into search indexes stored on HDFS; Uses a morphline.
+that are stored on HDFS into search indexes stored on HDFS.
 
 ## Getting Started
 
@@ -10,8 +10,10 @@ In addition, below we assume a working MapReduce cluster, for example as install
 
 ## MapReduceIndexerTool
 
-MapReduce batch job driver that creates a set of Solr index shards from a set of input files and writes the indexes  into  HDFS, in a flexible, scalable and fault-tolerant manner. 
-It also supports merging the output shards into a set of live customer facing Solr servers, typically a SolrCloud.
+`MapReduceIndexerTool` is a MapReduce batch job driver that takes a morphline and creates a set of Solr 
+index shards from a set of input files and writes the indexes into HDFS in a flexible, scalable, 
+and fault-tolerant manner. It also supports merging the output shards into a set of live 
+customer-facing Solr servers, typically a SolrCloud.
 More details are available through the extensive command line help:
 
 <pre>
