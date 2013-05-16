@@ -18,7 +18,6 @@
  */
 package org.apache.solr.morphline;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;

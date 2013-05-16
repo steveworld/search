@@ -47,7 +47,6 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.morphline.DocumentLoader;
 import org.apache.solr.morphline.FaultTolerance;
-import org.apache.solr.morphline.SafeConcurrentUpdateSolrServer;
 import org.apache.solr.morphline.SolrLocator;
 import org.apache.solr.morphline.SolrMorphlineContext;
 import org.apache.solr.morphline.SolrServerDocumentLoader;
@@ -113,8 +112,9 @@ public class TestMorphlineSolrSink extends SolrTestCaseJ4 {
     final Map<String, String> context = new HashMap();
     
     if (EXTERNAL_SOLR_SERVER_URL != null) {
+      throw new UnsupportedOperationException();
       //solrServer = new ConcurrentUpdateSolrServer(EXTERNAL_SOLR_SERVER_URL, 2, 2);
-      solrServer = new SafeConcurrentUpdateSolrServer(EXTERNAL_SOLR_SERVER_URL, 2, 2);
+      //solrServer = new SafeConcurrentUpdateSolrServer(EXTERNAL_SOLR_SERVER_URL, 2, 2);
       //solrServer = new HttpSolrServer(EXTERNAL_SOLR_SERVER_URL);
     } else {
       if (TEST_WITH_EMBEDDED_SOLR_SERVER) {
