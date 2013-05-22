@@ -65,11 +65,10 @@
       <version>${junit.version}</version>
     </dependency>
 
-    <dependency> <!-- see http://www.slf4j.org -->
+    <dependency> <!-- (required by solrj) see http://www.slf4j.org -->
       <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-jcl</artifactId>
+      <artifactId>jcl-over-slf4j</artifactId>
       <version>${slf4j.version}</version>
-      <scope>test</scope>
     </dependency>
 
   </dependencies>

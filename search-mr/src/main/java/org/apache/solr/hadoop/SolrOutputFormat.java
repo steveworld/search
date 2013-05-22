@@ -160,6 +160,7 @@ public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
 
   @Override
   public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
+    Utils.getLogConfigFile(context.getConfiguration());
     Path workDir = getDefaultWorkFile(context, "");
     int batchSize = getBatchSize(context.getConfiguration());
     return new SolrRecordWriter<K, V>(context, workDir, batchSize);

@@ -16,8 +16,29 @@
  */
 package org.apache.solr.hadoop;
 
+import java.io.File;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.log4j.PropertyConfigurator;
+
+import com.google.common.annotations.Beta;
+
+
+@Beta
 public final class Utils {
+  
+  private static final String LOG_CONFIG_FILE = "hadoop.log4j.configuration";
+  
+  public static void setLogConfigFile(File file, Configuration conf) {
+    conf.set(LOG_CONFIG_FILE, file.getName());
+  }
+
+  public static void getLogConfigFile(Configuration conf) {
+    String log4jPropertiesFile = conf.get(LOG_CONFIG_FILE);
+    if (log4jPropertiesFile != null) {
+      PropertyConfigurator.configure(log4jPropertiesFile);
+    }
+  }
 
   public static String getShortClassName(Class clazz) {
     return getShortClassName(clazz.getName());

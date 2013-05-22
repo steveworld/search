@@ -61,7 +61,6 @@ import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
-import com.cloudera.cdk.morphline.base.Configs;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.stdio.AbstractParser;
 import com.google.common.base.Joiner;
@@ -115,7 +114,7 @@ public final class SolrCellBuilder implements CommandBuilder {
     public SolrCell(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
       
-      Config solrLocatorConfig = Configs.getConfig(config, "solrLocator");
+      Config solrLocatorConfig = getConfigs().getConfig(config, "solrLocator");
       SolrLocator locator = new SolrLocator(solrLocatorConfig, context);
       LOG.debug("solrLocator: {}", locator);
       this.schema = locator.getIndexSchema();
@@ -123,36 +122,39 @@ public final class SolrCellBuilder implements CommandBuilder {
       LOG.trace("Solr schema: \n{}", Joiner.on("\n").join(new TreeMap(schema.getFields()).values()));
 
       ListMultimap<String, String> cellParams = ArrayListMultimap.create();
-      if (config.hasPath(ExtractingParams.UNKNOWN_FIELD_PREFIX)) {
-        cellParams.put(ExtractingParams.UNKNOWN_FIELD_PREFIX, Configs.getString(config, ExtractingParams.UNKNOWN_FIELD_PREFIX));
+      String uprefix = getConfigs().getString(config, ExtractingParams.UNKNOWN_FIELD_PREFIX, null);
+      if (uprefix != null) {
+        cellParams.put(ExtractingParams.UNKNOWN_FIELD_PREFIX, uprefix);
       }
-      for (String capture : Configs.getStringList(config, ExtractingParams.CAPTURE_ELEMENTS, Collections.EMPTY_LIST)) {
+      for (String capture : getConfigs().getStringList(config, ExtractingParams.CAPTURE_ELEMENTS, Collections.EMPTY_LIST)) {
         cellParams.put(ExtractingParams.CAPTURE_ELEMENTS, capture);
       }
-      if (config.hasPath("fmap")) {
-        for (Map.Entry<String, Object> entry : config.getConfig("fmap").root().unwrapped().entrySet()) {
+      Config fmapConfig = getConfigs().getConfig(config, "fmap", null);
+      if (fmapConfig != null) {
+        for (Map.Entry<String, Object> entry : fmapConfig.root().unwrapped().entrySet()) {
           cellParams.put(ExtractingParams.MAP_PREFIX + entry.getKey(), entry.getValue().toString());
         }
       }
-      if (config.hasPath(ExtractingParams.CAPTURE_ATTRIBUTES)) {
-        cellParams.put(ExtractingParams.CAPTURE_ATTRIBUTES, Configs.getString(config, ExtractingParams.CAPTURE_ATTRIBUTES));
+      String captureAttributes = getConfigs().getString(config, ExtractingParams.CAPTURE_ATTRIBUTES, null);
+      if (captureAttributes != null) {
+        cellParams.put(ExtractingParams.CAPTURE_ATTRIBUTES, captureAttributes);
       }
-      if (config.hasPath(ExtractingParams.LOWERNAMES)) {
-        cellParams.put(ExtractingParams.LOWERNAMES, Configs.getString(config, ExtractingParams.LOWERNAMES));
+      String lowerNames = getConfigs().getString(config, ExtractingParams.LOWERNAMES, null);
+      if (lowerNames != null) {
+        cellParams.put(ExtractingParams.LOWERNAMES, lowerNames);
       }
-      if (config.hasPath(ExtractingParams.DEFAULT_FIELD)) {
-        cellParams.put(ExtractingParams.DEFAULT_FIELD, Configs.getString(config, ExtractingParams.DEFAULT_FIELD));
+      String defaultField = getConfigs().getString(config, ExtractingParams.DEFAULT_FIELD, null);
+      if (defaultField != null) {
+        cellParams.put(ExtractingParams.DEFAULT_FIELD, defaultField);
       }
-      if (config.hasPath(ExtractingParams.XPATH_EXPRESSION)) {
-        xpathExpr = Configs.getString(config, ExtractingParams.XPATH_EXPRESSION);
+      xpathExpr = getConfigs().getString(config, ExtractingParams.XPATH_EXPRESSION, null);
+      if (xpathExpr != null) {
         cellParams.put(ExtractingParams.XPATH_EXPRESSION, xpathExpr);
-      } else {
-        xpathExpr = null;
       }
       
-      this.dateFormats = Configs.getStringList(config, "dateFormats", new ArrayList<String>(DateUtil.DEFAULT_DATE_FORMATS));
+      this.dateFormats = getConfigs().getStringList(config, "dateFormats", new ArrayList<String>(DateUtil.DEFAULT_DATE_FORMATS));
       
-      String handlerStr = Configs.getString(config, "solrContentHandlerFactory", TrimSolrContentHandlerFactory.class.getName());
+      String handlerStr = getConfigs().getString(config, "solrContentHandlerFactory", TrimSolrContentHandlerFactory.class.getName());
       Class<? extends SolrContentHandlerFactory> factoryClass;
       try {
         factoryClass = (Class<? extends SolrContentHandlerFactory>)Class.forName(handlerStr);
@@ -165,9 +167,9 @@ public final class SolrCellBuilder implements CommandBuilder {
       this.mediaTypeToParserMap = new HashMap<MediaType, Parser>();
       //MimeTypes mimeTypes = MimeTypes.getDefaultMimeTypes(); // FIXME getMediaTypeRegistry.normalize() 
 
-      List<? extends Config> parserConfigs = Configs.getConfigList(config, "parsers");
+      List<? extends Config> parserConfigs = getConfigs().getConfigList(config, "parsers");
       for (Config parserConfig : parserConfigs) {
-        String parserClassName = Configs.getString(parserConfig, "parser");
+        String parserClassName = getConfigs().getString(parserConfig, "parser");
         
         Object obj;
         try {
@@ -182,7 +184,7 @@ public final class SolrCellBuilder implements CommandBuilder {
         Parser parser = (Parser) obj;
         this.parsers.add(parser);
 
-        List<String> mediaTypes = Configs.getStringList(parserConfig, SUPPORTED_MIME_TYPES, Collections.EMPTY_LIST);
+        List<String> mediaTypes = getConfigs().getStringList(parserConfig, SUPPORTED_MIME_TYPES, Collections.EMPTY_LIST);
         for (String mediaTypeStr : mediaTypes) {
           MediaType mediaType = parseMediaType(mediaTypeStr);
           addSupportedMimeType(mediaTypeStr);
@@ -195,7 +197,7 @@ public final class SolrCellBuilder implements CommandBuilder {
             addSupportedMimeType(mediaType.toString());
             this.mediaTypeToParserMap.put(mediaType, parser);
           }        
-          List<String> extras = Configs.getStringList(parserConfig, ADDITIONAL_SUPPORTED_MIME_TYPES, Collections.EMPTY_LIST);
+          List<String> extras = getConfigs().getStringList(parserConfig, ADDITIONAL_SUPPORTED_MIME_TYPES, Collections.EMPTY_LIST);
           for (String mediaTypeStr : extras) {
             MediaType mediaType = parseMediaType(mediaTypeStr);
             addSupportedMimeType(mediaTypeStr);
@@ -210,6 +212,7 @@ public final class SolrCellBuilder implements CommandBuilder {
         tmp.put(entry.getKey(), entry.getValue().toArray(new String[entry.getValue().size()]));
       }
       this.solrParams = new MultiMapSolrParams(tmp);
+      validateArguments();
     }
     
     @Override

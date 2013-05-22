@@ -29,6 +29,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -67,6 +70,7 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.log4j.PropertyConfigurator;
 import org.apache.solr.common.cloud.SolrZkClient;
 import org.apache.solr.hadoop.dedup.RetainMostRecentUpdateConflictResolver;
 import org.apache.solr.hadoop.morphline.MorphlineMapRunner;
@@ -78,9 +82,10 @@ import com.cloudera.cdk.morphline.base.Fields;
 
 
 /**
- * Public API for a MapReduce batch job driver that creates a set of Solr index
- * shards from a set of input files and writes the indexes into HDFS, in a
- * flexible, scalable and fault-tolerant manner.
+ * Public API for a MapReduce batch job driver that creates a set of Solr index shards from a set of
+ * input files and writes the indexes into HDFS, in a flexible, scalable and fault-tolerant manner.
+ * Also supports merging the output shards into a set of live customer facing Solr servers,
+ * typically a SolrCloud.
  */
 public class MapReduceIndexerTool extends Configured implements Tool {
   
@@ -179,19 +184,13 @@ public class MapReduceIndexerTool extends Configured implements Tool {
             System.out.println(
               "Examples: \n\n" + 
 
-              "# Prepare a config jar file containing a custom mylog4j.properties:\n" +
-              "rm -fr myconfig; mkdir myconfig\n" + 
-              "cp src/test/resources/log4j.properties myconfig/mylog4j.properties\n" + 
-              "cp -r src/test/resources/org myconfig/\n" + 
-              "jar -cMvf myconfig.jar -C myconfig .\n" + 
-              "\n" +              
               "# (Re)index an Avro based Twitter tweet file:\n" +
               "sudo -u hdfs hadoop \\\n" + 
               "  --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
               "  jar target/search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
-              "  --libjars myconfig.jar \\\n" + 
-              "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-//            "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "  -D 'mapred.child.java.opts=-Xmx500m' \\\n" + 
+//            "  -D 'mapreduce.child.java.opts=-Xmx500m' \\\n" + 
+              "  --log4j src/test/resources/log4j.properties \\\n" + 
               "  --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \\\n" + 
               "  --solr-home-dir src/test/resources/solr/minimr \\\n" +
               "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
@@ -214,9 +213,9 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "| sudo -u hdfs hadoop \\\n" + 
               "  --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" + 
               "  jar target/search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
-              "  --libjars myconfig.jar \\\n" + 
-              "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-//            "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "  -D 'mapred.child.java.opts=-Xmx500m' \\\n" + 
+//            "  -D 'mapreduce.child.java.opts=-Xmx500m' \\\n" + 
+              "  --log4j src/test/resources/log4j.properties \\\n" + 
               "  --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadJsonTestTweets.conf \\\n" + 
               "  --solr-home-dir src/test/resources/solr/minimr \\\n" + 
               "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
@@ -228,9 +227,9 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "sudo -u hdfs hadoop \\\n" + 
               "  --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
               "  jar target/search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
-              "  --libjars myconfig.jar \\\n" + 
-              "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-//            "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "  -D 'mapred.child.java.opts=-Xmx500m' \\\n" + 
+//            "  -D 'mapreduce.child.java.opts=-Xmx500m' \\\n" + 
+              "  --log4j src/test/resources/log4j.properties \\\n" + 
               "  --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \\\n" + 
               "  --solr-home-dir src/test/resources/solr/minimr \\\n" + 
               "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
@@ -244,9 +243,9 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "sudo -u hdfs hadoop \\\n" + 
               "  --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
               "  jar target/search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
-              "  --libjars myconfig.jar \\\n" + 
-              "  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
-//            "  -D 'mapreduce.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \\\n" + 
+              "  -D 'mapred.child.java.opts=-Xmx500m' \\\n" + 
+//            "  -D 'mapreduce.child.java.opts=-Xmx500m' \\\n" + 
+              "  --log4j src/test/resources/log4j.properties \\\n" + 
               "  --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \\\n" + 
               "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" + 
               "  --zk-host zk01.mycompany.com:2181/solr \\\n" + 
@@ -288,7 +287,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         
       Argument morphlineFileArg = requiredGroup.addArgument("--morphline-file")
         .metavar("FILE")
-        .type(new FileArgumentType().verifyIsFile().verifyCanRead())
+        .type(new FileArgumentType().verifyExists().verifyIsFile().verifyCanRead())
         .required(true)
         .help("Relative or absolute path to a local config file that contains one or more morphlines. " +
         		  "The file must be UTF-8 encoded. Example: /path/to/morphline.conf");
@@ -397,6 +396,12 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "the morphline in the client process (without submitting a job to MR) for quicker turnaround during " +
               "early trial & debug sessions.");
     
+      Argument log4jConfigFileArg = parser.addArgument("--log4j")
+        .metavar("FILE")
+        .type(new FileArgumentType().verifyExists().verifyIsFile().verifyCanRead())
+        .help("Relative or absolute path to a log4j.properties config file on the local file system. This file " +
+        		  "will be uploaded to each MR task. Example: /path/to/log4j.properties");
+    
       Argument verboseArg = parser.addArgument("--verbose", "-v")
         .action(Arguments.storeTrue())
         .help("Turn on verbose output.");
@@ -420,7 +425,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "Multiple --shard-url arguments can be specified, one for each desired shard. " +
               "If you are merging shards into a SolrCloud cluster, use --zk-host instead.");
       
-      Argument zkServerAddressArg = clusterInfoGroup.addArgument("--zk-host")
+      Argument zkHostArg = clusterInfoGroup.addArgument("--zk-host")
         .metavar("STRING")
         .type(String.class)
         .help("The address of a ZooKeeper ensemble being used by a SolrCloud cluster. "
@@ -466,7 +471,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .metavar("STRING")
         .help("The SolrCloud collection to merge shards into when using --go-live and --zk-host. Example: collection1");
       
-      Argument golivethreadsArg = goLiveGroup.addArgument("--go-live-threads")
+      Argument goLiveThreadsArg = goLiveGroup.addArgument("--go-live-threads")
         .metavar("INTEGER")
         .type(Integer.class)
         .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
@@ -490,6 +495,11 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         parser.handleError(e);
         return 1;
       }
+      
+      opts.log4jConfigFile = (File) ns.get(log4jConfigFileArg.getDest());
+      if (opts.log4jConfigFile != null) {
+        PropertyConfigurator.configure(opts.log4jConfigFile.getPath());        
+      }
       LOG.debug("Parsed command line args: {}", ns);
       
       opts.inputLists = ns.getList(inputListArg.getDest());
@@ -509,11 +519,11 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       opts.fairSchedulerPool = ns.getString(fairSchedulerPoolArg.getDest());
       opts.isDryRun = ns.getBoolean(dryRunArg.getDest());
       opts.isVerbose = ns.getBoolean(verboseArg.getDest());
-      opts.zkHost = ns.getString(zkServerAddressArg.getDest());
+      opts.zkHost = ns.getString(zkHostArg.getDest());
       opts.shards = ns.getInt(shardsArg.getDest());
       opts.shardUrls = buildShardUrls(ns.getList(shardUrlsArg.getDest()), opts.shards);
       opts.goLive = ns.getBoolean(goLiveArg.getDest());
-      opts.golivethreads = ns.getInt(golivethreadsArg.getDest());
+      opts.goLiveThreads = ns.getInt(goLiveThreadsArg.getDest());
       opts.collection = ns.getString(collectionArg.getDest());
 
       try {
@@ -561,7 +571,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     boolean goLive;
     String collection;
     String zkHost;
-    Integer golivethreads;
+    Integer goLiveThreads;
     List<List<String>> shardUrls;
     List<Path> inputLists;
     List<Path> inputFiles;
@@ -577,6 +587,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     File solrHomeDir;
     String fairSchedulerPool;
     boolean isDryRun;
+    File log4jConfigFile;
     boolean isVerbose;
   }
   // END OF INNER CLASS  
@@ -618,7 +629,12 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     // switch off a false warning about allegedly not implementing Tool
     // also see http://hadoop.6.n7.nabble.com/GenericOptionsParser-warning-td8103.html
     // also see https://issues.apache.org/jira/browse/HADOOP-8183
-    getConf().setBoolean("mapred.used.genericoptionsparser", true); 
+    getConf().setBoolean("mapred.used.genericoptionsparser", true);
+    
+    if (options.log4jConfigFile != null) {
+      Utils.setLogConfigFile(options.log4jConfigFile, getConf());
+      addDistributedCacheFile(options.log4jConfigFile, getConf());
+    }
 
     job = Job.getInstance(getConf());
     job.setJarByClass(getClass());
@@ -671,7 +687,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     int reducers = options.reducers;
     LOG.info("Using these parameters: " +
     		"numFiles: {}, mappers: {}, realMappers: {}, reducers: {}, shards: {}, fanout: {}, maxSegments: {}",
-        numFiles, mappers, realMappers, reducers, options.shards, options.fanout, options.maxSegments);
+        new Object[] {numFiles, mappers, realMappers, reducers, options.shards, options.fanout, options.maxSegments});
         
     
     LOG.info("Randomizing list of {} input files to spread indexing load more evenly among mappers", numFiles);
@@ -754,7 +770,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     }
     
     MorphlineMapRunner runner = setupMorphline(options);
-    if (options.isDryRun) {
+    if (options.isDryRun && runner != null) {
       LOG.info("Indexing {} files in dryrun mode", numFiles);
       startTime = System.currentTimeMillis();
       dryRun(runner, fs, fullInputList);
@@ -762,22 +778,20 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       LOG.info("Done. Indexing {} files in dryrun mode took {} secs", numFiles, secs);
       goodbye(null, programStartTime);
       return 0;
-    }      
-    
-    job.getConfiguration().set(MorphlineMapRunner.MORPHLINE_FILE_PARAM,
-        options.isDryRun ? options.morphlineFile.getPath() : options.morphlineFile.getName());
+    }          
+    job.getConfiguration().set(MorphlineMapRunner.MORPHLINE_FILE_PARAM, options.morphlineFile.getName());
 
     job.setNumReduceTasks(reducers);  
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(SolrInputDocumentWritable.class);
-    LOG.info("Indexing {} files using {} real mappers into {} reducers", numFiles, realMappers, reducers);
+    LOG.info("Indexing {} files using {} real mappers into {} reducers", new Object[] {numFiles, realMappers, reducers});
     startTime = System.currentTimeMillis();
     if (!waitForCompletion(job, options.isVerbose)) {
       return -1; // job failed
     }
 
     secs = (System.currentTimeMillis() - startTime) / 1000.0f;
-    LOG.info("Done. Indexing {} files using {} real mappers into {} reducers took {} secs", numFiles, realMappers, reducers, secs);
+    LOG.info("Done. Indexing {} files using {} real mappers into {} reducers took {} secs", new Object[] {numFiles, realMappers, reducers, secs});
 
     int mtreeMergeIterations = 0;
     if (reducers > options.shards) {
@@ -798,7 +812,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       
       Path inputStepDir = new Path(options.outputDir, "mtree-merge-input-iteration" + mtreeMergeIteration);
       fullInputList = new Path(inputStepDir, FULL_INPUT_LIST);    
-      LOG.debug("MTree merge iteration {}/{}: Creating input list file for mappers {}", mtreeMergeIteration, mtreeMergeIterations, fullInputList);
+      LOG.debug("MTree merge iteration {}/{}: Creating input list file for mappers {}", new Object[] {mtreeMergeIteration, mtreeMergeIterations, fullInputList});
       numFiles = createTreeMergeInputDirList(outputReduceDir, fs, fullInputList);    
       if (numFiles != reducers) {
         throw new IllegalStateException("Not same reducers: " + reducers + ", numFiles: " + numFiles);
@@ -807,15 +821,15 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       NLineInputFormat.setNumLinesPerSplit(job, options.fanout);    
       FileOutputFormat.setOutputPath(job, outputTreeMergeStep);
       
-      LOG.info("MTree merge iteration {}/{}: Merging {} shards into {} shards using fanout {}", mtreeMergeIteration,
-          mtreeMergeIterations, reducers, (reducers / options.fanout), options.fanout);
+      LOG.info("MTree merge iteration {}/{}: Merging {} shards into {} shards using fanout {}", new Object[] { 
+          mtreeMergeIteration, mtreeMergeIterations, reducers, (reducers / options.fanout), options.fanout});
       startTime = System.currentTimeMillis();
       if (!waitForCompletion(job, options.isVerbose)) {
         return -1; // job failed
       }
       secs = (System.currentTimeMillis() - startTime) / 1000.0f;
       LOG.info("MTree merge iteration {}/{}: Done. Merging {} shards into {} shards using fanout {} took {} secs",
-          mtreeMergeIteration, mtreeMergeIterations, reducers, (reducers / options.fanout), options.fanout, secs);
+          new Object[] {mtreeMergeIteration, mtreeMergeIterations, reducers, (reducers / options.fanout), options.fanout, secs});
       
       if (!delete(outputReduceDir, true, fs)) {
         return -1;
@@ -1036,33 +1050,80 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     return job2;
   }
 
-  private MorphlineMapRunner setupMorphline(Options options) throws IOException {
-    if (options.morphlineId != null) {
-      job.getConfiguration().set(MorphlineMapRunner.MORPHLINE_ID_PARAM, options.morphlineId);
-    }
-    
-    // do the same as if the user had typed 'hadoop ... --files <morphlinesFile>' 
+  // do the same as if the user had typed 'hadoop ... --files <file>' 
+  private void addDistributedCacheFile(File file, Configuration conf) throws IOException {
     String HADOOP_TMP_FILES = "tmpfiles"; // see Hadoop's GenericOptionsParser
-    options.morphlineFile = options.morphlineFile.getCanonicalFile();
-    job.getConfiguration().set(MorphlineMapRunner.MORPHLINE_FILE_PARAM, options.morphlineFile.getPath());
-    String tmpFiles = job.getConfiguration().get(HADOOP_TMP_FILES, "");
+    String tmpFiles = conf.get(HADOOP_TMP_FILES, "");
     if (tmpFiles.length() > 0) { // already present?
       tmpFiles = tmpFiles + ","; 
     }
     GenericOptionsParser parser = new GenericOptionsParser(
-        new Configuration(job.getConfiguration()), 
-        new String[] { "--files", options.morphlineFile.getPath() });
-    String morphlineTmpFiles = parser.getConfiguration().get(HADOOP_TMP_FILES);
-    assert morphlineTmpFiles != null;
-    assert morphlineTmpFiles.length() > 0;
-    tmpFiles += morphlineTmpFiles;
-    job.getConfiguration().set(HADOOP_TMP_FILES, tmpFiles);
+        new Configuration(conf), 
+        new String[] { "--files", file.getCanonicalPath() });
+    String additionalTmpFiles = parser.getConfiguration().get(HADOOP_TMP_FILES);
+    assert additionalTmpFiles != null;
+    assert additionalTmpFiles.length() > 0;
+    tmpFiles += additionalTmpFiles;
+    conf.set(HADOOP_TMP_FILES, tmpFiles);
+  }
+  
+  private MorphlineMapRunner setupMorphline(Options options) throws IOException, URISyntaxException {
+    if (options.morphlineId != null) {
+      job.getConfiguration().set(MorphlineMapRunner.MORPHLINE_ID_PARAM, options.morphlineId);
+    }
+    addDistributedCacheFile(options.morphlineFile, job.getConfiguration());    
+    if (!options.isDryRun) {
+      return null;
+    }
     
-    // Verify that the morphline compiles without error (i.e. fail fast even before submitting a job) 
-    MorphlineMapRunner runner = new MorphlineMapRunner(
+    /*
+     * Ensure scripting support for Java via morphline "java" command works even in dryRun mode,
+     * i.e. when executed in the client side driver JVM. To do so, collect all classpath URLs from
+     * the class loaders chain that org.apache.hadoop.util.RunJar (hadoop jar xyz-job.jar) and
+     * org.apache.hadoop.util.GenericOptionsParser (--libjars) have installed, then tell
+     * FastJavaScriptEngine.parse() where to find classes that JavaBuilder scripts might depend on.
+     * This ensures that scripts that reference external java classes compile without exceptions
+     * like this:
+     * 
+     * ... caused by compilation failed: mfm:///MyJavaClass1.java:2: package
+     * com.cloudera.cdk.morphline.api does not exist
+     */
+    LOG.trace("dryRun: java.class.path: {}", System.getProperty("java.class.path"));
+    String fullClassPath = "";
+    ClassLoader loader = Thread.currentThread().getContextClassLoader(); // see org.apache.hadoop.util.RunJar
+    while (loader != null) { // walk class loaders, collect all classpath URLs
+      if (loader instanceof URLClassLoader) { 
+        URL[] classPathPartURLs = ((URLClassLoader) loader).getURLs(); // see org.apache.hadoop.util.RunJar
+        LOG.trace("dryRun: classPathPartURLs: {}", Arrays.asList(classPathPartURLs));
+        StringBuilder classPathParts = new StringBuilder();
+        for (URL url : classPathPartURLs) {
+          File file = new File(url.toURI());
+          if (classPathPartURLs.length > 0) {
+            classPathParts.append(File.pathSeparator);
+          }
+          classPathParts.append(file.getPath());
+        }
+        LOG.trace("dryRun: classPathParts: {}", classPathParts);
+        String separator = File.pathSeparator;
+        if (fullClassPath.length() == 0 || classPathParts.length() == 0) {
+          separator = "";
+        }
+        fullClassPath = classPathParts + separator + fullClassPath;
+      }
+      loader = loader.getParent();
+    }
+    
+    // tell FastJavaScriptEngine.parse() where to find the classes that the script might depend on
+    if (fullClassPath.length() > 0) {
+      assert System.getProperty("java.class.path") != null;
+      fullClassPath = System.getProperty("java.class.path") + File.pathSeparator + fullClassPath;
+      LOG.trace("dryRun: fullClassPath: {}", fullClassPath);
+      System.setProperty("java.class.path", fullClassPath); // see FastJavaScriptEngine.parse()
+    }
+    
+    job.getConfiguration().set(MorphlineMapRunner.MORPHLINE_FILE_PARAM, options.morphlineFile.getPath());
+    return new MorphlineMapRunner(
         job.getConfiguration(), new DryRunDocumentLoader(), options.solrHomeDir.getPath());
-
-    return runner;
   }
   
   /*

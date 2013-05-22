@@ -63,7 +63,6 @@ final class ZooKeeperInspector {
         urls.add(props.getCoreUrl());
       }
       solrUrls.add(urls);
-
     }
     return solrUrls;
   }
@@ -99,7 +98,7 @@ final class ZooKeeperInspector {
 
     SolrZkClient zkClient;
     try {
-      zkClient = new SolrZkClient(zkHost, 15000);
+      zkClient = new SolrZkClient(zkHost, 30000);
     } catch (Exception e) {
       throw new IllegalArgumentException("Cannot connect to ZooKeeper: " + zkHost, e);
     }

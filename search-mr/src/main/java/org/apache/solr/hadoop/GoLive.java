@@ -54,7 +54,7 @@ class GoLive {
     LOG.info("Live merging of output shards into Solr cluster...");
     boolean success = false;
     long start = System.currentTimeMillis();
-    int concurrentMerges = options.golivethreads;
+    int concurrentMerges = options.goLiveThreads;
     ThreadPoolExecutor executor = new ThreadPoolExecutor(concurrentMerges,
         concurrentMerges, 1, TimeUnit.SECONDS,
         new LinkedBlockingQueue<Runnable>());
@@ -65,7 +65,7 @@ class GoLive {
       int cnt = -1;
       for (final FileStatus dir : outDirs) {
         
-        LOG.debug("processing:" + dir.getPath());
+        LOG.debug("processing: " + dir.getPath());
 
         cnt++;
         List<String> urls = options.shardUrls.get(cnt);
@@ -96,8 +96,7 @@ class GoLive {
               try {
                 CoreAdminRequest.MergeIndexes mergeRequest = new CoreAdminRequest.MergeIndexes();
                 mergeRequest.setCoreName(name);
-                mergeRequest.setIndexDirs(Arrays.asList(new String[] {dir
-                    .getPath().toString() + "/data/index"}));
+                mergeRequest.setIndexDirs(Arrays.asList(dir.getPath().toString() + "/data/index"));
                 try {
                   mergeRequest.process(server);
                   req.success = true;

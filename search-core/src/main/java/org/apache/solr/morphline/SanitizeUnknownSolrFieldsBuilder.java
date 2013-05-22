@@ -31,7 +31,6 @@ import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
-import com.cloudera.cdk.morphline.base.Configs;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.typesafe.config.Config;
@@ -68,15 +67,16 @@ public final class SanitizeUnknownSolrFieldsBuilder implements CommandBuilder {
     public SanitizeUnknownSolrFields(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);      
       
-      Config solrLocatorConfig = Configs.getConfig(config, "solrLocator");
+      Config solrLocatorConfig = getConfigs().getConfig(config, "solrLocator");
       SolrLocator locator = new SolrLocator(solrLocatorConfig, context);
       LOG.debug("solrLocator: {}", locator);
       this.schema = locator.getIndexSchema();
       Preconditions.checkNotNull(schema);
       LOG.trace("Solr schema: \n{}", Joiner.on("\n").join(new TreeMap(schema.getFields()).values()));
       
-      String str = Configs.getString(config, "renameToPrefix", "").trim();
+      String str = getConfigs().getString(config, "renameToPrefix", "").trim();
       this.renameToPrefix = str.length() > 0 ? str : null;  
+      validateArguments();
     }
     
     @Override

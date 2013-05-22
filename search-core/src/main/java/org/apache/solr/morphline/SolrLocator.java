@@ -74,12 +74,14 @@ public class SolrLocator {
   public SolrLocator(Config config, MorphlineContext context) {
     this(context);
     this.config = config;
-    collectionName = Configs.getString(config, "collection", null);
-    zkHost = Configs.getString(config, "zkHost", null);
-    solrHomeDir = Configs.getString(config, "solrHomeDir", null);
-    solrUrl = Configs.getString(config, "solrUrl", null);    
-    batchSize = Configs.getInt(config, "batchSize", batchSize);
+    Configs configs = new Configs();
+    collectionName = configs.getString(config, "collection", null);
+    zkHost = configs.getString(config, "zkHost", null);
+    solrHomeDir = configs.getString(config, "solrHomeDir", null);
+    solrUrl = configs.getString(config, "solrUrl", null);    
+    batchSize = configs.getInt(config, "batchSize", batchSize);
     LOG.trace("Constructed solrLocator: {}", this);
+    configs.validateArguments(config);
   }
   
   public DocumentLoader getLoader() {
@@ -120,6 +122,7 @@ public class SolrLocator {
     if (context instanceof SolrMorphlineContext) {    
       IndexSchema schema = ((SolrMorphlineContext)context).getIndexSchema();
       if (schema != null) {
+        validateSchema(schema);
         return schema;
       }
     }
@@ -170,7 +173,9 @@ public class SolrLocator {
       InputSource is = new InputSource(loader.openSchema("schema.xml"));
           is.setSystemId(SystemIdResolver.createSystemIdFromResourceName("schema.xml"));
         
-      return new IndexSchema(solrConfig, "schema.xml", is);
+      IndexSchema schema = new IndexSchema(solrConfig, "schema.xml", is);
+      validateSchema(schema);
+      return schema;
     } catch (ParserConfigurationException e) {
       throw new MorphlineRuntimeException(e);
     } catch (IOException e) {
@@ -185,6 +190,12 @@ public class SolrLocator {
           System.setProperty(SOLR_HOME_PROPERTY_NAME, oldSolrHomeDir);
         }
       }
+    }
+  }
+  
+  private void validateSchema(IndexSchema schema) {
+    if (schema.getUniqueKeyField() == null) {
+      throw new MorphlineCompilationException("Solr schema.xml is missing unique key field", config);
     }
   }
   

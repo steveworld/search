@@ -35,7 +35,6 @@ import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
-import com.cloudera.cdk.morphline.base.Configs;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.stdio.AbstractParser;
 import com.google.common.io.Closeables;
@@ -73,9 +72,10 @@ public final class ReadSequenceFileBuilder implements CommandBuilder {
   
     public ReadSequenceFile(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
-      this.includeMetaData = Configs.getBoolean(config, "includeMetaData", false);
-      this.keyField = Configs.getString(config, CONFIG_KEY_FIELD, Fields.ATTACHMENT_NAME);
-      this.valueField = Configs.getString(config, CONFIG_VALUE_FIELD, Fields.ATTACHMENT_BODY);
+      this.includeMetaData = getConfigs().getBoolean(config, "includeMetaData", false);
+      this.keyField = getConfigs().getString(config, CONFIG_KEY_FIELD, Fields.ATTACHMENT_NAME);
+      this.valueField = getConfigs().getString(config, CONFIG_VALUE_FIELD, Fields.ATTACHMENT_BODY);
+      validateArguments();
     }
   
     @Override

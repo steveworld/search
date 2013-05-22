@@ -32,7 +32,6 @@ import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
-import com.cloudera.cdk.morphline.base.Configs;
 import com.cloudera.cdk.morphline.base.Metrics;
 import com.cloudera.cdk.morphline.base.Notifications;
 import com.codahale.metrics.Timer;
@@ -64,10 +63,11 @@ public final class LoadSolrBuilder implements CommandBuilder {
     
     public LoadSolr(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
-      Config solrLocatorConfig = Configs.getConfig(config, "solrLocator");
+      Config solrLocatorConfig = getConfigs().getConfig(config, "solrLocator");
       SolrLocator locator = new SolrLocator(solrLocatorConfig, context);
       LOG.debug("solrLocator: {}", locator);
       this.loader = locator.getLoader();
+      validateArguments();
       this.elapsedTime = getTimer(Metrics.ELAPSED_TIME);
     }
 
