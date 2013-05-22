@@ -48,6 +48,7 @@ public class TreeMergeOutputFormat extends FileOutputFormat<Text, NullWritable> 
   
   @Override
   public RecordWriter getRecordWriter(TaskAttemptContext context) throws IOException {
+    Utils.getLogConfigFile(context.getConfiguration());
     Path workDir = getDefaultWorkFile(context, "");
     return new TreeMergeRecordWriter(context, workDir);
   }

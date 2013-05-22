@@ -63,6 +63,7 @@ public class SolrCellMorphlineTest extends AbstractSolrMorphlineTest {
         path + "/testJPEG_EXIF.jpg",
         path + "/testJPEG_EXIF.jpg.gz",
         path + "/testJPEG_EXIF.jpg.tar.gz",
+        //path + "/jpeg2000.jp2",
     };
     testDocumentTypesInternal(files, expectedRecords);
   }  

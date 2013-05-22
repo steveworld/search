@@ -55,8 +55,8 @@ public final class ParseTextMyWritableBuilder implements CommandBuilder {
 
     public ParseTextMyWritable(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
-      this.keyField = Configs.getString(config, ReadSequenceFileBuilder.CONFIG_KEY_FIELD, Fields.ATTACHMENT_BODY);
-      this.valueField = Configs.getString(config, ReadSequenceFileBuilder.CONFIG_VALUE_FIELD, Fields.ATTACHMENT_BODY);
+      this.keyField = getConfigs().getString(config, ReadSequenceFileBuilder.CONFIG_KEY_FIELD, Fields.ATTACHMENT_BODY);
+      this.valueField = getConfigs().getString(config, ReadSequenceFileBuilder.CONFIG_VALUE_FIELD, Fields.ATTACHMENT_BODY);
     }
 
     @Override

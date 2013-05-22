@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudera.cdk.morphline.api.Command;
+import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Compiler;
@@ -131,6 +132,9 @@ public final class MorphlineMapRunner {
 
     String morphlineFile = configuration.get(MORPHLINE_FILE_PARAM);
     String morphlineId = configuration.get(MORPHLINE_ID_PARAM);
+    if (morphlineFile == null || morphlineFile.trim().length() == 0) {
+      throw new MorphlineCompilationException("Missing parameter: " + MORPHLINE_FILE_PARAM, null);
+    }
     morphline = new Compiler().compile(new File(morphlineFile), morphlineId, morphlineContext, null);
 
     disableFileOpen = configuration.getBoolean(DISABLE_FILE_OPEN, false);

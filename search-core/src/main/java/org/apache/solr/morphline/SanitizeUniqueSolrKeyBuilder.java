@@ -32,7 +32,6 @@ import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.AbstractCommand;
-import com.cloudera.cdk.morphline.base.Configs;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.base.Notifications;
 import com.typesafe.config.Config;
@@ -79,27 +78,25 @@ public final class SanitizeUniqueSolrKeyBuilder implements CommandBuilder {
 
     public SanitizeUniqueSolrKey(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
-      this.baseIdFieldName = Configs.getString(config, "baseIdField", Fields.BASE_ID);
-      this.preserveExisting = Configs.getBoolean(config, "preserveExisting", true);      
+      this.baseIdFieldName = getConfigs().getString(config, "baseIdField", Fields.BASE_ID);
+      this.preserveExisting = getConfigs().getBoolean(config, "preserveExisting", true);      
       
-      Config solrLocatorConfig = Configs.getConfig(config, "solrLocator");
+      Config solrLocatorConfig = getConfigs().getConfig(config, "solrLocator");
       SolrLocator locator = new SolrLocator(solrLocatorConfig, context);
       LOG.debug("solrLocator: {}", locator);
       IndexSchema schema = locator.getIndexSchema();
       SchemaField uniqueKey = schema.getUniqueKeyField();
       uniqueKeyName = uniqueKey == null ? null : uniqueKey.getName();
       
-      String tmpIdPrefix = null;
+      String tmpIdPrefix = getConfigs().getString(config, "idPrefix", null);  // for load testing only
       Random tmpRandomIdPrefx = null;
-      if (config.hasPath("idPrefix")) { // for load testing only
-        tmpIdPrefix = config.getString("idPrefix");
-      }
       if ("random".equals(tmpIdPrefix)) { // for load testing only
         tmpRandomIdPrefx = new Random(new SecureRandom().nextLong());    
         tmpIdPrefix = null;
       }
       idPrefix = tmpIdPrefix;
       randomIdPrefix = tmpRandomIdPrefx;
+      validateArguments();
     }
 
     @Override

@@ -31,7 +31,6 @@ import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.CommandBuilder;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
-import com.cloudera.cdk.morphline.base.Configs;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.stdio.AbstractParser;
 import com.fasterxml.jackson.core.JsonParseException;
@@ -79,13 +78,14 @@ public final class ReadJsonTestTweetsBuilder implements CommandBuilder {
     public ReadJsonTestTweets(Config config, Command parent, Command child, MorphlineContext context) { 
       super(config, parent, child, context);
       
-      this.isLengthDelimited = Configs.getBoolean(config, "isLengthDelimited", true);
-      this.idPrefix = Configs.getString(config, "idPrefix", null);
+      this.isLengthDelimited = getConfigs().getBoolean(config, "isLengthDelimited", true);
+      this.idPrefix = getConfigs().getString(config, "idPrefix", null);
       if ("random".equals(idPrefix)) {
         idPrefix = String.valueOf(new Random().nextInt());
       } else if (idPrefix == null) {
         idPrefix = "";
       }
+      validateArguments();
     }
 
     @Override

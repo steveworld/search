@@ -61,7 +61,7 @@ public class MorphlineInterceptor implements Interceptor {
   }
 
   @Override
-  public void close() {
+  public synchronized void close() {
     morphline.stop();
   }
 
@@ -78,7 +78,7 @@ public class MorphlineInterceptor implements Interceptor {
   }
 
   @Override
-  public Event intercept(Event event) {
+  public synchronized Event intercept(Event event) {
     collector.reset();
     morphline.process(event);
     List<Record> results = collector.getRecords();
