@@ -24,9 +24,9 @@ usage: hadoop [GenericOptions]... jar search-mr-*-job.jar org.apache.solr.hadoop
        --morphline-file FILE [--morphline-id STRING] [--solr-home-dir DIR]
        [--update-conflict-resolver FQCN] [--mappers INTEGER]
        [--reducers INTEGER] [--max-segments INTEGER]
-       [--fair-scheduler-pool STRING] [--dry-run] [--verbose]
-       [--shard-url URL] [--zk-host STRING] [--shards INTEGER] [--go-live]
-       [--collection STRING] [--go-live-threads INTEGER]
+       [--fair-scheduler-pool STRING] [--dry-run] [--log4j FILE]
+       [--verbose] [--shard-url URL] [--zk-host STRING] [--shards INTEGER]
+       [--go-live] [--collection STRING] [--go-live-threads INTEGER]
        [HDFS_URI [HDFS_URI ...]]
 
 MapReduce batch job driver that  takes  a  morphline  and creates a set of
@@ -204,6 +204,10 @@ optional arguments:
                          submitting a job  to  MR)  for quicker turnaround
                          during early trial  &  debug  sessions. (default:
                          false)
+  --log4j FILE           Relative or absolute  path  to a log4j.properties
+                         config file on the  local  file system. This file
+                         will  be  uploaded  to  each  MR  task.  Example:
+                         /path/to/log4j.properties
   --verbose, -v          Turn on verbose output. (default: false)
 
 Required arguments:
@@ -308,18 +312,12 @@ bin/hadoop command [genericOptions] [commandOptions]
 
 Examples: 
 
-# Prepare a config jar file containing a custom mylog4j.properties:
-rm -fr myconfig; mkdir myconfig
-cp src/test/resources/log4j.properties myconfig/mylog4j.properties
-cp -r src/test/resources/org myconfig/
-jar -cMvf myconfig.jar -C myconfig .
-
 # (Re)index an Avro based Twitter tweet file:
 sudo -u hdfs hadoop \
   --config /etc/hadoop/conf.cloudera.mapreduce1 \
   jar target/search-mr-*-job.jar org.apache.solr.hadoop.MapReduceIndexerTool \
-  --libjars myconfig.jar \
-  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \
+  -D 'mapred.child.java.opts=-Xmx500m' \
+  --log4j src/test/resources/log4j.properties \
   --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \
   --solr-home-dir src/test/resources/solr/minimr \
   --output-dir hdfs://c2202.mycompany.com/user/$USER/test \
@@ -342,8 +340,8 @@ hadoop jar target/search-mr-*-job.jar org.apache.solr.hadoop.HdfsFindTool \
 | sudo -u hdfs hadoop \
   --config /etc/hadoop/conf.cloudera.mapreduce1 \
   jar target/search-mr-*-job.jar org.apache.solr.hadoop.MapReduceIndexerTool \
-  --libjars myconfig.jar \
-  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \
+  -D 'mapred.child.java.opts=-Xmx500m' \
+  --log4j src/test/resources/log4j.properties \
   --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadJsonTestTweets.conf \
   --solr-home-dir src/test/resources/solr/minimr \
   --output-dir hdfs://c2202.mycompany.com/user/$USER/test \
@@ -355,8 +353,8 @@ hadoop jar target/search-mr-*-job.jar org.apache.solr.hadoop.HdfsFindTool \
 sudo -u hdfs hadoop \
   --config /etc/hadoop/conf.cloudera.mapreduce1 \
   jar target/search-mr-*-job.jar org.apache.solr.hadoop.MapReduceIndexerTool \
-  --libjars myconfig.jar \
-  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \
+  -D 'mapred.child.java.opts=-Xmx500m' \
+  --log4j src/test/resources/log4j.properties \
   --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \
   --solr-home-dir src/test/resources/solr/minimr \
   --output-dir hdfs://c2202.mycompany.com/user/$USER/test \
@@ -370,8 +368,8 @@ sudo -u hdfs hadoop \
 sudo -u hdfs hadoop \
   --config /etc/hadoop/conf.cloudera.mapreduce1 \
   jar target/search-mr-*-job.jar org.apache.solr.hadoop.MapReduceIndexerTool \
-  --libjars myconfig.jar \
-  -D 'mapred.child.java.opts=-Xmx500m -Dlog4j.configuration=mylog4j.properties' \
+  -D 'mapred.child.java.opts=-Xmx500m' \
+  --log4j src/test/resources/log4j.properties \
   --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \
   --output-dir hdfs://c2202.mycompany.com/user/$USER/test \
   --zk-host zk01.mycompany.com:2181/solr \
