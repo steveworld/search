@@ -19,6 +19,7 @@
 package org.apache.solr.morphline;
 
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Random;
@@ -50,23 +51,26 @@ import com.typesafe.config.Config;
  * The name of the unique key field is fetched from Solr's schema.xml file, as directed by the
  * <code>solrLocator</code> configuration parameter.
  */
-public final class SanitizeUniqueSolrKeyBuilder implements CommandBuilder {
+public final class GenerateSolrSequenceKeyBuilder implements CommandBuilder {
 
   @Override
   public Collection<String> getNames() {
-    return Collections.singletonList("sanitizeUniqueSolrKey");
+    return Arrays.asList(
+        "generateSolrSequenceKey", 
+        "sanitizeUniqueSolrKey" // old name (retained for backwards compatibility)
+    );
   }
 
   @Override
   public Command build(Config config, Command parent, Command child, MorphlineContext context) {
-    return new SanitizeUniqueSolrKey(config, parent, child, context);
+    return new GenerateSolrSequenceKey(config, parent, child, context);
   }
   
   
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
   ///////////////////////////////////////////////////////////////////////////////
-  private static final class SanitizeUniqueSolrKey extends AbstractCommand {
+  private static final class GenerateSolrSequenceKey extends AbstractCommand {
     
     private final boolean preserveExisting;
     private final String baseIdFieldName;
@@ -76,7 +80,7 @@ public final class SanitizeUniqueSolrKeyBuilder implements CommandBuilder {
     private final String idPrefix; // for load testing only; enables adding same document many times with a different unique key
     private final Random randomIdPrefix; // for load testing only; enables adding same document many times with a different unique key
 
-    public SanitizeUniqueSolrKey(Config config, Command parent, Command child, MorphlineContext context) {
+    public GenerateSolrSequenceKey(Config config, Command parent, Command child, MorphlineContext context) {
       super(config, parent, child, context);
       this.baseIdFieldName = getConfigs().getString(config, "baseIdField", Fields.BASE_ID);
       this.preserveExisting = getConfigs().getBoolean(config, "preserveExisting", true);      
