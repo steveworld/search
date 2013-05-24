@@ -90,6 +90,7 @@
     <module>search-flume</module>
     <module>search-contrib</module>
     <module>search-mr</module>
+    <module>search-dist</module>
   </modules>
 
   <repositories>
@@ -121,6 +122,62 @@
         <groupId>org.apache.lucene</groupId>
         <artifactId>lucene-core</artifactId>
         <version>${solr.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.cloudera.search</groupId>
+        <artifactId>search-solrcell</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.cloudera.search</groupId>
+        <artifactId>search-mr</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.cloudera.search</groupId>
+        <artifactId>cdk-morphlines-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.cloudera.search</groupId>
+        <artifactId>cdk-morphlines-avro</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.cloudera.search</groupId>
+        <artifactId>cdk-morphlines-tika</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.cloudera.search</groupId>
+        <artifactId>cdk-morphlines</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.cloudera.search</groupId>
+        <artifactId>search-dist</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.cloudera.search</groupId>
+        <artifactId>search-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.cloudera.search</groupId>
+        <artifactId>search-parent</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.cloudera.search</groupId>
+        <artifactId>search-flume</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.cloudera.search</groupId>
+        <artifactId>search-contrib</artifactId>
+        <version>${project.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
