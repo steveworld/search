@@ -132,6 +132,7 @@ public class TreeMergeOutputFormat extends FileOutputFormat<Text, NullWritable> 
         writer.addIndexes(indexes); 
         // TODO: avoid intermediate copying of files into dst directory; rename the files into the dir instead (cp -> rename) 
         // This can improve performance and turns this phase into a true "logical" merge, completing in constant time.
+        // See https://issues.apache.org/jira/browse/LUCENE-4746
         
         if (LOG.isDebugEnabled()) {
           context.getCounter(SolrCounters.class.getName(), SolrCounters.LOGICAL_TREE_MERGE_TIME.toString()).increment(System.currentTimeMillis() - start);
