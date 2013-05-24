@@ -44,7 +44,7 @@ final class ZooKeeperDownloader {
 
     SolrZkClient zkClient;
     try {
-      zkClient = new SolrZkClient(zkHost, 15000);
+      zkClient = new SolrZkClient(zkHost, 30000);
     } catch (Exception e) {
       throw new IllegalArgumentException("Cannot connect to ZooKeeper: " + zkHost, e);
     }

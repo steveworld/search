@@ -45,7 +45,9 @@ public class TestMorphlineInterceptor extends Assert {
     context.put(MorphlineSolrIndexer.MORPHLINE_FILE_PARAM, RESOURCES_DIR + "/test-morphlines/noOperation.conf");
     Event input = EventBuilder.withBody("foo", Charsets.UTF_8);
     input.getHeaders().put("name", "nadja");
-    Event actual = build(context).intercept(input);
+    MorphlineInterceptor interceptor = build(context);
+    Event actual = interceptor.intercept(input);
+    interceptor.close();
     Event expected = EventBuilder.withBody("foo".getBytes("UTF-8"), ImmutableMap.of("name", "nadja"));
     assertEqualsEvent(expected, actual);
     
