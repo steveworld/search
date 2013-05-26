@@ -22,10 +22,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BlockingDeque;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import org.apache.flume.Context;
@@ -49,8 +51,8 @@ import com.google.common.io.ByteStreams;
 public class MorphlineInterceptor implements Interceptor {
 
   private final Context context;
-  private final BlockingDeque<LocalMorphlineInterceptor> pool = 
-      new LinkedBlockingDeque(2 * Runtime.getRuntime().availableProcessors());
+  private final Queue<LocalMorphlineInterceptor> pool = 
+      new ConcurrentLinkedQueue<MorphlineInterceptor.LocalMorphlineInterceptor>();
   
   protected MorphlineInterceptor(Context context) {
     Preconditions.checkNotNull(context);
@@ -65,7 +67,7 @@ public class MorphlineInterceptor implements Interceptor {
   @Override
   public void close() {
     LocalMorphlineInterceptor interceptor;
-    while ((interceptor = pool.pollFirst()) != null) {
+    while ((interceptor = pool.poll()) != null) {
       interceptor.close();
     }
   }
@@ -87,11 +89,11 @@ public class MorphlineInterceptor implements Interceptor {
   }
 
   private void returnToPool(LocalMorphlineInterceptor interceptor) {
-    pool.offerFirst(interceptor);
+    pool.offer(interceptor);
   }
   
   private LocalMorphlineInterceptor borrowFromPool() {
-    LocalMorphlineInterceptor local = pool.pollFirst();
+    LocalMorphlineInterceptor local = pool.poll();
     return local != null ? local : new LocalMorphlineInterceptor(context);
   }
 
