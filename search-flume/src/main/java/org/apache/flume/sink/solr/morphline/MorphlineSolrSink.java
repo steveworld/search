@@ -107,7 +107,9 @@ public class MorphlineSolrSink extends AbstractSink implements Configurable {
   public synchronized void stop() {
     LOGGER.info("Solr sink {} stopping...", getName());
     try {
-      indexer.stop();
+      if (indexer != null) {
+        indexer.stop();
+      }
       sinkCounter.stop();
       LOGGER.info("Solr sink {} stopped. Metrics: {}, {}", getName(), sinkCounter);
     } finally {
