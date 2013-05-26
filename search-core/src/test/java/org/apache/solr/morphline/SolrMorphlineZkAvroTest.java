@@ -135,8 +135,8 @@ public class SolrMorphlineZkAvroTest extends AbstractSolrMorphlineZkTest {
   private void assertTweetEquals(GenericData.Record expected, Record actual, int i) {
     Preconditions.checkNotNull(expected);
     Preconditions.checkNotNull(actual);
-      System.out.println("\n\nexpected: " + toString(expected));
-      System.out.println("actual:   " + actual);
+//    System.out.println("\n\nexpected: " + toString(expected));
+//    System.out.println("actual:   " + actual);
     String[] fieldNames = new String[] { 
         "id", 
         "in_reply_to_status_id", 
@@ -145,12 +145,14 @@ public class SolrMorphlineZkAvroTest extends AbstractSolrMorphlineZkTest {
         "text", 
         };
     for (String fieldName : fieldNames) {
-      assertEquals(i + " fieldName: " + fieldName, expected.get(fieldName).toString(), actual.getFirstValue(fieldName).toString());
+      assertEquals(
+          i + " fieldName: " + fieldName, 
+          expected.get(fieldName).toString(), 
+          actual.getFirstValue(fieldName).toString());
     }
-    i++;
   }
 
-  public String toString(GenericData.Record avroRecord) {
+  private String toString(GenericData.Record avroRecord) {
     Record record = new Record();
     for (Field field : avroRecord.getSchema().getFields()) {
       record.put(field.name(), avroRecord.get(field.pos()));
