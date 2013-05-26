@@ -35,7 +35,7 @@
        that you fully re-index after changing this setting as it can
        affect both how text is indexed and queried.
   -->
-  <luceneMatchVersion>LUCENE_41</luceneMatchVersion>
+  <luceneMatchVersion>LUCENE_43</luceneMatchVersion>
 
   <!-- lib directives can be used to instruct Solr to load an Jars
        identified and use them to resolve any "plugins" specified in
@@ -64,22 +64,22 @@
        files in that directory which completely match the regex
        (anchored on both ends) will be included.
     -->
-  <lib dir="../../../dist/" regex="apache-solr-cell-\d.*\.jar" />
   <lib dir="../../../contrib/extraction/lib" regex=".*\.jar" />
+  <lib dir="../../../dist/" regex="solr-cell-\d.*\.jar" />
 
-  <lib dir="../../../dist/" regex="apache-solr-clustering-\d.*\.jar" />
   <lib dir="../../../contrib/clustering/lib/" regex=".*\.jar" />
+  <lib dir="../../../dist/" regex="solr-clustering-\d.*\.jar" />
 
-  <lib dir="../../../dist/" regex="apache-solr-langid-\d.*\.jar" />
   <lib dir="../../../contrib/langid/lib/" regex=".*\.jar" />
+  <lib dir="../../../dist/" regex="solr-langid-\d.*\.jar" />
 
-  <lib dir="../../../dist/" regex="apache-solr-velocity-\d.*\.jar" />
   <lib dir="../../../contrib/velocity/lib" regex=".*\.jar" />
+  <lib dir="../../../dist/" regex="solr-velocity-\d.*\.jar" />
 
   <!-- If a 'dir' option (with or without a regex) is used and nothing
        is found that matches, it will be ignored
     -->
-  <lib dir="/total/crap/dir/ignored" /> 
+  <lib dir="/non/existent/dir/yields/warning" /> 
 
   <!-- an exact 'path' can be used instead of a 'dir' to specify a 
        specific file.  This will cause a serious error to be logged if 
@@ -117,6 +117,17 @@
   <directoryFactory name="DirectoryFactory" 
                     class="${solr.directoryFactory:solr.NRTCachingDirectoryFactory}"/> 
 
+  <!-- The CodecFactory for defining the format of the inverted index.
+       The default implementation is SchemaCodecFactory, which is the official Lucene
+       index format, but hooks into the schema to provide per-field customization of
+       the postings lists and per-document values in the fieldType element
+       (postingsFormat/docValuesFormat). Note that most of the alternative implementations
+       are experimental, so if you choose to customize the index format, its a good
+       idea to convert back to the official format e.g. via IndexWriter.addIndexes(IndexReader)
+       before upgrading to a newer version to avoid unnecessary reindexing.
+  -->
+  <codecFactory class="solr.SchemaCodecFactory"/>
+
   <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
        Index Config - These settings control low-level behavior of indexing
        Most example settings here show the default value, but are commented
@@ -136,7 +147,7 @@
          indexing documents at once in IndexWriter; if more than this
          many threads arrive they will wait for others to finish.
          Default in Solr/Lucene is 8. -->
-    <!-- <maxIndexingThreads>8</maxIndexingThreads>  -->
+         <maxIndexingThreads>${solr.maxIndexingThreads:8}</maxIndexingThreads>
     
     <!-- Expert: Enabling compound file will use less files for the index, 
          using fewer file descriptors on the expense of performance decrease. 
@@ -300,6 +311,16 @@
   <!-- The default high-performance update handler -->
   <updateHandler class="solr.DirectUpdateHandler2">
 
+    <!-- Enables a transaction log, used for real-time get, durability, and
+         and solr cloud replica recovery.  The log can grow as big as
+         uncommitted changes to the index, so use of a hard autoCommit
+         is recommended (see below).
+         "dir" - the target directory for transaction logs, defaults to the
+                solr data directory.  --> 
+    <updateLog>
+      <str name="dir">${solr.ulog.dir:}</str>
+    </updateLog>
+ 
     <!-- AutoCommit
 
          Perform a hard commit automatically under certain conditions.
@@ -319,7 +340,7 @@
          searcher to be opened to make those changes visible.
       -->
      <autoCommit> 
-       <maxTime>60000</maxTime> 
+       <maxTime>${solr.autoCommit.maxTime:60000}</maxTime> 
        <openSearcher>false</openSearcher> 
      </autoCommit>
 
@@ -330,7 +351,7 @@
       -->
      
        <autoSoftCommit> 
-         <maxTime>1000</maxTime> 
+         <maxTime>${solr.autoSoftCommit.maxTime:1000}</maxTime> 
        </autoSoftCommit>
       
 
@@ -366,13 +387,6 @@
        </listener>
       -->
 
-    <!-- Enables a transaction log, currently used for real-time get.
-         "dir" - the target directory for transaction logs, defaults to the
-            solr data directory.  --> 
-    <updateLog>
-      <str name="dir">${solr.data.dir:}</str>
-    </updateLog>
-   
 
   </updateHandler>
   
@@ -619,7 +633,7 @@
          Recommend values of 1-2 for read-only slaves, higher for
          masters w/o cache warming.
       -->
-    <maxWarmingSearchers>2</maxWarmingSearchers>
+    <maxWarmingSearchers>4</maxWarmingSearchers>
 
   </query>
 
@@ -663,7 +677,8 @@
 
       --> 
     <requestParsers enableRemoteStreaming="true" 
-                    multipartUploadLimitInKB="2048000" />
+                    multipartUploadLimitInKB="2048000"
+                    formdataUploadLimitInKB="2048"/>
 
     <!-- HTTP Caching
 
@@ -979,30 +994,63 @@
        http://wiki.apache.org/solr/ExtractingRequestHandler 
 
     -->
-<requestHandler name="/update/extract" 
+  <requestHandler name="/update/extract" 
                   startup="lazy"
                   class="solr.extraction.ExtractingRequestHandler" >
-  <lst name="defaults">
-    <!-- extract some fields with the capture directive -->
-    <str name="capture">id</str> 
-    <str name="capture">user_screen_name</str>
-    <str name="capture">created_at</str>
-    <str name="capture">text</str>
+    <lst name="defaults">
+      <str name="lowernames">true</str>
+      <str name="uprefix">ignored_</str>
+      <!--<str name="uprefix">attr_</str>-->
 
-    <!-- rename user_screen_name to username -->
-    <str name="fmap.user_screen_name">username</str>
+      <str name="fmap.content">text</str>
 
-    <!-- ignore all unknown input fields -->
-    <str name="uprefix">ignored_</str>
-    
-    <!-- <str name="lowernames">true</str> -->      
-  </lst>
+      <!-- twitter feed schema -->
+      <str name="capture">id</str>
+      <str name="capture">user_friends_count</str>
+      <str name="capture">user_location</str>
+      <str name="capture">user_description</str>
+      <str name="capture">user_statuses_count</str>
+      <str name="capture">user_followers_count</str>
+      <str name="capture">user_name</str>
+      <str name="capture">user_screen_name</str>
+      <str name="capture">created_at</str>
+      <str name="capture">text</str>
+      <str name="capture">retweet_count</str>
+      <str name="capture">retweeted</str>
+      <str name="capture">in_reply_to_user_id</str>
+      <str name="capture">source</str>
+      <str name="capture">in_reply_to_status_id</str>
+      <str name="capture">media_url_https</str>
+      <str name="capture">expanded_url</str>
+      
+      <!-- file metadata -->   
+      <str name="capture">file_download_url</str>
+      <str name="capture">file_upload_url</str>
+      <str name="capture">file_scheme</str>
+      <str name="capture">file_host</str>
+      <str name="capture">file_port</str>
+      <str name="capture">file_path</str>
+      <str name="capture">file_name</str>
+      <str name="capture">file_length</str>
+      <str name="capture">file_last_modified</str>
+      <str name="capture">file_owner</str>
+      <str name="capture">file_group</str>
+      <str name="capture">file_permissions_user</str>
+      <str name="capture">file_permissions_group</str>
+      <str name="capture">file_permissions_other</str>
+      <str name="capture">file_permissions_stickybit</str>
+      
+      <!-- tika metadata -->   
+      <str name="content-type">content_type</str>
 
-  <!-- see http://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html -->
-  <lst name="date.formats"> 
-    <str>yyyy-MM-dd'T'HH:mm:ss'Z'</str> <!-- e.g. 2012-09-06T14:14:34Z -->
-  </lst>
-</requestHandler>
+      <!-- capture link hrefs but ignore div attributes -->
+      <!--
+      <str name="captureAttr">true</str>
+      <str name="fmap.a">links</str>
+      <str name="fmap.div">ignored_</str>
+      -->            
+    </lst>
+  </requestHandler>
 
 
   <!-- Field Analysis Request Handler
