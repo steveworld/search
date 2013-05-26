@@ -59,6 +59,13 @@
     </dependency>
 
     <dependency>
+      <groupId>com.cloudera.search</groupId>
+      <artifactId>cdk-morphlines-avro</artifactId>
+      <version>${project.parent.version}</version>
+      <scope>test</scope>
+    </dependency>
+    
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
