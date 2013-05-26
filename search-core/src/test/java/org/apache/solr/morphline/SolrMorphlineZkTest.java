@@ -82,7 +82,7 @@ public class SolrMorphlineZkTest extends AbstractSolrMorphlineZkTest {
     
     commit();
     
-    QueryResponse rsp = cloudClient.query(new SolrQuery("*:*").setRows(100000));   
+    QueryResponse rsp = cloudClient.query(new SolrQuery("*:*").setRows(100000).addSort("id", SolrQuery.ORDER.asc));
     //System.out.println(rsp);
     Iterator<SolrDocument> iter = rsp.getResults().iterator();
     assertEquals(expected.getFields(), next(iter));
