@@ -25,6 +25,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -46,14 +48,14 @@ import com.google.common.io.ByteStreams;
  */
 public class MorphlineInterceptor implements Interceptor {
 
-  private final MorphlineSolrIndexer morphline;
-  private final Collector collector;
+  private final Context context;
+  private final BlockingDeque<LocalMorphlineInterceptor> pool = 
+      new LinkedBlockingDeque(2 * Runtime.getRuntime().availableProcessors());
   
   protected MorphlineInterceptor(Context context) {
-    this.morphline = new MorphlineSolrIndexer();
-    this.collector = new Collector();
-    this.morphline.setFinalChild(collector);
-    this.morphline.configure(context);
+    Preconditions.checkNotNull(context);
+    this.context = context;
+    borrowFromPool(); // fail fast on morphline compilation exception
   }
 
   @Override
@@ -61,67 +63,36 @@ public class MorphlineInterceptor implements Interceptor {
   }
 
   @Override
-  public synchronized void close() {
-    morphline.stop();
+  public void close() {
+    LocalMorphlineInterceptor interceptor;
+    while ((interceptor = pool.pollFirst()) != null) {
+      interceptor.close();
+    }
   }
 
   @Override
   public List<Event> intercept(List<Event> events) {
-    List results = new ArrayList(events.size());
-    for (Event event : events) {
-      event = intercept(event);
-      if (event != null) {
-        results.add(event);
-      }
-    }
+    LocalMorphlineInterceptor interceptor = borrowFromPool();
+    List<Event> results = interceptor.intercept(events);
+    returnToPool(interceptor);
     return results;
   }
-
+  
   @Override
-  public synchronized Event intercept(Event event) {
-    collector.reset();
-    morphline.process(event);
-    List<Record> results = collector.getRecords();
-    if (results.size() == 0) {
-      return null;
-    }
-    if (results.size() > 1) {
-      throw new FlumeException(getClass().getName() + 
-          " must not generate more than one output record per input event");
-    }
-    Event result = toEvent(results.get(0));    
+  public Event intercept(Event event) {
+    LocalMorphlineInterceptor interceptor = borrowFromPool();
+    Event result = interceptor.intercept(event);
+    returnToPool(interceptor);
     return result;
   }
+
+  private void returnToPool(LocalMorphlineInterceptor interceptor) {
+    pool.offerFirst(interceptor);
+  }
   
-  private Event toEvent(Record record) {
-    Map<String, String> headers = new HashMap();
-    Map<String, Collection<Object>> recordMap = record.getFields().asMap();
-    byte[] body = null;
-    for (Map.Entry<String, Collection<Object>> entry : recordMap.entrySet()) {
-      if (entry.getValue().size() > 1) {
-        throw new FlumeException(getClass().getName()
-            + " must not generate more than one output value per record field");
-      }
-      assert entry.getValue().size() != 0; // guava guarantees that
-      Object firstValue = entry.getValue().iterator().next();
-      if (Fields.ATTACHMENT_BODY.equals(entry.getKey())) {
-        if (firstValue instanceof byte[]) {
-          body = (byte[]) firstValue;
-        } else if (firstValue instanceof InputStream) {
-          try {
-            body = ByteStreams.toByteArray((InputStream) firstValue);
-          } catch (IOException e) {
-            throw new FlumeException(e);
-          }            
-        } else {
-          throw new FlumeException(getClass().getName()
-              + " must non generate attachments that are not a byte[] or InputStream");
-        }
-      } else {
-        headers.put(entry.getKey(), firstValue.toString());
-      }
-    }
-    return EventBuilder.withBody(body, headers);
+  private LocalMorphlineInterceptor borrowFromPool() {
+    LocalMorphlineInterceptor local = pool.pollFirst();
+    return local != null ? local : new LocalMorphlineInterceptor(context);
   }
 
   
@@ -148,6 +119,91 @@ public class MorphlineInterceptor implements Interceptor {
 
   }
 
+  
+  ///////////////////////////////////////////////////////////////////////////////
+  // Nested classes:
+  ///////////////////////////////////////////////////////////////////////////////
+  private static final class LocalMorphlineInterceptor implements Interceptor {
+
+    private final MorphlineSolrIndexer morphline;
+    private final Collector collector;
+    
+    protected LocalMorphlineInterceptor(Context context) {
+      this.morphline = new MorphlineSolrIndexer();
+      this.collector = new Collector();
+      this.morphline.setFinalChild(collector);
+      this.morphline.configure(context);
+    }
+
+    @Override
+    public void initialize() {
+    }
+
+    @Override
+    public synchronized void close() {
+      morphline.stop();
+    }
+
+    @Override
+    public List<Event> intercept(List<Event> events) {
+      List results = new ArrayList(events.size());
+      for (Event event : events) {
+        event = intercept(event);
+        if (event != null) {
+          results.add(event);
+        }
+      }
+      return results;
+    }
+
+    @Override
+    public synchronized Event intercept(Event event) {
+      collector.reset();
+      morphline.process(event);
+      List<Record> results = collector.getRecords();
+      if (results.size() == 0) {
+        return null;
+      }
+      if (results.size() > 1) {
+        throw new FlumeException(getClass().getName() + 
+            " must not generate more than one output record per input event");
+      }
+      Event result = toEvent(results.get(0));    
+      return result;
+    }
+    
+    private Event toEvent(Record record) {
+      Map<String, String> headers = new HashMap();
+      Map<String, Collection<Object>> recordMap = record.getFields().asMap();
+      byte[] body = null;
+      for (Map.Entry<String, Collection<Object>> entry : recordMap.entrySet()) {
+        if (entry.getValue().size() > 1) {
+          throw new FlumeException(getClass().getName()
+              + " must not generate more than one output value per record field");
+        }
+        assert entry.getValue().size() != 0; // guava guarantees that
+        Object firstValue = entry.getValue().iterator().next();
+        if (Fields.ATTACHMENT_BODY.equals(entry.getKey())) {
+          if (firstValue instanceof byte[]) {
+            body = (byte[]) firstValue;
+          } else if (firstValue instanceof InputStream) {
+            try {
+              body = ByteStreams.toByteArray((InputStream) firstValue);
+            } catch (IOException e) {
+              throw new FlumeException(e);
+            }            
+          } else {
+            throw new FlumeException(getClass().getName()
+                + " must non generate attachments that are not a byte[] or InputStream");
+          }
+        } else {
+          headers.put(entry.getKey(), firstValue.toString());
+        }
+      }
+      return EventBuilder.withBody(body, headers);
+    }
+  }
+  
   
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
