@@ -145,14 +145,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
           "plus some headers plus contextual metadata) and generates as output zero or more records. " + 
           "Any kind of data format can be indexed and any Solr documents for any kind of Solr schema can be generated, " +
           "and any custom ETL logic can be registered and executed.\n" +
-          "Optionally, rich input files can be mapped to MIME types via the detectMimeType morphline command, i.e. by specifying to include " +
-          "the Tika defaultMimeTypes config file (which already ships embedded in " +
-          "tika-core.jar - see " +
-          "http://github.com/apache/tika/blob/trunk/tika-core/src/main/resources/org/apache/tika/mime/tika-mimetypes.xml) " +
-          "and optionally also one or more custom-mimetypes.xml configs (either as a file or embedded XML fragment), which extends and overrides " +
-          "the Tika defaultMimeTypes with custom directives.\n" +
-          "Morphline commands can use MIME types to determine how to interpret the input data. \n" +
-          "Fields, including MIME types, can also explicitly be passed by force from the CLI to the morphline, for example: " +
+          "Record fields, including MIME types, can also explicitly be passed by force from the CLI to the morphline, for example: " +
           "hadoop ... -D " + MorphlineMapRunner.MORPHLINE_HEADER_PREFIX + Fields.ATTACHMENT_MIME_TYPE + "=text/csv" +
           "\n\n" +
           "3) Reducer phase: This (parallel) phase loads the mapper's SolrInputDocuments into one EmbeddedSolrServer per reducer. " +
