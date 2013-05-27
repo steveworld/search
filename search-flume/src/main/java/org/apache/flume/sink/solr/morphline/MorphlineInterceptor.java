@@ -52,7 +52,9 @@ public class MorphlineInterceptor implements Interceptor {
   protected MorphlineInterceptor(Context context) {
     Preconditions.checkNotNull(context);
     this.context = context;
-    this.pool.add(new LocalMorphlineInterceptor(context)); // fail fast on morphline compilation exception
+    synchronized (pool) {
+      pool.add(new LocalMorphlineInterceptor(context)); // fail fast on morphline compilation exception
+    }
   }
 
   @Override
@@ -144,7 +146,7 @@ public class MorphlineInterceptor implements Interceptor {
     }
 
     @Override
-    public synchronized void close() {
+    public void close() {
       morphline.stop();
     }
 
@@ -161,7 +163,7 @@ public class MorphlineInterceptor implements Interceptor {
     }
 
     @Override
-    public synchronized Event intercept(Event event) {
+    public Event intercept(Event event) {
       collector.reset();
       morphline.process(event);
       List<Record> results = collector.getRecords();
