@@ -146,7 +146,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
           "Any kind of data format can be indexed and any Solr documents for any kind of Solr schema can be generated, " +
           "and any custom ETL logic can be registered and executed.\n" +
           "Record fields, including MIME types, can also explicitly be passed by force from the CLI to the morphline, for example: " +
-          "hadoop ... -D " + MorphlineMapRunner.MORPHLINE_HEADER_PREFIX + Fields.ATTACHMENT_MIME_TYPE + "=text/csv" +
+          "hadoop ... -D " + MorphlineMapRunner.MORPHLINE_FIELD_PREFIX + Fields.ATTACHMENT_MIME_TYPE + "=text/csv" +
           "\n\n" +
           "3) Reducer phase: This (parallel) phase loads the mapper's SolrInputDocuments into one EmbeddedSolrServer per reducer. " +
           "Each such reducer and Solr server can be seen as a (micro) shard. The Solr servers store their " +

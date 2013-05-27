@@ -74,7 +74,7 @@ public final class MorphlineMapRunner {
    * Headers, including MIME types, can also explicitly be passed by force from the CLI to Morphline, e.g:
    * hadoop ... -D morphlineField._attachment_mimetype=text/csv
    */
-  public static final String MORPHLINE_HEADER_PREFIX = "morphlineField.";
+  public static final String MORPHLINE_FIELD_PREFIX = "morphlineField.";
   
   /**
    * Flag to disable reading of file contents if indexing just file metadata is sufficient. 
@@ -142,8 +142,8 @@ public final class MorphlineMapRunner {
         
     commandLineMorphlineHeaders = new HashMap();
     for (Map.Entry<String,String> entry : configuration) {     
-      if (entry.getKey().startsWith(MORPHLINE_HEADER_PREFIX)) {
-        commandLineMorphlineHeaders.put(entry.getKey().substring(MORPHLINE_HEADER_PREFIX.length()), entry.getValue());
+      if (entry.getKey().startsWith(MORPHLINE_FIELD_PREFIX)) {
+        commandLineMorphlineHeaders.put(entry.getKey().substring(MORPHLINE_FIELD_PREFIX.length()), entry.getValue());
       }
     }
     LOG.debug("Headers, including MIME types, passed by force from the CLI to morphline: {}", commandLineMorphlineHeaders);
