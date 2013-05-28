@@ -96,15 +96,15 @@ Example configurations and test data files.
 
 ## Mailing List
 
-* [email](search-user@cloudera.org)
-* [Mailing List Archive](http://groups.google.com/a/cloudera.org/group/search-user)
+* [Posting](search-user@cloudera.org)
+* [Archive](http://groups.google.com/a/cloudera.org/group/search-user)
 * [Subscribe and Unsubcribe](http://groups.google.com/a/cloudera.org/group/search-user/subscribe)
 
 ## Documentation
 
-* [FAQ](http://www.cloudera.com).
-* [Admin Guide](http://www.cloudera.com).
-* [Release Notes](http://www.cloudera.com).
+* [FAQ](http://www.cloudera.com)
+* [Admin Guide](http://www.cloudera.com)
+* [Release Notes](http://www.cloudera.com)
 
 ## License
 
