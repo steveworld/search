@@ -5,7 +5,7 @@ that are stored on HDFS into search indexes stored on HDFS.
 
 ## Getting Started
 
-The steps below assume you have already [built the software](../README.md) as described in the parent maven module.
+The steps below assume you have already built the software as described in the parent maven module.
 In addition, below we assume a working MapReduce cluster, for example as installed by Cloudera Manager.
 
 ## MapReduceIndexerTool
