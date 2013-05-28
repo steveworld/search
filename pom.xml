@@ -19,10 +19,6 @@
 
     mvn clean package
 
-- To generate jar file for test classes:
-
-    mvn jar:test-jar
-
 - To generate documentation into the doc/ directory:
 
     mvn site
@@ -54,13 +50,90 @@
     <version>4.3.0-search-0.9.0-SNAPSHOT</version>
   </parent>
 
-  <!--
-  <parent>
-    <artifactId>flume-ng-sinks</artifactId>
-    <groupId>org.apache.flume</groupId>
-    <version>1.4.0-SNAPSHOT</version>
-  </parent>
-  -->
+  <modules>
+    <module>cdk-morphlines</module>
+    <module>search-core</module>
+    <module>search-solrcell</module>
+    <module>search-flume</module>
+    <module>search-contrib</module>
+    <module>search-mr</module>
+    <module>search-dist</module>
+  </modules>
+
+  <developers>
+    <developer>
+      <id>phunt</id>
+      <name>Patrick Hunt</name>
+      <organization>Cloudera</organization>
+    </developer>
+    <developer>
+      <id>whoschek</id>
+      <name>Wolfgang Hoschek</name>
+      <organization>Cloudera</organization>
+    </developer>
+    <developer>
+      <id>markrmiller</id>
+      <name>Mark Miller</name>
+      <organization>Cloudera</organization>
+    </developer>
+    <developer>
+      <id>gchanan</id>
+      <name>Gregory Chanan</name>
+      <organization>Cloudera</organization>
+    </developer>
+    <developer>
+      <id>rvs</id>
+      <name>Roman Shaposhnik</name>
+      <organization>Cloudera</organization>
+    </developer>    
+    <developer>
+      <id>ebwong</id>
+      <name>Eric Wong</name>
+      <organization>Cloudera</organization>
+    </developer>    
+  </developers>
+
+  <url>${url.project}</url>
+
+  <scm>
+    <connection>scm:git:git://github.com/cloudera/search.git</connection>
+    <developerConnection>scm:git:git@github.com:cloudera/search.git
+    </developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+
+  <issueManagement>
+    <system>JIRA</system>
+    <url>${url.jira}</url>
+  </issueManagement>
+
+  <organization>
+    <name>Cloudera</name>
+    <url>${url.cloudera}</url>
+  </organization>
+  <inceptionYear>2013</inceptionYear>
+  
+  <mailingLists>
+    <mailingList>
+      <name>search-user@cloudera.org</name>
+      <post>search-user@cloudera.org</post>
+      <archive>http://groups.google.com/a/cloudera.org/group/search-user
+      </archive>
+      <subscribe>
+        http://groups.google.com/a/cloudera.org/group/search-user/subscribe
+      </subscribe>
+      <unsubscribe>
+        http://groups.google.com/a/cloudera.org/group/search-user/subscribe
+      </unsubscribe>
+    </mailingList>
+  </mailingLists>
+  
+  <licenses>
+    <license>
+      <name>Apache Software License v2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
   
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -75,23 +148,15 @@
     <typesafe.config.version>1.0.0</typesafe.config.version>
     <argparse4j.version>0.4.0</argparse4j.version>    
     <junit.version>4.11</junit.version>
+    <codahale.metrics.version>3.0.0-BETA3</codahale.metrics.version>
     <surefire.version>2.12.4</surefire.version>
     <maven.antrun.plugin.version>1.7</maven.antrun.plugin.version>
     <build.helper.maven.plugin.version>1.7</build.helper.maven.plugin.version>    
     <apache.rat.version>0.7</apache.rat.version>
-    <codahale.metrics.version>3.0.0-BETA3</codahale.metrics.version>
-    <yammer.metrics.version>2.2.0</yammer.metrics.version>
+    <url.cloudera>http://www.cloudera.com</url.cloudera>
+    <url.project>http://github.com/cloudera/search</url.project>
+    <url.jira>http://issues.cloudera.com/browse/search</url.jira>
   </properties>
-
-  <modules>
-    <module>cdk-morphlines</module>
-    <module>search-core</module>
-    <module>search-solrcell</module>
-    <module>search-flume</module>
-    <module>search-contrib</module>
-    <module>search-mr</module>
-    <module>search-dist</module>
-  </modules>
 
   <repositories>
     <repository>
