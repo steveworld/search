@@ -19,7 +19,7 @@
 
     mvn clean package
 
-- To generate documentation into the doc/ directory:
+- To generate documentation into the target/site directory:
 
     mvn site
 
