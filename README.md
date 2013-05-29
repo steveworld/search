@@ -175,9 +175,11 @@ This module contains example configurations and test data files.
 
 ## Documentation
 
-* [FAQ](http://www.cloudera.com)
-* [Admin Guide](http://www.cloudera.com)
-* [Release Notes](http://www.cloudera.com)
+* [Landing Page](http://tiny.cloudera.com/search-v1-docs-landing)
+* [FAQ](http://tiny.cloudera.com/search-v1-faq)
+* [Installation Guide](http://tiny.cloudera.com/search-v1-install-guide)
+* [User Guide](http://tiny.cloudera.com/search-v1-user-guide)
+* [Release Notes](http://tiny.cloudera.com/search-v1-release-notes)
 
 ## License
 
