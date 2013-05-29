@@ -96,7 +96,8 @@ BEGIN_TRANSACTION, COMMIT_TRANSACTION, ROLLBACK_TRANSACTION, SHUTDOWN.
 
 The morphline configuration file is implemented using the HOCON format (Human-Optimized Config
 Object Notation). HOCON is basically JSON slightly adjusted for the configuration file use case.
-HOCON syntax is defined at HOCON github page and also used by Akka and Play.
+HOCON syntax is defined at [HOCON github page](http://github.com/typesafehub/config/blob/master/HOCON.md) 
+and also used by [Akka](http://www.akka.io) and [Play](http://www.playframework.org/).
 
 Cloudera Search includes several maven modules that contain morphline commands for integration with
 Apache Solr including SolrCloud, flexible log file analysis, single-line records, multi-line
