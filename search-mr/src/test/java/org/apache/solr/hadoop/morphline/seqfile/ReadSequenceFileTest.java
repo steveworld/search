@@ -66,7 +66,7 @@ public class ReadSequenceFileTest extends AbstractSolrMorphlineTest {
     expectedRecords.put(sequenceFile.getAbsolutePath(), numRecords);
 
     morphline = createMorphline("test-morphlines/sequenceFileMorphlineSimple");
-    testDocumentTypesInternal(files, expectedRecords, false);
+    testDocumentTypesInternal(files, expectedRecords);
     HashMap<String, ExpectedResult> expectedResultMap =
       getExpectedOutputForSimpleCase(numRecords);
     
@@ -121,7 +121,7 @@ public class ReadSequenceFileTest extends AbstractSolrMorphlineTest {
     expectedRecords.put(sequenceFile.getAbsolutePath(), numRecords);
 
     morphline = createMorphline("test-morphlines/sequenceFileMorphlineCustom");
-    testDocumentTypesInternal(files, expectedRecords, false);
+    testDocumentTypesInternal(files, expectedRecords);
     HashMap<String, ExpectedResult> expectedResultMap =
       getExpectedOutputForCustomCase(numRecords);
 

@@ -115,11 +115,6 @@ public class AbstractSolrMorphlineTest extends SolrTestCaseJ4 {
   }
 
   protected void testDocumentTypesInternal(String[] files, Map<String,Integer> expectedRecords) throws Exception {
-    testDocumentTypesInternal(files, expectedRecords, false);
-  }
-
-  protected void testDocumentTypesInternal(String[] files, Map<String,Integer> expectedRecords, boolean isProductionMode)
-  throws Exception {
     deleteAllDocuments();
     int numDocs = 0;    
     for (int i = 0; i < 1; i++) {
