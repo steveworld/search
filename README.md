@@ -81,7 +81,7 @@ analysis and annotate the record accordingly, continuously maintain statistics f
 sliding windows, compute exact or approximate distinct values and quantiles, etc.
 
 A command can also consume records and pass them to external systems. For example, a command can
-load records into Solr or write them to a MapReduce RecordWriter or pass them into an online
+load records into Solr or write them to a MapReduce Reducer or pass them into an online
 dashboard.
 
 A command can contain nested commands. Thus, a morphline is a tree of commands, akin to a push-based
