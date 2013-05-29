@@ -186,7 +186,7 @@ public class AbstractSolrMorphlineTest extends SolrTestCaseJ4 {
             numDocs++;
           }
         }
-        assertEquals(numDocs, queryResultSetSize("*:*"));
+        assertEquals("unexpected results in " + file, numDocs, queryResultSetSize("*:*"));
         //assertEquals(numDocs, queryResultSetSize("*:*", solrIndexer));
       }
 //      LOGGER.trace("iter: {}", i);

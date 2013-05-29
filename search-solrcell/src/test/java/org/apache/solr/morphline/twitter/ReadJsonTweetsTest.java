@@ -54,8 +54,8 @@ public class ReadJsonTweetsTest extends AbstractMorphlineTest {
     assertTrue(morphline.process(record));
     assertEquals(1, collector.getNumStartEvents());
     Iterator<Record> iter = collector.getRecords().iterator();
-    assertEquals(Arrays.asList("2012-09-06T14:14:34Z"), iter.next().get("created_at"));
-    assertEquals(Arrays.asList("2012-09-06T14:14:34Z"), iter.next().get("created_at"));
+    assertEquals(Arrays.asList("1985-09-04T18:01:01Z"), iter.next().get("created_at"));
+    assertEquals(Arrays.asList("1985-09-04T19:14:34Z"), iter.next().get("created_at"));
     assertFalse(iter.hasNext());
   }
   

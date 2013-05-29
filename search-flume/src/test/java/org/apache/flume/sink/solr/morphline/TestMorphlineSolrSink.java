@@ -304,9 +304,9 @@ public class TestMorphlineSolrSink extends SolrTestCaseJ4 {
     QueryResponse rsp = query("*:*");
     Iterator<SolrDocument> iter = rsp.getResults().iterator();
     ListMultimap<String, String> expectedFieldValues;
-    expectedFieldValues = ImmutableListMultimap.of("id", "243819505283899393", "text", "Let me see wat this Big Sean mixtape tlkn bout", "user_screen_name", "BB_IpushPuss");
+    expectedFieldValues = ImmutableListMultimap.of("id", "1234567890", "text", "sample tweet one", "user_screen_name", "fake_user1");
     assertEquals(expectedFieldValues, next(iter));
-    expectedFieldValues = ImmutableListMultimap.of("id", "243819505279721472", "text", "It's sad to say I can't even count how many hearts I've broken.", "user_screen_name", "BroodieBroski");  
+    expectedFieldValues = ImmutableListMultimap.of("id", "2345678901", "text", "sample tweet two", "user_screen_name", "fake_user2");  
     assertEquals(expectedFieldValues, next(iter));
     assertFalse(iter.hasNext());
   }
