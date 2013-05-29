@@ -59,10 +59,6 @@ public class AbstractSolrMorphlineTest extends SolrTestCaseJ4 {
   protected SolrServer solrServer;
   protected DocumentLoader testServer;
   
-  protected boolean injectUnknownSolrField = false; // to force exceptions
-  protected boolean injectSolrServerException = false; // force SolrServerException
-  protected boolean isProductionMode = false;
-
   protected static final boolean TEST_WITH_EMBEDDED_SOLR_SERVER = true;
   protected static final String EXTERNAL_SOLR_SERVER_URL = System.getProperty("externalSolrServer");
 //  protected static final String EXTERNAL_SOLR_SERVER_URL = "http://127.0.0.1:8983/solr";
@@ -120,38 +116,12 @@ public class AbstractSolrMorphlineTest extends SolrTestCaseJ4 {
 
   protected void testDocumentTypesInternal(String[] files, Map<String,Integer> expectedRecords) throws Exception {
     testDocumentTypesInternal(files, expectedRecords, false);
-//    boolean beforeProd = isProductionMode;
-//    try {    
-//      testDocumentTypesInternal(files, expectedRecords, indexer, false);
-//      testDocumentTypesInternal(files, expectedRecords, indexer, true);
-//      
-//      boolean before = injectUnknownSolrField;
-//      injectUnknownSolrField = true;
-//      try {
-//        testDocumentTypesInternal(files, expectedRecords, indexer, false);
-//        testDocumentTypesInternal(files, expectedRecords, indexer, true);
-//      } finally {
-//        injectUnknownSolrField = before;
-//      }      
-//      
-//      testDocumentTypesInternal(files, expectedRecords, indexer, false);
-//    } finally {
-//      isProductionMode = beforeProd;
-//    }
   }
 
-//  protected void testDocumentTypesInternal(String[] files, Map<String,Integer> expectedRecords, SolrIndexer solrIndexer, boolean isProductionMode)
   protected void testDocumentTypesInternal(String[] files, Map<String,Integer> expectedRecords, boolean isProductionMode)
   throws Exception {
     deleteAllDocuments();
-//    deleteAllDocuments(solrIndexer);
-//    setProductionMode(isProductionMode);
-    int numDocs = 0;
-    int docId = 0;
-    long startTime = System.currentTimeMillis();
-    
-//    assertEquals(numDocs, queryResultSetSize("*:*", solrIndexer));
-//  assertQ(req("*:*"), "//*[@numFound='0']");
+    int numDocs = 0;    
     for (int i = 0; i < 1; i++) {
       
       for (String file : files) {
@@ -161,40 +131,18 @@ public class AbstractSolrMorphlineTest extends SolrTestCaseJ4 {
         //event.put(Fields.ID, docId++);
         event.getFields().put(Fields.ATTACHMENT_BODY, new ByteArrayInputStream(body));
         event.getFields().put(Fields.ATTACHMENT_NAME, f.getName());
-        event.getFields().put(Fields.BASE_ID, f.getName());
-
-        boolean injectUnknownSolrField = false;
-
-        if (isProductionMode || !injectUnknownSolrField) {
-          load(event); // must not throw exception
-//          load(event, solrIndexer); // must not throw exception
+        event.getFields().put(Fields.BASE_ID, f.getName());        
+        load(event);
+        Integer count = expectedRecords.get(file);
+        if (count != null) {
+          numDocs += count;
         } else {
-          try {
-//            load(event, solrIndexer); // must throw exception
-            load(event); // must throw exception
-            fail();
-          } catch (Exception e) {
-            ; // expected
-          }          
-        }
-        
-        if (!injectUnknownSolrField) {
-          Integer count = expectedRecords.get(file);
-          if (count != null) {
-            numDocs += count;
-          } else {
-            numDocs++;
-          }
+          numDocs++;
         }
         assertEquals("unexpected results in " + file, numDocs, queryResultSetSize("*:*"));
-        //assertEquals(numDocs, queryResultSetSize("*:*", solrIndexer));
       }
-//      LOGGER.trace("iter: {}", i);
     }
-//    LOGGER.trace("all done with put at {}", System.currentTimeMillis() - startTime);
     assertEquals(numDocs, queryResultSetSize("*:*"));
-//    assertEquals(numDocs, queryResultSetSize("*:*", solrIndexer));
-//    LOGGER.trace("indexer: ", solrIndexer);
   }
 
   private boolean load(Record record) {
