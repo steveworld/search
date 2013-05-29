@@ -384,7 +384,7 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
       assertTrue(tool.job.isComplete());
       assertTrue(tool.job.isSuccessful());      
       results = server.query(new SolrQuery("*:*"));
-      assertEquals(32, results.getResults().getNumFound());
+      assertEquals(30, results.getResults().getNumFound());
     }    
     
     cloudClient.deleteByQuery("*:*");
@@ -415,7 +415,7 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
       assertTrue(tool.job.isSuccessful());
       
       results = server.query(new SolrQuery("*:*"));      
-      assertEquals(2124, results.getResults().getNumFound());
+      assertEquals(2126, results.getResults().getNumFound());
     }    
     
     server.shutdown();
