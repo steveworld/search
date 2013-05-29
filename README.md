@@ -11,7 +11,7 @@ The following maven modules currently exist:
 
 ### cdk-morphlines
 
-Morphlines is an open source framework that reduces the time and skills necessary to build or 
+Cloudera Morphlines is an open source framework that reduces the time and skills necessary to build or 
 change Search indexing applications. A morphline is a rich configuration file that makes it easy 
 to define an ETL transformation chain that consumes any kind of data from any kind of data source,
 processes the data and loads the results into Cloudera Search. Executing in a small embeddable 
@@ -111,10 +111,10 @@ arbitrarily nested container file formats, among others. These are introduced be
 
 ### cdk-morphlines-core
 
-This module contains the morphline compiler, runtime and standard library of commands that higher
+This module contains the Cloudera morphline compiler, runtime and standard library of commands that higher
 level modules such as `cdk-morphlines-avro` and `cdk-morphlines-tika` depend on.
 
-Includes commands for flexible log file analysis, single-line records, multi-line records, 
+This includes commands for flexible log file analysis, single-line records, multi-line records, 
 CSV files, regular expression based pattern matching and extraction, operations on fields for 
 assignment and comparison, operations on fields with list and set semantics, if-then-else 
 conditionals, string and timestamp conversions, scripting support for dynamic java code, 
@@ -122,11 +122,11 @@ a small rules engine, logging, metrics & counters, etc.
 
 ### cdk-morphlines-avro
 
-This module contains morphline commands for reading, extracting and transforming Avro files and Avro objects.
+This module contains Cloudera morphline commands for reading, extracting and transforming Avro files and Avro objects.
 
 ### cdk-morphlines-tika
 
-This module contains morphline commands for auto-detecting MIME types from binary data, as well as decompressing and 
+This module contains Cloudera morphline commands for auto-detecting MIME types from binary data, as well as decompressing and 
 unpacking files. Depends on Apache Tika.
 
 ### search-core
