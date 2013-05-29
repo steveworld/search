@@ -122,26 +122,26 @@ a small rules engine, logging, metrics & counters, etc.
 
 ### cdk-morphlines-avro
 
-Morphline commands for reading, extracting and transforming Avro files and Avro objects.
+This module contains morphline commands for reading, extracting and transforming Avro files and Avro objects.
 
 ### cdk-morphlines-tika
 
-Morphline commands for auto-detecting MIME types from binary data, as well as decompressing and 
+This module contains morphline commands for auto-detecting MIME types from binary data, as well as decompressing and 
 unpacking files. Depends on Apache Tika.
 
 ### search-core
 
-Morphline commands for Solr that higher level modules such as `search-solrcell` and `search-mr` 
+This module contains morphline commands for Solr that higher level modules such as `search-solrcell` and `search-mr` 
 and `search-flume` depend on for indexing.
 
 ### search-solrcell
 
-Morphline commands for using SolrCell with Tika parsers. This includes support for HTML, 
+This module contains morphline commands for using SolrCell with Tika parsers. This includes support for HTML, 
 XML, PDF, Word, Excel, Images, Audio, Video, etc. 
 
 ### search-flume
 
-Flume Morphline Solr Sink that extracts search documents from Apache Flume events, transforms 
+This module contains a Flume Morphline Solr Sink that extracts search documents from Apache Flume events, transforms 
 them and loads them in Near Real Time into Apache Solr, typically a SolrCloud.
 
 Also includes a Flume MorphlineInterceptor that can be used to implement software defined network
@@ -150,7 +150,7 @@ certain event headers via regular expression based pattern matching, etc.
 
 ### search-mr
 
-Flexible, scalable, fault tolerant, batch oriented system for processing large numbers of records 
+This module contains a flexible, scalable, fault tolerant, batch oriented system for processing large numbers of records 
 contained in files that are stored on HDFS into search indexes stored on HDFS.
 
 `MapReduceIndexerTool` is a MapReduce batch job driver that takes a morphline and creates a set of Solr 
@@ -160,11 +160,11 @@ customer-facing Solr servers, typically a SolrCloud.
 
 ### search-contrib
 
-Additional sources to help with search.
+This module contains additional sources to help with search.
 
 ### samples
 
-Example configurations and test data files.
+This module contains example configurations and test data files.
 
 
 ## Mailing List
