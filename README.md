@@ -96,7 +96,7 @@ Example configurations and test data files.
 
 ## Mailing List
 
-* [Posting](search-user@cloudera.org)
+* [Posting](mailto:search-user@cloudera.org)
 * [Archive](http://groups.google.com/a/cloudera.org/group/search-user)
 * [Subscribe and Unsubcribe](http://groups.google.com/a/cloudera.org/group/search-user/subscribe)
 
