@@ -1,6 +1,6 @@
 # Cloudera Search - Flume
 
-Flume Morphline Solr Sink that extracts search documents from Apache Flume events, transforms 
+This module contains a Flume Morphline Solr Sink that extracts search documents from Apache Flume events, transforms 
 them and loads them in Near Real Time into Apache Solr, typically a SolrCloud.
 
 Also includes a Flume MorphlineInterceptor that can be used to implement software defined network

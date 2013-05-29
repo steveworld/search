@@ -1,3 +1,3 @@
 # Cloudera Search - Contrib
 
-Examples and contributions.
+This module contains examples and contributions.
