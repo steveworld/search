@@ -195,7 +195,7 @@ git clone git@github.com:cloudera/search.git
 cd search
 #git checkout master
 mvn clean package
-find . -name '*.jar'
+ls search-dist/target/*.tar.gz
 </pre>
 
 ## Integrating with Eclipse
