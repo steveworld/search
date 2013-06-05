@@ -968,30 +968,6 @@
        </lst>
   </requestHandler>
 
-  <!-- Solr Cell Update Request Handler
-
-       http://wiki.apache.org/solr/ExtractingRequestHandler 
-
-    -->
-  <requestHandler name="/update/extract" 
-                  startup="lazy"
-                  class="solr.extraction.ExtractingRequestHandler" >
-    <lst name="defaults">
-      <str name="lowernames">false</str>
-      <str name="uprefix">ignored_</str>
-      
-      <str name="capture">key</str>
-      <str name="capture">value</str>
-      <!-- capture link hrefs but ignore div attributes -->
-      <!--
-      <str name="captureAttr">true</str>
-      <str name="fmap.a">links</str>
-      <str name="fmap.div">ignored_</str>
-      -->            
-    </lst>
-  </requestHandler>
-
-
   <!-- Field Analysis Request Handler
 
        RequestHandler that provides much the same functionality as
