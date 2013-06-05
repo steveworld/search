@@ -359,7 +359,10 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
       assertEquals(20, results.getResults().getNumFound());
     }    
     
-    fs.delete(inDir, true);    
+    fs.delete(inDir, true);   
+    fs.delete(outDir, true);  
+    fs.delete(dataDir, true); 
+    assertTrue(fs.mkdirs(inDir));
     INPATH = upAvroFile(fs, inDir, DATADIR, dataDir, inputAvroFile2);
     
     args = new String[] {
@@ -383,14 +386,14 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
       assertTrue(tool.job.isComplete());
       assertTrue(tool.job.isSuccessful());      
       results = server.query(new SolrQuery("*:*"));
-      assertEquals(30, results.getResults().getNumFound());
+      
+      assertEquals(22, results.getResults().getNumFound());
     }    
     
-    cloudClient.deleteByQuery("*:*");
-    cloudClient.commit();
-    
     // try using zookeeper
-    fs.delete(inDir, true);    
+    fs.delete(inDir, true);   
+    fs.delete(outDir, true);  
+    fs.delete(dataDir, true);    
     INPATH = upAvroFile(fs, inDir, DATADIR, dataDir, inputAvroFile3);
     
     args = new String[] {
@@ -424,8 +427,9 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     createCollection(replicatedCollection, 2, 3, 2);
     waitForRecoveriesToFinish(false);
     cloudClient.setDefaultCollection(replicatedCollection);
-    fs.delete(inDir, true);    
-    fs.delete(dataDir, true);
+    fs.delete(inDir, true);   
+    fs.delete(outDir, true);  
+    fs.delete(dataDir, true);  
     assertTrue(fs.mkdirs(dataDir));
     INPATH = upAvroFile(fs, inDir, DATADIR, dataDir, inputAvroFile3);
     
@@ -531,7 +535,7 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     Path INPATH = new Path(inDir, "input.txt");
     OutputStream os = fs.create(INPATH);
     Writer wr = new OutputStreamWriter(os, "UTF-8");
-    wr.write(DATADIR + File.separator + inputAvroFile1);
+    wr.write(DATADIR + File.separator + localFile);
     wr.close();
     
     assertTrue(fs.mkdirs(dataDir));
