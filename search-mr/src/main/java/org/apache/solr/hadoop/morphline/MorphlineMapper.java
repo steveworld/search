@@ -129,9 +129,13 @@ public class MorphlineMapper extends SolrMapper<LongWritable, Text> {
     @Override
     public void load(SolrInputDocument doc) throws IOException, SolrServerException {
       String uniqueKeyFieldName = getSchema().getUniqueKeyField().getName();
-      String id = doc.getFieldValue(uniqueKeyFieldName).toString();
+      Object id = doc.getFieldValue(uniqueKeyFieldName);
+      if (id == null) {
+        throw new IllegalArgumentException("Missing value for (required) unique document key: " + uniqueKeyFieldName
+            + " (see Solr schema.xml)");
+      }
       try {
-        context.write(new Text(id), new SolrInputDocumentWritable(doc));
+        context.write(new Text(id.toString()), new SolrInputDocumentWritable(doc));
       } catch (InterruptedException e) {
         throw new IOException("Interrupted while writing " + doc, e);
       }
