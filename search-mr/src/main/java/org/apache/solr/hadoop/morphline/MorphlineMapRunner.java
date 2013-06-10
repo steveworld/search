@@ -64,6 +64,7 @@ public final class MorphlineMapRunner {
   private IndexSchema schema;
   private Map<String, String> commandLineMorphlineHeaders;
   private boolean disableFileOpen;
+  private String morphlineFileAndId;
   private final Timer elapsedTime;   
   
   public static final String MORPHLINE_FILE_PARAM = "morphlineFile";
@@ -136,7 +137,8 @@ public final class MorphlineMapRunner {
       throw new MorphlineCompilationException("Missing parameter: " + MORPHLINE_FILE_PARAM, null);
     }
     morphline = new Compiler().compile(new File(morphlineFile), morphlineId, morphlineContext, null);
-
+    morphlineFileAndId = morphlineFile + "@" + morphlineId;
+    
     disableFileOpen = configuration.getBoolean(DISABLE_FILE_OPEN, false);
     LOG.debug("disableFileOpen: {}", disableFileOpen);
         
@@ -178,7 +180,9 @@ public final class MorphlineMapRunner {
       }
       record.put(Fields.ATTACHMENT_BODY, in);
       Notifications.notifyStartSession(morphline);
-      morphline.process(record);
+      if (!morphline.process(record)) {
+        LOG.warn("Morphline {} failed to process record: {}", morphlineFileAndId, record);
+      }
       if (context != null) {
         context.getCounter(MorphlineCounters.class.getName(), MorphlineCounters.FILES_READ.toString()).increment(1);
         context.getCounter(MorphlineCounters.class.getName(), MorphlineCounters.FILE_BYTES_READ.toString()).increment(fileLength);

@@ -21,6 +21,8 @@ import java.util.Map.Entry;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.solr.morphline.FaultTolerance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
@@ -40,9 +42,12 @@ public class MorphlineSolrIndexer implements SolrIndexer {
   private MorphlineContext morphlineContext;
   private Command morphline;
   private Command finalChild;
+  private String morphlineFileAndId;
   
   public static final String MORPHLINE_FILE_PARAM = "morphlineFile";
   public static final String MORPHLINE_ID_PARAM = "morphlineId";
+
+  private static final Logger LOG = LoggerFactory.getLogger(MorphlineSolrIndexer.class);
   
   // For test injection
   void setMorphlineContext(MorphlineContext morphlineContext) {
@@ -56,7 +61,6 @@ public class MorphlineSolrIndexer implements SolrIndexer {
 
   @Override
   public void configure(Context context) {
-    // TODO: maybe also support fetching morphlineFile from zk? (in addition to fetching it from local disk)
     if (morphlineContext == null) {
       FaultTolerance faultTolerance = new FaultTolerance(
           context.getBoolean(FaultTolerance.IS_PRODUCTION_MODE, false), 
@@ -74,6 +78,7 @@ public class MorphlineSolrIndexer implements SolrIndexer {
       throw new MorphlineCompilationException("Missing parameter: " + MORPHLINE_FILE_PARAM, null);
     }
     morphline = new Compiler().compile(new File(morphlineFile), morphlineId, morphlineContext, finalChild);
+    morphlineFileAndId = morphlineFile + "@" + morphlineId;
   }
 
   @Override
@@ -88,7 +93,9 @@ public class MorphlineSolrIndexer implements SolrIndexer {
     }    
     try {
       Notifications.notifyStartSession(morphline);
-      morphline.process(record);
+      if (!morphline.process(record)) {
+        LOG.warn("Morphline {} failed to process record: {}", morphlineFileAndId, record);
+      }
     } catch (RuntimeException t) {
       morphlineContext.getExceptionHandler().handleException(t, record);
     }

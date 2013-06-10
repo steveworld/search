@@ -194,6 +194,9 @@ public class SolrLocator {
     if (schema.getUniqueKeyField() == null) {
       throw new MorphlineCompilationException("Solr schema.xml is missing unique key field", config);
     }
+    if (!schema.getUniqueKeyField().isRequired()) {
+      throw new MorphlineCompilationException("Solr schema.xml must contain a required unique key field", config);
+    }
   }
   
   @Override

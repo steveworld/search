@@ -97,7 +97,7 @@ public final class ReadSequenceFileBuilder implements CommandBuilder {
         removeAttachments(template);
         try {
           while (reader.next(key, val)) {
-            numRecordsCounter.inc();
+            numRecordsMeter.mark();
             Record outputRecord = template.copy();
             outputRecord.put(keyField, key);
             outputRecord.put(valueField, val);

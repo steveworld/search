@@ -36,6 +36,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.Counting;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 
@@ -96,14 +99,22 @@ public class MorphlineMapper extends SolrMapper<LongWritable, Text> {
 
   private void addMetricsToMRCounters(MetricRegistry metricRegistry, Context context) {
     for (Map.Entry<String, Counter> entry : metricRegistry.getCounters().entrySet()) {
-      String metricName = entry.getKey();
-      context.getCounter("morphline", metricName).increment(entry.getValue().getCount());
+      addCounting(entry.getKey(),  entry.getValue(), 1);
+    }
+    for (Map.Entry<String, Histogram> entry : metricRegistry.getHistograms().entrySet()) {
+      addCounting(entry.getKey(),  entry.getValue(), 1);
+    }
+    for (Map.Entry<String, Meter> entry : metricRegistry.getMeters().entrySet()) {
+      addCounting(entry.getKey(), entry.getValue(), 1);
     }
     for (Map.Entry<String, Timer> entry : metricRegistry.getTimers().entrySet()) {
-      String metricName = entry.getKey();
       long nanosPerMilliSec = 1000 * 1000;
-      context.getCounter("morphline", metricName).increment(entry.getValue().getCount() / nanosPerMilliSec);
+      addCounting(entry.getKey(), entry.getValue(), nanosPerMilliSec);
     }
+  }
+  
+  private void addCounting(String metricName, Counting value, long scale) {
+    context.getCounter("morphline", metricName).increment(value.getCount() / scale);
   }
   
   ///////////////////////////////////////////////////////////////////////////////
