@@ -58,7 +58,7 @@
     <module>search-flume</module>
     <module>search-contrib</module>
     <module>search-mr</module>
-    <!--<module>search-dist</module>-->
+    <module>search-dist</module>
   </modules>
 
   <developers>
