@@ -14,7 +14,7 @@
  limitations under the License. -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
- 
+
   <parent>
     <groupId>com.cloudera.search</groupId>
     <artifactId>search-parent</artifactId>
@@ -60,7 +60,7 @@
   <dependencies>
     <dependency>
       <groupId>com.cloudera.search</groupId>
-      <artifactId>search-solrcell</artifactId>
+      <artifactId>cdk-morphlines-solrcell</artifactId>
     </dependency>
     <dependency>
       <groupId>com.cloudera.search</groupId>
@@ -80,11 +80,15 @@
     </dependency>
     <dependency>
       <groupId>com.cloudera.search</groupId>
-      <artifactId>search-core</artifactId>
+      <artifactId>cdk-morphlines-solr</artifactId>
     </dependency>
     <dependency>
       <groupId>com.cloudera.search</groupId>
       <artifactId>search-flume</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.cloudera.search</groupId>
+      <artifactId>cdk-morphlines-twitter</artifactId>
     </dependency>
     <dependency>
       <groupId>com.cloudera.search</groupId>

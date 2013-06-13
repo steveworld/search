@@ -48,15 +48,15 @@
       </properties>
     </profile>
   </profiles>
-  
+
   <dependencies>
-      
+
     <dependency> <!-- see http://lucene.apache.org/solr -->
       <groupId>org.apache.solr</groupId>
       <artifactId>solr-test-framework</artifactId>
       <version>${solr.version}</version>
       <scope>test</scope>
-    </dependency>    
+    </dependency>
 
     <dependency>
       <groupId>org.apache.hadoop</groupId>
@@ -95,7 +95,13 @@
 
     <dependency>
       <groupId>com.cloudera.search</groupId>
-      <artifactId>search-solrcell</artifactId>
+      <artifactId>cdk-morphlines-solrcell</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.cloudera.search</groupId>
+      <artifactId>cdk-morphlines-twitter</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
 
@@ -104,20 +110,20 @@
       <artifactId>cdk-morphlines-avro</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
-  
+
     <dependency>
       <groupId>com.cloudera.search</groupId>
       <artifactId>cdk-morphlines-tika</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
-  
+
     <dependency> <!-- see http://tika.apache.org -->
       <groupId>org.apache.tika</groupId>
       <artifactId>tika-xmp</artifactId>
-      <version>${tika.version}</version>      
+      <version>${tika.version}</version>
       <exclusions>
         <exclusion>
-          <groupId>org.apache.geronimo.specs</groupId> 
+          <groupId>org.apache.geronimo.specs</groupId>
           <artifactId>geronimo-stax-api_1.0_spec</artifactId> <!-- needed by tika-parsers but already provided by JDK -->
         </exclusion>
         <exclusion>
@@ -126,15 +132,15 @@
         </exclusion>
       </exclusions>
     </dependency>
-    
+
     <dependency>
       <groupId>com.cloudera.search</groupId>
-      <artifactId>search-core</artifactId>
+      <artifactId>cdk-morphlines-solr</artifactId>
       <version>${project.parent.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>com.cloudera.search</groupId>
       <artifactId>cdk-morphlines-core</artifactId>
@@ -142,7 +148,7 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-        
+
     <dependency> <!-- see http://argparse4j.sourceforge.net -->
       <groupId>net.sourceforge.argparse4j</groupId>
       <artifactId>argparse4j</artifactId>
@@ -155,7 +161,7 @@
       <version>${slf4j.version}</version>
       <scope>provided</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
@@ -176,21 +182,21 @@
         </exclusion>
       </exclusions>
     </dependency>
-    
+
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <version>1.9.5</version>
       <scope>test</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-minicluster</artifactId>
@@ -219,7 +225,7 @@
           </systemPropertyVariables>
         </configuration>
       </plugin>
-      
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>

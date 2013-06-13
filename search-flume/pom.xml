@@ -17,7 +17,7 @@ limitations under the License.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
- 
+
   <parent>
     <groupId>com.cloudera.search</groupId>
     <artifactId>search-parent</artifactId>
@@ -35,7 +35,7 @@ limitations under the License.
       <artifactId>flume-ng-core</artifactId>
       <version>${flume.version}</version>
       <scope>provided</scope>
-    </dependency>    
+    </dependency>
 
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -56,11 +56,17 @@ limitations under the License.
       <artifactId>solr-test-framework</artifactId>
       <version>${solr.version}</version>
       <scope>test</scope>
-    </dependency>    
-    
+    </dependency>
+
     <dependency>
       <groupId>com.cloudera.search</groupId>
-      <artifactId>search-solrcell</artifactId>
+      <artifactId>cdk-morphlines-solrcell</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.cloudera.search</groupId>
+      <artifactId>cdk-morphlines-twitter</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
 
@@ -69,20 +75,20 @@ limitations under the License.
       <artifactId>cdk-morphlines-avro</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
-  
+
     <dependency>
       <groupId>com.cloudera.search</groupId>
       <artifactId>cdk-morphlines-tika</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
-  
+
     <dependency> <!-- see http://tika.apache.org -->
       <groupId>org.apache.tika</groupId>
       <artifactId>tika-xmp</artifactId>
-      <version>${tika.version}</version>      
+      <version>${tika.version}</version>
       <exclusions>
         <exclusion>
-          <groupId>org.apache.geronimo.specs</groupId> 
+          <groupId>org.apache.geronimo.specs</groupId>
           <artifactId>geronimo-stax-api_1.0_spec</artifactId> <!-- needed by tika-parsers but already provided by JDK -->
         </exclusion>
         <exclusion>
@@ -91,10 +97,10 @@ limitations under the License.
         </exclusion>
       </exclusions>
     </dependency>
-    
+
     <dependency>
       <groupId>com.cloudera.search</groupId>
-      <artifactId>search-core</artifactId>
+      <artifactId>cdk-morphlines-solr</artifactId>
       <version>${project.parent.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
@@ -109,21 +115,21 @@ limitations under the License.
           <groupId>org.slf4j</groupId>
           <artifactId>slf4j-jdk14</artifactId> <!-- instead use slf4j on top of log4j or logback  -->
         </exclusion>
-      </exclusions>        
+      </exclusions>
     </dependency>
-    
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
       <version>${junit.version}</version>
     </dependency>
-    
+
   </dependencies>
 
   <build>
     <plugins>
-    
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
@@ -135,7 +141,7 @@ limitations under the License.
             <configuration>
               <target>
                 <copy todir="${project.build.directory}/test-classes">
-                  <fileset dir="${basedir}/../search-core/src/test/resources"/>
+                  <fileset dir="${basedir}/../cdk-morphlines/cdk-morphlines-solr/src/test/resources"/>
                 </copy>
               </target>
             </configuration>
@@ -145,7 +151,7 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
-    
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -156,10 +162,10 @@ limitations under the License.
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
           <systemPropertyVariables>
             <solr.expected.version>${solr.expected.version}</solr.expected.version>
-          </systemPropertyVariables>          
+          </systemPropertyVariables>
         </configuration>
       </plugin>
 
-    </plugins>  
+    </plugins>
   </build>
 </project>
