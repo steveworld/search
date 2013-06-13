@@ -28,13 +28,10 @@ import java.util.TreeMap;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.mapreduce.Mapper.Context;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.hadoop.HdfsFileFieldNames;
 import org.apache.solr.hadoop.PathParts;
 import org.apache.solr.hadoop.Utils;
-import org.apache.solr.morphline.DocumentLoader;
-import org.apache.solr.morphline.FaultTolerance;
-import org.apache.solr.morphline.SolrLocator;
-import org.apache.solr.morphline.SolrMorphlineContext;
 import org.apache.solr.schema.IndexSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,9 +41,13 @@ import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Compiler;
+import com.cloudera.cdk.morphline.base.FaultTolerance;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.base.Metrics;
 import com.cloudera.cdk.morphline.base.Notifications;
+import com.cloudera.cdk.morphline.solr.DocumentLoader;
+import com.cloudera.cdk.morphline.solr.SolrLocator;
+import com.cloudera.cdk.morphline.solr.SolrMorphlineContext;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.google.common.annotations.Beta;
@@ -105,7 +106,9 @@ public final class MorphlineMapRunner {
     
     FaultTolerance faultTolerance = new FaultTolerance(
         configuration.getBoolean(FaultTolerance.IS_PRODUCTION_MODE, false), 
-        configuration.getBoolean(FaultTolerance.IS_IGNORING_RECOVERABLE_EXCEPTIONS, false));
+        configuration.getBoolean(FaultTolerance.IS_IGNORING_RECOVERABLE_EXCEPTIONS, false),
+        configuration.get(FaultTolerance.RECOVERABLE_EXCEPTION_CLASSES, SolrServerException.class.getName())        
+        );
     
     morphlineContext = new SolrMorphlineContext.Builder()
       .setDocumentLoader(loader)

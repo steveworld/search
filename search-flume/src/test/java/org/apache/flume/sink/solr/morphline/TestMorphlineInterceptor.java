@@ -1,11 +1,12 @@
 /*
- * Copyright 2013 Cloudera Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -39,7 +40,7 @@ public class TestMorphlineInterceptor extends Assert {
   @Test
   public void testNoOperation() throws Exception {
     Context context = new Context();
-    context.put(MorphlineSolrIndexer.MORPHLINE_FILE_PARAM, RESOURCES_DIR + "/test-morphlines/noOperation.conf");
+    context.put(MorphlineHandlerImpl.MORPHLINE_FILE_PARAM, RESOURCES_DIR + "/test-morphlines/noOperation.conf");
     Event input = EventBuilder.withBody("foo", Charsets.UTF_8);
     input.getHeaders().put("name", "nadja");
     MorphlineInterceptor interceptor = build(context);
@@ -56,7 +57,7 @@ public class TestMorphlineInterceptor extends Assert {
   @Test
   public void testReadClob() throws Exception {
     Context context = new Context();
-    context.put(MorphlineSolrIndexer.MORPHLINE_FILE_PARAM, RESOURCES_DIR + "/test-morphlines/readClob.conf");
+    context.put(MorphlineHandlerImpl.MORPHLINE_FILE_PARAM, RESOURCES_DIR + "/test-morphlines/readClob.conf");
     Event input = EventBuilder.withBody("foo", Charsets.UTF_8);
     input.getHeaders().put("name", "nadja");
     Event actual = build(context).intercept(input);
@@ -71,7 +72,7 @@ public class TestMorphlineInterceptor extends Assert {
   @Test
   public void testGrokIfNotMatchDropEventRetain() throws Exception {
     Context context = new Context();
-    context.put(MorphlineSolrIndexer.MORPHLINE_FILE_PARAM, RESOURCES_DIR + "/test-morphlines/grokIfNotMatchDropRecord.conf");
+    context.put(MorphlineHandlerImpl.MORPHLINE_FILE_PARAM, RESOURCES_DIR + "/test-morphlines/grokIfNotMatchDropRecord.conf");
 
     String msg = "<164>Feb  4 10:46:14 syslog sshd[607]: Server listening on 0.0.0.0 port 22.";
     Event input = EventBuilder.withBody(null, ImmutableMap.of(Fields.MESSAGE, msg));
@@ -93,7 +94,7 @@ public class TestMorphlineInterceptor extends Assert {
   /* leading XXXXX does not match regex, thus we expect the event to be dropped */
   public void testGrokIfNotMatchDropEventDrop() throws Exception {
     Context context = new Context();
-    context.put(MorphlineSolrIndexer.MORPHLINE_FILE_PARAM, RESOURCES_DIR + "/test-morphlines/grokIfNotMatchDropRecord.conf");
+    context.put(MorphlineHandlerImpl.MORPHLINE_FILE_PARAM, RESOURCES_DIR + "/test-morphlines/grokIfNotMatchDropRecord.conf");
     String msg = "<XXXXXXXXXXXXX164>Feb  4 10:46:14 syslog sshd[607]: Server listening on 0.0.0.0 port 22.";
     Event input = EventBuilder.withBody(null, ImmutableMap.of(Fields.MESSAGE, msg));
     Event actual = build(context).intercept(input);
@@ -104,7 +105,7 @@ public class TestMorphlineInterceptor extends Assert {
   /** morphline says route to southpole if it's an avro file, otherwise route to northpole */
   public void testIfDetectMimeTypeRouteToSouthPole() throws Exception {
     Context context = new Context();
-    context.put(MorphlineSolrIndexer.MORPHLINE_FILE_PARAM, RESOURCES_DIR + "/test-morphlines/ifDetectMimeType.conf");
+    context.put(MorphlineHandlerImpl.MORPHLINE_FILE_PARAM, RESOURCES_DIR + "/test-morphlines/ifDetectMimeType.conf");
 
     Event input = EventBuilder.withBody(Files.toByteArray(new File(RESOURCES_DIR + "/test-documents/sample-statuses-20120906-141433.avro")));
     Event actual = build(context).intercept(input);
@@ -120,7 +121,7 @@ public class TestMorphlineInterceptor extends Assert {
   /** morphline says route to southpole if it's an avro file, otherwise route to northpole */
   public void testIfDetectMimeTypeRouteToNorthPole() throws Exception {
     Context context = new Context();
-    context.put(MorphlineSolrIndexer.MORPHLINE_FILE_PARAM, RESOURCES_DIR + "/test-morphlines/ifDetectMimeType.conf");
+    context.put(MorphlineHandlerImpl.MORPHLINE_FILE_PARAM, RESOURCES_DIR + "/test-morphlines/ifDetectMimeType.conf");
     Event input = EventBuilder.withBody(Files.toByteArray(new File(RESOURCES_DIR + "/test-documents/testPDF.pdf")));
     Event actual = build(context).intercept(input);
 

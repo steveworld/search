@@ -1,11 +1,12 @@
 /*
- * Copyright 2013 Cloudera Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -42,12 +43,6 @@ import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
-import org.apache.solr.morphline.DocumentLoader;
-import org.apache.solr.morphline.FaultTolerance;
-import org.apache.solr.morphline.SolrLocator;
-import org.apache.solr.morphline.SolrMorphlineContext;
-import org.apache.solr.morphline.SolrServerDocumentLoader;
-import org.apache.solr.morphline.TestEmbeddedSolrServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -57,7 +52,13 @@ import org.slf4j.LoggerFactory;
 
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
+import com.cloudera.cdk.morphline.base.FaultTolerance;
 import com.cloudera.cdk.morphline.base.Fields;
+import com.cloudera.cdk.morphline.solr.DocumentLoader;
+import com.cloudera.cdk.morphline.solr.SolrLocator;
+import com.cloudera.cdk.morphline.solr.SolrMorphlineContext;
+import com.cloudera.cdk.morphline.solr.SolrServerDocumentLoader;
+import com.cloudera.cdk.morphline.solr.TestEmbeddedSolrServer;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableListMultimap;
@@ -68,7 +69,7 @@ public class TestMorphlineSolrSink extends SolrTestCaseJ4 {
 
   private EmbeddedSource source;
   private SolrServer solrServer;
-  private MorphlineSolrSink sink;
+  private MorphlineSink sink;
   private Map<String,Integer> expectedRecords;
 
   private File tmpFile;
@@ -130,7 +131,7 @@ public class TestMorphlineSolrSink extends SolrTestCaseJ4 {
     Configurables.configure(channel, new Context(channelContext));
  
     class MySolrSink extends MorphlineSolrSink {
-      public MySolrSink(MorphlineSolrIndexer indexer) {
+      public MySolrSink(MorphlineHandlerImpl indexer) {
         super(indexer);
       }
     }
@@ -139,10 +140,10 @@ public class TestMorphlineSolrSink extends SolrTestCaseJ4 {
     DocumentLoader testServer = new SolrServerDocumentLoader(solrServer, batchSize);
     MorphlineContext solrMorphlineContext = new SolrMorphlineContext.Builder()
       .setDocumentLoader(testServer)
-      .setExceptionHandler(new FaultTolerance(false, false))
+      .setExceptionHandler(new FaultTolerance(false, false, SolrServerException.class.getName()))
       .setMetricRegistry(new MetricRegistry()).build();
     
-    MorphlineSolrIndexer impl = new MorphlineSolrIndexer();
+    MorphlineHandlerImpl impl = new MorphlineHandlerImpl();
     impl.setMorphlineContext(solrMorphlineContext);
     
     class MySolrLocator extends SolrLocator { // trick to access protected ctor

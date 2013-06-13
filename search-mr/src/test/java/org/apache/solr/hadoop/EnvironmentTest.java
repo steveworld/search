@@ -21,7 +21,7 @@ import java.net.UnknownHostException;
 import org.junit.Test;
 
 /** Print and verify some info about the environment in which the unit tests are running */
-public class EnvironmentTest extends org.apache.solr.morphline.EnvironmentTest {
+public class EnvironmentTest extends com.cloudera.cdk.morphline.solr.EnvironmentTest {
 
   @Test
   public void testEnvironment() throws UnknownHostException {

@@ -1,11 +1,12 @@
 /*
- * Copyright 2013 Cloudera Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,7 +21,6 @@ import java.util.Map.Entry;
 
 import org.apache.flume.Context;
 import org.apache.flume.Event;
-import org.apache.solr.morphline.FaultTolerance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,15 +29,15 @@ import com.cloudera.cdk.morphline.api.MorphlineCompilationException;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Compiler;
+import com.cloudera.cdk.morphline.base.FaultTolerance;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.base.Notifications;
 import com.codahale.metrics.MetricRegistry;
 
 /**
- * A {@link SolrIndexer} that processes it's events using a morphline {@link Command} chain in order
- * to load them into Solr.
+ * A {@link MorphlineHandler} that processes it's events using a morphline {@link Command} chain.
  */
-public class MorphlineSolrIndexer implements SolrIndexer {
+public class MorphlineHandlerImpl implements MorphlineHandler {
 
   private MorphlineContext morphlineContext;
   private Command morphline;
@@ -47,7 +47,7 @@ public class MorphlineSolrIndexer implements SolrIndexer {
   public static final String MORPHLINE_FILE_PARAM = "morphlineFile";
   public static final String MORPHLINE_ID_PARAM = "morphlineId";
 
-  private static final Logger LOG = LoggerFactory.getLogger(MorphlineSolrIndexer.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MorphlineHandlerImpl.class);
   
   // For test injection
   void setMorphlineContext(MorphlineContext morphlineContext) {
@@ -64,7 +64,8 @@ public class MorphlineSolrIndexer implements SolrIndexer {
     if (morphlineContext == null) {
       FaultTolerance faultTolerance = new FaultTolerance(
           context.getBoolean(FaultTolerance.IS_PRODUCTION_MODE, false), 
-          context.getBoolean(FaultTolerance.IS_IGNORING_RECOVERABLE_EXCEPTIONS, false));
+          context.getBoolean(FaultTolerance.IS_IGNORING_RECOVERABLE_EXCEPTIONS, false),
+          context.getString(FaultTolerance.RECOVERABLE_EXCEPTION_CLASSES));
       
       morphlineContext = new MorphlineContext.Builder()
         .setExceptionHandler(faultTolerance)

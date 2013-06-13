@@ -28,13 +28,14 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
-import org.apache.solr.morphline.AbstractSolrMorphlineTest;
-import org.apache.solr.morphline.SolrMorphlineTest;
 import org.apache.zookeeper.common.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.cloudera.cdk.morphline.solr.AbstractSolrMorphlineTest;
+import com.cloudera.cdk.morphline.solr.SolrMorphlineTest;
 
 public class ReadSequenceFileTest extends AbstractSolrMorphlineTest {
   private static final Logger LOGGER = LoggerFactory.getLogger(SolrMorphlineTest.class);

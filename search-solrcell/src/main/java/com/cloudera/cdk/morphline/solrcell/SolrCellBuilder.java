@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.solr.morphline.solrcell;
+package com.cloudera.cdk.morphline.solrcell;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,7 +36,6 @@ import org.apache.solr.common.util.DateUtil;
 import org.apache.solr.handler.extraction.ExtractingParams;
 import org.apache.solr.handler.extraction.SolrContentHandler;
 import org.apache.solr.handler.extraction.SolrContentHandlerFactory;
-import org.apache.solr.morphline.SolrLocator;
 import org.apache.solr.schema.IndexSchema;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
@@ -59,6 +58,7 @@ import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.MorphlineRuntimeException;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Fields;
+import com.cloudera.cdk.morphline.solr.SolrLocator;
 import com.cloudera.cdk.morphline.stdio.AbstractParser;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;

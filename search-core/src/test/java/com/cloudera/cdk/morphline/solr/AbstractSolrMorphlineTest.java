@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.solr.morphline;
+package com.cloudera.cdk.morphline.solr;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -45,8 +45,13 @@ import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Compiler;
+import com.cloudera.cdk.morphline.base.FaultTolerance;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.base.Notifications;
+import com.cloudera.cdk.morphline.solr.DocumentLoader;
+import com.cloudera.cdk.morphline.solr.SolrLocator;
+import com.cloudera.cdk.morphline.solr.SolrMorphlineContext;
+import com.cloudera.cdk.morphline.solr.SolrServerDocumentLoader;
 import com.cloudera.cdk.morphline.stdlib.PipeBuilder;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.io.Files;
@@ -178,7 +183,7 @@ public class AbstractSolrMorphlineTest extends SolrTestCaseJ4 {
     return new SolrMorphlineContext.Builder()
       .setDocumentLoader(testServer)
 //      .setDocumentLoader(new CollectingDocumentLoader(100))
-      .setExceptionHandler(new FaultTolerance(false,  false))
+      .setExceptionHandler(new FaultTolerance(false, false, SolrServerException.class.getName()))
       .setMetricRegistry(new MetricRegistry())
       .build();
   }

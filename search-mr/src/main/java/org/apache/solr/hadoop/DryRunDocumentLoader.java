@@ -19,7 +19,8 @@ package org.apache.solr.hadoop;
 import org.apache.solr.client.solrj.response.SolrPingResponse;
 import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
-import org.apache.solr.morphline.DocumentLoader;
+
+import com.cloudera.cdk.morphline.solr.DocumentLoader;
 
 /**
  * Prints documents to stdout instead of loading them into Solr for quicker turnaround during early

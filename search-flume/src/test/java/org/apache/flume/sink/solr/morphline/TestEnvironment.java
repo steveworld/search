@@ -18,8 +18,9 @@ package org.apache.flume.sink.solr.morphline;
 
 import java.net.UnknownHostException;
 
-import org.apache.solr.morphline.EnvironmentTest;
 import org.junit.Test;
+
+import com.cloudera.cdk.morphline.solr.EnvironmentTest;
 
 /** Print and verify some info about the environment in which the unit tests are running */
 public class TestEnvironment extends EnvironmentTest {

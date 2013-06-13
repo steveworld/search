@@ -151,7 +151,7 @@
     <typesafe.config.version>1.0.0</typesafe.config.version>
     <argparse4j.version>0.4.0</argparse4j.version>    
     <junit.version>4.11</junit.version>
-    <codahale.metrics.version>3.0.0-RC1</codahale.metrics.version>
+    <codahale.metrics.version>3.0.0</codahale.metrics.version>
     <surefire.version>2.12.4</surefire.version>
     <maven.antrun.plugin.version>1.7</maven.antrun.plugin.version>
     <build.helper.maven.plugin.version>1.7</build.helper.maven.plugin.version>    

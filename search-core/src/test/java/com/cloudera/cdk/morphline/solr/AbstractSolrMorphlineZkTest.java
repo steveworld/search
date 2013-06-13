@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.solr.morphline;
+package com.cloudera.cdk.morphline.solr;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.embedded.JettySolrRunner;
 import org.apache.solr.cloud.AbstractFullDistribZkTestBase;
 import org.apache.solr.common.SolrDocument;
@@ -33,7 +34,9 @@ import com.cloudera.cdk.morphline.api.Command;
 import com.cloudera.cdk.morphline.api.MorphlineContext;
 import com.cloudera.cdk.morphline.api.Record;
 import com.cloudera.cdk.morphline.base.Compiler;
+import com.cloudera.cdk.morphline.base.FaultTolerance;
 import com.cloudera.cdk.morphline.base.Notifications;
+import com.cloudera.cdk.morphline.solr.SolrLocator;
 import com.cloudera.cdk.morphline.stdlib.PipeBuilder;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ListMultimap;
@@ -110,7 +113,7 @@ public abstract class AbstractSolrMorphlineZkTest extends AbstractFullDistribZkT
 
   private MorphlineContext createMorphlineContext() {
     return new MorphlineContext.Builder()
-      .setExceptionHandler(new FaultTolerance(false,  false))
+      .setExceptionHandler(new FaultTolerance(false, false, SolrServerException.class.getName()))
       .setMetricRegistry(new MetricRegistry())
       .build();
   }

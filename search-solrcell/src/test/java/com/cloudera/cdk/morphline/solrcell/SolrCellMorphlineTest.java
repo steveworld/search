@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.solr.morphline.solrcell;
+package com.cloudera.cdk.morphline.solrcell;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,11 +22,13 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.MapSolrParams;
 import org.apache.solr.common.util.DateUtil;
 import org.apache.solr.handler.extraction.SolrContentHandler;
-import org.apache.solr.morphline.AbstractSolrMorphlineTest;
 import org.apache.solr.schema.IndexSchema;
 import org.apache.tika.metadata.Metadata;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.cloudera.cdk.morphline.solr.AbstractSolrMorphlineTest;
+import com.cloudera.cdk.morphline.solrcell.StripNonCharSolrContentHandlerFactory;
 
 public class SolrCellMorphlineTest extends AbstractSolrMorphlineTest {
 

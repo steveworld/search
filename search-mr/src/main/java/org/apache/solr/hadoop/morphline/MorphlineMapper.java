@@ -30,11 +30,11 @@ import org.apache.solr.common.SolrInputField;
 import org.apache.solr.hadoop.HeartBeater;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrMapper;
-import org.apache.solr.morphline.DocumentLoader;
 import org.apache.solr.schema.IndexSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cloudera.cdk.morphline.solr.DocumentLoader;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Counting;
 import com.codahale.metrics.Histogram;

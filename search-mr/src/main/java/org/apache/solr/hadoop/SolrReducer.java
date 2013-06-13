@@ -22,15 +22,16 @@ import java.util.Iterator;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.util.ReflectionUtils;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.hadoop.dedup.NoChangeUpdateConflictResolver;
 import org.apache.solr.hadoop.dedup.RetainMostRecentUpdateConflictResolver;
 import org.apache.solr.hadoop.dedup.UpdateConflictResolver;
-import org.apache.solr.morphline.FaultTolerance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudera.cdk.morphline.api.ExceptionHandler;
+import com.cloudera.cdk.morphline.base.FaultTolerance;
 
 /**
  * This class loads the mapper's SolrInputDocuments into one EmbeddedSolrServer
@@ -66,7 +67,8 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
 
     this.exceptionHandler = new FaultTolerance(
         context.getConfiguration().getBoolean(FaultTolerance.IS_PRODUCTION_MODE, false), 
-        context.getConfiguration().getBoolean(FaultTolerance.IS_IGNORING_RECOVERABLE_EXCEPTIONS, false));
+        context.getConfiguration().getBoolean(FaultTolerance.IS_IGNORING_RECOVERABLE_EXCEPTIONS, false),
+        context.getConfiguration().get(FaultTolerance.RECOVERABLE_EXCEPTION_CLASSES, SolrServerException.class.getName()));
     
     this.heartBeater = new HeartBeater(context);
   }

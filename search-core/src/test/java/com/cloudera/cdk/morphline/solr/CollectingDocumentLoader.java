@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.solr.morphline;
+package com.cloudera.cdk.morphline.solr;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +23,8 @@ import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.cloudera.cdk.morphline.solr.DocumentLoader;
 
 /**
  * A mockup DocumentLoader implementation for unit tests; collects all documents into a main memory list.
