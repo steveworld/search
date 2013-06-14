@@ -28,6 +28,10 @@ import com.cloudera.cdk.morphline.base.FaultTolerance;
  */
 public class MorphlineSolrSink extends MorphlineSink {
 
+  public MorphlineSolrSink() {
+    super();
+  }
+  
   /** For testing only */
   protected MorphlineSolrSink(MorphlineHandler handler) {
     super(handler);
