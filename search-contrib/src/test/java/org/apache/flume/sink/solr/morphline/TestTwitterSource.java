@@ -52,17 +52,27 @@ public class TestTwitterSource extends Assert {
   
   @Test
   public void testBasic() throws Exception {
-    String username = System.getProperty("twitter.username");
-    if (username == null) {
+    String consumerKey = System.getProperty("twitter.consumerKey");
+    if (consumerKey == null) {
       return;
     }
-    String password = System.getProperty("twitter.password");
-    if (password == null) {
+    String consumerSecret = System.getProperty("twitter.consumerSecret");
+    if (consumerSecret == null) {
+      return;
+    }
+    String accessToken = System.getProperty("twitter.accessToken");
+    if (accessToken == null) {
+      return;
+    }
+    String accessTokenSecret = System.getProperty("twitter.accessTokenSecret");
+    if (accessTokenSecret == null) {
       return;
     }
     Context context = new Context();
-    context.put("username", username);
-    context.put("password", password);
+    context.put("consumerKey", consumerKey);
+    context.put("consumerSecret", consumerSecret);
+    context.put("accessToken", accessToken);
+    context.put("accessTokenSecret", accessTokenSecret);
     context.put("maxBatchDurationMillis", "1000");
 
     TwitterSource source = new TwitterSource();
