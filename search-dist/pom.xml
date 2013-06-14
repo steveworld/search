@@ -92,6 +92,10 @@
     </dependency>
     <dependency>
       <groupId>com.cloudera.search</groupId>
+      <artifactId>cdk-morphlines-hadoop-sequencefile</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.cloudera.search</groupId>
       <artifactId>search-contrib</artifactId>
     </dependency>
   </dependencies>
