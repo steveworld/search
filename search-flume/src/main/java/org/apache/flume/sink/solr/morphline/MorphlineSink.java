@@ -116,7 +116,7 @@ public class MorphlineSink extends AbstractSink implements Configurable {
   }
 
   @Override
-  public synchronized Status process() throws EventDeliveryException {
+  public Status process() throws EventDeliveryException {
     int batchSize = getMaxBatchSize();
     long batchEndTime = System.currentTimeMillis() + getMaxBatchDurationMillis();
     Channel myChannel = getChannel();
