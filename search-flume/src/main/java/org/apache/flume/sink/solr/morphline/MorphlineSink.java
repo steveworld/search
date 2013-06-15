@@ -168,12 +168,14 @@ public class MorphlineSink extends AbstractSink implements Configurable {
           handler.rollbackTransaction();
         }
       } catch (Throwable t2) {
-        ; // ignore
+        LOGGER.error("Morphline Sink " + getName() + ": Unable to rollback morphline transaction. " +
+        		"Exception follows.", t2);
       } finally {
         try {
           txn.rollback();
         } catch (Throwable t4) {
-          ; // ignore
+          LOGGER.error("Morphline Sink " + getName() + ": Unable to rollback Flume transaction. " +
+              "Exception follows.", t4);
         }
       }
 

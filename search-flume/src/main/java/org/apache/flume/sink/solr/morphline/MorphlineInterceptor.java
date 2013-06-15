@@ -23,6 +23,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -45,14 +47,12 @@ import com.google.common.io.ByteStreams;
 public class MorphlineInterceptor implements Interceptor {
 
   private final Context context;
-  private final List<LocalMorphlineInterceptor> pool = new ArrayList();
+  private final BlockingQueue<LocalMorphlineInterceptor> pool = new LinkedBlockingQueue();
   
   protected MorphlineInterceptor(Context context) {
     Preconditions.checkNotNull(context);
     this.context = context;
-    synchronized (pool) {
-      pool.add(new LocalMorphlineInterceptor(context)); // fail fast on morphline compilation exception
-    }
+    returnToPool(new LocalMorphlineInterceptor(context)); // fail fast on morphline compilation exception
   }
 
   @Override
@@ -61,10 +61,10 @@ public class MorphlineInterceptor implements Interceptor {
 
   @Override
   public void close() {
-    synchronized (pool) {
-      for (LocalMorphlineInterceptor interceptor : pool) {
-        interceptor.close();
-      }
+    List<LocalMorphlineInterceptor> interceptors = new ArrayList();
+    pool.drainTo(interceptors);
+    for (LocalMorphlineInterceptor interceptor : interceptors) {
+      interceptor.close();
     }
   }
 
@@ -85,18 +85,19 @@ public class MorphlineInterceptor implements Interceptor {
   }
 
   private void returnToPool(LocalMorphlineInterceptor interceptor) {
-    synchronized (pool) {
-      pool.add(interceptor);
+    try {
+      pool.put(interceptor);
+    } catch (InterruptedException e) {
+      throw new FlumeException(e);
     }
   }
   
   private LocalMorphlineInterceptor borrowFromPool() {
-    synchronized (pool) {
-      if (pool.size() > 0) {
-        return pool.remove(pool.size() - 1);
-      }
+    LocalMorphlineInterceptor interceptor = pool.poll();
+    if (interceptor == null) {
+      interceptor = new LocalMorphlineInterceptor(context);
     }
-    return new LocalMorphlineInterceptor(context);
+    return interceptor;
   }
 
   
