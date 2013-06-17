@@ -124,20 +124,19 @@ a small rules engine, logging, metrics & counters, etc.
 
 This module contains Cloudera morphline commands for reading, extracting and transforming Avro files and Avro objects.
 
-### cdk-morphlines-tika-mime
+### cdk-morphlines-tika-core
 
 This module contains Cloudera morphline commands for auto-detecting MIME types from binary data. Depends on Apache Tika Core.
 
 ### cdk-morphlines-tika-decompress
 
-This module contains Cloudera morphline commands for decompressing and unpacking files. Depends on Apache Tika Core.
+This module contains Cloudera morphline commands for decompressing and unpacking files. Depends on Apache Tika Core and Commons Compress.
 
-### search-core
+### cdk-morphlines-solr-core
 
-This module contains morphline commands for Solr that higher level modules such as `search-solrcell` and `search-mr`
-and `search-flume` depend on for indexing.
+This module contains morphline commands for Solr that higher level modules such as `cdk-morphlines-solr-cell` and `search-mr` and `search-flume` depend on for indexing.
 
-### search-solrcell
+### cdk-morphlines-solr-cell
 
 This module contains morphline commands for using SolrCell with Tika parsers. This includes support for HTML,
 XML, PDF, Word, Excel, Images, Audio, Video, etc.
