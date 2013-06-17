@@ -146,9 +146,27 @@ limitations under the License.
             <phase>process-test-resources</phase>
             <configuration>
               <target>
+                <!-- tmp solution to stay in sync with CDK morphlines until we separate the two repos -->
+                <copy todir="${project.build.directory}/test-classes">
+                  <fileset dir="${basedir}/../cdk-morphlines/cdk-morphlines-core/src/test/resources"/>
+                </copy>
                 <copy todir="${project.build.directory}/test-classes">
                   <fileset dir="${basedir}/../cdk-morphlines/cdk-morphlines-solr-core/src/test/resources"/>
                 </copy>
+                
+                <copy todir="${basedir}/../samples/test-documents">
+                  <fileset dir="${basedir}/../cdk-morphlines/cdk-morphlines-core/src/test/resources/test-documents"/>
+                </copy>
+                <copy todir="${basedir}/../samples/solr-nrt/test-morphlines">
+                  <fileset dir="${basedir}/../cdk-morphlines/cdk-morphlines-core/src/test/resources/test-morphlines"/>
+                </copy>
+                <copy todir="${basedir}/../samples/solr-nrt/grok-dictionaries">
+                  <fileset dir="${basedir}/../cdk-morphlines/cdk-morphlines-core/src/test/resources/grok-dictionaries"/>
+                </copy>
+                <copy todir="${basedir}/../samples/solr-nrt"
+                  file="${basedir}/../cdk-morphlines/cdk-morphlines-core/src/test/resources/custom-mimetypes.xml"
+                />
+                
               </target>
             </configuration>
             <goals>
