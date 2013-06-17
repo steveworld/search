@@ -33,6 +33,8 @@ import com.cloudera.cdk.morphline.base.FaultTolerance;
 import com.cloudera.cdk.morphline.base.Fields;
 import com.cloudera.cdk.morphline.base.Notifications;
 import com.codahale.metrics.MetricRegistry;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 
 /**
  * A {@link MorphlineHandler} that processes it's events using a morphline {@link Command} chain.
@@ -46,6 +48,12 @@ public class MorphlineHandlerImpl implements MorphlineHandler {
   
   public static final String MORPHLINE_FILE_PARAM = "morphlineFile";
   public static final String MORPHLINE_ID_PARAM = "morphlineId";
+  
+  /**
+   * Morphline variables can be passed from flume.conf to the morphline, e.g.:
+   * agent.sinks.solrSink.morphlineVariable.zkHost=127.0.0.1:2181/solr
+   */
+  public static final String MORPHLINE_VARIABLE_PARAM = "morphlineVariable";
 
   private static final Logger LOG = LoggerFactory.getLogger(MorphlineHandlerImpl.class);
   
@@ -78,7 +86,8 @@ public class MorphlineHandlerImpl implements MorphlineHandler {
     if (morphlineFile == null || morphlineFile.trim().length() == 0) {
       throw new MorphlineCompilationException("Missing parameter: " + MORPHLINE_FILE_PARAM, null);
     }
-    morphline = new Compiler().compile(new File(morphlineFile), morphlineId, morphlineContext, finalChild);
+    Config override = ConfigFactory.parseMap(context.getSubProperties(MORPHLINE_VARIABLE_PARAM + "."));
+    morphline = new Compiler().compile(new File(morphlineFile), morphlineId, morphlineContext, finalChild, override);      
     morphlineFileAndId = morphlineFile + "@" + morphlineId;
   }
 

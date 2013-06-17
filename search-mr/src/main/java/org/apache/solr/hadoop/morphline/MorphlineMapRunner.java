@@ -52,6 +52,8 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.google.common.annotations.Beta;
 import com.google.common.base.Joiner;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 
 /**
  * Internal helper for {@link MorphlineMapper} and dryRun mode; This API is for *INTERNAL* use only
@@ -70,6 +72,12 @@ public final class MorphlineMapRunner {
   
   public static final String MORPHLINE_FILE_PARAM = "morphlineFile";
   public static final String MORPHLINE_ID_PARAM = "morphlineId";
+  
+  /**
+   * Morphline variables can be passed from the CLI to the Morphline, e.g.:
+   * hadoop ... -D morphlineVariable.zkHost=127.0.0.1:2181/solr
+   */
+  public static final String MORPHLINE_VARIABLE_PARAM = "morphlineVariable";
   
 
   /**
@@ -139,7 +147,15 @@ public final class MorphlineMapRunner {
     if (morphlineFile == null || morphlineFile.trim().length() == 0) {
       throw new MorphlineCompilationException("Missing parameter: " + MORPHLINE_FILE_PARAM, null);
     }
-    morphline = new Compiler().compile(new File(morphlineFile), morphlineId, morphlineContext, null);
+    Map morphlineVariables = new HashMap();
+    for (Map.Entry<String, String> entry : configuration) {
+      String argPrefix = MORPHLINE_VARIABLE_PARAM + ".";
+      if (entry.getKey().startsWith(argPrefix)) {
+        morphlineVariables.put(entry.getKey().substring(argPrefix.length()), entry.getValue());
+      }
+    }
+    Config override = ConfigFactory.parseMap(morphlineVariables);
+    morphline = new Compiler().compile(new File(morphlineFile), morphlineId, morphlineContext, null, override);
     morphlineFileAndId = morphlineFile + "@" + morphlineId;
     
     disableFileOpen = configuration.getBoolean(DISABLE_FILE_OPEN, false);

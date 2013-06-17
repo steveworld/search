@@ -106,6 +106,7 @@ public class TestMorphlineInterceptor extends Assert {
   public void testIfDetectMimeTypeRouteToSouthPole() throws Exception {
     Context context = new Context();
     context.put(MorphlineHandlerImpl.MORPHLINE_FILE_PARAM, RESOURCES_DIR + "/test-morphlines/ifDetectMimeType.conf");
+    context.put(MorphlineHandlerImpl.MORPHLINE_VARIABLE_PARAM + ".MY.MIME_TYPE", "avro/binary");
 
     Event input = EventBuilder.withBody(Files.toByteArray(new File(RESOURCES_DIR + "/test-documents/sample-statuses-20120906-141433.avro")));
     Event actual = build(context).intercept(input);
@@ -122,6 +123,8 @@ public class TestMorphlineInterceptor extends Assert {
   public void testIfDetectMimeTypeRouteToNorthPole() throws Exception {
     Context context = new Context();
     context.put(MorphlineHandlerImpl.MORPHLINE_FILE_PARAM, RESOURCES_DIR + "/test-morphlines/ifDetectMimeType.conf");
+    context.put(MorphlineHandlerImpl.MORPHLINE_VARIABLE_PARAM + ".MY.MIME_TYPE", "avro/binary");
+
     Event input = EventBuilder.withBody(Files.toByteArray(new File(RESOURCES_DIR + "/test-documents/testPDF.pdf")));
     Event actual = build(context).intercept(input);
 
