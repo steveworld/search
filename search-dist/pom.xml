@@ -76,7 +76,11 @@
     </dependency>
     <dependency>
       <groupId>com.cloudera.search</groupId>
-      <artifactId>cdk-morphlines-tika</artifactId>
+      <artifactId>cdk-morphlines-tika-mime</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.cloudera.search</groupId>
+      <artifactId>cdk-morphlines-tika-decompress</artifactId>
     </dependency>
     <dependency>
       <groupId>com.cloudera.search</groupId>

@@ -189,7 +189,6 @@
         <artifactId>lucene-core</artifactId>
         <version>${solr.version}</version>
       </dependency>
-
       <dependency>
         <groupId>com.cloudera.search</groupId>
         <artifactId>cdk-morphlines-solrcell</artifactId>
@@ -212,7 +211,12 @@
       </dependency>
       <dependency>
         <groupId>com.cloudera.search</groupId>
-        <artifactId>cdk-morphlines-tika</artifactId>
+        <artifactId>cdk-morphlines-tika-mime</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.cloudera.search</groupId>
+        <artifactId>cdk-morphlines-tika-decompress</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
