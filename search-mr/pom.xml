@@ -95,7 +95,7 @@
 
     <dependency>
       <groupId>com.cloudera.search</groupId>
-      <artifactId>cdk-morphlines-solrcell</artifactId>
+      <artifactId>cdk-morphlines-solr-cell</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
 
@@ -113,7 +113,7 @@
 
     <dependency>
       <groupId>com.cloudera.search</groupId>
-      <artifactId>cdk-morphlines-tika-mime</artifactId>
+      <artifactId>cdk-morphlines-tika-core</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
 
@@ -141,7 +141,7 @@
 
     <dependency>
       <groupId>com.cloudera.search</groupId>
-      <artifactId>cdk-morphlines-solr</artifactId>
+      <artifactId>cdk-morphlines-solr-core</artifactId>
       <version>${project.parent.version}</version>
       <type>test-jar</type>
       <scope>test</scope>

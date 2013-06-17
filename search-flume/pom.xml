@@ -60,7 +60,7 @@ limitations under the License.
 
     <dependency>
       <groupId>com.cloudera.search</groupId>
-      <artifactId>cdk-morphlines-solrcell</artifactId>
+      <artifactId>cdk-morphlines-solr-cell</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
 
@@ -78,7 +78,7 @@ limitations under the License.
 
     <dependency>
       <groupId>com.cloudera.search</groupId>
-      <artifactId>cdk-morphlines-tika-mime</artifactId>
+      <artifactId>cdk-morphlines-tika-core</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
 
@@ -106,7 +106,7 @@ limitations under the License.
 
     <dependency>
       <groupId>com.cloudera.search</groupId>
-      <artifactId>cdk-morphlines-solr</artifactId>
+      <artifactId>cdk-morphlines-solr-core</artifactId>
       <version>${project.parent.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
@@ -147,7 +147,7 @@ limitations under the License.
             <configuration>
               <target>
                 <copy todir="${project.build.directory}/test-classes">
-                  <fileset dir="${basedir}/../cdk-morphlines/cdk-morphlines-solr/src/test/resources"/>
+                  <fileset dir="${basedir}/../cdk-morphlines/cdk-morphlines-solr-core/src/test/resources"/>
                 </copy>
               </target>
             </configuration>
