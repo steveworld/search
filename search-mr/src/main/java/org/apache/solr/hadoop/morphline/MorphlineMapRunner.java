@@ -79,7 +79,6 @@ public final class MorphlineMapRunner {
    */
   public static final String MORPHLINE_VARIABLE_PARAM = "morphlineVariable";
   
-
   /**
    * Headers, including MIME types, can also explicitly be passed by force from the CLI to Morphline, e.g:
    * hadoop ... -D morphlineField._attachment_mimetype=text/csv
