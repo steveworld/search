@@ -149,9 +149,9 @@ public final class MorphlineMapRunner {
     }
     Map morphlineVariables = new HashMap();
     for (Map.Entry<String, String> entry : configuration) {
-      String argPrefix = MORPHLINE_VARIABLE_PARAM + ".";
-      if (entry.getKey().startsWith(argPrefix)) {
-        morphlineVariables.put(entry.getKey().substring(argPrefix.length()), entry.getValue());
+      String variablePrefix = MORPHLINE_VARIABLE_PARAM + ".";
+      if (entry.getKey().startsWith(variablePrefix)) {
+        morphlineVariables.put(entry.getKey().substring(variablePrefix.length()), entry.getValue());
       }
     }
     Config override = ConfigFactory.parseMap(morphlineVariables);
