@@ -258,6 +258,7 @@
         <groupId>com.cloudera.search</groupId>
         <artifactId>search-contrib</artifactId>
         <version>${project.version}</version>
+        <classifier>jar-with-dependencies</classifier>
       </dependency>
     </dependencies>
   </dependencyManagement>
