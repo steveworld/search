@@ -27,6 +27,8 @@ import java.util.List;
 
 import org.apache.solr.cloud.ZkController;
 import org.apache.solr.common.SolrException;
+import org.apache.solr.common.cloud.Aliases;
+import org.apache.solr.common.cloud.ClusterState;
 import org.apache.solr.common.cloud.DocCollection;
 import org.apache.solr.common.cloud.Replica;
 import org.apache.solr.common.cloud.Slice;
@@ -34,6 +36,7 @@ import org.apache.solr.common.cloud.SolrZkClient;
 import org.apache.solr.common.cloud.ZkCoreNodeProps;
 import org.apache.solr.common.cloud.ZkNodeProps;
 import org.apache.solr.common.cloud.ZkStateReader;
+import org.apache.solr.common.util.StrUtils;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +51,7 @@ final class ZooKeeperInspector {
   private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperInspector.class);
   
   public List<List<String>> extractShardUrls(String zkHost, String collection) {
+
     DocCollection docCollection = extractDocCollection(zkHost, collection);
     List<Slice> slices = getSortedSlices(docCollection.getSlices());
     List<List<String>> solrUrls = new ArrayList<List<String>>(slices.size());
@@ -76,6 +80,8 @@ final class ZooKeeperInspector {
     try {
       ZkStateReader zkStateReader = new ZkStateReader(zkClient);
       try {
+        // first check for alias
+        collection = checkForAlias(zkClient, collection);
         zkStateReader.createClusterStateWatchersAndUpdate();
       } catch (Exception e) {
         throw new IllegalArgumentException("Cannot find expected information for SolrCloud in ZooKeeper: " + zkHost, e);
@@ -127,6 +133,9 @@ final class ZooKeeperInspector {
     }
     String configName = null;
 
+    // first check for alias
+    collection = checkForAlias(zkClient, collection);
+    
     String path = ZkStateReader.COLLECTIONS_ZKNODE + "/" + collection;
     if (LOG.isInfoEnabled()) {
       LOG.info("Load collection config from:" + path);
@@ -145,6 +154,21 @@ final class ZooKeeperInspector {
     }
 
     return configName;
+  }
+
+  private String checkForAlias(SolrZkClient zkClient, String collection)
+      throws KeeperException, InterruptedException {
+    byte[] aliasData = zkClient.getData(ZkStateReader.ALIASES, null, null, true);
+    Aliases aliases = ClusterState.load(aliasData);
+    String alias = aliases.getCollectionAlias(collection);
+    if (alias != null) {
+      List<String> aliasList = StrUtils.splitSmart(alias, ",", true);
+      if (aliasList.size() > 1) {
+        throw new IllegalArgumentException("collection cannot be an alias that maps to multiple collections");
+      }
+      collection = aliasList.get(0);
+    }
+    return collection;
   }
 
   /**

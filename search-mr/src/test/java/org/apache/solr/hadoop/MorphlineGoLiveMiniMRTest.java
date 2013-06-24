@@ -45,12 +45,16 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.embedded.JettySolrRunner;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.request.QueryRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.cloud.AbstractFullDistribZkTestBase;
 import org.apache.solr.common.cloud.Replica;
 import org.apache.solr.common.cloud.Slice;
 import org.apache.solr.common.cloud.SolrZkClient;
 import org.apache.solr.common.cloud.ZkCoreNodeProps;
+import org.apache.solr.common.params.ModifiableSolrParams;
+import org.apache.solr.common.params.CollectionParams.CollectionAction;
+import org.apache.solr.common.util.NamedList;
 import org.apache.solr.handler.extraction.ExtractingParams;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -391,13 +395,19 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     }    
     
     // try using zookeeper
+    String collection = "collection1";
+    if (random().nextBoolean()) {
+      // sometimes, use an alias
+      createAlias("updatealias", "collection1");
+      collection = "updatealias";
+    }
+    
     fs.delete(inDir, true);   
     fs.delete(outDir, true);  
     fs.delete(dataDir, true);    
     INPATH = upAvroFile(fs, inDir, DATADIR, dataDir, inputAvroFile3);
     
     args = new String[] {
-        "--solr-home-dir=" + MINIMR_CONF_DIR.getAbsolutePath(),
         "--output-dir=" + outDir.toString(),
         "--mappers=3",
         "--reducers=6",
@@ -405,7 +415,7 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
         "--go-live",
         ++numRuns % 2 == 0 ? "--input-list=" + INPATH.toString() : dataDir.toString(), 
         "--zk-host", zkServer.getZkAddress(), 
-        "--collection", "collection1"
+        "--collection", collection
     };
     args = prependInitialArgs(args);
 
@@ -658,6 +668,16 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
       pos += array.length;
     }
     return result;
+  }
+  
+  private NamedList<Object> createAlias(String alias, String collections) throws SolrServerException, IOException {
+    ModifiableSolrParams params = new ModifiableSolrParams();
+    params.set("collections", collections);
+    params.set("name", alias);
+    params.set("action", CollectionAction.CREATEALIAS.toString());
+    QueryRequest request = new QueryRequest(params);
+    request.setPath("/admin/collections");
+    return cloudClient.request(request);
   }
 
   
