@@ -94,34 +94,35 @@
     </dependency>
 
     <dependency>
-      <groupId>com.cloudera.search</groupId>
+      <groupId>com.cloudera.cdk</groupId>
       <artifactId>cdk-morphlines-solr-cell</artifactId>
-      <version>${project.parent.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>com.cloudera.search</groupId>
+      <groupId>com.cloudera.cdk</groupId>
       <artifactId>cdk-morphlines-twitter</artifactId>
-      <version>${project.parent.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>com.cloudera.search</groupId>
+      <groupId>com.cloudera.cdk</groupId>
       <artifactId>cdk-morphlines-avro</artifactId>
-      <version>${project.parent.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>com.cloudera.search</groupId>
+      <groupId>com.cloudera.cdk</groupId>
       <artifactId>cdk-morphlines-tika-core</artifactId>
-      <version>${project.parent.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>com.cloudera.search</groupId>
+      <groupId>com.cloudera.cdk</groupId>
       <artifactId>cdk-morphlines-tika-decompress</artifactId>
-      <version>${project.parent.version}</version>
     </dependency>
+
+    <dependency>
+      <groupId>com.cloudera.cdk</groupId>
+      <artifactId>cdk-morphlines-hadoop-sequencefile</artifactId>
+    </dependency>
+
 
     <dependency> <!-- see http://tika.apache.org -->
       <groupId>org.apache.tika</groupId>
@@ -140,17 +141,15 @@
     </dependency>
 
     <dependency>
-      <groupId>com.cloudera.search</groupId>
+      <groupId>com.cloudera.cdk</groupId>
       <artifactId>cdk-morphlines-solr-core</artifactId>
-      <version>${project.parent.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
 
     <dependency>
-      <groupId>com.cloudera.search</groupId>
+      <groupId>com.cloudera.cdk</groupId>
       <artifactId>cdk-morphlines-core</artifactId>
-      <version>${project.parent.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
@@ -159,11 +158,6 @@
       <groupId>net.sourceforge.argparse4j</groupId>
       <artifactId>argparse4j</artifactId>
       <version>${argparse4j.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.cloudera.search</groupId>
-      <artifactId>cdk-morphlines-hadoop-sequencefile</artifactId>
     </dependency>
 
     <dependency>

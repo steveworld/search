@@ -27,6 +27,10 @@
   <name>Search distribution</name>
   <packaging>pom</packaging>
 
+  <modules>
+    <module>flume-ng-solr-sink-dist</module>
+  </modules>
+
   <build>
     <plugins>
       <plugin>
@@ -60,48 +64,56 @@
   <dependencies>
     <dependency>
       <groupId>com.cloudera.search</groupId>
-      <artifactId>cdk-morphlines-solr-cell</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudera.search</groupId>
       <artifactId>search-mr</artifactId>
     </dependency>
     <dependency>
       <groupId>com.cloudera.search</groupId>
-      <artifactId>cdk-morphlines-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudera.search</groupId>
-      <artifactId>cdk-morphlines-avro</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudera.search</groupId>
-      <artifactId>cdk-morphlines-tika-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudera.search</groupId>
-      <artifactId>cdk-morphlines-tika-decompress</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudera.search</groupId>
-      <artifactId>cdk-morphlines-solr-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudera.search</groupId>
-      <artifactId>search-flume</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudera.search</groupId>
-      <artifactId>cdk-morphlines-twitter</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.cloudera.search</groupId>
-      <artifactId>cdk-morphlines-hadoop-sequencefile</artifactId>
+      <artifactId>search-mr</artifactId>
+      <classifier>job</classifier>
     </dependency>
     <dependency>
       <groupId>com.cloudera.search</groupId>
       <artifactId>search-contrib</artifactId>
       <classifier>jar-with-dependencies</classifier>
+    </dependency>
+
+    <dependency>
+      <groupId>com.cloudera.search</groupId>
+      <artifactId>flume-ng-solr-sink-dist</artifactId>
+      <classifier>jar-with-dependencies</classifier>
+    </dependency>
+
+    <dependency>
+      <groupId>com.cloudera.cdk</groupId>
+      <artifactId>cdk-morphlines-solr-cell</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.cloudera.cdk</groupId>
+      <artifactId>cdk-morphlines-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.cloudera.cdk</groupId>
+      <artifactId>cdk-morphlines-avro</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.cloudera.cdk</groupId>
+      <artifactId>cdk-morphlines-tika-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.cloudera.cdk</groupId>
+      <artifactId>cdk-morphlines-tika-decompress</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.cloudera.cdk</groupId>
+      <artifactId>cdk-morphlines-solr-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.cloudera.cdk</groupId>
+      <artifactId>cdk-morphlines-twitter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.cloudera.cdk</groupId>
+      <artifactId>cdk-morphlines-hadoop-sequencefile</artifactId>
     </dependency>
   </dependencies>
 </project>

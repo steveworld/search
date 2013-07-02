@@ -1,8 +1,0 @@
-{"type": "record", "name":"Interop", "namespace": "org.apache.avro",
-  "fields": [
-      {"name": "mapField", "type":
-       {"type": "map", "values":
-        {"type": "record", "name": "Foo",
-         "fields": [{"name": "label", "type": "string"}]}}}
-  ]
-}
