@@ -192,6 +192,7 @@ class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     SolrCore core = container.create(descr);
     container.register(core, false);
     
+    System.setProperty("solr.hdfs.nrtcachingdirectory", "false");
     System.setProperty("solr.hdfs.blockcache.enabled", "false");
     System.setProperty("solr.autoCommit.maxTime", "-1");
     System.setProperty("solr.autoSoftCommit.maxTime", "-1");
