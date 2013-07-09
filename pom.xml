@@ -142,13 +142,9 @@
     <avro.version>${cdh.avro.version}</avro.version>
     <cdk.version>0.4.1-SNAPSHOT</cdk.version>
     <tika.version>1.3</tika.version>
-    <jackson.version>2.2.1</jackson.version>
-    <httpclient.version>4.2.3</httpclient.version>
     <slf4j.version>1.6.1</slf4j.version>
-    <typesafe.config.version>1.0.0</typesafe.config.version>
     <argparse4j.version>0.4.0</argparse4j.version>
     <junit.version>4.11</junit.version>
-    <codahale.metrics.version>3.0.0</codahale.metrics.version>
     <surefire.version>2.12.4</surefire.version>
     <maven.antrun.plugin.version>1.7</maven.antrun.plugin.version>
     <build.helper.maven.plugin.version>1.7</build.helper.maven.plugin.version>
