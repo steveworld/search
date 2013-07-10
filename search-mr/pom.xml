@@ -110,6 +110,11 @@
 
     <dependency>
       <groupId>com.cloudera.cdk</groupId>
+      <artifactId>cdk-morphlines-json</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.cloudera.cdk</groupId>
       <artifactId>cdk-morphlines-tika-core</artifactId>
     </dependency>
 
