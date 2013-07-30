@@ -213,34 +213,9 @@
       </dependency>
 
       <dependency>
-        <groupId>com.cloudera.search</groupId>
-        <artifactId>flume-ng-solr-sink-dist</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.cloudera.search</groupId>
-        <artifactId>solr-solrj-dist</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.cloudera.search</groupId>
-        <artifactId>flume-ng-solr-sink-dist</artifactId>
-        <version>${project.version}</version>
-        <classifier>jar-with-dependencies</classifier>
-      </dependency>
-
-      <dependency>
         <groupId>org.apache.lucene</groupId>
         <artifactId>lucene-core</artifactId>
         <version>${solr.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.flume.flume-ng-sinks</groupId>
-        <artifactId>flume-ng-morphline-solr-sink</artifactId>
-        <version>${flume.version}</version>
       </dependency>
 
       <dependency>
