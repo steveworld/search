@@ -44,13 +44,13 @@
   <groupId>com.cloudera.search</groupId>
   <artifactId>search-parent</artifactId>
   <name>Search Parent</name>
-  <version>1.0.0</version>
+  <version>1.0.0-cdh5.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <parent>
     <groupId>com.cloudera.cdh</groupId>
     <artifactId>cdh-root</artifactId>
-    <version>4.3.0-search-1.0.0</version>
+    <version>5.0.0-SNAPSHOT</version>
   </parent>
 
   <modules>
@@ -137,12 +137,12 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <solr.version>${cdh.solr.version}</solr.version>
-    <solr.expected.version>4.4.0-search</solr.expected.version> <!-- sanity check to verify we actually run against the expected version rather than some outdated version -->
-    <flume.version>${cdh.flume-ng-solr.version}</flume.version>
+    <solr.expected.version>4.4.0-cdh5.0.0-SNAPSHOT</solr.expected.version> <!-- sanity check to verify we actually run against the expected version rather than some outdated version -->
+    <flume.version>${cdh.flume-ng.version}</flume.version>
     <avro.version>${cdh.avro.version}</avro.version>
     <httpclient.version>4.2.5</httpclient.version>
-    <cdk.version>${search.cdk.version}</cdk.version>
-    <tika.version>${search.tika.version}</tika.version>
+    <cdk.version>${cdh.cdk.version}</cdk.version>
+    <tika.version>${cdh.tika.version}</tika.version>
     <slf4j.version>1.6.1</slf4j.version>
     <argparse4j.version>0.4.0</argparse4j.version>
     <junit.version>4.11</junit.version>
