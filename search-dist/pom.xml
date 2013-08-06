@@ -119,5 +119,9 @@
       <groupId>com.cloudera.cdk</groupId>
       <artifactId>cdk-morphlines-hadoop-sequencefile</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.cloudera.cdk</groupId>
+      <artifactId>cdk-morphlines-saxon</artifactId>
+    </dependency>
   </dependencies>
 </project>
