@@ -18,12 +18,12 @@
   <parent>
     <groupId>com.cloudera.search</groupId>
     <artifactId>search-parent</artifactId>
-    <version>0.9.3-cdh4.3.0-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
   <groupId>com.cloudera.search</groupId>
   <artifactId>search-contrib</artifactId>
-  <version>0.9.3-cdh4.3.0-SNAPSHOT</version>
+  <version>1.0.0-SNAPSHOT</version>
   <name>Search Contrib</name>
 
   <dependencies>

@@ -90,7 +90,7 @@ public class TreeMergeOutputFormat extends FileOutputFormat<Text, NullWritable> 
         Directory mergedIndex = new HdfsDirectory(workDir, context.getConfiguration());
         
         IndexWriterConfig writerConfig = new IndexWriterConfig(Version.LUCENE_CURRENT, null)
-            .setOpenMode(OpenMode.CREATE)
+            .setOpenMode(OpenMode.CREATE).setUseCompoundFile(false)
             //.setMergePolicy(mergePolicy) // TODO: grab tuned MergePolicy from solrconfig.xml?
             //.setMergeScheduler(...) // TODO: grab tuned MergeScheduler from solrconfig.xml?
             ;
@@ -107,12 +107,12 @@ public class TreeMergeOutputFormat extends FileOutputFormat<Text, NullWritable> 
         MergePolicy mergePolicy = writerConfig.getMergePolicy();
         LOG.debug("mergePolicy was: {}", mergePolicy);
         if (mergePolicy instanceof TieredMergePolicy) {
-          ((TieredMergePolicy) mergePolicy).setUseCompoundFile(false); 
+          ((TieredMergePolicy) mergePolicy).setNoCFSRatio(0.0);
 //          ((TieredMergePolicy) mergePolicy).setMaxMergeAtOnceExplicit(10000);          
 //          ((TieredMergePolicy) mergePolicy).setMaxMergeAtOnce(10000);       
 //          ((TieredMergePolicy) mergePolicy).setSegmentsPerTier(10000);
         } else if (mergePolicy instanceof LogMergePolicy) {
-          ((LogMergePolicy) mergePolicy).setUseCompoundFile(false); 
+          ((LogMergePolicy) mergePolicy).setNoCFSRatio(0.0);
         }
         LOG.info("Using mergePolicy: {}", mergePolicy);
         
