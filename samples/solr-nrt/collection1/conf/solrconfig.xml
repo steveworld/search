@@ -35,7 +35,7 @@
        that you fully re-index after changing this setting as it can
        affect both how text is indexed and queried.
   -->
-  <luceneMatchVersion>LUCENE_43</luceneMatchVersion>
+  <luceneMatchVersion>4.4</luceneMatchVersion>
 
   <!-- <lib/> directives can be used to instruct Solr to load an Jars
        identified and use them to resolve any "plugins" specified in
@@ -66,6 +66,9 @@
        files in that directory which completely match the regex
        (anchored on both ends) will be included.
 
+       If a 'dir' option (with or without a regex) is used and nothing
+       is found that matches, a warning will be logged.
+
        The examples below can be used to load some solr-contribs along 
        with their external dependencies.
     -->
@@ -80,11 +83,6 @@
 
   <lib dir="../../../contrib/velocity/lib" regex=".*\.jar" />
   <lib dir="../../../dist/" regex="solr-velocity-\d.*\.jar" />
-
-  <!-- If a 'dir' option (with or without a regex) is used and nothing
-       is found that matches, a warning will be logged.
-    -->
-  <lib dir="/non/existent/dir/yields/warning" /> 
 
   <!-- an exact 'path' can be used instead of a 'dir' to specify a 
        specific jar file.  This will cause a serious error to be logged 
@@ -145,6 +143,28 @@
        before upgrading to a newer version to avoid unnecessary reindexing.
   -->
   <codecFactory class="solr.SchemaCodecFactory"/>
+
+  <!-- To enable dynamic schema REST APIs, use the following for <schemaFactory>:
+  
+       <schemaFactory class="ManagedIndexSchemaFactory">
+         <bool name="mutable">true</bool>
+         <str name="managedSchemaResourceName">managed-schema</str>
+       </schemaFactory>
+       
+       When ManagedIndexSchemaFactory is specified, Solr will load the schema from
+       he resource named in 'managedSchemaResourceName', rather than from schema.xml.
+       Note that the managed schema resource CANNOT be named schema.xml.  If the managed
+       schema does not exist, Solr will create it after reading schema.xml, then rename
+       'schema.xml' to 'schema.xml.bak'. 
+       
+       Do NOT hand edit the managed schema - external modifications will be ignored and
+       overwritten as a result of schema modification REST API calls.
+
+       When ManagedIndexSchemaFactory is specified with mutable = true, schema
+       modification REST API calls will be allowed; otherwise, error responses will be
+       sent back for these requests. 
+  -->
+  <schemaFactory class="ClassicIndexSchemaFactory"/>
 
   <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
        Index Config - These settings control low-level behavior of indexing
@@ -298,10 +318,11 @@
          To aid in advanced debugging, Lucene provides an "InfoStream"
          of detailed information when indexing.
 
-         Setting The value to true will instruct the underlying Lucene
-         IndexWriter to write its debugging info the specified file
+         Setting the value to true will instruct the underlying Lucene
+         IndexWriter to write its info stream to solr's log. By default,
+         this is enabled here, and controlled through log4j.properties.
       -->
-     <!-- <infoStream file="INFOSTREAM.txt">false</infoStream> --> 
+     <infoStream>true</infoStream>
   </indexConfig>
 
 
@@ -691,6 +712,13 @@
          POST. You can use POST to pass request parameters not
          fitting into the URL.
          
+         addHttpRequestToContext - if set to true, it will instruct
+         the requestParsers to include the original HttpServletRequest
+         object in the context map of the SolrQueryRequest under the 
+         key "httpRequest". It will not be used by any of the existing
+         Solr components, but may be useful when developing custom 
+         plugins.
+         
          *** WARNING ***
          The settings below authorize Solr to fetch remote files, You
          should make sure your system has some authentication before
@@ -699,7 +727,8 @@
       --> 
     <requestParsers enableRemoteStreaming="true" 
                     multipartUploadLimitInKB="2048000"
-                    formdataUploadLimitInKB="2048"/>
+                    formdataUploadLimitInKB="2048"
+                    addHttpRequestToContext="false"/>
 
     <!-- HTTP Caching
 
@@ -1010,6 +1039,7 @@
        </lst>
   </requestHandler>
 
+
   <!-- Field Analysis Request Handler
 
        RequestHandler that provides much the same functionality as
@@ -1233,7 +1263,7 @@
       <!-- maximum threshold of documents a query term can appear to be considered for correction -->
       <float name="maxQueryFrequency">0.01</float>
       <!-- uncomment this to require suggestions to occur in 1% of the documents
-      	<float name="thresholdTokenFrequency">.01</float>
+      <float name="thresholdTokenFrequency">.01</float>
       -->
     </lst>
     
