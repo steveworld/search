@@ -55,5 +55,16 @@
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
       <artifactId>flume-ng-morphline-solr-sink</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>com.cloudera.cdk</groupId>
+      <artifactId>cdk-morphlines-all</artifactId>
+      <type>pom</type>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.tika</groupId>
+      <artifactId>tika-xmp</artifactId>
+    </dependency>
   </dependencies>
 </project>

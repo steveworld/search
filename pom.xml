@@ -242,72 +242,6 @@
         <version>${cdk.version}</version>
         <type>pom</type>
       </dependency>
-
-      <dependency>
-        <groupId>com.cloudera.cdk</groupId>
-        <artifactId>cdk-morphlines-solr-cell</artifactId>
-        <version>${cdk.version}</version>
-      </dependency>
-      
-      <dependency>
-        <groupId>com.cloudera.cdk</groupId>
-        <artifactId>cdk-morphlines-core</artifactId>
-        <version>${cdk.version}</version>
-      </dependency>
-      
-      <dependency>
-        <groupId>com.cloudera.cdk</groupId>
-        <artifactId>cdk-morphlines-avro</artifactId>
-        <version>${cdk.version}</version>
-      </dependency>
-      
-      <dependency>
-        <groupId>com.cloudera.cdk</groupId>
-        <artifactId>cdk-morphlines-json</artifactId>
-        <version>${cdk.version}</version>
-      </dependency>
-      
-      <dependency>
-        <groupId>com.cloudera.cdk</groupId>
-        <artifactId>cdk-morphlines-tika-core</artifactId>
-        <version>${cdk.version}</version>
-      </dependency>
-      
-      <dependency>
-        <groupId>com.cloudera.cdk</groupId>
-        <artifactId>cdk-morphlines-tika-decompress</artifactId>
-        <version>${cdk.version}</version>
-      </dependency>
-      
-      <dependency>
-        <groupId>com.cloudera.cdk</groupId>
-        <artifactId>cdk-morphlines</artifactId>
-        <version>${cdk.version}</version>
-      </dependency>
-      
-      <dependency>
-        <groupId>com.cloudera.cdk</groupId>
-        <artifactId>cdk-morphlines-solr-core</artifactId>
-        <version>${cdk.version}</version>
-      </dependency>
-      
-      <dependency>
-        <groupId>com.cloudera.cdk</groupId>
-        <artifactId>cdk-morphlines-twitter</artifactId>
-        <version>${cdk.version}</version>
-      </dependency>
-      
-      <dependency>
-        <groupId>com.cloudera.cdk</groupId>
-        <artifactId>cdk-morphlines-hadoop-sequencefile</artifactId>
-        <version>${cdk.version}</version>
-      </dependency>
-      
-      <dependency>
-        <groupId>com.cloudera.cdk</groupId>
-        <artifactId>cdk-morphlines-saxon</artifactId>
-        <version>${cdk.version}</version>
-      </dependency>
       
       <dependency>
         <groupId>com.cloudera.cdk</groupId>
@@ -335,12 +269,101 @@
         <version>${tika.version}</version>
       </dependency>
       
-      <dependency>
+      <dependency> <!-- see http://tika.apache.org -->
         <groupId>org.apache.tika</groupId>
         <artifactId>tika-xmp</artifactId>
         <version>${tika.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.geronimo.specs</groupId>
+            <artifactId>geronimo-stax-api_1.0_spec</artifactId> <!-- needed by tika-parsers but already provided by JDK -->
+          </exclusion>
+          <exclusion>
+            <groupId>xerces</groupId>
+            <artifactId>xercesImpl</artifactId> <!-- used by com.drewnoakes:metadata-extractor:jar but replacing built-in XML parser with legacy xerces is scary and probably don't need it -->
+          </exclusion>
+        </exclusions>
       </dependency>
-      
+
+
+      <!-- The rest is here to override dependencies coming from upstream CDK -->
+      <dependency>
+        <groupId>org.apache.solr</groupId>
+        <artifactId>solr-cell</artifactId>
+        <version>${cdh.solr.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.solr</groupId>
+        <artifactId>solr-core</artifactId>
+        <version>${cdh.solr.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.solr</groupId>
+        <artifactId>solr-solrj</artifactId>
+        <version>${cdh.solr.version}</version>
+      </dependency>
+
+
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-analyzers-common</artifactId>
+        <version>${solr.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-analyzers-kuromoji</artifactId>
+        <version>${solr.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-analyzers-phonetic</artifactId>
+        <version>${solr.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-codecs</artifactId>
+        <version>${solr.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-grouping</artifactId>
+        <version>${solr.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-highlighter</artifactId>
+        <version>${solr.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-memory</artifactId>
+        <version>${solr.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-misc</artifactId>
+        <version>${solr.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-queries</artifactId>
+        <version>${solr.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-queryparser</artifactId>
+        <version>${solr.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-spatial</artifactId>
+        <version>${solr.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-suggest</artifactId>
+        <version>${solr.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
