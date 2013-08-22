@@ -76,13 +76,11 @@
       <artifactId>search-contrib</artifactId>
       <classifier>jar-with-dependencies</classifier>
     </dependency>
-
     <dependency>
       <groupId>com.cloudera.search</groupId>
       <artifactId>flume-ng-solr-sink-dist</artifactId>
       <classifier>jar-with-dependencies</classifier>
     </dependency>
-
     <dependency>
       <groupId>com.cloudera.cdk</groupId>
       <artifactId>cdk-morphlines-solr-cell</artifactId>

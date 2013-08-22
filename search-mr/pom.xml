@@ -109,42 +109,8 @@
 
     <dependency>
       <groupId>com.cloudera.cdk</groupId>
-      <artifactId>cdk-morphlines-solr-cell</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.cloudera.cdk</groupId>
-      <artifactId>cdk-morphlines-twitter</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.cloudera.cdk</groupId>
-      <artifactId>cdk-morphlines-avro</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.cloudera.cdk</groupId>
-      <artifactId>cdk-morphlines-json</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.cloudera.cdk</groupId>
-      <artifactId>cdk-morphlines-tika-core</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.cloudera.cdk</groupId>
-      <artifactId>cdk-morphlines-tika-decompress</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.cloudera.cdk</groupId>
-      <artifactId>cdk-morphlines-hadoop-sequencefile</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.cloudera.cdk</groupId>
-      <artifactId>cdk-morphlines-saxon</artifactId>
+      <artifactId>cdk-morphlines-all</artifactId>
+      <type>pom</type>
     </dependency>
 
     <dependency> <!-- see http://tika.apache.org -->
@@ -162,7 +128,7 @@
         </exclusion>
       </exclusions>
     </dependency>
-
+    
     <dependency>
       <groupId>com.cloudera.cdk</groupId>
       <artifactId>cdk-morphlines-solr-core</artifactId>

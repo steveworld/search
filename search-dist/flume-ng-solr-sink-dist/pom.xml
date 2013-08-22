@@ -55,11 +55,5 @@
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
       <artifactId>flume-ng-morphline-solr-sink</artifactId>
     </dependency>
-
-    <!-- FIXME: the following needs to go away -->
-    <dependency>
-      <groupId>com.cloudera.cdk</groupId>
-      <artifactId>cdk-morphlines-saxon</artifactId>
-    </dependency>
   </dependencies>
 </project>

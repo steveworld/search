@@ -140,7 +140,7 @@
     <solr.expected.version>4.4.0-search</solr.expected.version> <!-- sanity check to verify we actually run against the expected version rather than some outdated version -->
     <flume.version>${cdh.flume-ng-solr.version}</flume.version>
     <avro.version>${cdh.avro.version}</avro.version>
-    <cdk.version>0.5.0</cdk.version>
+    <cdk.version>0.6.0</cdk.version>
     <tika.version>1.3</tika.version>
     <slf4j.version>1.6.1</slf4j.version>
     <argparse4j.version>0.4.0</argparse4j.version>
@@ -184,33 +184,39 @@
         <artifactId>search-mr</artifactId>
         <version>${project.version}</version>
       </dependency>
+
       <dependency>
         <groupId>com.cloudera.search</groupId>
         <artifactId>search-mr</artifactId>
         <version>${project.version}</version>
         <classifier>job</classifier>
       </dependency>
+
       <dependency>
         <groupId>com.cloudera.search</groupId>
         <artifactId>search-dist</artifactId>
         <version>${project.version}</version>
       </dependency>
+
       <dependency>
         <groupId>com.cloudera.search</groupId>
         <artifactId>search-parent</artifactId>
         <version>${project.version}</version>
       </dependency>
+
       <dependency>
         <groupId>com.cloudera.search</groupId>
         <artifactId>search-contrib</artifactId>
         <version>${project.version}</version>
         <classifier>jar-with-dependencies</classifier>
       </dependency>
+
       <dependency>
         <groupId>com.cloudera.search</groupId>
         <artifactId>flume-ng-solr-sink-dist</artifactId>
         <version>${project.version}</version>
       </dependency>
+
       <dependency>
         <groupId>com.cloudera.search</groupId>
         <artifactId>flume-ng-solr-sink-dist</artifactId>
@@ -232,71 +238,109 @@
 
       <dependency>
         <groupId>com.cloudera.cdk</groupId>
+        <artifactId>cdk-morphlines-all</artifactId>
+        <version>${cdk.version}</version>
+        <type>pom</type>
+      </dependency>
+
+      <dependency>
+        <groupId>com.cloudera.cdk</groupId>
         <artifactId>cdk-morphlines-solr-cell</artifactId>
         <version>${cdk.version}</version>
       </dependency>
+      
       <dependency>
         <groupId>com.cloudera.cdk</groupId>
         <artifactId>cdk-morphlines-core</artifactId>
         <version>${cdk.version}</version>
       </dependency>
+      
       <dependency>
         <groupId>com.cloudera.cdk</groupId>
         <artifactId>cdk-morphlines-avro</artifactId>
         <version>${cdk.version}</version>
       </dependency>
+      
       <dependency>
         <groupId>com.cloudera.cdk</groupId>
         <artifactId>cdk-morphlines-json</artifactId>
         <version>${cdk.version}</version>
       </dependency>
+      
       <dependency>
         <groupId>com.cloudera.cdk</groupId>
         <artifactId>cdk-morphlines-tika-core</artifactId>
         <version>${cdk.version}</version>
       </dependency>
+      
       <dependency>
         <groupId>com.cloudera.cdk</groupId>
         <artifactId>cdk-morphlines-tika-decompress</artifactId>
         <version>${cdk.version}</version>
       </dependency>
+      
       <dependency>
         <groupId>com.cloudera.cdk</groupId>
         <artifactId>cdk-morphlines</artifactId>
         <version>${cdk.version}</version>
       </dependency>
+      
       <dependency>
         <groupId>com.cloudera.cdk</groupId>
         <artifactId>cdk-morphlines-solr-core</artifactId>
         <version>${cdk.version}</version>
       </dependency>
+      
       <dependency>
         <groupId>com.cloudera.cdk</groupId>
         <artifactId>cdk-morphlines-twitter</artifactId>
         <version>${cdk.version}</version>
       </dependency>
+      
       <dependency>
         <groupId>com.cloudera.cdk</groupId>
         <artifactId>cdk-morphlines-hadoop-sequencefile</artifactId>
         <version>${cdk.version}</version>
       </dependency>
+      
       <dependency>
         <groupId>com.cloudera.cdk</groupId>
         <artifactId>cdk-morphlines-saxon</artifactId>
         <version>${cdk.version}</version>
       </dependency>
+      
       <dependency>
         <groupId>com.cloudera.cdk</groupId>
         <artifactId>cdk-morphlines-core</artifactId>
         <version>${cdk.version}</version>
         <type>test-jar</type>
       </dependency>
+
       <dependency>
         <groupId>com.cloudera.cdk</groupId>
         <artifactId>cdk-morphlines-solr-core</artifactId>
         <version>${cdk.version}</version>
         <type>test-jar</type>
       </dependency>
+      
+      <dependency>
+        <groupId>org.apache.tika</groupId>
+        <artifactId>tika-core</artifactId>
+        <version>${tika.version}</version>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.apache.tika</groupId>
+        <artifactId>tika-parsers</artifactId>
+        <version>${tika.version}</version>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.apache.tika</groupId>
+        <artifactId>tika-xmp</artifactId>
+        <version>${tika.version}</version>
+      </dependency>
+      
     </dependencies>
   </dependencyManagement>
 
