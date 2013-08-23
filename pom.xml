@@ -140,6 +140,7 @@
     <solr.expected.version>4.4.0-search</solr.expected.version> <!-- sanity check to verify we actually run against the expected version rather than some outdated version -->
     <flume.version>${cdh.flume-ng-solr.version}</flume.version>
     <avro.version>${cdh.avro.version}</avro.version>
+    <httpclient.version>4.2.5</httpclient.version>
     <cdk.version>0.6.0</cdk.version>
     <tika.version>1.3</tika.version>
     <slf4j.version>1.6.1</slf4j.version>
@@ -214,6 +215,12 @@
       <dependency>
         <groupId>com.cloudera.search</groupId>
         <artifactId>flume-ng-solr-sink-dist</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.cloudera.search</groupId>
+        <artifactId>solr-solrj-dist</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -363,6 +370,17 @@
         <groupId>org.apache.lucene</groupId>
         <artifactId>lucene-suggest</artifactId>
         <version>${solr.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpmime</artifactId>
+        <version>${httpclient.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpclient</artifactId>
+        <version>${httpclient.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

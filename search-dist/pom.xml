@@ -29,6 +29,7 @@
 
   <modules>
     <module>flume-ng-solr-sink-dist</module>
+    <module>solr-solrj-dist</module>
   </modules>
 
   <build>
@@ -80,6 +81,10 @@
       <groupId>com.cloudera.search</groupId>
       <artifactId>flume-ng-solr-sink-dist</artifactId>
       <classifier>jar-with-dependencies</classifier>
+    </dependency>
+    <dependency>
+      <groupId>com.cloudera.search</groupId>
+      <artifactId>solr-solrj-dist</artifactId>
     </dependency>
     <dependency>
       <groupId>com.cloudera.cdk</groupId>
