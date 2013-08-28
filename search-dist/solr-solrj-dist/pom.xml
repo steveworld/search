@@ -18,13 +18,13 @@
   <parent>
     <groupId>com.cloudera.search</groupId>
     <artifactId>search-parent</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
   <groupId>com.cloudera.search</groupId>
   <artifactId>solr-solrj-dist</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <name>Solr solrj distribution (shaded to work with security)</name>
 
   <build>
