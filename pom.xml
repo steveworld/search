@@ -140,10 +140,10 @@
     <solr.expected.version>4.4.0-cdh5.0.0-SNAPSHOT</solr.expected.version> <!-- sanity check to verify we actually run against the expected version rather than some outdated version -->
     <flume.version>${cdh.flume-ng.version}</flume.version>
     <avro.version>${cdh.avro.version}</avro.version>
-    <httpclient.version>4.2.5</httpclient.version>
+    <httpclient.version>${cdh.httpcomponents.version}</httpclient.version>
     <cdk.version>${cdh.cdk.version}</cdk.version>
     <tika.version>${cdh.tika.version}</tika.version>
-    <slf4j.version>1.6.1</slf4j.version>
+    <slf4j.version>${cdh.slf4j.version}</slf4j.version>
     <argparse4j.version>0.4.0</argparse4j.version>
     <junit.version>4.11</junit.version>
     <surefire.version>2.12.4</surefire.version>
