@@ -606,7 +606,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
   
   /** API for Java clients; visible for testing; may become a public API eventually */
   int run(Options options) throws Exception {
-    if ("local".equals(getConf().get("mapred.job.tracker"))) {
+    if (getConf().getBoolean("isMR1", false) && "local".equals(getConf().get("mapred.job.tracker"))) {
       throw new IllegalStateException(
         "Running with LocalJobRunner (i.e. all of Hadoop inside a single JVM) is not supported " +
         "because LocalJobRunner does not (yet) implement the Hadoop Distributed Cache feature, " +
