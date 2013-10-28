@@ -54,7 +54,6 @@
   </parent>
 
   <modules>
-    <module>search-contrib</module>
     <module>search-mr</module>
     <module>search-dist</module>
   </modules>
@@ -203,32 +202,6 @@
         <groupId>com.cloudera.search</groupId>
         <artifactId>search-parent</artifactId>
         <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.cloudera.search</groupId>
-        <artifactId>search-contrib</artifactId>
-        <version>${project.version}</version>
-        <classifier>jar-with-dependencies</classifier>
-      </dependency>
-
-      <dependency>
-        <groupId>com.cloudera.search</groupId>
-        <artifactId>flume-ng-solr-sink-dist</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.cloudera.search</groupId>
-        <artifactId>solr-solrj-dist</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.cloudera.search</groupId>
-        <artifactId>flume-ng-solr-sink-dist</artifactId>
-        <version>${project.version}</version>
-        <classifier>jar-with-dependencies</classifier>
       </dependency>
 
       <dependency>
