@@ -32,9 +32,11 @@ import java.io.Writer;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -79,6 +81,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cloudera.cdk.morphline.base.Fields;
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
+import com.google.common.io.ByteStreams;
 
 
 /**
@@ -820,10 +825,13 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       if (!waitForCompletion(job, options.isVerbose)) {
         return -1; // job failed
       }
+      if (!renameTreeMergeShardDirs(outputTreeMergeStep, job, fs)) {
+        return -1;
+      }
       secs = (System.currentTimeMillis() - startTime) / 1000.0f;
       LOG.info("MTree merge iteration {}/{}: Done. Merging {} shards into {} shards using fanout {} took {} secs",
           new Object[] {mtreeMergeIteration, mtreeMergeIterations, reducers, (reducers / options.fanout), options.fanout, secs});
-      
+
       if (!delete(outputReduceDir, true, fs)) {
         return -1;
       }
@@ -1175,8 +1183,67 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         throw new IllegalStateException("Not a directory: " + dir.getPath());
       }
     }
-    Arrays.sort(dirs); // FIXME: handle more than 99999 shards (need numeric sort rather than lexicographical sort)
+    
+    // use alphanumeric sort (rather than lexicographical sort) to properly handle more than 99999 shards
+    Arrays.sort(dirs, new Comparator<FileStatus>() {
+      @Override
+      public int compare(FileStatus f1, FileStatus f2) {
+        return new AlphaNumericComparator().compare(f1.getPath().getName(), f2.getPath().getName());
+      }
+    });
+
     return dirs;
+  }
+
+  private boolean renameTreeMergeShardDirs(Path outputTreeMergeStep, Job job, FileSystem fs) throws IOException {
+    final String dirPrefix = SolrOutputFormat.getOutputName(job);
+    FileStatus[] dirs = fs.listStatus(outputTreeMergeStep, new PathFilter() {      
+      @Override
+      public boolean accept(Path path) {
+        return path.getName().startsWith(dirPrefix);
+      }
+    });
+    
+    for (FileStatus dir : dirs) {
+      if (!dir.isDirectory()) {
+        throw new IllegalStateException("Not a directory: " + dir.getPath());
+      }
+    }
+
+    for (FileStatus dir : dirs) {
+      Path path = dir.getPath();
+      Path renamedPath = new Path(path.getParent(), "_" + path.getName());
+      if (!rename(path, renamedPath, fs)) {
+        return false;
+      }
+    }
+    
+    for (FileStatus dir : dirs) {
+      Path path = dir.getPath();
+      Path renamedPath = new Path(path.getParent(), "_" + path.getName());
+      
+      Path solrShardNumberFile = new Path(renamedPath, TreeMergeMapper.SOLR_SHARD_NUMBER);
+      InputStream in = fs.open(solrShardNumberFile);
+      byte[] bytes = ByteStreams.toByteArray(in);
+      in.close();
+      Preconditions.checkArgument(bytes.length > 0);
+      int solrShard = Integer.parseInt(new String(bytes, Charsets.UTF_8));
+      if (!delete(solrShardNumberFile, false, fs)) {
+        return false;
+      }
+      
+      // see FileOutputFormat.NUMBER_FORMAT
+      NumberFormat numberFormat = NumberFormat.getInstance();
+      numberFormat.setMinimumIntegerDigits(5);
+      numberFormat.setGroupingUsed(false);
+      Path finalPath = new Path(renamedPath.getParent(), dirPrefix + "-m-" + numberFormat.format(solrShard));
+      
+      LOG.info("MTree merge renaming solr shard: " + solrShard + " from dir: " + dir.getPath() + " to dir: " + finalPath);
+      if (!rename(renamedPath, finalPath, fs)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static void verifyGoLiveArgs(Options opts, ArgumentParser parser) throws ArgumentParserException {
