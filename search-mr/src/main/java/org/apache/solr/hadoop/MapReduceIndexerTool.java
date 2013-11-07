@@ -1197,7 +1197,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
 
   /*
    * You can run MapReduceIndexerTool in Solrcloud mode, and once the MR job completes, you can use
-   * the standard solrj Solrcloud API to send updates and deletes to SolrCloud, and those updates
+   * the standard solrj Solrcloud API to send doc updates and deletes to SolrCloud, and those updates
    * and deletes will go to the right Solr shards, and it will work just fine.
    * 
    * The MapReduce framework doesn't guarantee that input split N goes to the map task with the
