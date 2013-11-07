@@ -171,10 +171,16 @@ public class TreeMergeOutputFormat extends FileOutputFormat<Text, NullWritable> 
       }
     }
 
+    /*
+     * For background see MapReduceIndexerTool.renameTreeMergeShardDirs()
+     * 
+     * Also see MapReduceIndexerTool.run() method where it uses
+     * NLineInputFormat.setNumLinesPerSplit(job, options.fanout)
+     */
     private void writeShardNumberFile(TaskAttemptContext context) throws IOException {
       Preconditions.checkArgument(shards.size() > 0);
-      String shard = shards.get(0).getParent().getParent().getName();
-      String taskId = shard.substring("part-m-".length(), shard.length());
+      String shard = shards.get(0).getParent().getParent().getName(); // move up from "data/index"
+      String taskId = shard.substring("part-m-".length(), shard.length()); // e.g. part-m-00001
       int taskNum = Integer.parseInt(taskId);
       int outputShardNum = taskNum / shards.size();
       LOG.debug("Merging into outputShardNum: " + outputShardNum + " from taskId: " + taskId);

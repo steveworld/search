@@ -1195,6 +1195,35 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     return dirs;
   }
 
+  /*
+   * You can run MapReduceIndexerTool in Solrcloud mode, and once the MR job completes, you can use
+   * the standard solrj Solrcloud API to send updates and deletes to SolrCloud, and those updates
+   * and deletes will go to the right Solr shards, and it will work just fine.
+   * 
+   * The MapReduce framework doesn't guarantee that input split N goes to the map task with the
+   * taskId = N. The job tracker and Yarn schedule and assign tasks, considering data locality
+   * aspects, but without regard of the input split# withing the overall list of input splits. In
+   * other words, split# != taskId can be be true.
+   * 
+   * To deal with this issue, our mapper tasks write a little auxiliary meta data file (per task)
+   * that tells the job driver which taskId processed which split#. Once the mapper-only job is
+   * completed, the job driver renames the output dirs such that the dir name contains the true solr
+   * shard id, based on these auxiliary files.
+   * 
+   * This way each doc gets assigned to the right Solr shard even with #reducers > #solrshards
+   * 
+   * Example for a merge with two shards:
+   * 
+   * part-m-00000 and part-m-00001 goes to outputShardNum = 0 and will end up in merged part-m-00000
+   * part-m-00002 and part-m-00003 goes to outputShardNum = 1 and will end up in merged part-m-00001
+   * part-m-00004 and part-m-00005 goes to outputShardNum = 2 and will end up in merged part-m-00002
+   * ... and so on
+   * 
+   * Also see run() method above where it uses NLineInputFormat.setNumLinesPerSplit(job,
+   * options.fanout)
+   * 
+   * Also see TreeMergeOutputFormat.TreeMergeRecordWriter.writeShardNumberFile()
+   */
   private boolean renameTreeMergeShardDirs(Path outputTreeMergeStep, Job job, FileSystem fs) throws IOException {
     final String dirPrefix = SolrOutputFormat.getOutputName(job);
     FileStatus[] dirs = fs.listStatus(outputTreeMergeStep, new PathFilter() {      
