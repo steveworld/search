@@ -1203,7 +1203,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
    * The MapReduce framework doesn't guarantee that input split N goes to the map task with the
    * taskId = N. The job tracker and Yarn schedule and assign tasks, considering data locality
    * aspects, but without regard of the input split# withing the overall list of input splits. In
-   * other words, split# != taskId can be be true.
+   * other words, split# != taskId can be true.
    * 
    * To deal with this issue, our mapper tasks write a little auxiliary meta data file (per task)
    * that tells the job driver which taskId processed which split#. Once the mapper-only job is
