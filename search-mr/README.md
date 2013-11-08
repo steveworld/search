@@ -21,12 +21,12 @@ $ hadoop jar target/search-mr-*-job.jar org.apache.solr.hadoop.MapReduceIndexerT
 
 usage: hadoop [GenericOptions]... jar search-mr-*-job.jar org.apache.solr.hadoop.MapReduceIndexerTool
        [--help] --output-dir HDFS_URI [--input-list URI]
-       --morphline-file FILE [--morphline-id STRING] [--solr-home-dir DIR]
+       --morphline-file FILE [--morphline-id STRING]
        [--update-conflict-resolver FQCN] [--mappers INTEGER]
        [--reducers INTEGER] [--max-segments INTEGER]
        [--fair-scheduler-pool STRING] [--dry-run] [--log4j FILE]
-       [--verbose] [--shard-url URL] [--zk-host STRING] [--shards INTEGER]
-       [--go-live] [--collection STRING] [--go-live-threads INTEGER]
+       [--verbose] [--show-non-solr-cloud] [--zk-host STRING] [--go-live]
+       [--collection STRING] [--go-live-threads INTEGER]
        [HDFS_URI [HDFS_URI ...]]
 
 MapReduce batch job driver that  takes  a  morphline  and creates a set of
@@ -96,11 +96,6 @@ optional arguments:
                          morphline-id option is  ommitted  the first (i.e.
                          top-most) morphline  within  the  config  file is
                          used. Example: morphline1
-  --solr-home-dir DIR    Relative  or  absolute  path   to   a  local  dir
-                         containing  Solr  conf/  dir  and  in  particular
-                         conf/solrconfig.xml  and  optionally   also  lib/
-                         dir. This directory will  be  uploaded to each MR
-                         task. Example: src/test/resources/solr/minimr
   --update-conflict-resolver FQCN
                          Fully qualified class name  of  a Java class that
                          implements the  UpdateConflictResolver interface.
@@ -199,6 +194,8 @@ optional arguments:
                          will  be  uploaded  to  each  MR  task.  Example:
                          /path/to/log4j.properties
   --verbose, -v          Turn on verbose output. (default: false)
+  --show-non-solr-cloud  Also show options for  Non-SolrCloud mode as part
+                         of --help. (default: false)
 
 Required arguments:
   --output-dir HDFS_URI  HDFS directory to write  Solr  indexes to. Inside
@@ -211,20 +208,8 @@ Required arguments:
                          /path/to/morphline.conf
 
 Cluster arguments:
-  Arguments that provide information about  your  Solr cluster. If you are
-  not using --go-live, pass  the  --shards  argument.  If you are building
-  shards for a Non-SolrCloud  cluster,  pass  the --shard-url argument one
-  or more times. To build indexes  for  a replicated cluster with --shard-
-  url, pass replica urls consecutively and  also pass --shards. If you are
-  building shards for a  SolrCloud  cluster,  pass the --zk-host argument.
-  Using --go-live requires either --shard-url or --zk-host.
+  Arguments that provide information about your Solr cluster. 
 
-  --shard-url URL        Solr URL to merge  resulting  shard into if using
-                         --go-live. Example: http://solr001.mycompany.com:
-                         8983/solr/collection1.    Multiple    --shard-url
-                         arguments can be specified,  one for each desired
-                         shard.  If  you   are   merging   shards  into  a
-                         SolrCloud cluster, use --zk-host instead.
   --zk-host STRING       The address of  a  ZooKeeper  ensemble being used
                          by a SolrCloud  cluster.  This ZooKeeper ensemble
                          will be  examined  to  determine  the  number  of
@@ -254,10 +239,6 @@ Cluster arguments:
                          in operations being run  on '/solr/foo/bar' (from
                          the server perspective).
                          
-                         If --solr-home-dir  is  not  specified,  the Solr
-                         home  directory  for   the   collection  will  be
-                         downloaded from this ZooKeeper ensemble.
-  --shards INTEGER       Number of output shards to generate.
 
 Go live arguments:
   Arguments for merging  the  shards  that  are  built  into  a  live Solr
@@ -267,10 +248,7 @@ Go live arguments:
                          shards into a live  Solr  cluster  after they are
                          built. You can pass the ZooKeeper address with --
                          zk-host  and  the  relevant  cluster  information
-                         will be auto detected.  If  you  are  not using a
-                         SolrCloud cluster, --shard-url  arguments  can be
-                         used to  specify  each  SolrCore  to  merge  each
-                         shard into. (default: false)
+                         will be auto detected.  (default: false)
   --collection STRING    The SolrCloud  collection  to  merge  shards into
                          when  using  --go-live  and  --zk-host.  Example:
                          collection1
