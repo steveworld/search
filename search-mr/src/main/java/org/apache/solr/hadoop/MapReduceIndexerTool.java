@@ -111,6 +111,10 @@ public class MapReduceIndexerTool extends Configured implements Tool {
    */
   static final class MyArgumentParser {
     
+    private static final String SHOW_NON_SOLR_CLOUD = "--show-non-solr-cloud";
+
+    private boolean showNonSolrCloud = false;
+
     /**
      * Parses the given command line arguments.
      * 
@@ -126,6 +130,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       if (args.length == 0) {
         args = new String[] { "--help" };
       }
+      
+      showNonSolrCloud = Arrays.asList(args).contains(SHOW_NON_SOLR_CLOUD); // intercept it first
       
       ArgumentParser parser = ArgumentParsers
         .newArgumentParser("hadoop [GenericOptions]... jar search-mr-*-job.jar " + MapReduceIndexerTool.class.getName(), false)
@@ -297,7 +303,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         		  "specified by --morphline-file. If the --morphline-id option is ommitted the first (i.e. " +
         		  "top-most) morphline within the config file is used. Example: morphline1");
             
-      Argument solrHomeDirArg = parser.addArgument("--solr-home-dir")
+      Argument solrHomeDirArg = nonSolrCloud(parser.addArgument("--solr-home-dir")
         .metavar("DIR")
         .type(new FileArgumentType() {
           @Override
@@ -312,7 +318,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .required(false)
         .help("Relative or absolute path to a local dir containing Solr conf/ dir and in particular " +
               "conf/solrconfig.xml and optionally also lib/ dir. This directory will be uploaded to each MR task. " +
-              "Example: src/test/resources/solr/minimr");
+              "Example: src/test/resources/solr/minimr"));
         
       Argument updateConflictResolverArg = parser.addArgument("--update-conflict-resolver")
         .metavar("FQCN")
@@ -404,25 +410,20 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .action(Arguments.storeTrue())
         .help("Turn on verbose output.");
   
+      parser.addArgument(SHOW_NON_SOLR_CLOUD)
+        .action(Arguments.storeTrue())
+        .help("Also show options for Non-SolrCloud mode as part of --help.");
+      
       ArgumentGroup clusterInfoGroup = parser
           .addArgumentGroup("Cluster arguments")
           .description(
               "Arguments that provide information about your Solr cluster. "
-                  + "If you are not using --go-live, pass the --shards argument. If you are building shards for "
-                  + "a Non-SolrCloud cluster, pass the --shard-url argument one or more times. To build indexes for"
-                  + " a replicated cluster with --shard-url, pass replica urls consecutively and also pass --shards. " 
-                  + "If you are building shards for a SolrCloud cluster, pass the --zk-host argument. "
-                  + "Using --go-live requires either --shard-url or --zk-host.");
+            + nonSolrCloud("If you are building shards for a SolrCloud cluster, pass the --zk-host argument. "
+            + "If you are building shards for "
+            + "a Non-SolrCloud cluster, pass the --shard-url argument one or more times. To build indexes for "
+            + "a replicated Non-SolrCloud cluster with --shard-url, pass replica urls consecutively and also pass --shards. "
+            + "Using --go-live requires either --zk-host or --shard-url."));
 
-      Argument shardUrlsArg = clusterInfoGroup.addArgument("--shard-url")
-        .metavar("URL")
-        .type(String.class)
-        .action(Arguments.append())
-        .help("Solr URL to merge resulting shard into if using --go-live. " +
-              "Example: http://solr001.mycompany.com:8983/solr/collection1. " + 
-              "Multiple --shard-url arguments can be specified, one for each desired shard. " +
-              "If you are merging shards into a SolrCloud cluster, use --zk-host instead.");
-      
       Argument zkHostArg = clusterInfoGroup.addArgument("--zk-host")
         .metavar("STRING")
         .type(String.class)
@@ -444,15 +445,24 @@ public class MapReduceIndexerTool extends Configured implements Tool {
             + "would be relative to this root - i.e. getting/setting/etc... "
             + "'/foo/bar' would result in operations being run on "
             + "'/solr/foo/bar' (from the server perspective).\n"
-            + "\n"
+            + nonSolrCloud("\n"
             + "If --solr-home-dir is not specified, the Solr home directory for the collection "
-            + "will be downloaded from this ZooKeeper ensemble.");
+            + "will be downloaded from this ZooKeeper ensemble."));
 
-      Argument shardsArg = clusterInfoGroup.addArgument("--shards")
+      Argument shardUrlsArg = nonSolrCloud(clusterInfoGroup.addArgument("--shard-url")
+        .metavar("URL")
+        .type(String.class)
+        .action(Arguments.append())
+        .help("Solr URL to merge resulting shard into if using --go-live. " +
+              "Example: http://solr001.mycompany.com:8983/solr/collection1. " + 
+              "Multiple --shard-url arguments can be specified, one for each desired shard. " +
+              "If you are merging shards into a SolrCloud cluster, use --zk-host instead."));
+      
+      Argument shardsArg = nonSolrCloud(clusterInfoGroup.addArgument("--shards")
         .metavar("INTEGER")
         .type(Integer.class)
         .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
-        .help("Number of output shards to generate.");
+        .help("Number of output shards to generate."));
       
       ArgumentGroup goLiveGroup = parser.addArgumentGroup("Go live arguments")
         .description("Arguments for merging the shards that are built into a live Solr cluster. " +
@@ -462,8 +472,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .action(Arguments.storeTrue())
         .help("Allows you to optionally merge the final index shards into a live Solr cluster after they are built. " +
               "You can pass the ZooKeeper address with --zk-host and the relevant cluster information will be auto detected. " +
-              "If you are not using a SolrCloud cluster, --shard-url arguments can be used to specify each SolrCore to merge " +
-              "each shard into.");
+              nonSolrCloud("If you are not using a SolrCloud cluster, --shard-url arguments can be used to specify each SolrCore to merge " +
+              "each shard into."));
 
       Argument collectionArg = goLiveGroup.addArgument("--collection")
         .metavar("STRING")
@@ -536,6 +546,15 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         return 0; // nothing to process
       }
       return null;     
+    }
+
+    // make it a "hidden" option, i.e. the option is functional and enabled but not shown in --help output
+    private Argument nonSolrCloud(Argument arg) {
+        return showNonSolrCloud ? arg : arg.help(FeatureControl.SUPPRESS); 
+    }
+
+    private String nonSolrCloud(String msg) {
+        return showNonSolrCloud ? msg : "";
     }
 
     /** Marker trick to prevent processing of any remaining arguments once --help option has been parsed */
