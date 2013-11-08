@@ -1205,7 +1205,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
    * aspects, but without regard of the input split# withing the overall list of input splits. In
    * other words, split# != taskId can be true.
    * 
-   * To deal with this issue, our mapper tasks write a little auxiliary meta data file (per task)
+   * To deal with this issue, our mapper tasks write a little auxiliary metadata file (per task)
    * that tells the job driver which taskId processed which split#. Once the mapper-only job is
    * completed, the job driver renames the output dirs such that the dir name contains the true solr
    * shard id, based on these auxiliary files.
@@ -1239,6 +1239,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       }
     }
 
+    // Example: rename part-m-00004 to _part-m-00004
     for (FileStatus dir : dirs) {
       Path path = dir.getPath();
       Path renamedPath = new Path(path.getParent(), "_" + path.getName());
@@ -1247,10 +1248,13 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       }
     }
     
+    // Example: rename _part-m-00004 to part-m-00002
     for (FileStatus dir : dirs) {
       Path path = dir.getPath();
       Path renamedPath = new Path(path.getParent(), "_" + path.getName());
       
+      // read auxiliary metadata file (per task) that tells which taskId 
+      // processed which split# aka solrShard
       Path solrShardNumberFile = new Path(renamedPath, TreeMergeMapper.SOLR_SHARD_NUMBER);
       InputStream in = fs.open(solrShardNumberFile);
       byte[] bytes = ByteStreams.toByteArray(in);
@@ -1261,7 +1265,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         return false;
       }
       
-      // see FileOutputFormat.NUMBER_FORMAT
+      // same as FileOutputFormat.NUMBER_FORMAT
       NumberFormat numberFormat = NumberFormat.getInstance();
       numberFormat.setMinimumIntegerDigits(5);
       numberFormat.setGroupingUsed(false);
