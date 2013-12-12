@@ -107,8 +107,8 @@
     </dependency>
 
     <dependency>
-      <groupId>com.cloudera.cdk</groupId>
-      <artifactId>cdk-morphlines-all</artifactId>
+      <groupId>org.kitesdk</groupId>
+      <artifactId>kite-morphlines-all</artifactId>
       <type>pom</type>
     </dependency>
 
@@ -118,15 +118,15 @@
     </dependency>
     
     <dependency>
-      <groupId>com.cloudera.cdk</groupId>
-      <artifactId>cdk-morphlines-solr-core</artifactId>
+      <groupId>org.kitesdk</groupId>
+      <artifactId>kite-morphlines-solr-core</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
 
     <dependency>
-      <groupId>com.cloudera.cdk</groupId>
-      <artifactId>cdk-morphlines-core</artifactId>
+      <groupId>org.kitesdk</groupId>
+      <artifactId>kite-morphlines-core</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

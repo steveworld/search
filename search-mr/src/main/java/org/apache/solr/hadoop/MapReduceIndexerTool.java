@@ -80,7 +80,7 @@ import org.apache.solr.hadoop.morphline.MorphlineMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cloudera.cdk.morphline.base.Fields;
+import org.kitesdk.morphline.base.Fields;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
@@ -1106,7 +1106,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
      * like this:
      * 
      * ... caused by compilation failed: mfm:///MyJavaClass1.java:2: package
-     * com.cloudera.cdk.morphline.api does not exist
+     * org.kitesdk.morphline.api does not exist
      */
     LOG.trace("dryRun: java.class.path: {}", System.getProperty("java.class.path"));
     String fullClassPath = "";
