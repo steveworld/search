@@ -947,8 +947,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         if (inputFileFs.exists(inputFile)) {
           PathFilter pathFilter = new PathFilter() {      
             @Override
-            public boolean accept(Path path) {
-              return !path.getName().startsWith("."); // ignore "hidden" files and dirs
+            public boolean accept(Path path) { // ignore "hidden" files and dirs
+              return !(path.getName().startsWith(".") || path.getName().startsWith("_")); 
             }
           };
           numFiles += addInputFilesRecursively(inputFile, writer, inputFileFs, pathFilter);
