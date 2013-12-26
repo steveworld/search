@@ -143,7 +143,7 @@
     <kite.version>${cdh.kite.version}</kite.version>
     <tika.version>${cdh.tika.version}</tika.version>
     <slf4j.version>${cdh.slf4j.version}</slf4j.version>
-    <argparse4j.version>0.4.0</argparse4j.version>
+    <argparse4j.version>0.4.2</argparse4j.version>
     <junit.version>4.11</junit.version>
     <surefire.version>2.12.4</surefire.version>
     <maven.antrun.plugin.version>1.7</maven.antrun.plugin.version>

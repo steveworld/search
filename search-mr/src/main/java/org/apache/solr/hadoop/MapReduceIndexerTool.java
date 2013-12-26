@@ -181,7 +181,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .action(new HelpArgumentAction() {
           @Override
           public void run(ArgumentParser parser, Argument arg, Map<String, Object> attrs, String flag, Object value) throws ArgumentParserException {
-            parser.printHelp(new PrintWriter(System.out));  
+            parser.printHelp();
             System.out.println();
             System.out.print(ToolRunnerHelpFormatter.getGenericCommandUsage());
             //ToolRunner.printGenericCommandUsage(System.out);
