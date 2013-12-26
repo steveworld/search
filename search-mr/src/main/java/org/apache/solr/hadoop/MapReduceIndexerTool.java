@@ -217,7 +217,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "| sudo -u hdfs hadoop \\\n" + 
               "  --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" + 
               "  jar target/search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
-              "  --libjars /path/to/kite-morphlines-twitter-0.10.0.jar \\\n" + 
+              "  --libjars /path/to/cdk-morphlines-twitter-0.8.1.jar \\\n" + 
               "  -D 'mapred.child.java.opts=-Xmx500m' \\\n" + 
 //            "  -D 'mapreduce.child.java.opts=-Xmx500m' \\\n" + 
               "  --log4j src/test/resources/log4j.properties \\\n" + 
