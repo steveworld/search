@@ -347,11 +347,12 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       Argument reducersArg = parser.addArgument("--reducers")
         .metavar("INTEGER")
         .type(Integer.class)
-        .choices(new RangeArgumentChoice(-1, Integer.MAX_VALUE)) // TODO: also support X% syntax where X is an integer
+        .choices(new RangeArgumentChoice(-2, Integer.MAX_VALUE)) // TODO: also support X% syntax where X is an integer
         .setDefault(-1)
         .help("Tuning knob that indicates the number of reducers to index into. " +
-        		"-1 indicates use all reduce slots available on the cluster. " +
-            "0 indicates use one reducer per output shard, which disables the mtree merge MR algorithm. " +
+            "0 (reserved for future mapper-only use). " +
+            "-1 indicates use all reduce slots available on the cluster. " +
+            "-2 indicates use one reducer per output shard, which disables the mtree merge MR algorithm. " +
             "The mtree merge MR algorithm improves scalability by spreading load " +
             "(in particular CPU load) among a number of parallel reducers that can be much larger than the number " +
             "of solr shards expected by the user. It can be seen as an extension of concurrent lucene merges " +
@@ -536,6 +537,9 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       opts.collection = ns.getString(collectionArg.getDest());
 
       try {
+        if (opts.reducers == 0) {
+          throw new ArgumentParserException("--reducers must not be zero", parser); 
+        }
         verifyGoLiveArgs(opts, parser);
       } catch (ArgumentParserException e) {
         parser.handleError(e);
@@ -907,11 +911,14 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     //reducers = job.getCluster().getClusterStatus().getReduceSlotCapacity(); // Yarn only      
     LOG.info("Cluster reports {} reduce slots", reducers);
 
-    if (options.reducers == 0) {
+    if (options.reducers == -2) {
       reducers = options.shards;
     } else if (options.reducers == -1) {
       reducers = Math.min(reducers, realMappers); // no need to use many reducers when using few mappers
     } else {
+      if (options.reducers == 0) {
+        throw new IllegalStateException("Illegal zero reducers");
+      }
       reducers = options.reducers;
     }
     reducers = Math.max(reducers, options.shards);
