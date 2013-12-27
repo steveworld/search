@@ -350,7 +350,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         .choices(new RangeArgumentChoice(-2, Integer.MAX_VALUE)) // TODO: also support X% syntax where X is an integer
         .setDefault(-1)
         .help("Tuning knob that indicates the number of reducers to index into. " +
-            "0 (reserved for future mapper-only use). " +
+            "0 is reserved for a mapper-only feature that may ship in a future release. " +
             "-1 indicates use all reduce slots available on the cluster. " +
             "-2 indicates use one reducer per output shard, which disables the mtree merge MR algorithm. " +
             "The mtree merge MR algorithm improves scalability by spreading load " +
