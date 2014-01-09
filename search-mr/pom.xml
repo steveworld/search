@@ -110,6 +110,13 @@
       <groupId>org.kitesdk</groupId>
       <artifactId>kite-morphlines-all</artifactId>
       <type>pom</type>
+      <exclusions>
+        <exclusion>
+          <!-- CDH-16644: no need for startReportingMetricsToHTTP command from kite-morphlines-metrics-servlets -->
+          <groupId>org.eclipse.jetty</groupId>
+          <artifactId>jetty-servlet</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
