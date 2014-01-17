@@ -40,6 +40,7 @@ import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.core.CoreContainer;
 import org.apache.solr.core.CoreDescriptor;
+import org.apache.solr.core.HdfsDirectoryFactory;
 import org.apache.solr.core.SolrCore;
 import org.apache.solr.core.SolrResourceLoader;
 import org.slf4j.Logger;
@@ -193,6 +194,13 @@ class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     descr.setDataDir(dataDirStr);
     descr.setCoreProperties(props);
     SolrCore core = container.create(descr);
+    
+    if (!(core.getDirectoryFactory() instanceof HdfsDirectoryFactory)) {
+      throw new UnsupportedOperationException(
+          "Invalid configuration. Currently, the only DirectoryFactory supported is "
+              + HdfsDirectoryFactory.class.getSimpleName());
+    }
+
     container.register(core, false);
 
     EmbeddedSolrServer solr = new EmbeddedSolrServer(container, "core1");
