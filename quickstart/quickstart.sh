@@ -36,15 +36,21 @@ export ZOOKEEPER_CONNECT=${ZOOKEEPER_HOST}:${ZOOKEEPER_PORT}${ZOOKEEPER_ROOT}
 
 export HDFS_USER=${HDFS_USER:="${USER}"}
 
+# save this off for better error reporting
+export USER_SOLR_HOME=${SOLR_HOME}
 # where do the Solr binaries live on this host
 export SOLR_HOME=${SOLR_HOME:="/opt/cloudera/parcels/SOLR/lib/solr"}
 
 QUICKSTART_SCRIPT="${BASH_SOURCE-$0}"
-QUICKSTART_SCRIPT_DIR=${QUICKSTART_SCRIPT_DIR:=$(dirname "${QUICKSTART_SCRIPT}")}
+# find the quickstart directory and make sure it's absolute
+export QUICKSTART_SCRIPT_DIR=${QUICKSTART_SCRIPT_DIR:=$(dirname "${QUICKSTART_SCRIPT}")}
+QUICKSTART_SCRIPT_DIR=$(cd $QUICKSTART_SCRIPT_DIR; pwd)
 
 ###
 ### But probably not what's after here...
 ###
+export ENRON_URL=${ENRON_URL:="http://download.srv.cs.cmu.edu/~enron/enron_mail_20110402.tgz"}
+
 export HDFS_USER_HOME=hdfs://${NAMENODE_HOST}:${NAMENODE_PORT}/user/${HDFS_USER}
 export HDFS_ENRON_INDIR=${HDFS_USER_HOME}/enron/indir
 export HDFS_ENRON_OUTDIR=${HDFS_USER_HOME}/enron/outdir
@@ -66,9 +72,23 @@ if [ $? != 0 ]; then
 fi
 
 # check solr home can be found locally
-if [ ! -d $SOLR_HOME ]; then
-    echo Unable to find SOLR_HOME at $SOLR_HOME
-    exit 1
+if [ ${USER_SOLR_HOME+x} ] && [ ${USER_SOLR_HOME} ]; then
+    if [ ! -d $SOLR_HOME ]; then
+	echo "Unable to find SOLR_HOME provided by user as $SOLR_HOME, exiting"
+	exit 1
+    fi
+    echo "Found SOLR_HOME $SOLR_HOME as provided by user, continuing"
+else
+    if [ ! -d $SOLR_HOME ]; then
+	echo "Unable to find SOLR_HOME at $SOLR_HOME (typical location for parcel based install)"
+	SOLR_HOME="/usr/lib/solr"
+	echo "Trying $SOLR_HOME (typical location for package based install)"
+	if [ ! -d $SOLR_HOME ]; then
+	    echo "Unable to find SOLR_HOME, exiting"
+	    exit 1
+	fi
+	echo Found $SOLR_HOME, continuing
+    fi
 fi
 
 # check that curl is installed
@@ -79,7 +99,7 @@ if [ $? != 0 ]; then
 fi
 
 # working directory for the quickstart
-export QUICKSTART_WORKINGDIR=${HOME}/quickstart_workingdir
+export QUICKSTART_WORKINGDIR=${QUICKSTART_WORKINGDIR:=${HOME}/quickstart_workingdir}
 mkdir -p ${QUICKSTART_WORKINGDIR}
 
 # cache location for enron emails
@@ -91,7 +111,7 @@ export ENRON_MAIL_CACHE=${QUICKSTART_WORKINGDIR}/enron_email
 mkdir -p ${ENRON_MAIL_CACHE}
 cd ${ENRON_MAIL_CACHE}
 echo Downloading enron email archive to `pwd`
-curl -C - -O http://download.srv.cs.cmu.edu/~enron/enron_mail_20110402.tgz
+curl -C - -O ${ENRON_URL}
 
 if [ -d enron_mail_20110402 ] && [ -e ".untarred_successfully" ]; then
     echo Using existing untarred enron directory at `pwd` called enron_mail_20110402
