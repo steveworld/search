@@ -39,7 +39,7 @@ export HDFS_USER=${HDFS_USER:="${USER}"}
 # save this off for better error reporting
 export USER_SOLR_HOME=${SOLR_HOME}
 # where do the Solr binaries live on this host
-export SOLR_HOME=${SOLR_HOME:="/opt/cloudera/parcels/SOLR/lib/solr"}
+export SOLR_HOME=${SOLR_HOME:="/opt/cloudera/parcels/CDH/lib/solr"}
 
 QUICKSTART_SCRIPT="${BASH_SOURCE-$0}"
 # find the quickstart directory and make sure it's absolute
