@@ -151,7 +151,7 @@ solrctl --zk ${ZOOKEEPER_CONNECT} instancedir --delete enron-email-collection >&
 solrctl --zk ${ZOOKEEPER_CONNECT} instancedir --create enron-email-collection ${QUICKSTART_WORKINGDIR}/emailSearch || die "Unable to create configuration via solrctl"
 
 # Create a Solr collection named enron-email-collection. -s 2 indicates that this collection has two shards.
-solrctl --zk ${ZOOKEEPER_CONNECT} collection --create enron-email-collection -s 2 || die "Unable to create collection"
+solrctl --zk ${ZOOKEEPER_CONNECT} collection --create enron-email-collection -s 2 -r 1 -m 2 || die "Unable to create collection"
 
 # Create a directory that the MapReduceBatchIndexer can write results to. Ensure it's empty
 hadoop fs -rm -f -skipTrash -r ${HDFS_ENRON_OUTDIR} || die "Unable to remove old outdir"
