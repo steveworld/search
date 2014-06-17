@@ -23,16 +23,34 @@
 ### You might want to override some of these...
 ###
 ### Which you can do by calling this script with them set, e.g.
-###    $ NAMENODE_HOST=host1 HDFS_USER=foobar quickstart.sh
+###    $ NAMENODE_HOST=host1 HDFS_USER=foobar quickstart.sh        # (For Non-HA clusters)
+###    $ NAMENODE_CONNECT=<nn-uri> HDFS_USER=foobar quickstart.sh  # (For HA clusters)
 ### and so on
 ###
 export NAMENODE_HOST=${NAMENODE_HOST:=`hostname`}
 export NAMENODE_PORT=${NAMENODE_PORT:="8020"}
 
+if [ -z $NAMENODE_CONNECT ]; then
+    # check the traditional namenode is accessible
+    timeout 1 bash -c 'cat < /dev/null > /dev/tcp/$NAMENODE_HOST/$NAMENODE_PORT' >& /dev/null
+    if [ $? != 0 ]; then
+        echo "[Warning] Unable to verify Namenode at $NAMENODE_HOST:$NAMENODE_PORT"
+    fi
+fi
+
+export NAMENODE_CONNECT=${NAMENODE_CONNECT:=${NAMENODE_HOST}:${NAMENODE_PORT}}
+
 export ZOOKEEPER_HOST=${ZOOKEEPER_HOST:=`hostname`}
 export ZOOKEEPER_PORT=${ZOOKEEPER_POST:="2181"}
 export ZOOKEEPER_ROOT=${ZOOKEEPER_ROOT:="/solr"}
 export ZOOKEEPER_CONNECT=${ZOOKEEPER_HOST}:${ZOOKEEPER_PORT}${ZOOKEEPER_ROOT}
+
+# check that zookeeper is accessible
+timeout 1 bash -c 'cat < /dev/null > /dev/tcp/$ZOOKEEPER_HOST/$ZOOKEEPER_PORT' >& /dev/null
+if [ $? != 0 ]; then
+    echo Unable to access ZooKeeper at ${ZOOKEEPER_HOST}:${ZOOKEEPER_PORT}$ZOOKEEPER_ROOT
+    exit 1
+fi
 
 export HDFS_USER=${HDFS_USER:="${USER}"}
 
@@ -51,25 +69,11 @@ QUICKSTART_SCRIPT_DIR=$(cd $QUICKSTART_SCRIPT_DIR; pwd)
 ###
 export ENRON_URL=${ENRON_URL:="http://download.srv.cs.cmu.edu/~enron/enron_mail_20110402.tgz"}
 
-export HDFS_USER_HOME=hdfs://${NAMENODE_HOST}:${NAMENODE_PORT}/user/${HDFS_USER}
+export HDFS_USER_HOME=hdfs://${NAMENODE_CONNECT}/user/${HDFS_USER}
 export HDFS_ENRON_INDIR=${HDFS_USER_HOME}/enron/indir
 export HDFS_ENRON_OUTDIR=${HDFS_USER_HOME}/enron/outdir
 
 die() { echo "$@" 1>&2 ; exit 1; }
-
-# check the namenode is accessible
-timeout 1 bash -c 'cat < /dev/null > /dev/tcp/$NAMENODE_HOST/$NAMENODE_PORT' >& /dev/null
-if [ $? != 0 ]; then
-    echo Unable to access Namenode at $NAMENODE_HOST:$NAMENODE_PORT
-    exit 1
-fi
-
-# check that zookeeper is accessible
-timeout 1 bash -c 'cat < /dev/null > /dev/tcp/$ZOOKEEPER_HOST/$ZOOKEEPER_PORT' >& /dev/null
-if [ $? != 0 ]; then
-    echo Unable to access ZooKeeper at ${ZOOKEEPER_HOST}:${ZOOKEEPER_PORT}$ZOOKEEPER_ROOT
-    exit 1
-fi
 
 # check solr home can be found locally
 if [ ${USER_SOLR_HOME+x} ] && [ ${USER_SOLR_HOME} ]; then
