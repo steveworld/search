@@ -27,29 +27,41 @@
 ###    $ NAMENODE_CONNECT=<nn-uri> HDFS_USER=foobar quickstart.sh  # (For HA clusters)
 ### and so on
 ###
+
+### Check whether the command timeout is present or not.
+bash -c 'type timeout >& /dev/null'
+IS_TIMEOUT_PRESENT=$?
+
 export NAMENODE_HOST=${NAMENODE_HOST:=`hostname`}
 export NAMENODE_PORT=${NAMENODE_PORT:="8020"}
 
 if [ -z $NAMENODE_CONNECT ]; then
-    # check the traditional namenode is accessible
-    timeout 1 bash -c 'cat < /dev/null > /dev/tcp/$NAMENODE_HOST/$NAMENODE_PORT' >& /dev/null
-    if [ $? != 0 ]; then
-        echo "[Warning] Unable to verify Namenode at $NAMENODE_HOST:$NAMENODE_PORT"
+    # Run the sanity checks only if the timeout command is present in $PATH
+    if [ $IS_TIMEOUT_PRESENT == 0 ]; then
+        # check the traditional namenode is accessible
+        timeout 1 bash -c 'cat < /dev/null > /dev/tcp/$NAMENODE_HOST/$NAMENODE_PORT' >& /dev/null
+        if [ $? != 0 ]; then
+            echo "Unable to verify Namenode at $NAMENODE_HOST:$NAMENODE_PORT"
+            exit 1
+        fi
     fi
 fi
 
 export NAMENODE_CONNECT=${NAMENODE_CONNECT:=${NAMENODE_HOST}:${NAMENODE_PORT}}
 
 export ZOOKEEPER_HOST=${ZOOKEEPER_HOST:=`hostname`}
-export ZOOKEEPER_PORT=${ZOOKEEPER_POST:="2181"}
+export ZOOKEEPER_PORT=${ZOOKEEPER_PORT:="2181"}
 export ZOOKEEPER_ROOT=${ZOOKEEPER_ROOT:="/solr"}
 export ZOOKEEPER_CONNECT=${ZOOKEEPER_HOST}:${ZOOKEEPER_PORT}${ZOOKEEPER_ROOT}
 
-# check that zookeeper is accessible
-timeout 1 bash -c 'cat < /dev/null > /dev/tcp/$ZOOKEEPER_HOST/$ZOOKEEPER_PORT' >& /dev/null
-if [ $? != 0 ]; then
-    echo Unable to access ZooKeeper at ${ZOOKEEPER_HOST}:${ZOOKEEPER_PORT}$ZOOKEEPER_ROOT
-    exit 1
+# Run the sanity checks only if the timeout command is present in $PATH
+if [ $IS_TIMEOUT_PRESENT == 0 ]; then
+    # check that zookeeper is accessible
+    timeout 1 bash -c 'cat < /dev/null > /dev/tcp/$ZOOKEEPER_HOST/$ZOOKEEPER_PORT' >& /dev/null
+    if [ $? != 0 ]; then
+        echo "Unable to access ZooKeeper at ${ZOOKEEPER_HOST}:${ZOOKEEPER_PORT}$ZOOKEEPER_ROOT"
+        exit 1
+    fi
 fi
 
 export HDFS_USER=${HDFS_USER:="${USER}"}
