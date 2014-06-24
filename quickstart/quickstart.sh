@@ -133,8 +133,9 @@ if [ -d enron_mail_20110402 ] && [ -e ".untarred_successfully" ]; then
     echo Using existing untarred enron directory at `pwd` called enron_mail_20110402
 else
     # there are 520926 records in the archive, takes about 5 minutes to extract
-    echo "Untarring enron email archive, this may take a few minutes (especially if you are not using a local disk...)"
-    tar -xaf enron_mail_20110402.tgz
+    echo "Decompressing and Untarring enron email archive, this may take a few minutes (especially if you are not using a local disk...)"
+    gzip -d enron_mail_20110402.tgz
+    tar -xf enron_mail_20110402.tar
     touch ".untarred_successfully"
 fi
 cd enron_mail_20110402
