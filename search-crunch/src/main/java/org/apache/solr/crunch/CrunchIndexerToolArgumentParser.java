@@ -234,7 +234,7 @@ final class CrunchIndexerToolArgumentParser {
                     + "  /user/systest/input/hello1.txt\n"
                     + "\n"
                     + "# Spark on Yarn in Client Mode (for testing) - Ingest into Solr:\n"
-                    + "Same as above except replace '--master local' with '--master yarn'\n"
+                    + "Same as above, except replace '--master local' with '--master yarn'\n"
                     + "\n"
                     + "# View the yarn executor log files (there is no GUI yet):\n"
                     + "yarn logs --applicationId $application_XYZ\n"

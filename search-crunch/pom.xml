@@ -137,14 +137,6 @@
 
     <dependency>
       <groupId>org.kitesdk</groupId>
-      <artifactId>kite-morphlines-solr-cell</artifactId>
-      <version>${kite.version}</version>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.kitesdk</groupId>
       <artifactId>kite-morphlines-core</artifactId>
       <version>${kite.version}</version>
       <type>test-jar</type>

@@ -194,7 +194,7 @@ spark-submit \
   /user/systest/input/hello1.txt
 
 # Spark on Yarn in Client Mode (for testing) - Ingest into Solr:
-Same as above except replace '--master local' with '--master yarn'
+Same as above, except replace '--master local' with '--master yarn'
 
 # View the yarn executor log files (there is no GUI yet):
 yarn logs --applicationId $application_XYZ
