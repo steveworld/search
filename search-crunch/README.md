@@ -29,7 +29,7 @@ on either the Apache Hadoop MapReduce or Apache Spark execution engine. More det
 <pre>
 $ hadoop jar target/search-crunch-*-job.jar org.apache.solr.crunch.CrunchIndexerTool --help
 
-MapReduceUsage: hadoop jar search-crunch-*-job.jar org.apache.solr.crunch.CrunchIndexerTool [MapReduceGenericOptions]... 
+MapReduceUsage: hadoop jar search-crunch-*-job.jar org.apache.solr.crunch.CrunchIndexerTool [MapReduceGenericOptions]...
         [--input-file-list URI] [--input-file-format FQCN]
         [--input-file-projection-schema FILE]
         [--input-file-reader-schema FILE] --morphline-file FILE
@@ -37,7 +37,8 @@ MapReduceUsage: hadoop jar search-crunch-*-job.jar org.apache.solr.crunch.Crunch
         [--mappers INTEGER] [--log4j FILE] [--chatty]
         [HDFS_URI [HDFS_URI ...]]
 
-SparkUsage: spark-submit [SparkGenericOptions]... --master local|yarn --deploy-mode client|cluster --class org.apache.solr.crunch.CrunchIndexerTool search-crunch-*-job.jar
+SparkUsage: spark-submit [SparkGenericOptions]... --master local|yarn --deploy-mode client|cluster 
+--class org.apache.solr.crunch.CrunchIndexerTool search-crunch-*-job.jar
         [--input-file-list URI] [--input-file-format FQCN]
         [--input-file-projection-schema FILE]
         [--input-file-reader-schema FILE] --morphline-file FILE

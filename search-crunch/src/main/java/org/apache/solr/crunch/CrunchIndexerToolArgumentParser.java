@@ -193,10 +193,10 @@ final class CrunchIndexerToolArgumentParser {
             String description = help.substring(i);
             String usage = help.substring("usage: ".length(), i);
             System.out.print("MapReduceUsage: hadoop jar search-crunch-*-job.jar " + CrunchIndexerTool.class.getName()
-                + " [MapReduceGenericOptions]... \n       " + usage);
+                + " [MapReduceGenericOptions]...\n       " + usage);
             System.out.print("SparkUsage: spark-submit [SparkGenericOptions]... "
-                + "--master local|yarn --deploy-mode client|cluster --class " 
-                + CrunchIndexerTool.class.getName() + " search-crunch-*-job.jar\n       " + usage);            
+                + "--master local|yarn --deploy-mode client|cluster \n" 
+                + "--class " + CrunchIndexerTool.class.getName() + " search-crunch-*-job.jar\n       " + usage);            
             System.out.println(description);
             System.out.println();
             System.out.println("SparkGenericOptions:     To print all options run 'spark-submit --help'");
