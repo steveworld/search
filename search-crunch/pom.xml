@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor
+  license agreements. See the NOTICE file distributed with this work for additional
+  information regarding copyright ownership. The ASF licenses this file to
+  You under the Apache License, Version 2.0 (the "License"); you may not use
+  this file except in compliance with the License. You may obtain a copy of
+  the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required
+  by applicable law or agreed to in writing, software distributed under the
+  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
+  OF ANY KIND, either express or implied. See the License for the specific
+  language governing permissions and limitations under the License. -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <artifactId>search-crunch</artifactId>
+  <name>Search Crunch</name>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.cloudera.search</groupId>
+  <version>1.0.0-cdh5.2.0-SNAPSHOT</version>
+
+  <parent>
+    <groupId>com.cloudera.search</groupId>
+    <artifactId>search-parent</artifactId>
+    <version>1.0.0-cdh5.2.0-SNAPSHOT</version>
+  </parent>
+
+  <properties>
+    <hadoop.version>${cdh.mr1.version}</hadoop.version>
+    <crunch.version>${cdh.crunch.version}</crunch.version>
+    <kite.version>${cdh.kite.version}</kite.version>
+    <spark.version>${cdh.spark.version}</spark.version>
+    <parquet.version>${cdh.parquet.version}</parquet.version>
+    <argparse4j.version>0.4.3</argparse4j.version>
+    <scala.base.version>2.10</scala.base.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <profiles>
+    <profile>
+      <id>yarn</id>
+      <properties>
+        <hadoop.version>${cdh.hadoop.version}</hadoop.version>
+      </properties>
+    </profile>
+    
+    <profile>
+      <id>OSX</id>
+      <activation>
+        <os><family>mac</family></os>
+      </activation>
+      <properties>
+        <!-- work-around for java 7 on OSX; see https://github.com/thinkaurelius/titan/issues/62 -->
+        <cdh.hadoop-snappy.version>1.0.5.3</cdh.hadoop-snappy.version> 
+      </properties>
+    </profile>
+  </profiles>
+
+  <dependencies>
+ 
+    <dependency>
+      <groupId>org.apache.crunch</groupId>
+      <artifactId>crunch-core</artifactId>
+      <version>${crunch.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.crunch</groupId>
+      <artifactId>crunch-test</artifactId>
+      <scope>test</scope>
+      <version>${crunch.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.crunch</groupId>
+      <artifactId>crunch-spark</artifactId>
+      <version>${crunch.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.scala-lang</groupId>
+          <artifactId>scala-library</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-core_${scala.base.version}</artifactId>
+      <version>${cdh.spark.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-yarn_${scala.base.version}</artifactId>
+      <version>${cdh.spark.version}</version>
+      <scope>provided</scope>
+    </dependency>    
+    
+    <dependency>
+      <groupId>org.apache.solr</groupId>
+      <artifactId>solr-test-framework</artifactId>
+      <scope>test</scope>
+      <version>${solr.version}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-client</artifactId>
+      <version>${hadoop.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.kitesdk</groupId>
+      <artifactId>kite-morphlines-all</artifactId>
+      <version>${kite.version}</version>
+      <type>pom</type>
+    </dependency>
+
+    <!-- If your commands only use the core morphline library features (no Avro, no JSON, no XML, no Solr, etc,
+         see http://kitesdk.org/docs/current/kite-morphlines/morphlinesReferenceGuide.html)
+         you can replace the kite-morphlines-all above with kite-morphlines-core, as follows:
+    <dependency>
+      <groupId>org.kitesdk</groupId>
+      <artifactId>kite-morphlines-core</artifactId>
+      <version>${kite.version}</version>
+    </dependency>
+    -->
+    
+    <dependency>
+      <groupId>org.kitesdk</groupId>
+      <artifactId>kite-morphlines-solr-core</artifactId>
+      <version>${kite.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.kitesdk</groupId>
+      <artifactId>kite-morphlines-solr-cell</artifactId>
+      <version>${kite.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.kitesdk</groupId>
+      <artifactId>kite-morphlines-core</artifactId>
+      <version>${kite.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency> <!-- see http://argparse4j.sourceforge.net -->
+      <groupId>net.sourceforge.argparse4j</groupId>
+      <artifactId>argparse4j</artifactId>
+      <version>${argparse4j.version}</version>
+    </dependency>
+    
+    <!-- The following libraries come with Hadoop but are missing from
+         the client POM. You need them if you want to use MR LocalJobRunner
+         from the IDE. If you don't you can safely delete them. -->
+    <dependency>
+      <groupId>commons-httpclient</groupId>
+      <artifactId>commons-httpclient</artifactId>
+      <version>3.0.1</version>
+      <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-codec</groupId>
+          <artifactId>commons-codec</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <dependencyManagement>
+    <dependencies>    
+      <dependency>
+        <groupId>org.apache.avro</groupId>
+        <artifactId>avro</artifactId>
+        <version>${avro.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>14.0.1</version> <!-- to make spark happy -->
+      </dependency>      
+      
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-log4j12</artifactId>
+        <version>${slf4j.version}</version>
+        <scope>test</scope>
+      </dependency>
+      
+      <!-- 
+           This parquet spec isn't necessary for <crunch.version>0.9.0-cdh5.0.0-SNAPSHOT</crunch.version>
+           but is required to make tests pass with <crunch.version>0.8.2+32-cdh4.4.0</crunch.version> 
+           as well as <crunch.version>0.9.0-hadoop2</crunch.version> 
+      -->
+      <!--
+      <dependency>
+        <groupId>com.twitter</groupId>
+        <artifactId>parquet-avro</artifactId>
+        <version>${parquet.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-core</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      -->
+    </dependencies>
+  </dependencyManagement>
+  
+  <repositories>
+    <repository>
+      <id>cdh.repo</id>
+      <url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
+      <name>Cloudera Repositories</name>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.1</version>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <argLine>-Xmx512m -XX:MaxPermSize=128M</argLine>
+          <redirectTestOutputToFile>true</redirectTestOutputToFile>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.3</version>
+        <configuration>
+          <descriptors>
+            <descriptor>src/main/assembly/hadoop-job.xml</descriptor>
+          </descriptors>
+          <archive>
+            <!--
+            <manifest>
+              <mainClass>org.apache.solr.crunch.CrunchIndexerTool</mainClass>
+            </manifest>
+            -->
+          </archive>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <prerequisites>
+    <maven>2.2.1</maven>
+  </prerequisites>
+
+</project>

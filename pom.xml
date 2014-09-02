@@ -54,6 +54,7 @@
   </parent>
 
   <modules>
+    <module>search-crunch</module>
     <module>search-mr</module>
     <module>search-dist</module>
   </modules>
@@ -188,6 +189,19 @@
       <dependency>
         <groupId>com.cloudera.search</groupId>
         <artifactId>search-mr</artifactId>
+        <version>${project.version}</version>
+        <classifier>job</classifier>
+      </dependency>
+
+      <dependency>
+        <groupId>com.cloudera.search</groupId>
+        <artifactId>search-crunch</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.cloudera.search</groupId>
+        <artifactId>search-crunch</artifactId>
         <version>${project.version}</version>
         <classifier>job</classifier>
       </dependency>
