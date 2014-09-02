@@ -88,15 +88,11 @@ import com.google.common.io.Files;
 
 
 /**
- * MapReduce ETL batch job driver that pipes data from an input source (splitable or non-splitable
- * HDFS files or Kite datasets) to an output target (HDFS files or Kite dataset or Apache Solr), and
- * along the way runs the data through a (optional) Morphline for extraction and transformation,
- * followed by a (optional) Crunch join followed by a (optional) arbitrary custom sequence of Crunch
- * processing steps.
- * 
- * The program is designed for flexible, scalable and fault-tolerant batch ETL pipeline jobs. It is
- * implemented as an Apache Crunch pipeline and as such can run on either the Apache Hadoop
- * MapReduce or Apache Spark execution engine.
+ * CrunchIndexerTool is a Spark or MapReduce ETL batch job that pipes data from (splitable or
+ * non-splitable) HDFS files into Apache Solr, and along the way runs the datathrough a Morphline
+ * for extraction and transformation. The program is designed for flexible, scalable and
+ * fault-tolerant batch ETL pipeline jobs. It is implemented as an Apache Crunch pipeline and as
+ * such can run on either the Apache Hadoop MapReduce or Apache Spark execution engine.
  */
 public class CrunchIndexerTool extends Configured implements Tool {
 
