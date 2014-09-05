@@ -102,6 +102,8 @@ public class MemoryCrunchIndexerToolTest extends AbstractSolrMorphlineZkTest {
     resetTest();
     testSplittableAvroFile();    
     resetTest();
+    testSplittableAvroFileWithReaderSchema();
+    resetTest();
     testSplittableAvroFileWithDryRun();
     resetTest();
     testSplittableAvroParquetFile();
@@ -189,6 +191,16 @@ public class MemoryCrunchIndexerToolTest extends AbstractSolrMorphlineZkTest {
     String[] expected = new String[] {"hello foo", "hello world"};
     String[] args = getInitialArgs(EXTRACT_AVRO_PATH);
     args = ObjectArrays.concat(args, "--input-file-format=avro");
+    args = ObjectArrays.concat(args, inputPath);    
+    runIntoSolr(args, expected);    
+  }
+  
+  private void testSplittableAvroFileWithReaderSchema() throws Exception {
+    String inputPath = tmpDir.copyResourceFileName("test-documents/strings-2.avro");
+    String[] expected = new String[] {"hello foo", "hello world"};
+    String[] args = getInitialArgs(EXTRACT_AVRO_PATH);
+    args = ObjectArrays.concat(args, "--input-file-format=avro");
+    args = ObjectArrays.concat(args, "--input-file-reader-schema=" + SCHEMA_FILE);
     args = ObjectArrays.concat(args, inputPath);    
     runIntoSolr(args, expected);    
   }

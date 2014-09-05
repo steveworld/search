@@ -36,10 +36,6 @@ import java.util.TreeSet;
 import java.util.UUID;
 
 import org.apache.avro.Schema;
-import org.apache.avro.file.DataFileReader;
-import org.apache.avro.generic.GenericDatumReader;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.mapred.FsInput;
 import org.apache.crunch.DoFn;
 import org.apache.crunch.MapFn;
 import org.apache.crunch.PCollection;
@@ -54,7 +50,6 @@ import org.apache.crunch.impl.mem.MemPipeline;
 import org.apache.crunch.impl.mr.MRPipeline;
 import org.apache.crunch.impl.spark.SparkPipeline;
 import org.apache.crunch.io.From;
-import org.apache.crunch.io.avro.AvroFileSource;
 import org.apache.crunch.io.impl.FileTableSourceImpl;
 import org.apache.crunch.io.parquet.AvroParquetFileSource;
 import org.apache.crunch.io.text.NLineFileSource;
@@ -241,11 +236,11 @@ public class CrunchIndexerTool extends Configured implements Tool {
         filePaths.add(new Path(file));
       }
       if (opts.inputFileFormat.isAssignableFrom(AvroInputFormat.class)) { 
-        // hack that fixes IncompatibleClassChangeError
-        Schema schema = opts.inputFileReaderSchema != null ? 
-            opts.inputFileReaderSchema : getAvroSchemaFromPath(filePaths.get(0), new Configuration());
-        Source source = new AvroFileSource(filePaths, Avros.generics(schema));
-        return pipeline.read(source);
+        if (opts.inputFileReaderSchema == null) {
+          return pipeline.read(From.avroFile(filePaths, pipeline.getConfiguration()));
+        } else {
+          return pipeline.read(From.avroFile(filePaths, Avros.generics(opts.inputFileReaderSchema)));
+        }
       } else if (opts.inputFileFormat.isAssignableFrom(AvroParquetInputFormat.class)) {
         if (opts.inputFileReaderSchema == null) {
           // TODO: for convenience we should extract the schema from the parquet data files. 
@@ -483,38 +478,6 @@ public class CrunchIndexerTool extends Configured implements Tool {
     return result;
   }
   
-  private Schema getAvroSchemaFromPath(Path path, Configuration conf) {
-    DataFileReader<GenericRecord> reader = null;
-    try {
-      FileSystem fs = FileSystem.get(conf);
-      if (!fs.isFile(path)) {
-        FileStatus[] fstat = fs.listStatus(path, new PathFilter() {
-          @Override
-          public boolean accept(Path path) {
-            String name = path.getName();
-            return !name.startsWith("_") && !name.startsWith(".");
-          }
-        });
-        if (fstat == null || fstat.length == 0) {
-          throw new IllegalArgumentException("No valid files found in directory: " + path);
-        }
-        path = fstat[0].getPath();
-      }
-      reader = new DataFileReader<GenericRecord>(new FsInput(path, conf), new GenericDatumReader<GenericRecord>());
-      return reader.getSchema();
-    } catch (IOException e) {
-      throw new RuntimeException("Error reading schema from path: "  + path, e);
-    } finally {
-      if (reader != null) {
-        try {
-          reader.close();
-        } catch (IOException e) {
-          // ignored
-        }
-      }
-    }
-  }
-
   
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
