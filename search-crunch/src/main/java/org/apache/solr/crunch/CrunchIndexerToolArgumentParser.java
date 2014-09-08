@@ -128,7 +128,7 @@ final class CrunchIndexerToolArgumentParser {
         .setDefault()
         .help("HDFS URI of file or directory tree to ingest.");
 
-    Argument inputFileListArg = indexerArgGroup.addArgument("--input-file-list")
+    Argument inputFileListArg = indexerArgGroup.addArgument("--input-file-list", "--input-list")
         .action(Arguments.append())
         .metavar("URI")
         .type(new PathArgumentType(conf).acceptSystemIn().verifyExists().verifyCanRead())
