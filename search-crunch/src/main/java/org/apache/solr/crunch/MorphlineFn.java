@@ -16,8 +16,10 @@
 package org.apache.solr.crunch;
 
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -25,6 +27,7 @@ import java.util.UUID;
 import org.apache.crunch.CrunchRuntimeException;
 import org.apache.crunch.DoFn;
 import org.apache.crunch.Emitter;
+import org.apache.hadoop.fs.FileStatus;
 import org.kitesdk.morphline.api.Command;
 import org.kitesdk.morphline.api.MorphlineContext;
 import org.kitesdk.morphline.api.Record;
@@ -33,6 +36,7 @@ import org.kitesdk.morphline.base.FaultTolerance;
 import org.kitesdk.morphline.base.Fields;
 import org.kitesdk.morphline.base.Metrics;
 import org.kitesdk.morphline.base.Notifications;
+import org.kitesdk.morphline.shaded.com.google.common.io.Closeables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +63,7 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
   private String morphlineFileContents;
   private String morphlineId;
   private Map<String, String> morphlineVariables;
+  private boolean isSplitable;
   
   private transient MorphlineContext morphlineContext;
   private transient Command morphline;
@@ -71,7 +76,7 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
 
   private static final Logger LOG = LoggerFactory.getLogger(MorphlineFn.class);
 
-  public MorphlineFn(String morphlineFileContents, String morphlineId, Map<String, String> morphlineVariables) {
+  public MorphlineFn(String morphlineFileContents, String morphlineId, Map<String, String> morphlineVariables, boolean isSplitable) {
     if (morphlineFileContents == null || morphlineFileContents.trim().length() == 0) {
       throw new IllegalArgumentException("Missing morphlineFileContents");
     }
@@ -79,6 +84,7 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
     this.morphlineId = morphlineId;
     Preconditions.checkNotNull(morphlineVariables);
     this.morphlineVariables = morphlineVariables;
+    this.isSplitable = isSplitable;
   }
 
   @Override
@@ -140,13 +146,22 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
     numRecords.mark();
     Timer.Context timerContext = mappingTimer.time();
     getContext().progress();
+    InputStream in = null;
     try {
       collector.setEmitter(emitter);
-      Record record = new Record();
-//      for (Map.Entry<String, String> entry : event.getHeaders().entrySet()) { // TODO
-//        record.put(entry.getKey(), entry.getValue());
-//      }
-      record.put(Fields.ATTACHMENT_BODY, item);
+      Record record;
+      if (isSplitable) {
+        record = new Record();
+        record.put(Fields.ATTACHMENT_BODY, item);
+      } else {
+        PathParts parts = new PathParts(item.toString(), getConfiguration());
+        record = getRecord(parts);
+        if (record == null) {
+          return; // ignore
+        }
+        in = new BufferedInputStream(parts.getFileSystem().open(parts.getUploadPath()));
+        record.put(Fields.ATTACHMENT_BODY, in);
+      }
       try {
         Notifications.notifyStartSession(morphline);
         if (!morphline.process(record)) {
@@ -157,7 +172,12 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
         numExceptionRecords.mark();
         morphlineContext.getExceptionHandler().handleException(t, record);
       }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     } finally {
+      if (in != null) {
+        Closeables.closeQuietly(in);
+      }
       timerContext.stop();
     }
   }
@@ -193,7 +213,46 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
     increment("morphline", metricName, value.getCount() / scale);
   }
 
-
+  private Record getRecord(PathParts parts) {
+    FileStatus stats;
+    try {
+      stats = parts.getFileStatus();
+    } catch (IOException e) {
+      stats = null;
+    }
+    if (stats == null) {
+      LOG.warn("Ignoring file that somehow has become unavailable since the job was submitted: {}",
+          parts.getUploadURL());
+      return null;
+    }
+    
+    Record headers = new Record();
+    //headers.put(getSchema().getUniqueKeyField().getName(), parts.getId()); // use HDFS file path as docId if no docId is specified
+    headers.put(Fields.BASE_ID, parts.getId()); // with sanitizeUniqueKey command, use HDFS file path as docId if no docId is specified
+    headers.put(Fields.ATTACHMENT_NAME, parts.getName()); // Tika can use the file name in guessing the right MIME type
+    
+    // enable indexing and storing of file meta data in Solr
+    headers.put(HdfsFileFieldNames.FILE_UPLOAD_URL, parts.getUploadURL());
+    headers.put(HdfsFileFieldNames.FILE_DOWNLOAD_URL, parts.getDownloadURL());
+    headers.put(HdfsFileFieldNames.FILE_SCHEME, parts.getScheme()); 
+    headers.put(HdfsFileFieldNames.FILE_HOST, parts.getHost()); 
+    headers.put(HdfsFileFieldNames.FILE_PORT, String.valueOf(parts.getPort())); 
+    headers.put(HdfsFileFieldNames.FILE_PATH, parts.getURIPath()); 
+    headers.put(HdfsFileFieldNames.FILE_NAME, parts.getName());     
+    headers.put(HdfsFileFieldNames.FILE_LAST_MODIFIED, String.valueOf(stats.getModificationTime())); // FIXME also add in SpoolDirectorySource
+    headers.put(HdfsFileFieldNames.FILE_LENGTH, String.valueOf(stats.getLen())); // FIXME also add in SpoolDirectorySource
+    headers.put(HdfsFileFieldNames.FILE_OWNER, stats.getOwner());
+    headers.put(HdfsFileFieldNames.FILE_GROUP, stats.getGroup());
+    headers.put(HdfsFileFieldNames.FILE_PERMISSIONS_USER, stats.getPermission().getUserAction().SYMBOL);
+    headers.put(HdfsFileFieldNames.FILE_PERMISSIONS_GROUP, stats.getPermission().getGroupAction().SYMBOL);
+    headers.put(HdfsFileFieldNames.FILE_PERMISSIONS_OTHER, stats.getPermission().getOtherAction().SYMBOL);
+    headers.put(HdfsFileFieldNames.FILE_PERMISSIONS_STICKYBIT, String.valueOf(stats.getPermission().getStickyBit()));
+    // TODO: consider to add stats.getAccessTime(), stats.getReplication(), stats.isSymlink(), stats.getBlockSize()
+    
+    return headers;
+  }
+  
+  
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
   ///////////////////////////////////////////////////////////////////////////////

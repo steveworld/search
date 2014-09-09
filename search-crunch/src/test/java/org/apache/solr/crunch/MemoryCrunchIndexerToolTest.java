@@ -68,7 +68,7 @@ public class MemoryCrunchIndexerToolTest extends AbstractSolrMorphlineZkTest {
 
   private static final String SCHEMA_FILE = "src/test/resources/test-documents/string.avsc";
   private static final String NOP = "nop.conf";
-  private static final String LOAD_SOLR_LINE_WITH_OPEN_FILE = "loadSolrLineWithOpenFile.conf";
+  private static final String LOAD_SOLR_LINE = "loadSolrLine.conf";
   private static final String EXTRACT_AVRO_PATH = "extractAvroPath.conf";  
   private static final String READ_AVRO_PARQUET_FILE = "readAvroParquetFile.conf";  
   private static final String FAIL_FILE = "fail.conf";  
@@ -171,7 +171,7 @@ public class MemoryCrunchIndexerToolTest extends AbstractSolrMorphlineZkTest {
   private void testStreamTextInputFile() throws Exception {
     String inputPath = tmpDir.copyResourceFileName("test-documents/hello1.txt");
     String[] expected = new String[] {"hello foo", "hello world"};
-    String[] args = getInitialArgs(LOAD_SOLR_LINE_WITH_OPEN_FILE);
+    String[] args = getInitialArgs(LOAD_SOLR_LINE);
     args = ObjectArrays.concat(args, inputPath);    
     PipelineResult pipelineResult = runIntoSolr(args, expected);
     Assert.assertTrue(pipelineResult.getStageResults().get(0).getCounterValue("morphline", "morphline.app.numRecords") > 0);
@@ -242,7 +242,7 @@ public class MemoryCrunchIndexerToolTest extends AbstractSolrMorphlineZkTest {
         "hello world",
         "hello2 file", 
         };
-    String[] args = getInitialArgs(LOAD_SOLR_LINE_WITH_OPEN_FILE);
+    String[] args = getInitialArgs(LOAD_SOLR_LINE);
     args = ObjectArrays.concat(args, new String[]{inputPath1, inputPath2}, String.class);    
     runIntoSolr(args, expected);
   }
@@ -250,7 +250,7 @@ public class MemoryCrunchIndexerToolTest extends AbstractSolrMorphlineZkTest {
   private void testFileList() throws Exception {
     String inputPath = tmpDir.copyResourceFileName("test-documents/filelist1.txt");
     String[] expected = new String[] {"hello foo", "hello world", "hello2 file"};
-    String[] args = getInitialArgs(LOAD_SOLR_LINE_WITH_OPEN_FILE);
+    String[] args = getInitialArgs(LOAD_SOLR_LINE);
     args = ObjectArrays.concat(args, "--input-file-list=" + inputPath);    
     runIntoSolr(args, expected);
   }
@@ -258,14 +258,14 @@ public class MemoryCrunchIndexerToolTest extends AbstractSolrMorphlineZkTest {
   private void testFileListWithScheme() throws Exception {
     String inputPath = tmpDir.copyResourceFileName("test-documents/filelist1.txt");
     String[] expected = new String[] {"hello foo", "hello world", "hello2 file"};
-    String[] args = getInitialArgs(LOAD_SOLR_LINE_WITH_OPEN_FILE);
+    String[] args = getInitialArgs(LOAD_SOLR_LINE);
     args = ObjectArrays.concat(args, "--input-file-list=file:" + inputPath);    
     runIntoSolr(args, expected);
   }
   
   private void testRecursiveInputDir() throws Exception {
     String[] expected = new String[] {"hello nadja"};
-    String[] args = getInitialArgs(LOAD_SOLR_LINE_WITH_OPEN_FILE);
+    String[] args = getInitialArgs(LOAD_SOLR_LINE);
     args = ObjectArrays.concat(args, RESOURCES_DIR + "/test-documents/subdir");    
     runIntoSolr(args, expected);
   }
@@ -273,7 +273,7 @@ public class MemoryCrunchIndexerToolTest extends AbstractSolrMorphlineZkTest {
   private void testRandomizeInputFiles() throws Exception {
     String inputPath = tmpDir.copyResourceFileName("test-documents/hello1.txt");
     String[] expected = new String[] {"hello foo", "hello world"};
-    String[] args = getInitialArgs(LOAD_SOLR_LINE_WITH_OPEN_FILE);
+    String[] args = getInitialArgs(LOAD_SOLR_LINE);
     args = ObjectArrays.concat(args, inputPath);
     isRandomizingWithDoFn = true;
     runIntoSolr(args, expected);    

@@ -96,7 +96,7 @@ final class CrunchIndexerToolArgumentParser {
             + "ingestion load more evenly among the mapper tasks of the subsequent phase. This phase is only executed for "
             + "non-splitables files, and skipped otherwise."
             + "\n\n"
-            + "2) Extraction phase: This (parallel) phase emits a series of HDFS input file paths (for non-splitable files) "
+            + "2) Extraction phase: This (parallel) phase emits a series of HDFS file input streams (for non-splitable files) "
             + "or a series of input data records (for splitable files). "
             + "\n\n"
             + "3) Morphline phase: This (parallel) phase receives the items of the previous "
@@ -142,7 +142,7 @@ final class CrunchIndexerToolArgumentParser {
         .help("The Hadoop FileInputFormat to use for extracting data from splitable HDFS files. Can be a "
             + "fully qualified Java class name or one of ['text', 'avro', 'avroParquet']. If this option "
             + "is present the extraction phase will emit a series of input data records rather than a series "
-            + "of HDFS file paths.");
+            + "of HDFS file input streams.");
 
     Argument inputFileProjectionSchemaArg = indexerArgGroup.addArgument("--input-file-projection-schema")
         .metavar("FILE")
@@ -219,7 +219,7 @@ final class CrunchIndexerToolArgumentParser {
                     + "  -D 'mapred.child.java.opts=-Xmx500m' \\\n"
                     + "  -D morphlineVariable.ZK_HOST=$(hostname):2181/solr \\\n"
                     + "  --files src/test/resources/test-documents/string.avsc \\\n"
-                    + "  --morphline-file src/test/resources/test-morphlines/loadSolrLineWithOpenFile.conf \\\n"
+                    + "  --morphline-file src/test/resources/test-morphlines/loadSolrLine.conf \\\n"
                     + "  --pipeline-type mapreduce \\\n"
                     + "  --chatty \\\n"
                     + "  --log4j src/test/resources/log4j.properties \\\n"
@@ -232,7 +232,7 @@ final class CrunchIndexerToolArgumentParser {
                     + "  --class " + CrunchIndexerTool.class.getName() + " \\\n"
                     + "  target/search-crunch-*-job.jar \\\n"
                     + "  -D morphlineVariable.ZK_HOST=$(hostname):2181/solr \\\n"
-                    + "  --morphline-file src/test/resources/test-morphlines/loadSolrLineWithOpenFile.conf \\\n"
+                    + "  --morphline-file src/test/resources/test-morphlines/loadSolrLine.conf \\\n"
                     + "  --pipeline-type spark \\\n"
                     + "  --chatty \\\n"
                     + "  --log4j src/test/resources/log4j.properties \\\n"
@@ -249,10 +249,10 @@ final class CrunchIndexerToolArgumentParser {
                     + "  --master yarn \\\n"
                     + "  --deploy-mode cluster \\\n"
                     + "  --class " + CrunchIndexerTool.class.getName() + " \\\n"
-                    + "  --files src/test/resources/log4j.properties,src/test/resources/test-morphlines/loadSolrLineWithOpenFile.conf \\\n"
+                    + "  --files src/test/resources/log4j.properties,src/test/resources/test-morphlines/loadSolrLine.conf \\\n"
                     + "  target/search-crunch-*-job.jar \\\n"
                     + "  -D morphlineVariable.ZK_HOST=$(hostname):2181/solr \\\n"
-                    + "  --morphline-file loadSolrLineWithOpenFile.conf \\\n"
+                    + "  --morphline-file loadSolrLine.conf \\\n"
                     + "  --pipeline-type spark \\\n"
                     + "  --chatty \\\n"
                     + "  --log4j log4j.properties \\\n"

@@ -60,8 +60,8 @@ input files in  order  to  spread  ingestion  load  more  evenly among the
 mapper tasks of the subsequent phase. This phase is only executed for non-
 splitables files, and skipped otherwise.
 
-2) Extraction phase: This (parallel)  phase  emits  a series of HDFS input
-file paths (for non-splitable files)  or  a  series  of input data records
+2) Extraction phase: This (parallel)  phase  emits  a  series of HDFS file
+input streams (for non-splitable files) or  a series of input data records
 (for splitable files). 
 
 3) Morphline phase:  This  (parallel)  phase  receives  the  items  of the
@@ -90,7 +90,8 @@ by rerunning the program again using the same arguments.
 CrunchIndexerOptions:
   HDFS_URI               HDFS URI of  file  or  directory  tree to ingest.
                          (default: [])
-  --input-file-list URI  Local URI or HDFS  URI  of  a  UTF-8 encoded file
+  --input-file-list URI, --input-list URI
+                         Local URI or HDFS  URI  of  a  UTF-8 encoded file
                          containing a list  of  HDFS  URIs  to ingest, one
                          URI per line in  the  file.  If '-' is specified,
                          URIs are read from  the  standard input. Multiple
@@ -102,7 +103,7 @@ CrunchIndexerOptions:
                          'avro',  'avroParquet'].   If   this   option  is
                          present the extraction phase  will  emit a series
                          of input data  records  rather  than  a series of
-                         HDFS file paths.
+                         HDFS file input streams.
   --input-file-projection-schema FILE
                          Relative or absolute path to  an Avro schema file
                          on the local file  system.  This  will be used as
@@ -174,7 +175,7 @@ hadoop \
   -D 'mapred.child.java.opts=-Xmx500m' \
   -D morphlineVariable.ZK_HOST=$(hostname):2181/solr \
   --files src/test/resources/test-documents/string.avsc \
-  --morphline-file src/test/resources/test-morphlines/loadSolrLineWithOpenFile.conf \
+  --morphline-file src/test/resources/test-morphlines/loadSolrLine.conf \
   --pipeline-type mapreduce \
   --chatty \
   --log4j src/test/resources/log4j.properties \
@@ -187,7 +188,7 @@ spark-submit \
   --class org.apache.solr.crunch.CrunchIndexerTool \
   target/search-crunch-*-job.jar \
   -D morphlineVariable.ZK_HOST=$(hostname):2181/solr \
-  --morphline-file src/test/resources/test-morphlines/loadSolrLineWithOpenFile.conf \
+  --morphline-file src/test/resources/test-morphlines/loadSolrLine.conf \
   --pipeline-type spark \
   --chatty \
   --log4j src/test/resources/log4j.properties \
@@ -204,10 +205,10 @@ spark-submit \
   --master yarn \
   --deploy-mode cluster \
   --class org.apache.solr.crunch.CrunchIndexerTool \
-  --files src/test/resources/log4j.properties,src/test/resources/test-morphlines/loadSolrLineWithOpenFile.conf \
+  --files src/test/resources/log4j.properties,src/test/resources/test-morphlines/loadSolrLine.conf \
   target/search-crunch-*-job.jar \
   -D morphlineVariable.ZK_HOST=$(hostname):2181/solr \
-  --morphline-file loadSolrLineWithOpenFile.conf \
+  --morphline-file loadSolrLine.conf \
   --pipeline-type spark \
   --chatty \
   --log4j log4j.properties \

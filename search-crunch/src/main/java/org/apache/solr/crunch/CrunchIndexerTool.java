@@ -180,7 +180,12 @@ public class CrunchIndexerTool extends Configured implements Tool {
           morphlineVariables.put(entry.getKey().substring(variablePrefix.length()), entry.getValue());
         }
       }
-      DoFn morphlineFn = new MorphlineFn(morphlineFileContents, opts.morphlineId, morphlineVariables);
+      DoFn morphlineFn = new MorphlineFn(
+          morphlineFileContents, 
+          opts.morphlineId, 
+          morphlineVariables,
+          opts.inputFileFormat != null
+          );
       collection = collection.parallelDo(
           "morphline",
           morphlineFn, 
