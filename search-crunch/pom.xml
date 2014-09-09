@@ -58,6 +58,18 @@
   <dependencies>
  
     <dependency>
+      <groupId>org.kitesdk</groupId>
+      <artifactId>kite-morphlines-core</artifactId>
+      <version>${kite.version}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.kitesdk</groupId>
+      <artifactId>kite-morphlines-json</artifactId>
+      <version>${kite.version}</version>
+    </dependency>
+    
+    <dependency>
       <groupId>org.apache.crunch</groupId>
       <artifactId>crunch-core</artifactId>
       <version>${crunch.version}</version>
@@ -110,6 +122,9 @@
       <scope>provided</scope>
     </dependency>
     
+    <!-- If your commands only use the core morphline library features (no Avro, no JSON, no XML, no Solr, etc,
+         see http://kitesdk.org/docs/current/kite-morphlines/morphlinesReferenceGuide.html)
+         you can omit this: -->
     <dependency>
       <groupId>org.kitesdk</groupId>
       <artifactId>kite-morphlines-all</artifactId>
@@ -117,16 +132,6 @@
       <type>pom</type>
     </dependency>
 
-    <!-- If your commands only use the core morphline library features (no Avro, no JSON, no XML, no Solr, etc,
-         see http://kitesdk.org/docs/current/kite-morphlines/morphlinesReferenceGuide.html)
-         you can replace the kite-morphlines-all above with kite-morphlines-core, as follows:
-    <dependency>
-      <groupId>org.kitesdk</groupId>
-      <artifactId>kite-morphlines-core</artifactId>
-      <version>${kite.version}</version>
-    </dependency>
-    -->
-    
     <dependency>
       <groupId>org.kitesdk</groupId>
       <artifactId>kite-morphlines-solr-core</artifactId>
