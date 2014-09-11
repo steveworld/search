@@ -208,13 +208,13 @@ final class CrunchIndexerToolArgumentParser {
                     + "MapReduceGenericOptions: " + ToolRunnerHelpFormatter.getGenericCommandUsage()
                     );
             System.out.println(
-                "Examples: \n\n" 
+                      "Examples: \n\n" 
                     + "# Prepare - Copy input files into HDFS:\n"
                     + "hadoop fs -copyFromLocal src/test/resources/test-documents/hello1.txt hdfs:/user/systest/input/\n"
                     + "\n"
                     + "# Prepare variables for convenient reuse:\n"
-                    + "export myDriverJarDir=target\n"
-                    + "export myDependencyJarDir=target/lib\n"
+                    + "export myDriverJarDir=target # for CDH: /usr/lib/search/lib/search-crunch\n"
+                    + "export myDependencyJarDir=target/lib # for CDH: /usr/lib/solr/contrib/crunch\n"
                     + "export myDriverJar=$(find $myDriverJarDir -maxdepth 1 -name '*.jar' ! -name '*-job.jar' ! -name '*-sources.jar'')\n"
                     + "export myDependencyJarFiles=$(find $myDependencyJarDir -name '*.jar' | sort | tr '\\n' ',' | head -c -1)\n"
                     + "export myDependencyJarPaths=$(find $myDependencyJarDir -name '*.jar' | sort | tr '\\n' ':' | head -c -1)\n"

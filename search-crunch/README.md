@@ -170,8 +170,8 @@ Examples:
 hadoop fs -copyFromLocal src/test/resources/test-documents/hello1.txt hdfs:/user/systest/input/
 
 # Prepare variables for convenient reuse:
-export myDriverJarDir=target
-export myDependencyJarDir=target/lib
+export myDriverJarDir=target # for CDH: /usr/lib/search/lib/search-crunch
+export myDependencyJarDir=target/lib # for CDH: /usr/lib/solr/contrib/crunch
 export myDriverJar=$(find $myDriverJarDir -maxdepth 1 -name '*.jar' ! -name '*-job.jar' ! -name '*-sources.jar'')
 export myDependencyJarFiles=$(find $myDependencyJarDir -name '*.jar' | sort | tr '\n' ',' | head -c -1)
 export myDependencyJarPaths=$(find $myDependencyJarDir -name '*.jar' | sort | tr '\n' ':' | head -c -1)
