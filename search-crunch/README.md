@@ -27,9 +27,9 @@ designed for flexible, scalable and fault-tolerant batch ETL pipeline jobs. It i
 on either the Apache Hadoop MapReduce or Apache Spark execution engine. More details are available through the command line help:
 
 <pre>
-$ hadoop jar target/search-crunch-*-job.jar org.apache.solr.crunch.CrunchIndexerTool --help
+$ HADOOP_CLASSPATH=$myDependencyJarPaths hadoop jar $myDriverJar org.apache.solr.crunch.CrunchIndexerTool --help
 
-MapReduceUsage: hadoop jar search-crunch-*-job.jar org.apache.solr.crunch.CrunchIndexerTool [MapReduceGenericOptions]...
+MapReduceUsage: HADOOP_CLASSPATH=$myDependencyJarPaths hadoop jar $myDriverJar org.apache.solr.crunch.CrunchIndexerTool --libjars $myDependencyJarFiles [MapReduceGenericOptions]...
         [--input-file-list URI] [--input-file-format FQCN]
         [--input-file-projection-schema FILE]
         [--input-file-reader-schema FILE] --morphline-file FILE
@@ -37,8 +37,8 @@ MapReduceUsage: hadoop jar search-crunch-*-job.jar org.apache.solr.crunch.Crunch
         [--mappers INTEGER] [--log4j FILE] [--chatty]
         [HDFS_URI [HDFS_URI ...]]
 
-SparkUsage: spark-submit [SparkGenericOptions]... --master local|yarn --deploy-mode client|cluster 
---class org.apache.solr.crunch.CrunchIndexerTool search-crunch-*-job.jar
+SparkUsage: spark-submit [SparkGenericOptions]... --master local|yarn --deploy-mode client|cluster --jars $myDependencyJarFiles
+--class org.apache.solr.crunch.CrunchIndexerTool $myDriverJar
         [--input-file-list URI] [--input-file-format FQCN]
         [--input-file-projection-schema FILE]
         [--input-file-reader-schema FILE] --morphline-file FILE
@@ -168,10 +168,19 @@ Examples:
 # Prepare - Copy input files into HDFS:
 hadoop fs -copyFromLocal src/test/resources/test-documents/hello1.txt hdfs:/user/systest/input/
 
+# Prepare variables for convenient reuse:
+export mydir=target
+export myDriverJar=$(find $mydir -maxdepth 1 -name '*.jar' ! -name '*-job.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar')
+export myDependencyJarFiles=$(find $mydir/lib -name '*.jar' | sort | tr '
+' ',' | head -c -1)
+export myDependencyJarPaths=$(find $mydir/lib -name '*.jar' | sort | tr '
+' ':' | head -c -1)
+
 # MapReduce on Yarn - Ingest text file line by line into Solr:
-hadoop \
+HADOOP_CLASSPATH=$myDependencyJarPaths hadoop \
   --config /etc/hadoop/conf.cloudera.YARN-1 \
-  jar target/search-crunch-*-job.jar org.apache.solr.crunch.CrunchIndexerTool \
+  jar $myDriverJar org.apache.solr.crunch.CrunchIndexerTool \
+  --libjars $myDependencyJarFiles \
   -D 'mapred.child.java.opts=-Xmx500m' \
   -D morphlineVariable.ZK_HOST=$(hostname):2181/solr \
   --files src/test/resources/test-documents/string.avsc \
@@ -185,8 +194,9 @@ hadoop \
 spark-submit \
   --master local \
   --deploy-mode client \
+  --jars $myDependencyJarFiles \
   --class org.apache.solr.crunch.CrunchIndexerTool \
-  target/search-crunch-*-job.jar \
+  $myDriverJar \
   -D morphlineVariable.ZK_HOST=$(hostname):2181/solr \
   --morphline-file src/test/resources/test-morphlines/loadSolrLine.conf \
   --pipeline-type spark \
@@ -204,9 +214,10 @@ yarn logs --applicationId $application_XYZ
 spark-submit \
   --master yarn \
   --deploy-mode cluster \
+  --jars $myDependencyJarFiles \
   --class org.apache.solr.crunch.CrunchIndexerTool \
   --files src/test/resources/log4j.properties,src/test/resources/test-morphlines/loadSolrLine.conf \
-  target/search-crunch-*-job.jar \
+  $myDriverJar \
   -D morphlineVariable.ZK_HOST=$(hostname):2181/solr \
   --morphline-file loadSolrLine.conf \
   --pipeline-type spark \

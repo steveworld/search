@@ -20,6 +20,10 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -75,6 +79,10 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
   private transient Meter numExceptionRecords;
 
   private static final Logger LOG = LoggerFactory.getLogger(MorphlineFn.class);
+  
+  static {
+    setupClasspath();
+  }
 
   public MorphlineFn(String morphlineFileContents, String morphlineId, Map<String, String> morphlineVariables, boolean isSplitable) {
     if (morphlineFileContents == null || morphlineFileContents.trim().length() == 0) {
@@ -252,6 +260,57 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
     return headers;
   }
   
+  /*
+   * Ensure scripting support for Java via morphline "java" command works even in dryRun mode,
+   * i.e. when executed in the client side driver JVM. To do so, collect all classpath URLs from
+   * the class loaders chain that org.apache.hadoop.util.RunJar (hadoop jar xyz-job.jar) and
+   * org.apache.hadoop.util.GenericOptionsParser (--libjars) have installed, then tell
+   * FastJavaScriptEngine.parse() where to find classes that JavaBuilder scripts might depend on.
+   * This ensures that scripts that reference external java classes compile without exceptions
+   * like this:
+   * 
+   * ... caused by compilation failed: mfm:///MyJavaClass1.java:2: package
+   * org.kitesdk.morphline.api does not exist
+   */
+  private static void setupClasspath()  {
+    LOG.trace("dryRun: java.class.path: {}", System.getProperty("java.class.path"));
+    String fullClassPath = "";
+    ClassLoader loader = Thread.currentThread().getContextClassLoader(); // see org.apache.hadoop.util.RunJar
+    while (loader != null) { // walk class loaders, collect all classpath URLs
+      if (loader instanceof URLClassLoader) { 
+        URL[] classPathPartURLs = ((URLClassLoader) loader).getURLs(); // see org.apache.hadoop.util.RunJar
+        LOG.trace("dryRun: classPathPartURLs: {}", Arrays.asList(classPathPartURLs));
+        StringBuilder classPathParts = new StringBuilder();
+        for (URL url : classPathPartURLs) {
+          File file;
+          try {
+            file = new File(url.toURI());
+          } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+          }
+          if (classPathPartURLs.length > 0) {
+            classPathParts.append(File.pathSeparator);
+          }
+          classPathParts.append(file.getPath());
+        }
+        LOG.trace("dryRun: classPathParts: {}", classPathParts);
+        String separator = File.pathSeparator;
+        if (fullClassPath.length() == 0 || classPathParts.length() == 0) {
+          separator = "";
+        }
+        fullClassPath = classPathParts + separator + fullClassPath;
+      }
+      loader = loader.getParent();
+    }
+    
+    // tell FastJavaScriptEngine.parse() where to find the classes that the script might depend on
+    if (fullClassPath.length() > 0) {
+      assert System.getProperty("java.class.path") != null;
+      fullClassPath = System.getProperty("java.class.path") + File.pathSeparator + fullClassPath;
+      LOG.trace("dryRun: fullClassPath: {}", fullClassPath);
+      System.setProperty("java.class.path", fullClassPath); // see FastJavaScriptEngine.parse()
+    }    
+  }
   
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
