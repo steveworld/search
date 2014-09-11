@@ -192,13 +192,13 @@ final class CrunchIndexerToolArgumentParser {
             String description = help.substring(i).trim();
             String usage = help.substring("usage: ".length(), i).trim();
             System.out.println(
-                      "MapReduceUsage: HADOOP_CLASSPATH=$myDependencyJarPaths hadoop jar $myDriverJar " + CrunchIndexerTool.class.getName()
+                      "MapReduceUsage: HADOOP_CLASSPATH=$myDependencyJarPaths hadoop jar $myDriverJar \n" + CrunchIndexerTool.class.getName()
                     + " --libjars $myDependencyJarFiles [MapReduceGenericOptions]...\n"
                     + "        " + usage + "\n"
                     + "\n"
                     + "SparkUsage: spark-submit [SparkGenericOptions]... "
-                    + "--master local|yarn --deploy-mode client|cluster --jars $myDependencyJarFiles\n" 
-                    + "--class " + CrunchIndexerTool.class.getName() + " $myDriverJar\n" 
+                    + "--master local|yarn --deploy-mode client|cluster\n"
+                    + "--jars $myDependencyJarFiles --class " + CrunchIndexerTool.class.getName() + " $myDriverJar\n" 
                     + "        " + usage + "\n"
                     + "\n"
                     + description + "\n"
@@ -215,7 +215,7 @@ final class CrunchIndexerToolArgumentParser {
                     + "# Prepare variables for convenient reuse:\n"
                     + "export myDriverJarDir=target\n"
                     + "export myDependencyJarDir=target/lib\n"
-                    + "export myDriverJar=$(find $myDriverJarDir -maxdepth 1 -name '*.jar' ! -name '*-job.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar')\n"
+                    + "export myDriverJar=$(find $myDriverJarDir -maxdepth 1 -name '*.jar' ! -name '*-job.jar' ! -name '*-sources.jar'')\n"
                     + "export myDependencyJarFiles=$(find $myDependencyJarDir -name '*.jar' | sort | tr '\\n' ',' | head -c -1)\n"
                     + "export myDependencyJarPaths=$(find $myDependencyJarDir -name '*.jar' | sort | tr '\\n' ':' | head -c -1)\n"
                     + "\n"
