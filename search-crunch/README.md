@@ -169,10 +169,11 @@ Examples:
 hadoop fs -copyFromLocal src/test/resources/test-documents/hello1.txt hdfs:/user/systest/input/
 
 # Prepare variables for convenient reuse:
-export mydir=target
-export myDriverJar=$(find $mydir -maxdepth 1 -name '*.jar' ! -name '*-job.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar')
-export myDependencyJarFiles=$(find $mydir/lib -name '*.jar' | sort | tr '\n' ',' | head -c -1)
-export myDependencyJarPaths=$(find $mydir/lib -name '*.jar' | sort | tr '\n' ':' | head -c -1)
+export myDriverJarDir=target
+export myDependencyJarDir=target/lib
+export myDriverJar=$(find $myDriverJarDir -maxdepth 1 -name '*.jar' ! -name '*-job.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar')
+export myDependencyJarFiles=$(find $myDependencyJarDir -name '*.jar' | sort | tr '\n' ',' | head -c -1)
+export myDependencyJarPaths=$(find $myDependencyJarDir -name '*.jar' | sort | tr '\n' ':' | head -c -1)
 
 # MapReduce on Yarn - Ingest text file line by line into Solr:
 HADOOP_CLASSPATH=$myDependencyJarPaths hadoop \
