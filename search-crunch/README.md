@@ -27,9 +27,9 @@ designed for flexible, scalable and fault-tolerant batch ETL pipeline jobs. It i
 on either the Apache Hadoop MapReduce or Apache Spark execution engine. More details are available through the command line help:
 
 <pre>
-$ HADOOP_CLASSPATH=$myDependencyJarPaths hadoop jar $myDriverJar org.apache.solr.crunch.CrunchIndexerTool --help
+$ export HADOOP_CLASSPATH=$myDependencyJarPaths; hadoop jar $myDriverJar org.apache.solr.crunch.CrunchIndexerTool --help
 
-MapReduceUsage: HADOOP_CLASSPATH=$myDependencyJarPaths hadoop jar $myDriverJar 
+MapReduceUsage: export HADOOP_CLASSPATH=$myDependencyJarPaths; hadoop jar $myDriverJar 
 org.apache.solr.crunch.CrunchIndexerTool --libjars $myDependencyJarFiles [MapReduceGenericOptions]...
         [--input-file-list URI] [--input-file-format FQCN]
         [--input-file-projection-schema FILE]
@@ -172,12 +172,12 @@ hadoop fs -copyFromLocal src/test/resources/test-documents/hello1.txt hdfs:/user
 # Prepare variables for convenient reuse:
 export myDriverJarDir=target # for CDH: /usr/lib/search/lib/search-crunch
 export myDependencyJarDir=target/lib # for CDH: /usr/lib/solr/contrib/crunch
-export myDriverJar=$(find $myDriverJarDir -maxdepth 1 -name '*.jar' ! -name '*-job.jar' ! -name '*-sources.jar'')
+export myDriverJar=$(find $myDriverJarDir -maxdepth 1 -name '*.jar' ! -name '*-job.jar' ! -name '*-sources.jar')
 export myDependencyJarFiles=$(find $myDependencyJarDir -name '*.jar' | sort | tr '\n' ',' | head -c -1)
 export myDependencyJarPaths=$(find $myDependencyJarDir -name '*.jar' | sort | tr '\n' ':' | head -c -1)
 
 # MapReduce on Yarn - Ingest text file line by line into Solr:
-HADOOP_CLASSPATH=$myDependencyJarPaths hadoop \
+export HADOOP_CLASSPATH=$myDependencyJarPaths; hadoop \
   --config /etc/hadoop/conf.cloudera.YARN-1 \
   jar $myDriverJar org.apache.solr.crunch.CrunchIndexerTool \
   --libjars $myDependencyJarFiles \

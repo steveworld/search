@@ -192,7 +192,7 @@ final class CrunchIndexerToolArgumentParser {
             String description = help.substring(i).trim();
             String usage = help.substring("usage: ".length(), i).trim();
             System.out.println(
-                      "MapReduceUsage: HADOOP_CLASSPATH=$myDependencyJarPaths hadoop jar $myDriverJar \n" + CrunchIndexerTool.class.getName()
+                      "MapReduceUsage: export HADOOP_CLASSPATH=$myDependencyJarPaths; hadoop jar $myDriverJar \n" + CrunchIndexerTool.class.getName()
                     + " --libjars $myDependencyJarFiles [MapReduceGenericOptions]...\n"
                     + "        " + usage + "\n"
                     + "\n"
@@ -215,12 +215,12 @@ final class CrunchIndexerToolArgumentParser {
                     + "# Prepare variables for convenient reuse:\n"
                     + "export myDriverJarDir=target # for CDH: /usr/lib/search/lib/search-crunch\n"
                     + "export myDependencyJarDir=target/lib # for CDH: /usr/lib/solr/contrib/crunch\n"
-                    + "export myDriverJar=$(find $myDriverJarDir -maxdepth 1 -name '*.jar' ! -name '*-job.jar' ! -name '*-sources.jar'')\n"
+                    + "export myDriverJar=$(find $myDriverJarDir -maxdepth 1 -name '*.jar' ! -name '*-job.jar' ! -name '*-sources.jar')\n"
                     + "export myDependencyJarFiles=$(find $myDependencyJarDir -name '*.jar' | sort | tr '\\n' ',' | head -c -1)\n"
                     + "export myDependencyJarPaths=$(find $myDependencyJarDir -name '*.jar' | sort | tr '\\n' ':' | head -c -1)\n"
                     + "\n"
                     + "# MapReduce on Yarn - Ingest text file line by line into Solr:\n"
-                    + "HADOOP_CLASSPATH=$myDependencyJarPaths hadoop \\\n"
+                    + "export HADOOP_CLASSPATH=$myDependencyJarPaths; hadoop \\\n"
                     + "  --config /etc/hadoop/conf.cloudera.YARN-1 \\\n"
                     + "  jar $myDriverJar " + CrunchIndexerTool.class.getName() + " \\\n"
                     + "  --libjars $myDependencyJarFiles \\\n"
