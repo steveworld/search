@@ -199,6 +199,9 @@ spark-submit \
   --master local \
   --deploy-mode client \
   --jars $myDependencyJarFiles \
+  --executor-memory 500M \
+  # --driver-library-path /opt/cloudera/parcels/CDH/lib/hadoop/lib/native # for Snappy on CDH with parcels\
+  # --driver-library-path /usr/lib/hadoop/lib/native # for Snappy on CDH with packages \
   --class org.apache.solr.crunch.CrunchIndexerTool \
   $myDriverJar \
   -D morphlineVariable.ZK_HOST=$(hostname):2181/solr \
@@ -219,6 +222,7 @@ spark-submit \
   --master yarn \
   --deploy-mode cluster \
   --jars $myDependencyJarFiles \
+  --executor-memory 500M \
   --class org.apache.solr.crunch.CrunchIndexerTool \
   --files src/test/resources/log4j.properties,src/test/resources/test-morphlines/loadSolrLine.conf \
   $myDriverJar \
