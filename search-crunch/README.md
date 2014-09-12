@@ -27,7 +27,7 @@ designed for flexible, scalable and fault-tolerant batch ETL pipeline jobs. It i
 on either the Apache Hadoop MapReduce or Apache Spark execution engine. More details are available through the command line help:
 
 <pre>
-$ export HADOOP_CLASSPATH=$myDependencyJarPaths; hadoop jar $myDriverJar org.apache.solr.crunch.CrunchIndexerTool --help
+$export HADOOP_CLASSPATH=$myDependencyJarPaths; hadoop jar $myDriverJar org.apache.solr.crunch.CrunchIndexerTool -help
 
 MapReduceUsage: export HADOOP_CLASSPATH=$myDependencyJarPaths; hadoop jar $myDriverJar 
 org.apache.solr.crunch.CrunchIndexerTool --libjars $myDependencyJarFiles [MapReduceGenericOptions]...
