@@ -19,31 +19,14 @@
     <format>tar.gz</format>
   </formats>
   <includeBaseDirectory>false</includeBaseDirectory>
-  <dependencySets>
-    
+  <dependencySets>    
     <dependencySet>
       <unpack>false</unpack>
       <scope>runtime</scope>
       <outputDirectory>search-crunch</outputDirectory>
-  <excludes>
+      <excludes>
         <exclude>*:search-crunch:jar</exclude>
       </excludes>
-     </dependencySet>
-  
-    <!-- <dependencySet>
-      <unpack>true</unpack>
-      <scope>runtime</scope>
-      <outputDirectory>lib</outputDirectory>
-      <excludes>
-        <exclude>${groupId}:${artifactId}</exclude>
-      </excludes>
     </dependencySet>
-    <dependencySet>
-      <unpack>true</unpack>
-      <includes>
-        <include>${groupId}:${artifactId}</include>
-      </includes>
-    </dependencySet>
--->
   </dependencySets>
 </assembly>

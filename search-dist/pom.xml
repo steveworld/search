@@ -82,7 +82,7 @@
       <groupId>com.cloudera.search</groupId>
       <artifactId>search-crunch</artifactId>
     </dependency>
-<dependency>
+    <dependency>
       <groupId>com.cloudera.search</groupId>
       <artifactId>search-crunch</artifactId>
       <version>${project.version}</version>

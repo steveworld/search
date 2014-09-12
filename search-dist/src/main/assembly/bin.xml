@@ -21,8 +21,8 @@
   </formats>
   <includeBaseDirectory>true</includeBaseDirectory>
   
-<!-- we should not ship the source code so removing the pom.xml and other java files 
-<fileSets>
+  <!-- we should not ship the source code so removing the pom.xml and other java files 
+  <fileSets>
     <fileSet>
       <directory>../</directory>
       <outputDirectory>/</outputDirectory>
@@ -44,8 +44,9 @@
       </excludes>
     </fileSet>
   </fileSets>
--->
- <dependencySets>
+  -->
+  
+  <dependencySets>
     <dependencySet>
       <outputDirectory>/dist/lib</outputDirectory>
       <unpack>false</unpack>
@@ -54,7 +55,7 @@
         <exclude>com.cloudera.search-mr:*:jar</exclude>
       </excludes>
     </dependencySet>
-<dependencySet>
+    <dependencySet>
       <outputDirectory>/dist/lib</outputDirectory>
       <unpack>true</unpack>
       <useProjectArtifact>false</useProjectArtifact>
@@ -63,7 +64,7 @@
       </includes>
     </dependencySet> 
 
-   <dependencySet>
+    <dependencySet>
       <outputDirectory>/dist</outputDirectory>
       <unpack>false</unpack>
       <useProjectArtifact>false</useProjectArtifact>
