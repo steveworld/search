@@ -82,10 +82,13 @@
       <groupId>com.cloudera.search</groupId>
       <artifactId>search-crunch</artifactId>
     </dependency>
-    <dependency>
+<dependency>
       <groupId>com.cloudera.search</groupId>
       <artifactId>search-crunch</artifactId>
-      <classifier>job</classifier>
+      <version>${project.version}</version>
+      <classifier>dist</classifier>
+     <type>tar.gz</type>
     </dependency>
+
   </dependencies>
 </project>

@@ -20,7 +20,9 @@
     <format>tar.gz</format>
   </formats>
   <includeBaseDirectory>true</includeBaseDirectory>
-  <fileSets>
+  
+<!-- we should not ship the source code so removing the pom.xml and other java files 
+<fileSets>
     <fileSet>
       <directory>../</directory>
       <outputDirectory>/</outputDirectory>
@@ -35,7 +37,6 @@
         <exclude>**/.project</exclude>
         <exclude>**/.settings</exclude>
         <exclude>**/target/**</exclude>
-        <!-- until the code that does this is fixed -->
         <exclude>**/*.log</exclude>
         <exclude>**/build/**</exclude>
         <exclude>**/file:/**</exclude>
@@ -43,16 +44,26 @@
       </excludes>
     </fileSet>
   </fileSets>
-  <dependencySets>
+-->
+ <dependencySets>
     <dependencySet>
       <outputDirectory>/dist/lib</outputDirectory>
       <unpack>false</unpack>
       <useProjectArtifact>false</useProjectArtifact>
       <excludes>
-        <exclude>com.cloudera.search:*:jar</exclude>
+        <exclude>com.cloudera.search-mr:*:jar</exclude>
       </excludes>
     </dependencySet>
-    <dependencySet>
+<dependencySet>
+      <outputDirectory>/dist/lib</outputDirectory>
+      <unpack>true</unpack>
+      <useProjectArtifact>false</useProjectArtifact>
+      <includes>
+        <include>com.cloudera.search:search-crunch:tar.gz:dist:*</include>
+      </includes>
+    </dependencySet> 
+
+   <dependencySet>
       <outputDirectory>/dist</outputDirectory>
       <unpack>false</unpack>
       <useProjectArtifact>false</useProjectArtifact>
@@ -60,5 +71,6 @@
         <include>com.cloudera.search:*:jar</include>
       </includes>
     </dependencySet>
+
   </dependencySets>
 </assembly>
