@@ -81,7 +81,7 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
   private static final Logger LOG = LoggerFactory.getLogger(MorphlineFn.class);
   
   static {
-    setupClasspath();
+    setupMorphlineClasspath();
   }
 
   public MorphlineFn(String morphlineFileContents, String morphlineId, Map<String, String> morphlineVariables, boolean isSplitable) {
@@ -261,18 +261,18 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
   }
   
   /*
-   * Ensure scripting support for Java via morphline "java" command works even in dryRun mode,
-   * i.e. when executed in the client side driver JVM. To do so, collect all classpath URLs from
-   * the class loaders chain that org.apache.hadoop.util.RunJar (hadoop jar xyz-job.jar) and
-   * org.apache.hadoop.util.GenericOptionsParser (--libjars) have installed, then tell
+   * Ensure scripting support for Java via morphline "java" command works even when running inside
+   * custom class loaders. To do so, collect all classpath URLs from the class loaders chain that
+   * org.apache.hadoop.util.RunJar (hadoop jar xyz-job.jar) and
+   * org.apache.hadoop.util.GenericOptionsParser (--libjars) or similar have installed, then tell
    * FastJavaScriptEngine.parse() where to find classes that JavaBuilder scripts might depend on.
-   * This ensures that scripts that reference external java classes compile without exceptions
-   * like this:
+   * This ensures that scripts that reference external java classes compile without exceptions like
+   * this:
    * 
    * ... caused by compilation failed: mfm:///MyJavaClass1.java:2: package
    * org.kitesdk.morphline.api does not exist
    */
-  private static void setupClasspath()  {
+  private static void setupMorphlineClasspath()  {
     LOG.trace("dryRun: java.class.path: {}", System.getProperty("java.class.path"));
     String fullClassPath = "";
     ClassLoader loader = Thread.currentThread().getContextClassLoader(); // see org.apache.hadoop.util.RunJar
