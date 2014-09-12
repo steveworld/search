@@ -12,7 +12,7 @@ cd search
 git checkout cdh5-1.0.0 # or whatever the latest version is
 mvn clean package -pl search-crunch # This can take several minutes
 cd search-crunch
-ls target/search-crunch-*-job.jar
+find target -name '*.jar'
 ```
 
 ## Getting Started
