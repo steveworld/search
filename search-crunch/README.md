@@ -226,6 +226,7 @@ spark-submit \
   --class org.apache.solr.crunch.CrunchIndexerTool \
   --files src/test/resources/log4j.properties,src/test/resources/test-morphlines/loadSolrLine.conf \
   $myDriverJar \
+  -D hadoop.tmp.dir=/tmp \
   -D morphlineVariable.ZK_HOST=$(hostname):2181/solr \
   --morphline-file loadSolrLine.conf \
   --pipeline-type spark \

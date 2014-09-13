@@ -269,6 +269,7 @@ final class CrunchIndexerToolArgumentParser {
                     + "  --class " + CrunchIndexerTool.class.getName() + " \\\n"
                     + "  --files src/test/resources/log4j.properties,src/test/resources/test-morphlines/loadSolrLine.conf \\\n"
                     + "  $myDriverJar \\\n"
+                    + "  -D hadoop.tmp.dir=/tmp \\\n" 
                     + "  -D morphlineVariable.ZK_HOST=$(hostname):2181/solr \\\n"
                     + "  --morphline-file loadSolrLine.conf \\\n"
                     + "  --pipeline-type spark \\\n"
