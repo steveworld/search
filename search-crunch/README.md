@@ -130,8 +130,6 @@ bin/hadoop command [genericOptions] [commandOptions]
 
 Examples: 
 
-Examples: 
-
 # Prepare - Copy input files into HDFS:
 hadoop fs -copyFromLocal src/test/resources/test-documents/hello1.txt hdfs:/user/systest/input/
 
