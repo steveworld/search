@@ -334,6 +334,17 @@ final class CrunchIndexerToolArgumentParser {
       opts.inputFileReaderSchema = parseSchema((File)ns.get(inputFileReaderSchemaArg.getDest()), parser);
       opts.inputFileProjectionSchema = parseSchema((File)ns.get(inputFileProjectionSchemaArg.getDest()), parser);
       opts.inputFileFormat = getClass(inputFormatArg, ns, FileInputFormat.class, parser, INPUT_FORMAT_SUBSTITUTIONS);
+      
+      String sparkMaster = System.getProperty("spark.master");
+      if (opts.pipelineType == PipelineType.spark) {
+        if (sparkMaster == null) {
+          throw new ArgumentParserException("--pipeline-type=" + PipelineType.spark + " must not be run as a Hadoop job", parser);
+        }
+      } else if (opts.pipelineType == PipelineType.mapreduce) {
+        if (sparkMaster != null) {
+          throw new ArgumentParserException("--pipeline-type=" + PipelineType.mapreduce + " must not be run as a Spark job", parser);
+        }
+      }
     } catch (ArgumentParserException e) {
       parser.handleError(e);
       return 1;
