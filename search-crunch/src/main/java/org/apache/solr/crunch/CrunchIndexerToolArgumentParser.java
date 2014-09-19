@@ -338,11 +338,11 @@ final class CrunchIndexerToolArgumentParser {
       String sparkMaster = System.getProperty("spark.master");
       if (opts.pipelineType == PipelineType.spark) {
         if (sparkMaster == null) {
-          throw new ArgumentParserException("--pipeline-type=" + PipelineType.spark + " must not be run as a Hadoop job", parser);
+          throw new ArgumentParserException("--pipeline-type=" + PipelineType.spark + " must not run as a MapReduce job", parser);
         }
       } else if (opts.pipelineType == PipelineType.mapreduce) {
         if (sparkMaster != null) {
-          throw new ArgumentParserException("--pipeline-type=" + PipelineType.mapreduce + " must not be run as a Spark job", parser);
+          throw new ArgumentParserException("--pipeline-type=" + PipelineType.mapreduce + " must not run as a Spark job", parser);
         }
       }
     } catch (ArgumentParserException e) {
