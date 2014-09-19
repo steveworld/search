@@ -31,117 +31,81 @@ $export HADOOP_CLASSPATH=$myDependencyJarPaths; hadoop jar $myDriverJar org.apac
 
 MapReduceUsage: export HADOOP_CLASSPATH=$myDependencyJarPaths; hadoop jar $myDriverJar 
 org.apache.solr.crunch.CrunchIndexerTool --libjars $myDependencyJarFiles [MapReduceGenericOptions]...
-        [--input-file-list URI] [--input-file-format FQCN]
-        [--input-file-projection-schema FILE]
-        [--input-file-reader-schema FILE] --morphline-file FILE
-        [--morphline-id STRING] [--pipeline-type STRING] [--xhelp]
-        [--mappers INTEGER] [--log4j FILE] [--chatty]
-        [HDFS_URI [HDFS_URI ...]]
+        [--input-file-list URI] [--input-file-format FQCN] [--input-file-projection-schema FILE]
+        [--input-file-reader-schema FILE] --morphline-file FILE [--morphline-id STRING] [--pipeline-type STRING]
+        [--xhelp] [--mappers INTEGER] [--log4j FILE] [--chatty] [HDFS_URI [HDFS_URI ...]]
 
 SparkUsage: spark-submit [SparkGenericOptions]... --master local|yarn --deploy-mode client|cluster
 --jars $myDependencyJarFiles --class org.apache.solr.crunch.CrunchIndexerTool $myDriverJar
-        [--input-file-list URI] [--input-file-format FQCN]
-        [--input-file-projection-schema FILE]
-        [--input-file-reader-schema FILE] --morphline-file FILE
-        [--morphline-id STRING] [--pipeline-type STRING] [--xhelp]
-        [--mappers INTEGER] [--log4j FILE] [--chatty]
-        [HDFS_URI [HDFS_URI ...]]
+        [--input-file-list URI] [--input-file-format FQCN] [--input-file-projection-schema FILE]
+        [--input-file-reader-schema FILE] --morphline-file FILE [--morphline-id STRING] [--pipeline-type STRING]
+        [--xhelp] [--mappers INTEGER] [--log4j FILE] [--chatty] [HDFS_URI [HDFS_URI ...]]
 
-Spark or MapReduce ETL batch job  that  pipes data from (splitable or non-
-splitable) HDFS files into Apache Solr,  and  along  the way runs the data
-through a Morphline  for  extraction  and  transformation.  The program is
-designed for flexible,  scalable  and  fault-tolerant  batch  ETL pipeline
-jobs. It is implemented as an Apache  Crunch  pipeline and as such can run
-on either the Apache Hadoop MapReduce or Apache Spark execution engine.
+Spark or MapReduce ETL batch job that pipes data  from  (splitable or non-splitable) HDFS files into Apache Solr,
+and along the way runs the data through  a  Morphline  for extraction and transformation. The program is designed
+for flexible, scalable and  fault-tolerant  batch  ETL  pipeline  jobs.  It  is  implemented  as an Apache Crunch
+pipeline and as such can run on either the Apache Hadoop MapReduce or Apache Spark execution engine.
 
 The program proceeds in several consecutive phases, as follows: 
 
-1) Randomization phase: This (parallel) phase  randomizes the list of HDFS
-input files in  order  to  spread  ingestion  load  more  evenly among the
-mapper tasks of the subsequent phase. This phase is only executed for non-
+1) Randomization phase: This (parallel)  phase  randomizes  the  list  of  HDFS  input  files  in order to spread
+ingestion load more evenly among the mapper tasks of  the  subsequent phase. This phase is only executed for non-
 splitables files, and skipped otherwise.
 
-2) Extraction phase: This (parallel)  phase  emits  a  series of HDFS file
-input streams (for non-splitable files) or  a series of input data records
-(for splitable files). 
+2) Extraction phase: This (parallel) phase emits a  series  of  HDFS file input streams (for non-splitable files)
+or a series of input data records (for splitable files). 
 
-3) Morphline phase:  This  (parallel)  phase  receives  the  items  of the
-previous phase, and uses  a  Morphline  to  extract  the relevant content,
-transform  it  and  load  zero  or  more  documents  into  Solr.  The  ETL
-functionality is  flexible  and  customizable  using  chains  of arbitrary
-morphline commands that pipe  records  from  one transformation command to
-another. Commands to parse and  transform  a  set of standard data formats
-such as Avro, Parquet,  CSV,  Text,  HTML,  XML,  PDF, MS-Office, etc. are
-provided out of the box,  and  additional  custom commands and parsers for
-additional  file  or  data  formats  can  be  added  as  custom  morphline
-commands. Any kind of data  format  can  be  processed and any kind output
-format can be generated  by  any  custom  Morphline  ETL logic. Also, this
-phase can be used to send data  directly  to a live SolrCloud cluster (via
-the loadSolr morphline command).
+3) Morphline phase: This (parallel) phase receives  the  items  of  the  previous  phase, and uses a Morphline to
+extract the relevant content, transform it and load  zero  or  more documents into Solr. The ETL functionality is
+flexible and customizable using chains of arbitrary morphline  commands that pipe records from one transformation
+command to another. Commands to parse and transform a  set  of  standard data formats such as Avro, Parquet, CSV,
+Text, HTML, XML, PDF, MS-Office, etc. are provided  out  of  the  box, and additional custom commands and parsers
+for additional file or data formats can be added  as  custom  morphline  commands. Any kind of data format can be
+processed and any kind output format can be generated by  any custom Morphline ETL logic. Also, this phase can be
+used to send data directly to a live SolrCloud cluster (via the loadSolr morphline command).
 
-The program is  implemented  as  a  Crunch  pipeline  and  as  such Crunch
-optimizes the logical phases  mentioned  above  into an efficient physical
-execution  plan  that  runs   a   single   mapper-only   job,  or  as  the
-corresponding Spark equivalent.
+The program is implemented as a Crunch pipeline and  as  such Crunch optimizes the logical phases mentioned above
+into an efficient physical execution plan  that  runs  a  single  mapper-only  job, or as the corresponding Spark
+equivalent.
 
-Fault Tolerance: Task attempts  are  retried  on  failure per the standard
-MapReduce or Spark semantics. If the whole  job fails you can retry simply
-by rerunning the program again using the same arguments.
+Fault Tolerance: Task attempts are retried  on  failure  per  the  standard  MapReduce or Spark semantics. If the
+whole job fails you can retry simply by rerunning the program again using the same arguments.
 
 CrunchIndexerOptions:
-  HDFS_URI               HDFS URI of  file  or  directory  tree to ingest.
-                         (default: [])
+  HDFS_URI               HDFS URI of file or directory tree to ingest. (default: [])
   --input-file-list URI, --input-list URI
-                         Local URI or HDFS  URI  of  a  UTF-8 encoded file
-                         containing a list  of  HDFS  URIs  to ingest, one
-                         URI per line in  the  file.  If '-' is specified,
-                         URIs are read from  the  standard input. Multiple
-                         --input-file-list arguments can be specified.
+                         Local URI or HDFS URI of a UTF-8 encoded  file containing a list of HDFS URIs to ingest,
+                         one URI per line in the  file.  If  '-'  is  specified,  URIs are read from the standard
+                         input. Multiple --input-file-list arguments can be specified.
   --input-file-format FQCN
-                         The Hadoop FileInputFormat to  use for extracting
-                         data from splitable HDFS  files.  Can  be a fully
-                         qualified Java  class  name  or  one  of ['text',
-                         'avro',  'avroParquet'].   If   this   option  is
-                         present the extraction phase  will  emit a series
-                         of input data  records  rather  than  a series of
-                         HDFS file input streams.
+                         The Hadoop FileInputFormat to use for extracting  data from splitable HDFS files. Can be
+                         a fully qualified Java class name  or  one  of  ['text', 'avro', 'avroParquet']. If this
+                         option is present the extraction phase will  emit  a series of input data records rather
+                         than a series of HDFS file input streams.
   --input-file-projection-schema FILE
-                         Relative or absolute path to  an Avro schema file
-                         on the local file  system.  This  will be used as
-                         the projection schema for Parquet input files.
+                         Relative or absolute path to an Avro schema file  on the local file system. This will be
+                         used as the projection schema for Parquet input files.
   --input-file-reader-schema FILE
-                         Relative or absolute path to  an Avro schema file
-                         on the local file  system.  This  will be used as
-                         the reader  schema  for  Avro  or  Parquet  input
-                         files.     Example:      src/test/resources/test-
-                         documents/strings.avsc
-  --morphline-file FILE  Relative or absolute path to  a local config file
-                         that contains one  or  more  morphlines. The file
-                         must be UTF-8  encoded.  It  will  be uploaded to
-                         each remote  task.  Example:  /path/to/morphline.
-                         conf
-  --morphline-id STRING  The identifier of  the  morphline  that  shall be
-                         executed  within   the   morphline   config  file
-                         specified  by   --morphline-file.   If   the   --
-                         morphline-id option is  ommitted  the first (i.e.
-                         top-most) morphline  within  the  config  file is
-                         used. Example: morphline1
+                         Relative or absolute path to an Avro schema file  on the local file system. This will be
+                         used  as   the   reader   schema   for   Avro   or   Parquet   input   files.   Example:
+                         src/test/resources/test-documents/strings.avsc
+  --morphline-file FILE  Relative or absolute path to a local  config  file that contains one or more morphlines.
+                         The file must be UTF-8  encoded.  It  will  be  uploaded  to  each remote task. Example:
+                         /path/to/morphline.conf
+  --morphline-id STRING  The identifier of the morphline that shall  be executed within the morphline config file
+                         specified by --morphline-file. If the --morphline-id  option is ommitted the first (i.e.
+                         top-most) morphline within the config file is used. Example: morphline1
   --pipeline-type STRING
-                         The engine to use for  executing  the job. Can be
-                         'mapreduce' or 'spark'. (default: mapreduce)
+                         The engine to use  for  executing  the  job.  Can  be  'mapreduce' or 'spark'. (default:
+                         mapreduce)
   --xhelp, --help, -help
                          Show this help message and exit
-  --mappers INTEGER      Tuning knob that indicates  the maximum number of
-                         MR mapper tasks to use.  -1 indicates use all map
-                         slots available on  the  cluster.  This parameter
-                         only  applies   to   non-splitable   input  files
-                         (default: -1)
-  --log4j FILE           Relative or absolute  path  to a log4j.properties
-                         config file on the  local  file system. This file
-                         will be uploaded  to  each  remote task. Example:
-                         /path/to/log4j.properties
+  --mappers INTEGER      Tuning knob that indicates the maximum number  of  MR  mapper tasks to use. -1 indicates
+                         use all map  slots  available  on  the  cluster.  This  parameter  only  applies to non-
+                         splitable input files (default: -1)
+  --log4j FILE           Relative or absolute path to a  log4j.properties  config  file on the local file system.
+                         This file will be uploaded to each remote task. Example: /path/to/log4j.properties
   --chatty               Turn on verbose output. (default: false)
-
 
 SparkGenericOptions:     To print all options run 'spark-submit --help'
 
@@ -163,6 +127,8 @@ MapReduceGenericOptions: Generic options supported are
 
 The general command line syntax is
 bin/hadoop command [genericOptions] [commandOptions]
+
+Examples: 
 
 Examples: 
 
