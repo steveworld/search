@@ -31,7 +31,6 @@ import net.sourceforge.argparse4j.inf.Argument;
 import net.sourceforge.argparse4j.inf.ArgumentGroup;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
-import net.sourceforge.argparse4j.inf.FeatureControl;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 import org.apache.avro.Schema;
@@ -291,9 +290,8 @@ final class CrunchIndexerToolArgumentParser {
 
     Argument dryRunArg = miscArgGroup.addArgument("--dry-run")
         .action(Arguments.storeTrue())
-        .help(FeatureControl.SUPPRESS);
-//        .help("Run the pipeline but print documents to stdout instead of loading them into Solr. " +
-//              "This can be used for quicker turnaround during early trial & debug sessions.");
+        .help("Run the pipeline but print documents to stdout instead of loading them into Solr. " +
+              "This can be used for quicker turnaround during early trial & debug sessions.");
 
     Argument log4jConfigFileArg = miscArgGroup.addArgument("--log4j")
         .metavar("FILE")

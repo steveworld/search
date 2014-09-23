@@ -184,7 +184,8 @@ public class CrunchIndexerTool extends Configured implements Tool {
           morphlineFileContents, 
           opts.morphlineId, 
           morphlineVariables,
-          opts.inputFileFormat != null
+          opts.inputFileFormat != null,
+          opts.isDryRun
           );
       collection = collection.parallelDo(
           "morphline",

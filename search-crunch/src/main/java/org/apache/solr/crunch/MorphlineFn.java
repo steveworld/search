@@ -24,6 +24,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -35,6 +36,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.kitesdk.morphline.api.Command;
 import org.kitesdk.morphline.api.MorphlineContext;
 import org.kitesdk.morphline.api.Record;
+import org.kitesdk.morphline.api.TypedSettings;
 import org.kitesdk.morphline.base.Compiler;
 import org.kitesdk.morphline.base.FaultTolerance;
 import org.kitesdk.morphline.base.Fields;
@@ -68,6 +70,7 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
   private String morphlineId;
   private Map<String, String> morphlineVariables;
   private boolean isSplitable;
+  private boolean isDryRun;
   
   private transient MorphlineContext morphlineContext;
   private transient Command morphline;
@@ -84,7 +87,7 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
     setupMorphlineClasspath();
   }
 
-  public MorphlineFn(String morphlineFileContents, String morphlineId, Map<String, String> morphlineVariables, boolean isSplitable) {
+  public MorphlineFn(String morphlineFileContents, String morphlineId, Map<String, String> morphlineVariables, boolean isSplitable, boolean isDryRun) {
     if (morphlineFileContents == null || morphlineFileContents.trim().length() == 0) {
       throw new IllegalArgumentException("Missing morphlineFileContents");
     }
@@ -93,6 +96,7 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
     Preconditions.checkNotNull(morphlineVariables);
     this.morphlineVariables = morphlineVariables;
     this.isSplitable = isSplitable;
+    this.isDryRun = isDryRun;
   }
 
   @Override
@@ -113,9 +117,16 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
         getConfiguration().getBoolean(FaultTolerance.IS_IGNORING_RECOVERABLE_EXCEPTIONS, false),
         getConfiguration().get(FaultTolerance.RECOVERABLE_EXCEPTION_CLASSES));
 
+    Map<String, Object> settings = new HashMap<String, Object>();
+    settings.put(TypedSettings.TASK_CONTEXT_SETTING_NAME, getContext());
+    if (isDryRun) {
+      settings.put(TypedSettings.DRY_RUN_SETTING_NAME, Boolean.TRUE);
+    }
+    
     morphlineContext = new MorphlineContext.Builder()
         .setExceptionHandler(faultTolerance)
         .setMetricRegistry(SharedMetricRegistries.getOrCreate(morphlineFileAndId))
+        .setSettings(settings)
         .build();
 
     Config override = ConfigFactory.parseMap(morphlineVariables);

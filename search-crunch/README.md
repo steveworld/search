@@ -33,13 +33,13 @@ MapReduceUsage: export HADOOP_CLASSPATH=$myDependencyJarPaths; hadoop jar $myDri
 org.apache.solr.crunch.CrunchIndexerTool --libjars $myDependencyJarFiles [MapReduceGenericOptions]...
         [--input-file-list URI] [--input-file-format FQCN] [--input-file-projection-schema FILE]
         [--input-file-reader-schema FILE] --morphline-file FILE [--morphline-id STRING] [--pipeline-type STRING]
-        [--xhelp] [--mappers INTEGER] [--log4j FILE] [--chatty] [HDFS_URI [HDFS_URI ...]]
+        [--xhelp] [--mappers INTEGER] [--dry-run] [--log4j FILE] [--chatty] [HDFS_URI [HDFS_URI ...]]
 
 SparkUsage: spark-submit [SparkGenericOptions]... --master local|yarn --deploy-mode client|cluster
 --jars $myDependencyJarFiles --class org.apache.solr.crunch.CrunchIndexerTool $myDriverJar
         [--input-file-list URI] [--input-file-format FQCN] [--input-file-projection-schema FILE]
         [--input-file-reader-schema FILE] --morphline-file FILE [--morphline-id STRING] [--pipeline-type STRING]
-        [--xhelp] [--mappers INTEGER] [--log4j FILE] [--chatty] [HDFS_URI [HDFS_URI ...]]
+        [--xhelp] [--mappers INTEGER] [--dry-run] [--log4j FILE] [--chatty] [HDFS_URI [HDFS_URI ...]]
 
 Spark or MapReduce ETL batch job that pipes data  from  (splitable or non-splitable) HDFS files into Apache Solr,
 and along the way runs the data through  a  Morphline  for extraction and transformation. The program is designed
@@ -103,6 +103,8 @@ CrunchIndexerOptions:
   --mappers INTEGER      Tuning knob that indicates the maximum number  of  MR  mapper tasks to use. -1 indicates
                          use all map  slots  available  on  the  cluster.  This  parameter  only  applies to non-
                          splitable input files (default: -1)
+  --dry-run              Run the pipeline but print documents to  stdout  instead of loading them into Solr. This
+                         can be used for quicker turnaround during early trial & debug sessions. (default: false)
   --log4j FILE           Relative or absolute path to a  log4j.properties  config  file on the local file system.
                          This file will be uploaded to each remote task. Example: /path/to/log4j.properties
   --chatty               Turn on verbose output. (default: false)
