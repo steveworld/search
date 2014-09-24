@@ -438,6 +438,7 @@
               <outputDirectory>${project.build.directory}/lib</outputDirectory>
               <includeScope>runtime</includeScope> <!-- excludes test jars; see http://jira.codehaus.org/browse/MDEP-128 -->
               <excludeScope>provided</excludeScope>
+              <excludeArtifactIds>kite-morphlines-all</excludeArtifactIds>
             </configuration>
           </execution>
         </executions>
