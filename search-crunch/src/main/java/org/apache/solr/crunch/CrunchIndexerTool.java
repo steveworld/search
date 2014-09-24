@@ -72,6 +72,7 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.solr.crunch.CrunchIndexerToolOptions.PipelineType;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.kitesdk.morphline.api.TypedSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -180,12 +181,16 @@ public class CrunchIndexerTool extends Configured implements Tool {
           morphlineVariables.put(entry.getKey().substring(variablePrefix.length()), entry.getValue());
         }
       }
+      
+      Map<String, Object> settings = new HashMap<String, Object>();
+      settings.put(TypedSettings.DRY_RUN_SETTING_NAME, opts.isDryRun);
+      
       DoFn morphlineFn = new MorphlineFn(
           morphlineFileContents, 
           opts.morphlineId, 
           morphlineVariables,
-          opts.inputFileFormat != null,
-          opts.isDryRun
+          settings,
+          opts.inputFileFormat != null
           );
       collection = collection.parallelDo(
           "morphline",

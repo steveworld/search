@@ -62,15 +62,16 @@ import com.typesafe.config.ConfigFactory;
 
 
 /**
- * Transforms the input with a configurable Morphline.
+ * Transforms the input with a configurable Morphline; 
+ * This class should be considered private and it's API is subject to change without notice.
  */
 public class MorphlineFn<S,T> extends DoFn<S,T> {
 
   private String morphlineFileContents;
   private String morphlineId;
   private Map<String, String> morphlineVariables;
+  private Map<String, Object> settings;
   private boolean isSplitable;
-  private boolean isDryRun;
   
   private transient MorphlineContext morphlineContext;
   private transient Command morphline;
@@ -87,7 +88,7 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
     setupMorphlineClasspath();
   }
 
-  public MorphlineFn(String morphlineFileContents, String morphlineId, Map<String, String> morphlineVariables, boolean isSplitable, boolean isDryRun) {
+  public MorphlineFn(String morphlineFileContents, String morphlineId, Map<String, String> morphlineVariables, Map<String, Object> settings, boolean isSplitable) {
     if (morphlineFileContents == null || morphlineFileContents.trim().length() == 0) {
       throw new IllegalArgumentException("Missing morphlineFileContents");
     }
@@ -95,8 +96,9 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
     this.morphlineId = morphlineId;
     Preconditions.checkNotNull(morphlineVariables);
     this.morphlineVariables = morphlineVariables;
+    Preconditions.checkNotNull(settings);
+    this.settings = settings;
     this.isSplitable = isSplitable;
-    this.isDryRun = isDryRun;
   }
 
   @Override
@@ -117,16 +119,13 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
         getConfiguration().getBoolean(FaultTolerance.IS_IGNORING_RECOVERABLE_EXCEPTIONS, false),
         getConfiguration().get(FaultTolerance.RECOVERABLE_EXCEPTION_CLASSES));
 
-    Map<String, Object> settings = new HashMap<String, Object>();
-    settings.put(TypedSettings.TASK_CONTEXT_SETTING_NAME, getContext());
-    if (isDryRun) {
-      settings.put(TypedSettings.DRY_RUN_SETTING_NAME, Boolean.TRUE);
-    }
+    Map<String, Object> mySettings = new HashMap(settings);
+    mySettings.put(TypedSettings.TASK_CONTEXT_SETTING_NAME, getContext());
     
     morphlineContext = new MorphlineContext.Builder()
         .setExceptionHandler(faultTolerance)
         .setMetricRegistry(SharedMetricRegistries.getOrCreate(morphlineFileAndId))
-        .setSettings(settings)
+        .setSettings(mySettings)
         .build();
 
     Config override = ConfigFactory.parseMap(morphlineVariables);
