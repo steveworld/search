@@ -22,7 +22,7 @@ In addition, below we assume a working MapReduce or Spark cluster, for example a
 
 ## CrunchIndexerTool
 
-`CrunchIndexerTool` is a Spark or MapReduce ETL batch job that pipes data from (splitable or non-splitable) HDFS files into Apache  Solr,  and  along the way runs the data through a Morphline  for extraction  and transformation. The program is
+`CrunchIndexerTool` is a Spark or MapReduce ETL batch job that pipes data from (splittable or non-splittable) HDFS files into Apache  Solr,  and  along the way runs the data through a Morphline  for extraction  and transformation. The program is
 designed for flexible, scalable and fault-tolerant batch ETL pipeline jobs. It is implemented as an  Apache  Crunch  pipeline and as such can run
 on either the Apache Hadoop MapReduce or Apache Spark execution engine. More details are available through the command line help:
 
@@ -41,7 +41,7 @@ SparkUsage: spark-submit [SparkGenericOptions]... --master local|yarn --deploy-m
         [--input-file-reader-schema FILE] --morphline-file FILE [--morphline-id STRING] [--pipeline-type STRING]
         [--xhelp] [--mappers INTEGER] [--dry-run] [--log4j FILE] [--chatty] [HDFS_URI [HDFS_URI ...]]
 
-Spark or MapReduce ETL batch job that pipes data  from  (splitable or non-splitable) HDFS files into Apache Solr,
+Spark or MapReduce ETL batch job that pipes data  from  (splittable or non-splittable) HDFS files into Apache Solr,
 and along the way runs the data through  a  Morphline  for extraction and transformation. The program is designed
 for flexible, scalable and  fault-tolerant  batch  ETL  pipeline  jobs.  It  is  implemented  as an Apache Crunch
 pipeline and as such can run on either the Apache Hadoop MapReduce or Apache Spark execution engine.
@@ -50,10 +50,10 @@ The program proceeds in several consecutive phases, as follows:
 
 1) Randomization phase: This (parallel)  phase  randomizes  the  list  of  HDFS  input  files  in order to spread
 ingestion load more evenly among the mapper tasks of  the  subsequent phase. This phase is only executed for non-
-splitables files, and skipped otherwise.
+splittables files, and skipped otherwise.
 
-2) Extraction phase: This (parallel) phase emits a  series  of  HDFS file input streams (for non-splitable files)
-or a series of input data records (for splitable files). 
+2) Extraction phase: This (parallel) phase emits a  series  of  HDFS file input streams (for non-splittable files)
+or a series of input data records (for splittable files). 
 
 3) Morphline phase: This (parallel) phase receives  the  items  of  the  previous  phase, and uses a Morphline to
 extract the relevant content, transform it and load  zero  or  more documents into Solr. The ETL functionality is
@@ -78,7 +78,7 @@ CrunchIndexerOptions:
                          one URI per line in the  file.  If  '-'  is  specified,  URIs are read from the standard
                          input. Multiple --input-file-list arguments can be specified.
   --input-file-format FQCN
-                         The Hadoop FileInputFormat to use for extracting  data from splitable HDFS files. Can be
+                         The Hadoop FileInputFormat to use for extracting  data from splittable HDFS files. Can be
                          a fully qualified Java class name  or  one  of  ['text', 'avro', 'avroParquet']. If this
                          option is present the extraction phase will  emit  a series of input data records rather
                          than a series of HDFS file input streams.
@@ -93,7 +93,7 @@ CrunchIndexerOptions:
                          The file must be UTF-8  encoded.  It  will  be  uploaded  to  each remote task. Example:
                          /path/to/morphline.conf
   --morphline-id STRING  The identifier of the morphline that shall  be executed within the morphline config file
-                         specified by --morphline-file. If the --morphline-id  option is ommitted the first (i.e.
+                         specified by --morphline-file. If the --morphline-id  option is omitted the first (i.e.
                          top-most) morphline within the config file is used. Example: morphline1
   --pipeline-type STRING
                          The engine to use  for  executing  the  job.  Can  be  'mapreduce' or 'spark'. (default:
@@ -102,7 +102,7 @@ CrunchIndexerOptions:
                          Show this help message and exit
   --mappers INTEGER      Tuning knob that indicates the maximum number  of  MR  mapper tasks to use. -1 indicates
                          use all map  slots  available  on  the  cluster.  This  parameter  only  applies to non-
-                         splitable input files (default: -1)
+                         splittable input files (default: -1)
   --dry-run              Run the pipeline but print documents to  stdout  instead of loading them into Solr. This
                          can be used for quicker turnaround during early trial & debug sessions. (default: false)
   --log4j FILE           Relative or absolute path to a  log4j.properties  config  file on the local file system.

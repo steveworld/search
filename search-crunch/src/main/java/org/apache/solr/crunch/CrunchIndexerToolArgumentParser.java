@@ -83,7 +83,7 @@ final class CrunchIndexerToolArgumentParser {
         .newArgumentParser("", false)
         .defaultHelp(true)
         .description( 
-            descriptionHead + " batch job that pipes data from (splitable or non-splitable) HDFS files "
+            descriptionHead + " batch job that pipes data from (splittable or non-splittable) HDFS files "
             + "into Apache Solr, and along the way runs the "
             + "data through a Morphline for extraction and transformation. The program is designed for "
             + "flexible, scalable and fault-tolerant batch ETL pipeline jobs. It is implemented as an Apache Crunch pipeline "
@@ -93,10 +93,10 @@ final class CrunchIndexerToolArgumentParser {
             + "\n\n"
             + "1) Randomization phase: This (parallel) phase randomizes the list of HDFS input files in order to spread "
             + "ingestion load more evenly among the mapper tasks of the subsequent phase. This phase is only executed for "
-            + "non-splitables files, and skipped otherwise."
+            + "non-splittables files, and skipped otherwise."
             + "\n\n"
-            + "2) Extraction phase: This (parallel) phase emits a series of HDFS file input streams (for non-splitable files) "
-            + "or a series of input data records (for splitable files). "
+            + "2) Extraction phase: This (parallel) phase emits a series of HDFS file input streams (for non-splittable files) "
+            + "or a series of input data records (for splittable files). "
             + "\n\n"
             + "3) Morphline phase: This (parallel) phase receives the items of the previous "
             + "phase, and uses a Morphline to extract the relevant content, transform it and load zero or more documents "
@@ -138,7 +138,7 @@ final class CrunchIndexerToolArgumentParser {
     Argument inputFormatArg = indexerArgGroup.addArgument("--input-file-format")
         .metavar("FQCN")
         .type(String.class)
-        .help("The Hadoop FileInputFormat to use for extracting data from splitable HDFS files. Can be a "
+        .help("The Hadoop FileInputFormat to use for extracting data from splittable HDFS files. Can be a "
             + "fully qualified Java class name or one of ['text', 'avro', 'avroParquet']. If this option "
             + "is present the extraction phase will emit a series of input data records rather than a series "
             + "of HDFS file input streams.");
@@ -168,7 +168,7 @@ final class CrunchIndexerToolArgumentParser {
         .metavar("STRING")
         .type(String.class)
         .help("The identifier of the morphline that shall be executed within the morphline config file "
-            + "specified by --morphline-file. If the --morphline-id option is ommitted the first (i.e. "
+            + "specified by --morphline-file. If the --morphline-id option is omitted the first (i.e. "
             + "top-most) morphline within the config file is used. Example: morphline1");
 
     Argument pipelineTypeArg = indexerArgGroup.addArgument("--pipeline-type")
@@ -286,7 +286,7 @@ final class CrunchIndexerToolArgumentParser {
         .choices(new RangeArgumentChoice(-1, Integer.MAX_VALUE)) // TODO: also support X% syntax where X is an integer
         .setDefault(-1)
         .help("Tuning knob that indicates the maximum number of MR mapper tasks to use. -1 indicates use all map slots " +
-            "available on the cluster. This parameter only applies to non-splitable input files");
+            "available on the cluster. This parameter only applies to non-splittable input files");
 
     Argument dryRunArg = miscArgGroup.addArgument("--dry-run")
         .action(Arguments.storeTrue())
