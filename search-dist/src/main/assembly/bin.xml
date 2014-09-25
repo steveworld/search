@@ -46,15 +46,14 @@
   </fileSets>
   -->
   
-  <dependencySets>
-    <dependencySet>
+  <fileSets>
+    <fileSet>
+      <directory>../search-mr/target/lib</directory>
       <outputDirectory>/dist/lib</outputDirectory>
-      <unpack>false</unpack>
-      <useProjectArtifact>false</useProjectArtifact>
-      <excludes>
-        <exclude>com.cloudera.search-mr:*:jar</exclude>
-      </excludes>
-    </dependencySet>
+    </fileSet>
+  </fileSets>
+  
+  <dependencySets>
     <dependencySet>
       <outputDirectory>/dist/lib</outputDirectory>
       <unpack>true</unpack>
