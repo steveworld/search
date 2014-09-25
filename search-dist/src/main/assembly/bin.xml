@@ -21,31 +21,6 @@
   </formats>
   <includeBaseDirectory>true</includeBaseDirectory>
   
-  <!-- we should not ship the source code so removing the pom.xml and other java files 
-  <fileSets>
-    <fileSet>
-      <directory>../</directory>
-      <outputDirectory>/</outputDirectory>
-      <excludes>
-        <exclude>.git/**</exclude>
-        <exclude>**/.gitignore</exclude>
-        <exclude>**/.svn</exclude>
-        <exclude>**/*.iws</exclude>
-        <exclude>**/*.ipr</exclude>
-        <exclude>**/*.iml</exclude>
-        <exclude>**/.classpath</exclude>
-        <exclude>**/.project</exclude>
-        <exclude>**/.settings</exclude>
-        <exclude>**/target/**</exclude>
-        <exclude>**/*.log</exclude>
-        <exclude>**/build/**</exclude>
-        <exclude>**/file:/**</exclude>
-        <exclude>**/SecurityAuth.audit*</exclude>
-      </excludes>
-    </fileSet>
-  </fileSets>
-  -->
-  
   <fileSets>
     <fileSet>
       <directory>../search-mr/target/lib</directory>
