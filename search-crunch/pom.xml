@@ -102,13 +102,6 @@
     </dependency>
     
     <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-yarn_${scala.base.version}</artifactId>
-      <version>${cdh.spark.version}</version>
-      <scope>provided</scope>
-    </dependency>    
-    
-    <dependency>
       <groupId>org.apache.solr</groupId>
       <artifactId>solr-test-framework</artifactId>
       <scope>test</scope>
