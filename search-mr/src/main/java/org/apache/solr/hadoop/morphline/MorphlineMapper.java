@@ -149,6 +149,16 @@ public class MorphlineMapper extends SolrMapper<LongWritable, Text> {
       }
       context.getCounter(MorphlineCounters.class.getName(), MorphlineCounters.DOCS_READ.toString()).increment(1);
     }
+    
+    @Override
+    public void deleteById(String id) {
+      throw new UnsupportedOperationException("deleteById");
+    }
+
+    @Override
+    public void deleteByQuery(String query) {
+      throw new UnsupportedOperationException("deleteByQuery");
+    }
 
     // just an approximation
     private long sizeOf(Object value) {

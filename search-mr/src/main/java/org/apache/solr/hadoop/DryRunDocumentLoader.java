@@ -34,7 +34,17 @@ final class DryRunDocumentLoader implements DocumentLoader {
 
   @Override
   public void load(SolrInputDocument doc) {
-    System.out.println("dryrun: " + doc);
+    System.out.println("dryrun: update: " + doc);
+  }
+
+  @Override
+  public void deleteById(String id) {
+    System.out.println("dryrun: deleteById: " + id.toString());
+  }
+
+  @Override
+  public void deleteByQuery(String query) {
+    System.out.println("dryrun: deleteByQuery: " + query.toString());
   }
 
   @Override
