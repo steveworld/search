@@ -70,8 +70,6 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.solr.crunch.CrunchIndexerToolOptions.PipelineType;
-import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.kitesdk.morphline.api.TypedSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -155,13 +153,12 @@ public class CrunchIndexerTool extends Configured implements Tool {
       //reducers = job.getCluster().getClusterStatus().getReduceSlotCapacity(); // Yarn only      
       LOG.info("Cluster reports {} reduce slots", reducers);
     } else if (opts.pipelineType == PipelineType.spark) {
-      SparkConf sconf = new SparkConf();
-      if (!sconf.contains("spark.app.name") || sconf.get("spark.app.name").equals(getClass().getName())) {
-        sconf.setAppName(Utils.getShortClassName(getClass()));
+      String master = System.getProperty("spark.master");
+      String appName = System.getProperty("spark.app.name");
+      if (appName == null || appName.equals(getClass().getName())) {
+        appName = Utils.getShortClassName(getClass());
       }
-      JavaSparkContext sparkContext = new JavaSparkContext(sconf);
-      pipeline = new SparkPipeline(sparkContext, sparkContext.appName());
-      pipeline.setConfiguration(getConf());
+      pipeline = new SparkPipeline(master, appName, null, getConf());
     } else {
       throw new IllegalArgumentException("Unsupported --pipeline-type: " + opts.pipelineType);
     }
