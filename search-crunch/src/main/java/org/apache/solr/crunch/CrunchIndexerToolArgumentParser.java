@@ -115,6 +115,16 @@ final class CrunchIndexerToolArgumentParser {
             + "Fault Tolerance: Task attempts are retried on failure per the standard MapReduce or Spark "
             + "semantics. If the whole job fails you can retry simply by rerunning the program again "
             + "using the same arguments."
+            + "\n\n"
+            + "Comparison with MapReduceIndexerTool: "
+            + "\n\n"
+            + "1) CrunchIndexerTool can also run on the Spark execution engine, not just on MapReduce. \n"
+            + "2) CrunchIndexerTool enables interactive low latency prototyping, in particular in Spark 'local' mode. \n"
+            + "3) CrunchIndexerTool supports updates (and deletes) of existing documents in Solr, not just inserts. \n"
+            + "4) CrunchIndexerTool can exploit data locality for splittable Hadoop files (text, avro, avroParquet). \n"
+            + "We recommend MapReduceIndexerTool for large scale batch ingestion use cases where updates "
+            + "(or deletes) of existing documents in Solr are not required, and we recommend CrunchIndexerTool for "
+            + "all other use cases."
         );
     
     ArgumentGroup indexerArgGroup = parser.addArgumentGroup("CrunchIndexerOptions");
