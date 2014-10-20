@@ -279,7 +279,7 @@ final class CrunchIndexerToolArgumentParser {
                     + "  --jars $myDependencyJarFiles \\\n"
                     + "  --executor-memory 500M \\\n"
                     + "  --class " + CrunchIndexerTool.class.getName() + " \\\n"
-                    + "  --files $myResourcesDir/log4j.properties,$myResourcesDir/test-morphlines/loadSolrLine.conf \\\n"
+                    + "  --files $(ls $myResourcesDir/log4j.properties),$(ls $myResourcesDir/test-morphlines/loadSolrLine.conf)\\\n"
                     + "  $myDriverJar \\\n"
                     + "  -D hadoop.tmp.dir=/tmp \\\n" 
                     + "  -D morphlineVariable.ZK_HOST=$(hostname):2181/solr \\\n"

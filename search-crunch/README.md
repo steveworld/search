@@ -207,7 +207,7 @@ spark-submit \
   --jars $myDependencyJarFiles \
   --executor-memory 500M \
   --class org.apache.solr.crunch.CrunchIndexerTool \
-  --files $myResourcesDir/log4j.properties,$myResourcesDir/test-morphlines/loadSolrLine.conf \
+  --files $(ls $myResourcesDir/log4j.properties),$(ls $myResourcesDir/test-morphlines/loadSolrLine.conf) \
   $myDriverJar \
   -D hadoop.tmp.dir=/tmp \
   -D morphlineVariable.ZK_HOST=$(hostname):2181/solr \
