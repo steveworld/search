@@ -69,8 +69,13 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.crunch.CrunchIndexerToolOptions.PipelineType;
+import org.kitesdk.morphline.api.MorphlineContext;
 import org.kitesdk.morphline.api.TypedSettings;
+import org.kitesdk.morphline.solr.LoadSolrBuilder;
+import org.kitesdk.morphline.solr.SolrLocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,6 +84,7 @@ import parquet.avro.AvroParquetInputFormat;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
+import com.typesafe.config.ConfigFactory;
 
 
 /**
@@ -127,6 +133,9 @@ public class CrunchIndexerTool extends Configured implements Tool {
   /** API for Java clients; visible for testing; may become a public API eventually */
   int run(CrunchIndexerToolOptions opts) throws Exception {
     long programStartTime = System.currentTimeMillis();
+    
+    // Workaround for CDH-22673 (CrunchIndexerTool should send a commit to Solr on job success)
+    getConf().setInt("mapreduce.job.counters.counter.name.max", 10000);
 
     if (opts.log4jConfigFile != null) {
       Utils.setLogConfigFile(opts.log4jConfigFile, getConf());
@@ -189,6 +198,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
           settings,
           opts.inputFileFormat != null
           );
+      
       collection = collection.parallelDo(
           "morphline",
           morphlineFn, 
@@ -201,7 +211,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
           );
   
       writeOutput(opts, pipeline, collection);
-  
+        
       if (!done(pipeline, opts.isVerbose)) {
         return 1; // job failed
       }
@@ -441,12 +451,43 @@ public class CrunchIndexerTool extends Configured implements Tool {
     LOG.debug("Running pipeline: " + name);
     pipelineResult = job.done();
     boolean success = pipelineResult.succeeded();
-    if (success) {
+    if (success) {      
+      commitSolr(pipelineResult);
       LOG.info("Succeeded with pipeline: " + name + " " + getJobInfo(pipelineResult, isVerbose));
     } else {
       LOG.error("Pipeline failed: " + name + " " + getJobInfo(pipelineResult, isVerbose));
     }
     return success;
+  }
+
+  // Implements CDH-22673 (CrunchIndexerTool should send a commit to Solr on job success)
+  private void commitSolr(PipelineResult pipeResult) {
+    StageResult stageResult = pipeResult.getStageResults().get(0);
+    Set<String> counterNames = stageResult.getCounterNames().get(MorphlineFn.METRICS_GROUP_NAME);
+    for (String counterName : counterNames) {
+      if (counterName.startsWith(LoadSolrBuilder.SOLR_LOCATOR_COUNTER_NAME_PREFIX)) {
+        String solrLocatorStr = counterName.substring(
+            LoadSolrBuilder.SOLR_LOCATOR_COUNTER_NAME_PREFIX.length()).trim();
+        SolrLocator solrLocator = new SolrLocator(
+            ConfigFactory.parseString(solrLocatorStr), 
+            new MorphlineContext.Builder().build());
+        LOG.info("Committing Solr at " + solrLocator);
+        SolrServer solrServer = solrLocator.getSolrServer();
+        float secs;
+        try {
+          long start = System.currentTimeMillis();
+          solrServer.commit(true, true, false);
+          secs = (System.currentTimeMillis() - start) / 1000.0f;
+        } catch (SolrServerException e) {
+          throw new RuntimeException(e);
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        } finally {
+          solrServer.shutdown();
+        }
+        LOG.info("Done committing Solr. Commit took " + secs + " secs");
+      }
+    }
   }
 
   private String getJobInfo(PipelineResult job, boolean isVerbose) {

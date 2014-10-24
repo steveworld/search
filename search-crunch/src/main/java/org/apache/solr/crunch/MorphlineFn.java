@@ -33,6 +33,7 @@ import org.apache.crunch.CrunchRuntimeException;
 import org.apache.crunch.DoFn;
 import org.apache.crunch.Emitter;
 import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.mapreduce.counters.Limits;
 import org.kitesdk.morphline.api.Command;
 import org.kitesdk.morphline.api.MorphlineContext;
 import org.kitesdk.morphline.api.Record;
@@ -82,6 +83,7 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
   private transient Meter numFailedRecords;
   private transient Meter numExceptionRecords;
 
+  static final String METRICS_GROUP_NAME = "morphline";
   private static final Logger LOG = LoggerFactory.getLogger(MorphlineFn.class);
   
   static {
@@ -103,6 +105,11 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
 
   @Override
   public void initialize() {
+    // Work-around for CDH-22673 (CrunchIndexerTool should send a commit to Solr on job success)
+    // This work-arounds overrides Limits.COUNTER_NAME_MAX 
+    // and thus ensures SolrLocator isn't cut off in the middle of the name because it's too long.
+    Limits.init(getConfiguration());
+    
     Utils.getLogConfigFile(getConfiguration());
     if (LOG.isTraceEnabled()) {
       TreeMap map = new TreeMap();
@@ -228,7 +235,7 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
   }
 
   private void addCounting(String metricName, Counting value, long scale) {
-    increment("morphline", metricName, value.getCount() / scale);
+    increment(METRICS_GROUP_NAME, metricName, value.getCount() / scale);
   }
 
   private Record getRecord(PathParts parts) {
