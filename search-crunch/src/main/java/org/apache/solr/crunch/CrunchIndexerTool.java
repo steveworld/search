@@ -489,7 +489,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
         }
         
         if (isDryRun) {
-          LOG.info("Skipped committing Solr because of --dry-run CLI flag");          
+          LOG.info("Skipped committing Solr because --dry-run option is enabled");          
         } else {
           LOG.info("Done committing Solr. Commit took " + secs + " secs");
         }
