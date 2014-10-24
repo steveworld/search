@@ -212,7 +212,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
   
       writeOutput(opts, pipeline, collection);
         
-      if (!done(pipeline, opts.isVerbose)) {
+      if (!done(pipeline, opts.isVerbose, opts.isDryRun)) {
         return 1; // job failed
       }
       float secs = (System.currentTimeMillis() - programStartTime) / 1000.0f;
@@ -442,7 +442,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
     return table.values();
   }
 
-  private boolean done(Pipeline job, boolean isVerbose) {
+  private boolean done(Pipeline job, boolean isVerbose, boolean isDryRun) {
     if (isVerbose) {
       job.enableDebug();
       job.getConfiguration().setBoolean("crunch.log.job.progress", true); // see class RuntimeParameters
@@ -452,7 +452,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
     pipelineResult = job.done();
     boolean success = pipelineResult.succeeded();
     if (success) {      
-      commitSolr(pipelineResult);
+      commitSolr(pipelineResult, isDryRun);
       LOG.info("Succeeded with pipeline: " + name + " " + getJobInfo(pipelineResult, isVerbose));
     } else {
       LOG.error("Pipeline failed: " + name + " " + getJobInfo(pipelineResult, isVerbose));
@@ -461,7 +461,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
   }
 
   // Implements CDH-22673 (CrunchIndexerTool should send a commit to Solr on job success)
-  private void commitSolr(PipelineResult pipeResult) {
+  private void commitSolr(PipelineResult pipeResult, boolean isDryRun) {
     StageResult stageResult = pipeResult.getStageResults().get(0);
     Set<String> counterNames = stageResult.getCounterNames().get(MorphlineFn.METRICS_GROUP_NAME);
     for (String counterName : counterNames) {
@@ -476,7 +476,9 @@ public class CrunchIndexerTool extends Configured implements Tool {
         float secs;
         try {
           long start = System.currentTimeMillis();
-          solrServer.commit();
+          if (!isDryRun) {
+            solrServer.commit();
+          }
           secs = (System.currentTimeMillis() - start) / 1000.0f;
         } catch (SolrServerException e) {
           throw new RuntimeException(e);
@@ -485,7 +487,12 @@ public class CrunchIndexerTool extends Configured implements Tool {
         } finally {
           solrServer.shutdown();
         }
-        LOG.info("Done committing Solr. Commit took " + secs + " secs");
+        
+        if (isDryRun) {
+          LOG.info("Skipped committing Solr because of --dry-run CLI flag");          
+        } else {
+          LOG.info("Done committing Solr. Commit took " + secs + " secs");
+        }
       }
     }
   }

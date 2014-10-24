@@ -16,44 +16,15 @@
 package org.apache.solr.crunch;
 
 import org.apache.lucene.util.LuceneTestCase.SuppressCodecs;
-import org.apache.solr.crunch.CrunchIndexerToolOptions.PipelineType;
-import org.junit.After;
-import org.junit.Before;
 
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope.Scope;
 
 @ThreadLeakScope(Scope.NONE)
 @SuppressCodecs({"Lucene3x", "Lucene40"})
-public class LocalSparkIndexerToolTest extends MemoryCrunchIndexerToolTest {
+public class DryRunLocalSparkIndexerToolTest extends LocalSparkIndexerToolTest {
 
-  private String oldSparkMaster;
-  
-  private static final String SPARK_MASTER = "spark.master";
-
-  public LocalSparkIndexerToolTest() {
-    this(false);
+  public DryRunLocalSparkIndexerToolTest() {
+    super(true);
   }
-  
-  protected LocalSparkIndexerToolTest(boolean isDryRun) {
-    super(PipelineType.spark, isDryRun);
-  }
-  
-  @Before
-  public void setUp() throws Exception {
-    oldSparkMaster = System.getProperty(SPARK_MASTER);
-    super.setUp();
-    System.setProperty(SPARK_MASTER, "local");
-  }
-  
-  @After
-  public void tearDown() throws Exception {
-    if (oldSparkMaster == null) {
-      System.clearProperty(SPARK_MASTER);
-    } else {
-      System.setProperty(SPARK_MASTER, oldSparkMaster);
-    }
-    super.tearDown();
-  }
-
 }
