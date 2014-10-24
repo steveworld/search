@@ -476,7 +476,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
         float secs;
         try {
           long start = System.currentTimeMillis();
-          solrServer.commit(true, true, false);
+          solrServer.commit();
           secs = (System.currentTimeMillis() - start) / 1000.0f;
         } catch (SolrServerException e) {
           throw new RuntimeException(e);
