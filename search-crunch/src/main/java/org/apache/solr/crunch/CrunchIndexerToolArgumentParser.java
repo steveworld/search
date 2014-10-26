@@ -31,6 +31,7 @@ import net.sourceforge.argparse4j.inf.Argument;
 import net.sourceforge.argparse4j.inf.ArgumentGroup;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
+import net.sourceforge.argparse4j.inf.FeatureControl;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 import org.apache.avro.Schema;
@@ -301,6 +302,10 @@ final class CrunchIndexerToolArgumentParser {
         .help("Tuning knob that indicates the maximum number of MR mapper tasks to use. -1 indicates use all map slots " +
             "available on the cluster. This parameter only applies to non-splittable input files");
 
+    Argument noCommitArg = miscArgGroup.addArgument("--no-commit")
+        .action(Arguments.storeTrue())
+        .help(FeatureControl.SUPPRESS);
+
     Argument dryRunArg = miscArgGroup.addArgument("--dry-run")
         .action(Arguments.storeTrue())
         .help("Run the pipeline but print documents to stdout instead of loading them into Solr. " +
@@ -338,6 +343,7 @@ final class CrunchIndexerToolArgumentParser {
     opts.morphlineFile = ns.get(morphlineFileArg.getDest());
     opts.morphlineId = ns.get(morphlineIdArg.getDest());
     opts.pipelineType = ns.get(pipelineTypeArg.getDest());
+    opts.isNoCommit = (Boolean) ns.get(noCommitArg.getDest());
     opts.isDryRun = (Boolean) ns.get(dryRunArg.getDest());
     opts.isVerbose = (Boolean) ns.get(verboseArg.getDest());
 

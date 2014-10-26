@@ -112,6 +112,8 @@ public class MemoryCrunchIndexerToolTest extends AbstractSolrMorphlineZkTest {
     resetTest();
     testStreamTextInputFiles();
     resetTest();
+    testStreamTextInputFileWithNoCommit();
+    resetTest();
     testFileList();
     resetTest();
     testFileListWithScheme();
@@ -245,6 +247,16 @@ public class MemoryCrunchIndexerToolTest extends AbstractSolrMorphlineZkTest {
     String[] args = getInitialArgs(LOAD_SOLR_LINE);
     args = ObjectArrays.concat(args, new String[]{inputPath1, inputPath2}, String.class);    
     runIntoSolr(args, expected);
+  }
+  
+  private void testStreamTextInputFileWithNoCommit() throws Exception {
+    String inputPath = tmpDir.copyResourceFileName("test-documents/hello1.txt");
+    String[] expected = new String[] {"hello foo", "hello world"};
+    String[] args = getInitialArgs(LOAD_SOLR_LINE);
+    args = ObjectArrays.concat(args, inputPath);    
+    args = ObjectArrays.concat(args, "--no-commit");    
+    PipelineResult pipelineResult = runIntoSolr(args, expected);
+    Assert.assertTrue(pipelineResult.getStageResults().get(0).getCounterValue("morphline", "morphline.app.numRecords") > 0);
   }
   
   private void testFileList() throws Exception {

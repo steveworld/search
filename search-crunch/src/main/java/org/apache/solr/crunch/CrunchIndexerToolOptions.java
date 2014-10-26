@@ -37,6 +37,7 @@ final class CrunchIndexerToolOptions {
   File morphlineFile;
   String morphlineId;
   PipelineType pipelineType;
+  boolean isNoCommit;
   boolean isDryRun;
   File log4jConfigFile;
   boolean isVerbose;

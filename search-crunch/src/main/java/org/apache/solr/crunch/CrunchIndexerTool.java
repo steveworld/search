@@ -212,7 +212,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
   
       writeOutput(opts, pipeline, collection);
         
-      if (!done(pipeline, opts.isVerbose, opts.isDryRun)) {
+      if (!done(pipeline, opts)) {
         return 1; // job failed
       }
       float secs = (System.currentTimeMillis() - programStartTime) / 1000.0f;
@@ -442,7 +442,8 @@ public class CrunchIndexerTool extends Configured implements Tool {
     return table.values();
   }
 
-  private boolean done(Pipeline job, boolean isVerbose, boolean isDryRun) {
+  private boolean done(Pipeline job, CrunchIndexerToolOptions opts) {
+    boolean isVerbose = opts.isVerbose;
     if (isVerbose) {
       job.enableDebug();
       job.getConfiguration().setBoolean("crunch.log.job.progress", true); // see class RuntimeParameters
@@ -452,7 +453,9 @@ public class CrunchIndexerTool extends Configured implements Tool {
     pipelineResult = job.done();
     boolean success = pipelineResult.succeeded();
     if (success) {      
-      commitSolr(pipelineResult, isDryRun);
+      if (!opts.isNoCommit) {
+        commitSolr(pipelineResult, opts.isDryRun);
+      }
       LOG.info("Succeeded with pipeline: " + name + " " + getJobInfo(pipelineResult, isVerbose));
     } else {
       LOG.error("Pipeline failed: " + name + " " + getJobInfo(pipelineResult, isVerbose));
