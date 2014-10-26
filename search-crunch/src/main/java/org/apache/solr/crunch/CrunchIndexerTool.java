@@ -453,7 +453,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
     pipelineResult = job.done();
     boolean success = pipelineResult.succeeded();
     if (success) {      
-      if (!opts.isNoCommit) {
+      if (false && !opts.isNoCommit) {
         commitSolr(pipelineResult, opts.isDryRun);
       }
       LOG.info("Succeeded with pipeline: " + name + " " + getJobInfo(pipelineResult, isVerbose));
@@ -471,10 +471,10 @@ public class CrunchIndexerTool extends Configured implements Tool {
       if (counterName.startsWith(LoadSolrBuilder.SOLR_LOCATOR_COUNTER_NAME_PREFIX)) {
         String solrLocatorStr = counterName.substring(
             LoadSolrBuilder.SOLR_LOCATOR_COUNTER_NAME_PREFIX.length()).trim();
+        LOG.info("Committing Solr at " + solrLocatorStr);
         SolrLocator solrLocator = new SolrLocator(
             ConfigFactory.parseString(solrLocatorStr), 
             new MorphlineContext.Builder().build());
-        LOG.info("Committing Solr at " + solrLocator);
         SolrServer solrServer = solrLocator.getSolrServer();
         float secs;
         try {
