@@ -232,7 +232,7 @@ final class CrunchIndexerToolArgumentParser {
                     + "export myDependencyJarDir=target/lib # for build from git\n"
                     + "export myDependencyJarDir=/opt/cloudera/parcels/CDH/lib/search/lib/search-crunch # for CDH with parcels\n"
                     + "export myDependencyJarDir=/usr/lib/search/lib/search-crunch # for CDH with packages\n"
-                    + "export myDriverJar=$(find $myDriverJarDir -maxdepth 1 -name '*.jar' ! -name '*-job.jar' ! -name '*-sources.jar')\n"
+                    + "export myDriverJar=$(find $myDriverJarDir -maxdepth 1 -name 'search-crunch-*.jar' ! -name '*-job.jar' ! -name '*-sources.jar')\n"
                     + "export myDependencyJarFiles=$(find $myDependencyJarDir -name '*.jar' | sort | tr '\\n' ',' | head -c -1)\n"
                     + "export myDependencyJarPaths=$(find $myDependencyJarDir -name '*.jar' | sort | tr '\\n' ':' | head -c -1)\n"
                     + "\n"

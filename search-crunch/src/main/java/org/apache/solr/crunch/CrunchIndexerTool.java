@@ -27,6 +27,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -74,7 +75,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.crunch.CrunchIndexerToolOptions.PipelineType;
 import org.kitesdk.morphline.api.MorphlineContext;
 import org.kitesdk.morphline.api.TypedSettings;
-import org.kitesdk.morphline.solr.LoadSolrBuilder;
+import org.kitesdk.morphline.base.Compiler;
 import org.kitesdk.morphline.solr.SolrLocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,6 +85,7 @@ import parquet.avro.AvroParquetInputFormat;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
+import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
 
@@ -134,9 +136,6 @@ public class CrunchIndexerTool extends Configured implements Tool {
   int run(CrunchIndexerToolOptions opts) throws Exception {
     long programStartTime = System.currentTimeMillis();
     
-    // Workaround for CDH-22673 (CrunchIndexerTool should send a commit to Solr on job success)
-    getConf().setInt("mapreduce.job.counters.counter.name.max", 10000);
-
     if (opts.log4jConfigFile != null) {
       Utils.setLogConfigFile(opts.log4jConfigFile, getConf());
     }
@@ -209,10 +208,14 @@ public class CrunchIndexerTool extends Configured implements Tool {
           FilterFns.REJECT_ALL(), // aka dropRecord
           Avros.nulls() // trick to enable morphline to emit any kind of output data, including non-avro data
           );
-  
+
+      Config override = ConfigFactory.parseMap(morphlineVariables);
+      Config config = new Compiler().parse(opts.morphlineFile, override);
+      Config morphlineConfig = new Compiler().find(opts.morphlineId, config, opts.morphlineFile.getPath());
+      
       writeOutput(opts, pipeline, collection);
         
-      if (!done(pipeline, opts)) {
+      if (!done(pipeline, opts, morphlineConfig)) {
         return 1; // job failed
       }
       float secs = (System.currentTimeMillis() - programStartTime) / 1000.0f;
@@ -442,7 +445,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
     return table.values();
   }
 
-  private boolean done(Pipeline job, CrunchIndexerToolOptions opts) {
+  private boolean done(Pipeline job, CrunchIndexerToolOptions opts, Config morphlineConfig) {
     boolean isVerbose = opts.isVerbose;
     if (isVerbose) {
       job.enableDebug();
@@ -453,8 +456,8 @@ public class CrunchIndexerTool extends Configured implements Tool {
     pipelineResult = job.done();
     boolean success = pipelineResult.succeeded();
     if (success) {      
-      if (false && !opts.isNoCommit) {
-        commitSolr(pipelineResult, opts.isDryRun);
+      if (!opts.isNoCommit) {
+        commitSolr(morphlineConfig, opts.isDryRun);
       }
       LOG.info("Succeeded with pipeline: " + name + " " + getJobInfo(pipelineResult, isVerbose));
     } else {
@@ -464,37 +467,57 @@ public class CrunchIndexerTool extends Configured implements Tool {
   }
 
   // Implements CDH-22673 (CrunchIndexerTool should send a commit to Solr on job success)
-  private void commitSolr(PipelineResult pipeResult, boolean isDryRun) {
-    StageResult stageResult = pipeResult.getStageResults().get(0);
-    Set<String> counterNames = stageResult.getCounterNames().get(MorphlineFn.METRICS_GROUP_NAME);
-    for (String counterName : counterNames) {
-      if (counterName.startsWith(LoadSolrBuilder.SOLR_LOCATOR_COUNTER_NAME_PREFIX)) {
-        String solrLocatorStr = counterName.substring(
-            LoadSolrBuilder.SOLR_LOCATOR_COUNTER_NAME_PREFIX.length()).trim();
-        LOG.info("Committing Solr at " + solrLocatorStr);
-        SolrLocator solrLocator = new SolrLocator(
-            ConfigFactory.parseString(solrLocatorStr), 
-            new MorphlineContext.Builder().build());
-        SolrServer solrServer = solrLocator.getSolrServer();
-        float secs;
-        try {
-          long start = System.currentTimeMillis();
-          if (!isDryRun) {
-            solrServer.commit();
-          }
-          secs = (System.currentTimeMillis() - start) / 1000.0f;
-        } catch (SolrServerException e) {
-          throw new RuntimeException(e);
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        } finally {
-          solrServer.shutdown();
+  private void commitSolr(Config morphlineConfig, boolean isDryRun) {
+    Set<Map<String,Object>> solrLocatorMaps = new LinkedHashSet();
+    collectSolrLocators(morphlineConfig.root().unwrapped(), isDryRun, solrLocatorMaps);
+    LOG.debug("Committing Solr at all of: {} ", solrLocatorMaps);
+    for (Map<String,Object> solrLocatorMap : solrLocatorMaps) {
+      LOG.info("Committing Solr at {}", solrLocatorMap);
+      SolrLocator solrLocator = new SolrLocator(
+          ConfigFactory.parseMap(solrLocatorMap), 
+          new MorphlineContext.Builder().build());
+      SolrServer solrServer = solrLocator.getSolrServer();
+      float secs;
+      try {
+        long start = System.currentTimeMillis();
+        if (!isDryRun) {
+          solrServer.commit();
         }
-        
-        if (isDryRun) {
-          LOG.info("Skipped committing Solr because --dry-run option is enabled");          
+        secs = (System.currentTimeMillis() - start) / 1000.0f;
+      } catch (SolrServerException e) {
+        throw new RuntimeException(e);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      } finally {
+        solrServer.shutdown();
+      }
+      
+      if (isDryRun) {
+        LOG.info("Skipped committing Solr because --dry-run option is specified");          
+      } else {
+        LOG.info("Done committing Solr. Commit took " + secs + " secs");
+      }
+    }        
+  }
+  
+  private void collectSolrLocators(Object obj, boolean isDryRun, Set<Map<String,Object>> solrLocators) {
+    if (obj instanceof List) {
+      for (Object item : (List)obj) {
+        collectSolrLocators(item, isDryRun, solrLocators);
+      }
+    } else if (obj instanceof Map) {
+      for (Map.Entry<String,Object> entry : ((Map<String,Object>) obj).entrySet()) {
+        String key = entry.getKey();
+        if (key.equals("loadSolr")) {
+          if (entry.getValue() instanceof Map) {
+            Map<String,Object> loadSolrMap = (Map<String,Object>)entry.getValue();
+            Object solrLocator = loadSolrMap.get("solrLocator");
+            if (solrLocator instanceof Map) {
+              solrLocators.add((Map<String,Object>)solrLocator);
+            }
+          }
         } else {
-          LOG.info("Done committing Solr. Commit took " + secs + " secs");
+          collectSolrLocators(entry.getValue(), isDryRun, solrLocators);
         }
       }
     }
