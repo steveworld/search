@@ -469,7 +469,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
   // Implements CDH-22673 (CrunchIndexerTool should send a commit to Solr on job success)
   private void commitSolr(Config morphlineConfig, boolean isDryRun) {
     Set<Map<String,Object>> solrLocatorMaps = new LinkedHashSet();
-    collectSolrLocators(morphlineConfig.root().unwrapped(), isDryRun, solrLocatorMaps);
+    collectSolrLocators(morphlineConfig.root().unwrapped(), solrLocatorMaps);
     LOG.debug("Committing Solr at all of: {} ", solrLocatorMaps);
     for (Map<String,Object> solrLocatorMap : solrLocatorMaps) {
       LOG.info("Committing Solr at {}", solrLocatorMap);
@@ -500,10 +500,10 @@ public class CrunchIndexerTool extends Configured implements Tool {
     }        
   }
   
-  private void collectSolrLocators(Object obj, boolean isDryRun, Set<Map<String,Object>> solrLocators) {
+  private void collectSolrLocators(Object obj, Set<Map<String,Object>> solrLocators) {
     if (obj instanceof List) {
       for (Object item : (List)obj) {
-        collectSolrLocators(item, isDryRun, solrLocators);
+        collectSolrLocators(item, solrLocators);
       }
     } else if (obj instanceof Map) {
       for (Map.Entry<String,Object> entry : ((Map<String,Object>) obj).entrySet()) {
@@ -517,7 +517,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
             }
           }
         } else {
-          collectSolrLocators(entry.getValue(), isDryRun, solrLocators);
+          collectSolrLocators(entry.getValue(), solrLocators);
         }
       }
     }
