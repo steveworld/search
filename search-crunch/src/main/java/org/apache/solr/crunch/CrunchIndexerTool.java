@@ -502,15 +502,15 @@ public class CrunchIndexerTool extends Configured implements Tool {
     }        
   }
   
-  private void collectSolrLocators(Object obj, Set<Map<String,Object>> solrLocators) {
-    if (obj instanceof List) {
-      for (Object item : (List)obj) {
+  private void collectSolrLocators(Object configNode, Set<Map<String,Object>> solrLocators) {
+    if (configNode instanceof List) {
+      for (Object item : (List)configNode) {
         collectSolrLocators(item, solrLocators);
       }
-    } else if (obj instanceof Map) {
+    } else if (configNode instanceof Map) {
       String loadSolrName = new LoadSolrBuilder().getNames().iterator().next();
       Preconditions.checkNotNull(loadSolrName);
-      for (Map.Entry<String,Object> entry : ((Map<String,Object>) obj).entrySet()) {
+      for (Map.Entry<String,Object> entry : ((Map<String,Object>) configNode).entrySet()) {
         if (entry.getKey().equals(loadSolrName)) {
           if (entry.getValue() instanceof Map) {
             Map<String,Object> loadSolrMap = (Map<String,Object>)entry.getValue();
