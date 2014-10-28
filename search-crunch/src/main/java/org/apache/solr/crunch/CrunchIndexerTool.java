@@ -76,6 +76,7 @@ import org.apache.solr.crunch.CrunchIndexerToolOptions.PipelineType;
 import org.kitesdk.morphline.api.MorphlineContext;
 import org.kitesdk.morphline.api.TypedSettings;
 import org.kitesdk.morphline.base.Compiler;
+import org.kitesdk.morphline.solr.LoadSolrBuilder;
 import org.kitesdk.morphline.solr.SolrLocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,6 +85,7 @@ import parquet.avro.AvroParquetInputFormat;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -506,12 +508,13 @@ public class CrunchIndexerTool extends Configured implements Tool {
         collectSolrLocators(item, solrLocators);
       }
     } else if (obj instanceof Map) {
+      String loadSolrName = new LoadSolrBuilder().getNames().iterator().next();
+      Preconditions.checkNotNull(loadSolrName);
       for (Map.Entry<String,Object> entry : ((Map<String,Object>) obj).entrySet()) {
-        String key = entry.getKey();
-        if (key.equals("loadSolr")) {
+        if (entry.getKey().equals(loadSolrName)) {
           if (entry.getValue() instanceof Map) {
             Map<String,Object> loadSolrMap = (Map<String,Object>)entry.getValue();
-            Object solrLocator = loadSolrMap.get("solrLocator");
+            Object solrLocator = loadSolrMap.get("solrLocator"); // see LoadSolrBuilder
             if (solrLocator instanceof Map) {
               solrLocators.add((Map<String,Object>)solrLocator);
             }
