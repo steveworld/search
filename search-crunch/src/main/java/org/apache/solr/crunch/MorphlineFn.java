@@ -33,6 +33,7 @@ import org.apache.crunch.CrunchRuntimeException;
 import org.apache.crunch.DoFn;
 import org.apache.crunch.Emitter;
 import org.apache.hadoop.fs.FileStatus;
+import org.apache.solr.security.util.job.JobSecurityUtil;
 import org.kitesdk.morphline.api.Command;
 import org.kitesdk.morphline.api.MorphlineContext;
 import org.kitesdk.morphline.api.Record;
@@ -122,7 +123,9 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
 
     Map<String, Object> mySettings = new HashMap(settings);
     mySettings.put(TypedSettings.TASK_CONTEXT_SETTING_NAME, getContext());
-    
+
+    loadSecureCredentials();
+
     morphlineContext = new MorphlineContext.Builder()
         .setExceptionHandler(faultTolerance)
         .setMetricRegistry(SharedMetricRegistries.getOrCreate(morphlineFileAndId))
@@ -209,6 +212,23 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
       Notifications.notifyShutdown(morphline);
     } finally {
       addMetricsToMRCounters(morphlineContext.getMetricRegistry());
+    }
+  }
+
+  private void loadSecureCredentials() {
+    // load secure credentials if present in configuration
+    String serviceName = getConfiguration().get(CrunchIndexerTool.SECURE_CONF_SERVICE_NAME);
+    try {
+      if (serviceName != null) {
+        if (getConfiguration().get(JobSecurityUtil.CREDENTIALS_FILE_LOCATION) == null) {
+          JobSecurityUtil.loadCredentialsForClients(getContext(), serviceName);
+        }
+        else {
+          JobSecurityUtil.loadCredentialsForClients(getConfiguration(), serviceName);
+        }
+      }
+    } catch (IOException e) {
+      throw new CrunchRuntimeException(e);
     }
   }
 
