@@ -18,6 +18,7 @@ package org.apache.solr.crunch;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -67,11 +68,13 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.security.util.job.JobSecurityUtil;
 import org.apache.solr.crunch.CrunchIndexerToolOptions.PipelineType;
 import org.kitesdk.morphline.api.MorphlineContext;
 import org.kitesdk.morphline.api.TypedSettings;
@@ -113,6 +116,16 @@ public class CrunchIndexerTool extends Configured implements Tool {
    * hadoop ... -D morphlineVariable.zkHost=127.0.0.1:2181/solr
    */
   static final String MORPHLINE_VARIABLE_PARAM = "morphlineVariable";
+  /**
+   * Token file location passed from CLI
+   */
+  static final String TOKEN_FILE_PARAM = "tokenFile";
+  /**
+   * In a secure setup, represents the configuration prop that
+   * has the serviceName for which the credentials are valid.
+   */
+  static final String SECURE_CONF_SERVICE_NAME =
+    "org.apache.solr.crunch.security.service.name";
 
   private static final Logger LOG = LoggerFactory.getLogger(CrunchIndexerTool.class);
 
@@ -144,16 +157,43 @@ public class CrunchIndexerTool extends Configured implements Tool {
 
     LOG.info("Initializing ...");
 
+    String morphlineFileContents = Files.toString(opts.morphlineFile, Charsets.UTF_8);
+    Map<String, String> morphlineVariables = new HashMap<String, String>();
+    for (Map.Entry<String, String> entry : getConf()) {
+      String variablePrefix = MORPHLINE_VARIABLE_PARAM + ".";
+      if (entry.getKey().startsWith(variablePrefix)) {
+        morphlineVariables.put(entry.getKey().substring(variablePrefix.length()), entry.getValue());
+      }
+    }
+
+    Config override = ConfigFactory.parseMap(morphlineVariables);
+    Config config = new Compiler().parse(opts.morphlineFile, override);
+    Config morphlineConfig = new Compiler().find(opts.morphlineId, config, opts.morphlineFile.getPath());
+    CredentialsCleanup credentialsCleanup = null;
+
     int mappers = 1;
     Pipeline pipeline; // coordinates pipeline creation and execution
     if (opts.pipelineType == PipelineType.memory) {
       pipeline = MemPipeline.getInstance();
       pipeline.setConfiguration(getConf());
     } else if (opts.pipelineType == PipelineType.mapreduce) {
+      Configuration mrConf = getConf();
+      SolrLocator secureLocator = getSecureSolrLocator(morphlineConfig,
+        System.getProperty("java.security.auth.login.config") != null);
+      if (secureLocator != null) {
+        String serviceName = secureLocator.getZkHost() != null ?
+          secureLocator.getZkHost() : secureLocator.getServerUrl();
+        Job job = new Job(getConf());
+        JobSecurityUtil.initCredentials(secureLocator.getSolrServer(), job, serviceName);
+        credentialsCleanup = new JobCredentialsCleanup(secureLocator.getSolrServer(), serviceName, job);
+        // pass the serviceName to the DoFn via the conf
+        job.getConfiguration().set(SECURE_CONF_SERVICE_NAME, serviceName);
+        mrConf = job.getConfiguration();
+      }
       pipeline = new MRPipeline(
           getClass(), 
           Utils.getShortClassName(getClass()), 
-          getConf());
+          mrConf);
 
       mappers = new JobClient(pipeline.getConfiguration()).getClusterStatus().getMaxMapTasks(); // MR1
       //mappers = job.getCluster().getClusterStatus().getMapSlotCapacity(); // Yarn only
@@ -168,6 +208,17 @@ public class CrunchIndexerTool extends Configured implements Tool {
       if (appName == null || appName.equals(getClass().getName())) {
         appName = Utils.getShortClassName(getClass());
       }
+      String tokenFileParam = getConf().get(TOKEN_FILE_PARAM);
+      File tokenFile = tokenFileParam == null ? null : new File(tokenFileParam);
+      SolrLocator secureLocator = getSecureSolrLocator(morphlineConfig, tokenFile != null);
+      if (secureLocator != null) {
+        String serviceName = secureLocator.getZkHost() != null ?
+          secureLocator.getZkHost() : secureLocator.getServerUrl();
+        JobSecurityUtil.initCredentials(tokenFile, getConf(), serviceName);
+        credentialsCleanup = new FileCredentialsCleanup(secureLocator.getSolrServer(), serviceName, getConf());
+        // pass the serviceName to the DoFn via the conf
+        getConf().set(SECURE_CONF_SERVICE_NAME, serviceName);
+      }
       pipeline = new SparkPipeline(master, appName, null, getConf());
     } else {
       throw new IllegalArgumentException("Unsupported --pipeline-type: " + opts.pipelineType);
@@ -178,15 +229,6 @@ public class CrunchIndexerTool extends Configured implements Tool {
       PCollection collection = extractInputCollection(opts, mappers, pipeline);
       if (collection == null) {
         return 0;
-      }
-
-      String morphlineFileContents = Files.toString(opts.morphlineFile, Charsets.UTF_8);
-      Map<String, String> morphlineVariables = new HashMap<String, String>();
-      for (Map.Entry<String, String> entry : pipeline.getConfiguration()) {
-        String variablePrefix = MORPHLINE_VARIABLE_PARAM + ".";
-        if (entry.getKey().startsWith(variablePrefix)) {
-          morphlineVariables.put(entry.getKey().substring(variablePrefix.length()), entry.getValue());
-        }
       }
       
       Map<String, Object> settings = new HashMap<String, Object>();
@@ -210,10 +252,6 @@ public class CrunchIndexerTool extends Configured implements Tool {
           FilterFns.REJECT_ALL(), // aka dropRecord
           Avros.nulls() // trick to enable morphline to emit any kind of output data, including non-avro data
           );
-
-      Config override = ConfigFactory.parseMap(morphlineVariables);
-      Config config = new Compiler().parse(opts.morphlineFile, override);
-      Config morphlineConfig = new Compiler().find(opts.morphlineId, config, opts.morphlineFile.getPath());
       
       writeOutput(opts, pipeline, collection);
         
@@ -224,11 +262,17 @@ public class CrunchIndexerTool extends Configured implements Tool {
       LOG.info("Success. Done. Program took {} secs. Goodbye.", secs);
       return 0;
     } finally {
-      // FIXME fails for yarn-cluster mode with spark unless hdfs permissions are fixed on tmp dir
-      if (tmpFile != null) {
-        FileSystem tmpFs = tmpFile.getFileSystem(pipeline.getConfiguration());
-        delete(tmpFile, false, tmpFs);
-        tmpFile = null;
+      try {
+        // FIXME fails for yarn-cluster mode with spark unless hdfs permissions are fixed on tmp dir
+        if (tmpFile != null) {
+          FileSystem tmpFs = tmpFile.getFileSystem(pipeline.getConfiguration());
+          delete(tmpFile, false, tmpFs);
+          tmpFile = null;
+        }
+      } finally {
+        if (credentialsCleanup != null) {
+          credentialsCleanup.cleanupCredentials();
+        }
       }
     }
   }
@@ -447,7 +491,8 @@ public class CrunchIndexerTool extends Configured implements Tool {
     return table.values();
   }
 
-  private boolean done(Pipeline job, CrunchIndexerToolOptions opts, Config morphlineConfig) {
+  private boolean done(Pipeline job, CrunchIndexerToolOptions opts, Config morphlineConfig)
+  throws IOException, SolrServerException {
     boolean isVerbose = opts.isVerbose;
     if (isVerbose) {
       job.enableDebug();
@@ -476,7 +521,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
     for (Map<String,Object> solrLocatorMap : solrLocatorMaps) {
       LOG.info("Committing Solr at {}", solrLocatorMap);
       SolrLocator solrLocator = new SolrLocator(
-          ConfigFactory.parseMap(solrLocatorMap), 
+          ConfigFactory.parseMap(solrLocatorMap),
           new MorphlineContext.Builder().build());
       SolrServer solrServer = solrLocator.getSolrServer();
       float secs;
@@ -524,6 +569,48 @@ public class CrunchIndexerTool extends Configured implements Tool {
         }
       }
     }
+  }
+
+  private SolrLocator getSecureSolrLocator(Config morphlineConfig, boolean isSecure) {
+    if (isSecure) {
+      Set<Map<String,Object>> solrLocatorMaps = new LinkedHashSet();
+      collectSolrLocators(morphlineConfig.root().unwrapped(), solrLocatorMaps);
+      SolrLocator zkHostLocator = null;
+      SolrLocator solrUrlLocator = null;
+      for (Map<String,Object> solrLocatorMap : solrLocatorMaps) {
+        SolrLocator solrLocator = new SolrLocator(
+          ConfigFactory.parseMap(solrLocatorMap),
+          new MorphlineContext.Builder().build());
+        if (solrLocator.getZkHost() != null) {
+          if (zkHostLocator == null) {
+            zkHostLocator = solrLocator;
+          } else if (!solrLocator.getZkHost().equals(zkHostLocator.getZkHost())) {
+            LOG.warn("For a secure job, found SolrLocator that species zkHost: "
+              + solrLocator.getZkHost() + " when a previous SolrLocator already "
+              + "defined a different zkHost: " + zkHostLocator.getZkHost() + ".  Only specifying "
+              + "the same zkHost is supported in secure mode, job may fail.");
+          }
+        } else if (solrLocator.getServerUrl() != null) {
+          if (solrUrlLocator == null) {
+            solrUrlLocator = solrLocator;
+          } else if (!solrLocator.getServerUrl().equals(solrUrlLocator.getServerUrl())) {
+            LOG.warn("For a secure job, found SolrLocator that species serverUrl: "
+              + solrLocator.getServerUrl() + " when a previous SolrLocator already "
+              + "defined a different serverUrl: " + solrUrlLocator.getServerUrl() + ".  Only specifying "
+              + "the same serverUrl is supported in secure mode, job may fail.");
+          }
+        }
+      }
+      if (zkHostLocator != null && solrUrlLocator != null) {
+        LOG.warn("For a secure job, found SolrLocator that species serverUrl: "
+          + solrUrlLocator.getServerUrl() + " when a previous SolrLocator already "
+          + "defined a zkHost: " + zkHostLocator.getServerUrl() + ".  Specifying multiple "
+          + "SolrLocators, where one specifies serverUrl and another specifies zkHost "
+          + "is not supported in secure mode (zkHost is preferred), job may fail");
+      }
+      return zkHostLocator != null ? zkHostLocator : solrUrlLocator;
+    }
+    return null;
   }
 
   private String getJobInfo(PipelineResult job, boolean isVerbose) {
@@ -584,4 +671,51 @@ public class CrunchIndexerTool extends Configured implements Tool {
     }
   }
 
+  private static abstract class CredentialsCleanup {
+    protected SolrServer solrServer;
+    protected String serviceName;
+
+    public CredentialsCleanup(SolrServer solrServer, String serviceName) {
+      this.solrServer = solrServer;
+      this.serviceName = serviceName;
+    }
+
+    public abstract void cleanupCredentials() throws IOException, SolrServerException;
+  }
+
+  private static class JobCredentialsCleanup extends CredentialsCleanup {
+    private Job job;
+
+    public JobCredentialsCleanup(SolrServer solrServer, String serviceName, Job job) {
+      super(solrServer, serviceName);
+      this.job = job;
+    }
+
+    @Override
+    public void cleanupCredentials() throws IOException, SolrServerException {
+      try {
+        JobSecurityUtil.cleanupCredentials(solrServer, job, serviceName);
+      } finally {
+        solrServer.shutdown();
+      }
+    }
+  }
+
+  private static class FileCredentialsCleanup extends CredentialsCleanup {
+    private Configuration conf;
+
+    public FileCredentialsCleanup(SolrServer solrServer, String serviceName, Configuration conf) {
+      super(solrServer, serviceName);
+      this.conf = conf;
+    }
+
+    @Override
+    public void cleanupCredentials() throws IOException, SolrServerException {
+       try {
+         JobSecurityUtil.cleanupCredentials(solrServer, conf, serviceName);
+       } finally {
+         solrServer.shutdown();
+       }
+    }
+  }
 }
