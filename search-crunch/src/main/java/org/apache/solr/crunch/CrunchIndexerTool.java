@@ -491,8 +491,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
     return table.values();
   }
 
-  private boolean done(Pipeline job, CrunchIndexerToolOptions opts, Config morphlineConfig)
-  throws IOException, SolrServerException {
+  private boolean done(Pipeline job, CrunchIndexerToolOptions opts, Config morphlineConfig) {
     boolean isVerbose = opts.isVerbose;
     if (isVerbose) {
       job.enableDebug();
