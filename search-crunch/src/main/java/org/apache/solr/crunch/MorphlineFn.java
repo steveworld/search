@@ -63,16 +63,15 @@ import com.typesafe.config.ConfigFactory;
 
 
 /**
- * Transforms the input with a configurable Morphline; 
- * This class should be considered private and it's API is subject to change without notice.
+ * Transforms the input with a configurable Morphline.
  */
 public class MorphlineFn<S,T> extends DoFn<S,T> {
 
   private String morphlineFileContents;
   private String morphlineId;
   private Map<String, String> morphlineVariables;
-  private Map<String, Object> settings;
-  private boolean isSplitable;
+  private Map<String, Object> morphlineSettings;
+  private boolean isSplittable;
   
   private transient MorphlineContext morphlineContext;
   private transient Command morphline;
@@ -90,7 +89,14 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
     setupMorphlineClasspath();
   }
 
-  public MorphlineFn(String morphlineFileContents, String morphlineId, Map<String, String> morphlineVariables, Map<String, Object> settings, boolean isSplitable) {
+  /** For public access use {@link Builder#build()} instead */  
+  private MorphlineFn(
+      String morphlineFileContents, 
+      String morphlineId, 
+      Map<String, String> morphlineVariables, 
+      Map<String, Object> morphlineSettings, 
+      boolean isSplittable) {
+    
     if (morphlineFileContents == null || morphlineFileContents.trim().length() == 0) {
       throw new IllegalArgumentException("Missing morphlineFileContents");
     }
@@ -98,9 +104,9 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
     this.morphlineId = morphlineId;
     Preconditions.checkNotNull(morphlineVariables);
     this.morphlineVariables = morphlineVariables;
-    Preconditions.checkNotNull(settings);
-    this.settings = settings;
-    this.isSplitable = isSplitable;
+    Preconditions.checkNotNull(morphlineSettings);
+    this.morphlineSettings = morphlineSettings;
+    this.isSplittable = isSplittable;
   }
 
   @Override
@@ -121,7 +127,7 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
         getConfiguration().getBoolean(FaultTolerance.IS_IGNORING_RECOVERABLE_EXCEPTIONS, false),
         getConfiguration().get(FaultTolerance.RECOVERABLE_EXCEPTION_CLASSES));
 
-    Map<String, Object> mySettings = new HashMap(settings);
+    Map<String, Object> mySettings = new HashMap(morphlineSettings);
     mySettings.put(TypedSettings.TASK_CONTEXT_SETTING_NAME, getContext());
 
     loadSecureCredentials();
@@ -172,7 +178,7 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
     try {
       collector.setEmitter(emitter);
       Record record;
-      if (isSplitable) {
+      if (isSplittable) {
         record = new Record();
         record.put(Fields.ATTACHMENT_BODY, item);
       } else {
@@ -343,6 +349,7 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
     }    
   }
   
+  
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
   ///////////////////////////////////////////////////////////////////////////////
@@ -376,4 +383,52 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
 
   }
 
+  
+  ///////////////////////////////////////////////////////////////////////////////
+  // Nested classes:
+  ///////////////////////////////////////////////////////////////////////////////
+  public static final class Builder {
+
+    private String morphlineFileContents;
+    private String morphlineId;
+    private Map<String, String> morphlineVariables;
+    private Map<String, Object> settings;
+    private boolean isSplittable = false;
+    
+    public Builder() {}
+    
+    public Builder morphlineFileContents(String morphlineFileContents) {
+      this.morphlineFileContents = morphlineFileContents;
+      return this;
+    }
+    
+    public Builder morphlineId(String morphlineId) {
+      this.morphlineId = morphlineId;
+      return this;
+    }
+    
+    public Builder morphlineVariables(Map<String, String> morphlineVariables) {
+      this.morphlineVariables = morphlineVariables;
+      return this;
+    }
+    
+    public Builder morphlineSettings(Map<String,Object> settings) {
+      this.settings = settings;
+      return this;
+    }
+    
+    public Builder isSplittable(boolean isSplittable) {
+      this.isSplittable = isSplittable;
+      return this;
+    }    
+    
+    public DoFn build() {
+      return new MorphlineFn(
+        morphlineFileContents, 
+        morphlineId, 
+        morphlineVariables, 
+        settings, 
+        isSplittable);    
+    }
+  }
 }
