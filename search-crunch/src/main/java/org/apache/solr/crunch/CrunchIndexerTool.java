@@ -118,7 +118,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
   static final String MORPHLINE_VARIABLE_PARAM = "morphlineVariable";
   
   /**
-   * Token file location passed from CLI
+   * Token file location passed from CLI via -D option; to support secure delegation.
    */
   static final String TOKEN_FILE_PARAM = "tokenFile";
   
