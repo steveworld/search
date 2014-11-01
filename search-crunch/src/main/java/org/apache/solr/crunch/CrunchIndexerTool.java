@@ -116,10 +116,12 @@ public class CrunchIndexerTool extends Configured implements Tool {
    * hadoop ... -D morphlineVariable.zkHost=127.0.0.1:2181/solr
    */
   static final String MORPHLINE_VARIABLE_PARAM = "morphlineVariable";
+  
   /**
    * Token file location passed from CLI
    */
   static final String TOKEN_FILE_PARAM = "tokenFile";
+  
   /**
    * In a secure setup, represents the configuration prop that
    * has the serviceName for which the credentials are valid.
@@ -670,7 +672,12 @@ public class CrunchIndexerTool extends Configured implements Tool {
     }
   }
 
+  
+  ///////////////////////////////////////////////////////////////////////////////
+  // Nested classes:
+  ///////////////////////////////////////////////////////////////////////////////
   private static abstract class CredentialsCleanup {
+    
     protected SolrServer solrServer;
     protected String serviceName;
 
@@ -682,7 +689,12 @@ public class CrunchIndexerTool extends Configured implements Tool {
     public abstract void cleanupCredentials() throws IOException, SolrServerException;
   }
 
-  private static class JobCredentialsCleanup extends CredentialsCleanup {
+  
+  ///////////////////////////////////////////////////////////////////////////////
+  // Nested classes:
+  ///////////////////////////////////////////////////////////////////////////////
+  private static final class JobCredentialsCleanup extends CredentialsCleanup {
+    
     private Job job;
 
     public JobCredentialsCleanup(SolrServer solrServer, String serviceName, Job job) {
@@ -700,7 +712,12 @@ public class CrunchIndexerTool extends Configured implements Tool {
     }
   }
 
-  private static class FileCredentialsCleanup extends CredentialsCleanup {
+  
+  ///////////////////////////////////////////////////////////////////////////////
+  // Nested classes:
+  ///////////////////////////////////////////////////////////////////////////////
+  private static final class FileCredentialsCleanup extends CredentialsCleanup {
+    
     private Configuration conf;
 
     public FileCredentialsCleanup(SolrServer solrServer, String serviceName, Configuration conf) {
