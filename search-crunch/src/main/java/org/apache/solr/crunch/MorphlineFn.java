@@ -83,6 +83,8 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
   private transient Meter numExceptionRecords;
 
   static final String METRICS_GROUP_NAME = "morphline";
+  static final String METRICS_LIVE_COUNTER_NAME = MetricRegistry.name(Metrics.MORPHLINE_APP, Metrics.NUM_RECORDS, "live");
+  
   private static final Logger LOG = LoggerFactory.getLogger(MorphlineFn.class);
   
   static {
@@ -171,6 +173,9 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
 
   @Override
   public void process(S item, Emitter<T> emitter) {
+    // This live counter can be monitored while the task is running, not just after task termination:
+    increment(METRICS_GROUP_NAME, METRICS_LIVE_COUNTER_NAME); 
+    
     numRecords.mark();
     Timer.Context timerContext = mappingTimer.time();
     getContext().progress();
