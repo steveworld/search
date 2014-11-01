@@ -260,9 +260,6 @@ public class CrunchIndexerTool extends Configured implements Tool {
       if (!done(pipeline, opts, morphlineConfig)) {
         return 1; // job failed
       }
-      float secs = (System.currentTimeMillis() - programStartTime) / 1000.0f;
-      LOG.info("Success. Done. Program took {} secs. Goodbye.", secs);
-      return 0;
     } finally {
       try {
         // FIXME fails for yarn-cluster mode with spark unless hdfs permissions are fixed on tmp dir
@@ -277,6 +274,9 @@ public class CrunchIndexerTool extends Configured implements Tool {
         }
       }
     }
+    float secs = (System.currentTimeMillis() - programStartTime) / 1000.0f;
+    LOG.info("Success. Done. Program took {} secs. Goodbye.", secs);
+    return 0;
   }
 
   private PCollection extractInputCollection(CrunchIndexerToolOptions opts, int mappers, Pipeline pipeline)
@@ -520,7 +520,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
     collectSolrLocators(morphlineConfig.root().unwrapped(), solrLocatorMaps);
     LOG.debug("Committing Solr at all of: {} ", solrLocatorMaps);
     for (Map<String,Object> solrLocatorMap : solrLocatorMaps) {
-      LOG.info("Committing Solr at {}", solrLocatorMap);
+      LOG.info("Preparing commit of Solr at {}", solrLocatorMap);
       SolrLocator solrLocator = new SolrLocator(
           ConfigFactory.parseMap(solrLocatorMap),
           new MorphlineContext.Builder().build());
@@ -529,6 +529,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
       try {
         long start = System.currentTimeMillis();
         if (!isDryRun) {
+          LOG.info("Committing Solr at {}", solrLocatorMap);
           solrServer.commit();
         }
         secs = (System.currentTimeMillis() - start) / 1000.0f;
