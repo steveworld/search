@@ -391,8 +391,8 @@ public class MorphlineFn<S,T> extends DoFn<S,T> {
 
     private String morphlineFileContents;
     private String morphlineId;
-    private Map<String, String> morphlineVariables;
-    private Map<String, Object> settings;
+    private Map<String, String> morphlineVariables = new HashMap<String, String>();
+    private Map<String, Object> settings = new HashMap<String, Object>();
     private boolean isSplittable = false;
     
     public Builder() {}
