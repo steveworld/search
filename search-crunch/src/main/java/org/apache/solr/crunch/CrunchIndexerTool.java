@@ -236,13 +236,13 @@ public class CrunchIndexerTool extends Configured implements Tool {
       Map<String, Object> settings = new HashMap<String, Object>();
       settings.put(TypedSettings.DRY_RUN_SETTING_NAME, opts.isDryRun);
       
-      DoFn morphlineFn = new MorphlineFn(
-          morphlineFileContents, 
-          opts.morphlineId, 
-          morphlineVariables,
-          settings,
-          opts.inputFileFormat != null
-          );
+      DoFn morphlineFn = new MorphlineFn.Builder().
+          morphlineFileContents(morphlineFileContents). 
+          morphlineId(opts.morphlineId). 
+          morphlineVariables(morphlineVariables).
+          morphlineSettings(settings).
+          isSplittable(opts.inputFileFormat != null).
+          build();
       
       collection = collection.parallelDo(
           "morphline",
