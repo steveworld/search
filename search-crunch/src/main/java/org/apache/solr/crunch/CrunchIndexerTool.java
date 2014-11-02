@@ -236,7 +236,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
       Map<String, Object> settings = new HashMap<String, Object>();
       settings.put(TypedSettings.DRY_RUN_SETTING_NAME, opts.isDryRun);
       
-      DoFn morphlineFn = new MorphlineFn.Builder().
+      DoFn morphlineFn = new MorphlineFnBuilder().
           morphlineFileContents(morphlineFileContents). 
           morphlineId(opts.morphlineId). 
           morphlineVariables(morphlineVariables).
