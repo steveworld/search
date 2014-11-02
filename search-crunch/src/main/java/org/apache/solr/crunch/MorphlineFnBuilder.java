@@ -75,7 +75,7 @@ public final class MorphlineFnBuilder<S,T> {
   
   public MorphlineFnBuilder() {}
   
-  public MorphlineFnBuilder morphlineFileContents(String morphlineFileContents) {
+  public MorphlineFnBuilder<S,T> morphlineFileContents(String morphlineFileContents) {
     if (morphlineFileContents == null || morphlineFileContents.trim().length() == 0) {
       throw new IllegalArgumentException("Missing morphlineFileContents");
     }
@@ -83,30 +83,30 @@ public final class MorphlineFnBuilder<S,T> {
     return this;
   }
   
-  public MorphlineFnBuilder morphlineId(String morphlineId) {
+  public MorphlineFnBuilder<S,T> morphlineId(String morphlineId) {
     this.morphlineId = morphlineId;
     return this;
   }
   
-  public MorphlineFnBuilder morphlineVariables(Map<String, String> morphlineVariables) {
+  public MorphlineFnBuilder<S,T> morphlineVariables(Map<String, String> morphlineVariables) {
     Preconditions.checkNotNull(morphlineVariables);
     this.morphlineVariables = morphlineVariables;
     return this;
   }
   
-  public MorphlineFnBuilder morphlineSettings(Map<String,Object> settings) {
+  public MorphlineFnBuilder<S,T> morphlineSettings(Map<String,Object> settings) {
     Preconditions.checkNotNull(settings);
     this.settings = settings;
     return this;
   }
   
-  public MorphlineFnBuilder isSplittable(boolean isSplittable) {
+  public MorphlineFnBuilder<S,T> isSplittable(boolean isSplittable) {
     this.isSplittable = isSplittable;
     return this;
   }    
   
   public DoFn<S,T> build() {
-    return new MorphlineFn(
+    return new MorphlineFn<S,T>(
       morphlineFileContents, 
       morphlineId, 
       morphlineVariables, 
