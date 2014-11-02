@@ -24,7 +24,7 @@ import org.apache.crunch.Emitter;
  * A DoFn that immediately sends progress heartbeats to the job tracker in order to avoid timeouts
  * for long-running tasks.
  */
-public final class ProgressFn<T> extends DoFn<T,T> {
+final class ProgressFn<T> extends DoFn<T,T> {
 
   @Override
   public void process(T item, Emitter<T> emitter) {
