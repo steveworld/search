@@ -24,7 +24,7 @@ import org.apache.crunch.Emitter;
  * A DoFn that periodically sends progress heartbeats to the job tracker in order to avoid timeouts
  * for long-running tasks.
  */
-public final class HeartbeatFn<T> extends DoFn<T,T> {
+final class HeartbeatFn<T> extends DoFn<T,T> {
 
   private transient HeartBeater heartBeater;
 
