@@ -186,8 +186,9 @@ public class CrunchIndexerTool extends Configured implements Tool {
         String serviceName = secureLocator.getZkHost() != null ?
           secureLocator.getZkHost() : secureLocator.getServerUrl();
         Job job = new Job(getConf());
-        JobSecurityUtil.initCredentials(secureLocator.getSolrServer(), job, serviceName);
-        credentialsCleanup = new JobCredentialsCleanup(secureLocator.getSolrServer(), serviceName, job);
+        SolrServer solrServer = secureLocator.getSolrServer();
+        JobSecurityUtil.initCredentials(solrServer, job, serviceName);
+        credentialsCleanup = new JobCredentialsCleanup(solrServer, serviceName, job);
         // pass the serviceName to the DoFn via the conf
         job.getConfiguration().set(SECURE_CONF_SERVICE_NAME, serviceName);
         mrConf = job.getConfiguration();
