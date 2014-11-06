@@ -171,7 +171,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
     Config override = ConfigFactory.parseMap(morphlineVariables);
     Config config = new Compiler().parse(opts.morphlineFile, override);
     Config morphlineConfig = new Compiler().find(opts.morphlineId, config, opts.morphlineFile.getPath());
-    CredentialsCleanup credentialsCleanup = null;
+    CredentialsExecutor credentialsExecutor = null;
 
     int mappers = 1;
     Pipeline pipeline; // coordinates pipeline creation and execution
@@ -188,7 +188,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
         Job job = new Job(getConf());
         SolrServer solrServer = secureLocator.getSolrServer();
         JobSecurityUtil.initCredentials(solrServer, job, serviceName);
-        credentialsCleanup = new JobCredentialsCleanup(solrServer, serviceName, job);
+        credentialsExecutor = new JobCredentialsExecutor(solrServer, serviceName, job);
         // pass the serviceName to the DoFn via the conf
         job.getConfiguration().set(SECURE_CONF_SERVICE_NAME, serviceName);
         mrConf = job.getConfiguration();
@@ -217,7 +217,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
         String serviceName = secureLocator.getZkHost() != null ?
           secureLocator.getZkHost() : secureLocator.getServerUrl();
         JobSecurityUtil.initCredentials(new File(tokenFileParam), getConf(), serviceName);
-        credentialsCleanup = new FileCredentialsCleanup(secureLocator.getSolrServer(), serviceName, getConf());
+        credentialsExecutor = new FileCredentialsExecutor(secureLocator.getSolrServer(), serviceName, getConf());
         // pass the serviceName to the DoFn via the conf
         getConf().set(SECURE_CONF_SERVICE_NAME, serviceName);
       }
@@ -257,7 +257,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
       
       writeOutput(opts, pipeline, collection);
         
-      if (!done(pipeline, opts, morphlineConfig)) {
+      if (!done(pipeline, opts, morphlineConfig, credentialsExecutor)) {
         return 1; // job failed
       }
     } finally {
@@ -269,8 +269,8 @@ public class CrunchIndexerTool extends Configured implements Tool {
           tmpFile = null;
         }
       } finally {
-        if (credentialsCleanup != null) {
-          credentialsCleanup.cleanupCredentials();
+        if (credentialsExecutor != null) {
+          credentialsExecutor.cleanupCredentials();
         }
       }
     }
@@ -493,7 +493,8 @@ public class CrunchIndexerTool extends Configured implements Tool {
     return table.values();
   }
 
-  private boolean done(Pipeline job, CrunchIndexerToolOptions opts, Config morphlineConfig) {
+  private boolean done(Pipeline job, CrunchIndexerToolOptions opts, Config morphlineConfig,
+      CredentialsExecutor credentialsExecutor) {
     boolean isVerbose = opts.isVerbose;
     if (isVerbose) {
       job.enableDebug();
@@ -505,7 +506,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
     boolean success = pipelineResult.succeeded();
     if (success) {      
       if (!opts.isNoCommit) {
-        commitSolr(morphlineConfig, opts.isDryRun);
+        commitSolr(morphlineConfig, opts.isDryRun, credentialsExecutor);
       }
       LOG.info("Succeeded with pipeline: " + name + " " + getJobInfo(pipelineResult, isVerbose));
     } else {
@@ -515,10 +516,11 @@ public class CrunchIndexerTool extends Configured implements Tool {
   }
 
   // Implements CDH-22673 (CrunchIndexerTool should send a commit to Solr on job success)
-  private void commitSolr(Config morphlineConfig, boolean isDryRun) {
+  private void commitSolr(Config morphlineConfig, boolean isDryRun, CredentialsExecutor credentialsExecutor) {
     Set<Map<String,Object>> solrLocatorMaps = new LinkedHashSet();
     collectSolrLocators(morphlineConfig.root().unwrapped(), solrLocatorMaps);
     LOG.debug("Committing Solr at all of: {} ", solrLocatorMaps);
+    boolean shouldLoadCredentials = credentialsExecutor != null;
     for (Map<String,Object> solrLocatorMap : solrLocatorMaps) {
       LOG.info("Preparing commit of Solr at {}", solrLocatorMap);
       SolrLocator solrLocator = new SolrLocator(
@@ -529,9 +531,13 @@ public class CrunchIndexerTool extends Configured implements Tool {
       try {
         long start = System.currentTimeMillis();
         if (!isDryRun) {
+          if (shouldLoadCredentials) {
+            credentialsExecutor.loadCredentialsForClients();
+          }
           LOG.info("Committing Solr at {}", solrLocatorMap);
           solrServer.commit();
         }
+        shouldLoadCredentials = false;
         secs = (System.currentTimeMillis() - start) / 1000.0f;
       } catch (SolrServerException e) {
         throw new RuntimeException(e);
@@ -674,28 +680,29 @@ public class CrunchIndexerTool extends Configured implements Tool {
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
   ///////////////////////////////////////////////////////////////////////////////
-  private static abstract class CredentialsCleanup {
-    
+  private static abstract class CredentialsExecutor {
+
     protected SolrServer solrServer;
     protected String serviceName;
 
-    public CredentialsCleanup(SolrServer solrServer, String serviceName) {
+    public CredentialsExecutor(SolrServer solrServer, String serviceName) {
       this.solrServer = solrServer;
       this.serviceName = serviceName;
     }
 
     public abstract void cleanupCredentials() throws IOException, SolrServerException;
+    public abstract void loadCredentialsForClients() throws IOException;
   }
 
   
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
   ///////////////////////////////////////////////////////////////////////////////
-  private static final class JobCredentialsCleanup extends CredentialsCleanup {
+  private static final class JobCredentialsExecutor extends CredentialsExecutor {
     
     private Job job;
 
-    public JobCredentialsCleanup(SolrServer solrServer, String serviceName, Job job) {
+    public JobCredentialsExecutor(SolrServer solrServer, String serviceName, Job job) {
       super(solrServer, serviceName);
       this.job = job;
     }
@@ -708,17 +715,21 @@ public class CrunchIndexerTool extends Configured implements Tool {
         solrServer.shutdown();
       }
     }
-  }
 
+    @Override
+    public void loadCredentialsForClients() throws IOException {
+      JobSecurityUtil.loadCredentialsForClients(job, serviceName);
+    }
+  }
   
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
   ///////////////////////////////////////////////////////////////////////////////
-  private static final class FileCredentialsCleanup extends CredentialsCleanup {
+  private static final class FileCredentialsExecutor extends CredentialsExecutor {
     
     private Configuration conf;
 
-    public FileCredentialsCleanup(SolrServer solrServer, String serviceName, Configuration conf) {
+    public FileCredentialsExecutor(SolrServer solrServer, String serviceName, Configuration conf) {
       super(solrServer, serviceName);
       this.conf = conf;
     }
@@ -730,6 +741,11 @@ public class CrunchIndexerTool extends Configured implements Tool {
        } finally {
          solrServer.shutdown();
        }
+    }
+
+    @Override
+    public void loadCredentialsForClients() throws IOException {
+      JobSecurityUtil.loadCredentialsForClients(conf, serviceName);
     }
   }
 }
