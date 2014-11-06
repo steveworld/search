@@ -180,8 +180,8 @@ public class CrunchIndexerTool extends Configured implements Tool {
       pipeline.setConfiguration(getConf());
     } else if (opts.pipelineType == PipelineType.mapreduce) {
       Configuration mrConf = getConf();
-      SolrLocator secureLocator = getSecureSolrLocator(morphlineConfig,
-        System.getProperty("java.security.auth.login.config") != null);
+      SolrLocator secureLocator = System.getProperty("java.security.auth.login.config") != null ? 
+          getSecureSolrLocator(morphlineConfig) : null;
       if (secureLocator != null) {
         String serviceName = secureLocator.getZkHost() != null ?
           secureLocator.getZkHost() : secureLocator.getServerUrl();
@@ -212,12 +212,11 @@ public class CrunchIndexerTool extends Configured implements Tool {
         appName = Utils.getShortClassName(getClass());
       }
       String tokenFileParam = getConf().get(TOKEN_FILE_PARAM);
-      File tokenFile = tokenFileParam == null ? null : new File(tokenFileParam);
-      SolrLocator secureLocator = getSecureSolrLocator(morphlineConfig, tokenFile != null);
+      SolrLocator secureLocator = tokenFileParam != null ? getSecureSolrLocator(morphlineConfig) : null;
       if (secureLocator != null) {
         String serviceName = secureLocator.getZkHost() != null ?
           secureLocator.getZkHost() : secureLocator.getServerUrl();
-        JobSecurityUtil.initCredentials(tokenFile, getConf(), serviceName);
+        JobSecurityUtil.initCredentials(new File(tokenFileParam), getConf(), serviceName);
         credentialsCleanup = new FileCredentialsCleanup(secureLocator.getSolrServer(), serviceName, getConf());
         // pass the serviceName to the DoFn via the conf
         getConf().set(SECURE_CONF_SERVICE_NAME, serviceName);
@@ -574,46 +573,43 @@ public class CrunchIndexerTool extends Configured implements Tool {
     }
   }
 
-  private SolrLocator getSecureSolrLocator(Config morphlineConfig, boolean isSecure) {
-    if (isSecure) {
-      Set<Map<String,Object>> solrLocatorMaps = new LinkedHashSet();
-      collectSolrLocators(morphlineConfig.root().unwrapped(), solrLocatorMaps);
-      SolrLocator zkHostLocator = null;
-      SolrLocator solrUrlLocator = null;
-      for (Map<String,Object> solrLocatorMap : solrLocatorMaps) {
-        SolrLocator solrLocator = new SolrLocator(
-          ConfigFactory.parseMap(solrLocatorMap),
-          new MorphlineContext.Builder().build());
-        if (solrLocator.getZkHost() != null) {
-          if (zkHostLocator == null) {
-            zkHostLocator = solrLocator;
-          } else if (!solrLocator.getZkHost().equals(zkHostLocator.getZkHost())) {
-            LOG.warn("For a secure job, found SolrLocator that species zkHost: "
-              + solrLocator.getZkHost() + " when a previous SolrLocator already "
-              + "defined a different zkHost: " + zkHostLocator.getZkHost() + ".  Only specifying "
-              + "the same zkHost is supported in secure mode, job may fail.");
-          }
-        } else if (solrLocator.getServerUrl() != null) {
-          if (solrUrlLocator == null) {
-            solrUrlLocator = solrLocator;
-          } else if (!solrLocator.getServerUrl().equals(solrUrlLocator.getServerUrl())) {
-            LOG.warn("For a secure job, found SolrLocator that species serverUrl: "
-              + solrLocator.getServerUrl() + " when a previous SolrLocator already "
-              + "defined a different serverUrl: " + solrUrlLocator.getServerUrl() + ".  Only specifying "
-              + "the same serverUrl is supported in secure mode, job may fail.");
-          }
+  private SolrLocator getSecureSolrLocator(Config morphlineConfig) {
+    Set<Map<String,Object>> solrLocatorMaps = new LinkedHashSet();
+    collectSolrLocators(morphlineConfig.root().unwrapped(), solrLocatorMaps);
+    SolrLocator zkHostLocator = null;
+    SolrLocator solrUrlLocator = null;
+    for (Map<String,Object> solrLocatorMap : solrLocatorMaps) {
+      SolrLocator solrLocator = new SolrLocator(
+        ConfigFactory.parseMap(solrLocatorMap),
+        new MorphlineContext.Builder().build());
+      if (solrLocator.getZkHost() != null) {
+        if (zkHostLocator == null) {
+          zkHostLocator = solrLocator;
+        } else if (!solrLocator.getZkHost().equals(zkHostLocator.getZkHost())) {
+          LOG.warn("For a secure job, found SolrLocator that species zkHost: "
+            + solrLocator.getZkHost() + " when a previous SolrLocator already "
+            + "defined a different zkHost: " + zkHostLocator.getZkHost() + ".  Only specifying "
+            + "the same zkHost is supported in secure mode, job may fail.");
+        }
+      } else if (solrLocator.getServerUrl() != null) {
+        if (solrUrlLocator == null) {
+          solrUrlLocator = solrLocator;
+        } else if (!solrLocator.getServerUrl().equals(solrUrlLocator.getServerUrl())) {
+          LOG.warn("For a secure job, found SolrLocator that species serverUrl: "
+            + solrLocator.getServerUrl() + " when a previous SolrLocator already "
+            + "defined a different serverUrl: " + solrUrlLocator.getServerUrl() + ".  Only specifying "
+            + "the same serverUrl is supported in secure mode, job may fail.");
         }
       }
-      if (zkHostLocator != null && solrUrlLocator != null) {
-        LOG.warn("For a secure job, found SolrLocator that species serverUrl: "
-          + solrUrlLocator.getServerUrl() + " when a previous SolrLocator already "
-          + "defined a zkHost: " + zkHostLocator.getServerUrl() + ".  Specifying multiple "
-          + "SolrLocators, where one specifies serverUrl and another specifies zkHost "
-          + "is not supported in secure mode (zkHost is preferred), job may fail");
-      }
-      return zkHostLocator != null ? zkHostLocator : solrUrlLocator;
     }
-    return null;
+    if (zkHostLocator != null && solrUrlLocator != null) {
+      LOG.warn("For a secure job, found SolrLocator that species serverUrl: "
+        + solrUrlLocator.getServerUrl() + " when a previous SolrLocator already "
+        + "defined a zkHost: " + zkHostLocator.getServerUrl() + ".  Specifying multiple "
+        + "SolrLocators, where one specifies serverUrl and another specifies zkHost "
+        + "is not supported in secure mode (zkHost is preferred), job may fail");
+    }
+    return zkHostLocator != null ? zkHostLocator : solrUrlLocator;
   }
 
   private String getJobInfo(PipelineResult job, boolean isVerbose) {
