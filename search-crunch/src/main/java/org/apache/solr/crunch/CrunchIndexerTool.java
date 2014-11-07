@@ -50,6 +50,7 @@ import org.apache.crunch.TableSource;
 import org.apache.crunch.fn.FilterFns;
 import org.apache.crunch.impl.mem.MemPipeline;
 import org.apache.crunch.impl.mr.MRPipeline;
+import org.apache.crunch.impl.mr.run.RuntimeParameters;
 import org.apache.crunch.impl.spark.SparkPipeline;
 import org.apache.crunch.io.From;
 import org.apache.crunch.io.impl.FileTableSourceImpl;
@@ -498,7 +499,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
     boolean isVerbose = opts.isVerbose;
     if (isVerbose) {
       job.enableDebug();
-      job.getConfiguration().setBoolean("crunch.log.job.progress", true); // see class RuntimeParameters
+      job.getConfiguration().setBoolean(RuntimeParameters.LOG_JOB_PROGRESS, true);
     }    
     String name = job.getName();
     LOG.debug("Running pipeline: " + name);
