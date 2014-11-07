@@ -568,7 +568,7 @@ public class CrunchIndexerTool extends Configured implements Tool {
         if (entry.getKey().equals(loadSolrName)) {
           if (entry.getValue() instanceof Map) {
             Map<String,Object> loadSolrMap = (Map<String,Object>)entry.getValue();
-            Object solrLocator = loadSolrMap.get("solrLocator"); // see LoadSolrBuilder
+            Object solrLocator = loadSolrMap.get(LoadSolrBuilder.SOLR_LOCATOR_PARAM);
             if (solrLocator instanceof Map) {
               solrLocators.add((Map<String,Object>)solrLocator);
             }
