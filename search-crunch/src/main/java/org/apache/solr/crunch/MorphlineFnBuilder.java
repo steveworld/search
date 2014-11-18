@@ -138,7 +138,7 @@ public final class MorphlineFnBuilder<S,T> {
     static final String METRICS_GROUP_NAME = "morphline";
     static final String METRICS_LIVE_COUNTER_NAME = MetricRegistry.name(Metrics.MORPHLINE_APP, Metrics.NUM_RECORDS, "live");
     
-    private static final Logger LOG = LoggerFactory.getLogger(MorphlineFnBuilder.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MorphlineFn.class);
     
     static {
       setupMorphlineClasspath();
@@ -239,6 +239,7 @@ public final class MorphlineFnBuilder<S,T> {
           record = new Record();
           record.put(Fields.ATTACHMENT_BODY, item);
         } else {
+          LOG.info("Processing file {}", item);
           PathParts parts = new PathParts(item.toString(), getConfiguration());
           record = getRecord(parts);
           if (record == null) {
