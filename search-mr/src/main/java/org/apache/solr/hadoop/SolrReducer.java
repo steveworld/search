@@ -39,7 +39,7 @@ import com.google.common.base.Preconditions;
  * per reducer. Each such reducer and Solr server can be seen as a (micro)
  * shard. The Solr servers store their data in HDFS.
  * 
- * More specifically, this class consumes a list of <docId, SolrInputDocument>
+ * More specifically, this class consumes a list of &lt;docId, SolrInputDocument&gt;
  * pairs, sorted by docId, and sends them to an embedded Solr server to generate
  * a Solr index shard from the documents.
  */
@@ -74,7 +74,7 @@ public class SolrReducer extends Reducer<Text, SolrInputDocumentWritable, Text, 
     
     this.heartBeater = new HeartBeater(context);
   }
-
+  
   protected void reduce(Text key, Iterable<SolrInputDocumentWritable> values, Context context) throws IOException, InterruptedException {
     heartBeater.needHeartBeat();
     try {

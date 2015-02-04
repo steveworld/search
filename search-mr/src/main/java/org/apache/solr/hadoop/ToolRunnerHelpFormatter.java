@@ -24,6 +24,7 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import com.google.common.base.Charsets;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.helper.ASCIITextWidthCounter;
@@ -33,7 +34,7 @@ import org.apache.hadoop.util.ToolRunner;
 
 /**
  * Nicely formats the output of
- * {@link ToolRunner#printGenericCommandUsage(PrintStream) with the same look and feel that argparse4j uses for help text.
+ * {@link ToolRunner#printGenericCommandUsage(PrintStream)} with the same look and feel that argparse4j uses for help text.
  */
 class ToolRunnerHelpFormatter {
   
@@ -42,7 +43,7 @@ class ToolRunnerHelpFormatter {
     String msg;
     try {
       ToolRunner.printGenericCommandUsage(new PrintStream(bout, true, "UTF-8"));
-      msg = new String(bout.toByteArray(), "UTF-8");
+      msg = new String(bout.toByteArray(), Charsets.UTF_8);
     } catch (UnsupportedEncodingException e) {
       throw new RuntimeException(e); // unreachable
     }

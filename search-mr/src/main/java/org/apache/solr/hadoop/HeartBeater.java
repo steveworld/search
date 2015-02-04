@@ -16,6 +16,7 @@
  */
 package org.apache.solr.hadoop;
 
+import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -94,12 +95,12 @@ public class HeartBeater extends Thread {
           if (threadsNeedingHeartBeat > 0) {
             progress.progress();
             if (LOG.isInfoEnabled()) {
-              LOG.info(String.format("Issuing heart beat for %d threads",
+              LOG.info(String.format(Locale.ENGLISH, "Issuing heart beat for %d threads",
                   threadsNeedingHeartBeat));
             }
           } else {
             if (LOG.isInfoEnabled()) {
-              LOG.info(String.format("heartbeat skipped count %d",
+              LOG.info(String.format(Locale.ENGLISH, "heartbeat skipped count %d",
                   threadsNeedingHeartBeat));
             }
           }

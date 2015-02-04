@@ -16,22 +16,21 @@
  */
 package org.apache.solr.hadoop;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import com.google.common.base.Charsets;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
@@ -43,8 +42,6 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.io.Files;
 
 public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
 
@@ -124,11 +121,10 @@ public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
   /**
    * configure the job to output zip files of the output index, or full
    * directory trees. Zip files are about 1/5th the size of the raw index, and
-   * much faster to write, but take more cpu to create. zip files are ideal for
-   * deploying into a katta managed shard.
+   * much faster to write, but take more cpu to create.
    * 
-   * @param output
-   * @param conf
+   * @param output true if should output zip files
+   * @param conf to use
    */
   public static void setOutputZipFormat(boolean output, Configuration conf) {
     conf.setBoolean(OUTPUT_ZIP_FILE, output);
@@ -138,8 +134,8 @@ public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
    * return true if the output should be a zip file of the index, rather than
    * the raw index
    * 
-   * @param conf
-   * @return
+   * @param conf to use
+   * @return true if output zip files is on
    */
   public static boolean isOutputZipFormat(Configuration conf) {
     return conf.getBoolean(OUTPUT_ZIP_FILE, false);
@@ -163,7 +159,7 @@ public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
     Utils.getLogConfigFile(context.getConfiguration());
     Path workDir = getDefaultWorkFile(context, "");
     int batchSize = getBatchSize(context.getConfiguration());
-    return new SolrRecordWriter<K, V>(context, workDir, batchSize);
+    return new SolrRecordWriter<K,V>(context, workDir, batchSize);
   }
 
   public static void setupSolrHomeCache(File solrHomeDir, Job job) throws IOException{
@@ -175,38 +171,10 @@ public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
     return createSolrHomeZip(solrHomeDir, false);
   }
 
-  private static void writeReplacementSolrConfigSite(File solrconfigsite) throws IOException {
-    BufferedWriter bw = new BufferedWriter(new FileWriter(solrconfigsite));
-    bw.write("<dataDir></dataDir>");
-    bw.close();
-  }
-
   private static File createSolrHomeZip(File solrHomeDir, boolean safeToModify) throws IOException {
     if (solrHomeDir == null || !(solrHomeDir.exists() && solrHomeDir.isDirectory())) {
       throw new IOException("Invalid solr home: " + solrHomeDir);
     }
-    // solrconfig-site.xml may have an unneeded variable with no default value ${solr.host},
-    // which will cause the job to fail.  Replace it.
-    File solrConfigSite = new File(solrHomeDir, "conf" + File.separator + "solrconfig-site.xml");
-    if (solrConfigSite.isFile()) {
-      if (!safeToModify) {
-        // not safe to modify, let's copy the contents over to a temp directory
-        File newTmpDir = Files.createTempDir();
-        newTmpDir.deleteOnExit();
-        LOG.debug("Creating temporary copy of solr home dir at: " + newTmpDir.getAbsolutePath());
-        FileUtils.copyDirectory(solrHomeDir, newTmpDir);
-        return createSolrHomeZip(newTmpDir, true);
-      }
-      // find a suitable backup name
-      File backup = new File(solrHomeDir, solrConfigSite.getName() + ".bak");
-      while (backup.exists()) {
-        backup = new File(solrHomeDir, backup.getName() + ".bak");
-      }
-      LOG.debug("Moving existing " + solrConfigSite.getName() + " to " + backup.getName());
-      Files.move(solrConfigSite, backup);
-      writeReplacementSolrConfigSite(solrConfigSite);
-    }
-
     File solrHomeZip = File.createTempFile("solr", ".zip");
     createZip(solrHomeDir, solrHomeZip);
     return solrHomeZip;
@@ -244,7 +212,7 @@ public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
       /** If the directory does not exist, and is required, bail out */
       if (!(configDirExists = configDir.exists())
           && SolrRecordWriter.isRequiredConfigDirectory(allowedDirectory)) {
-        throw new IOException(String.format(
+        throw new IOException(String.format(Locale.ENGLISH,
             "required configuration directory %s is not present in %s",
             allowedDirectory, dir));
       }
@@ -272,11 +240,23 @@ public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
       zos.flush();
       zos.closeEntry();
     }
+    
+    ZipEntry ze = new ZipEntry("solr.xml");
+    zos.putNextEntry(ze);
+    zos.write("<cores><core name=\"collection1\" instanceDir=\".\"/></cores>".getBytes(Charsets.UTF_8));
+    zos.flush();
+    zos.closeEntry();
     zos.close();
   }
 
   private static void listFiles(File dir, Set<File> files) throws IOException {
     File[] list = dir.listFiles();
+    
+    if (list == null && dir.isFile())  {
+      files.add(dir);
+      return;
+    }
+    
     for (File f : list) {
       if (f.isFile()) {
         files.add(f);

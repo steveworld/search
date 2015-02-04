@@ -22,36 +22,51 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.lang.reflect.Array;
+import com.google.common.base.Charsets;
 import java.util.Arrays;
-import java.util.Collection;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
+
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MiniMRCluster;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.hadoop.util.JarFinder;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.solr.handler.extraction.ExtractingParams;
+import org.apache.lucene.util.Constants;
+import org.apache.lucene.util.LuceneTestCase.Slow;
+import org.apache.solr.SolrTestCaseJ4;
+import org.apache.solr.SolrTestCaseJ4.SuppressSSL;
+import org.apache.solr.cloud.AbstractZkTestCase;
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(value = Parameterized.class)
-public class MorphlineBasicMiniMRTest extends Assert {
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakAction;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakAction.Action;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope.Scope;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakZombies;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakZombies.Consequence;
+
+@ThreadLeakAction({Action.WARN})
+@ThreadLeakLingering(linger = 0)
+@ThreadLeakZombies(Consequence.CONTINUE)
+@ThreadLeakScope(Scope.NONE)
+@Slow
+@SuppressSSL // SSL does not work with this test for currently unknown reasons
+public class MorphlineBasicMiniMRTest extends SolrTestCaseJ4 {
   
   private static final boolean ENABLE_LOCAL_JOB_RUNNER = false; // for debugging only
-  private static final String RESOURCES_DIR = "target/test-classes";
+  private static final String RESOURCES_DIR = getFile("morphlines-core.marker").getParent();  
   private static final String DOCUMENTS_DIR = RESOURCES_DIR + "/test-documents";
   private static final File MINIMR_CONF_DIR = new File(RESOURCES_DIR + "/solr/minimr");
   
@@ -64,30 +79,61 @@ public class MorphlineBasicMiniMRTest extends Assert {
   private final String inputAvroFile;
   private final int count;
   
+  private static String tempDir;
+  
+  private static File solrHomeDirectory;
+  
   protected MapReduceIndexerTool createTool() {
     return new MapReduceIndexerTool();
   }
 
-  @Parameters
-  public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][] {
-        { "sample-statuses-20120906-141433.avro", 2 },
-        { "sample-statuses-20120521-100919.avro", 20 }, 
-        { "sample-statuses-20120906-141433-medium.avro", 2104 }, 
-    });
-  }
+  public MorphlineBasicMiniMRTest() {
+    int data = random().nextInt(3);
+    switch (data) {
+      case 0:
+        this.inputAvroFile = "sample-statuses-20120906-141433.avro";
+        this.count = 2;
+        break;
+      case 1:
+        this.inputAvroFile = "sample-statuses-20120521-100919.avro";
+        this.count = 20;
+        break;
+      case 2:
+      this.inputAvroFile = "sample-statuses-20120906-141433-medium.avro";
+      this.count = 2104;
+        break;
+      default:
+        throw new RuntimeException("Test setup is broken");
+    }
 
-  public MorphlineBasicMiniMRTest(String inputAvroFile, int count) {
-    this.inputAvroFile = inputAvroFile;
-    this.count = count;
   }
 
   @BeforeClass
   public static void setupClass() throws Exception {
-    if (System.getProperty("hadoop.log.dir") == null) {
-      System.setProperty("hadoop.log.dir", "target");
-    }
-    int taskTrackers = 2;
+    solrHomeDirectory = createTempDir();
+    assumeTrue(
+        "Currently this test can only be run without the lucene test security policy in place",
+        System.getProperty("java.security.manager", "").equals(""));
+    
+    assumeFalse("HDFS tests were disabled by -Dtests.disableHdfs",
+        Boolean.parseBoolean(System.getProperty("tests.disableHdfs", "false")));
+    
+    assumeFalse("FIXME: This test does not work with Windows because of native library requirements", Constants.WINDOWS);
+    assumeFalse("FIXME: This test fails under Java 8 due to the Saxon dependency - see SOLR-1301", Constants.JRE_IS_MINIMUM_JAVA8);
+    assumeFalse("FIXME: This test fails under J9 due to the Saxon dependency - see SOLR-1301", System.getProperty("java.vm.info", "<?>").contains("IBM J9"));
+    
+    AbstractZkTestCase.SOLRHOME = solrHomeDirectory;
+    FileUtils.copyDirectory(MINIMR_CONF_DIR, solrHomeDirectory);
+    File dataDir = createTempDir();
+    tempDir = dataDir.getAbsolutePath();
+    new File(tempDir).mkdirs();
+    FileUtils.copyFile(new File(RESOURCES_DIR + "/custom-mimetypes.xml"), new File(tempDir + "/custom-mimetypes.xml"));
+    
+    UtilsForTests.setupMorphline(tempDir, "test-morphlines/solrCellDocumentTypes", true, RESOURCES_DIR);
+    
+    System.setProperty("hadoop.log.dir", new File(solrHomeDirectory, "logs").getAbsolutePath());
+    
+    int taskTrackers = 1;
     int dataNodes = 2;
 //    String proxyUser = System.getProperty("user.name");
 //    String proxyGroup = "g";
@@ -97,12 +143,21 @@ public class MorphlineBasicMiniMRTest extends Assert {
 //      sb.append(",").append(i.getCanonicalHostName());
 //    }
     
+    new File(dataDir, "nm-local-dirs").mkdirs();
+    
     System.setProperty("solr.hdfs.blockcache.enabled", "false");
+    
+    System.setProperty("test.build.dir", dataDir + File.separator + "hdfs" + File.separator + "test-build-dir");
+    System.setProperty("test.build.data", dataDir + File.separator + "hdfs" + File.separator + "build");
+    System.setProperty("test.cache.data", dataDir + File.separator + "hdfs" + File.separator + "cache");
 
     JobConf conf = new JobConf();
     conf.set("dfs.block.access.token.enable", "false");
     conf.set("dfs.permissions", "true");
     conf.set("hadoop.security.authentication", "simple");
+//    conf.set(YarnConfiguration.NM_LOCAL_DIRS, dataDir.getPath() + File.separator +  "nm-local-dirs");
+//    conf.set(YarnConfiguration.DEFAULT_NM_LOG_DIRS, dataDir + File.separator +  "nm-logs");
+    conf.set("testWorkDir", dataDir.getPath() + File.separator +  "testWorkDir");
 
     dfsCluster = new MiniDFSCluster(conf, dataNodes, true, null);
     FileSystem fileSystem = dfsCluster.getFileSystem();
@@ -124,6 +179,9 @@ public class MorphlineBasicMiniMRTest extends Assert {
   @AfterClass
   public static void teardownClass() throws Exception {
     System.clearProperty("solr.hdfs.blockcache.enabled");
+    System.clearProperty("test.build.dir");
+    System.clearProperty("test.build.data");
+    System.clearProperty("test.cache.data");
     if (mrCluster != null) {
       mrCluster.shutdown();
       mrCluster = null;
@@ -135,7 +193,11 @@ public class MorphlineBasicMiniMRTest extends Assert {
   }
   
   @After
-  public void tearDown() {
+  public void tearDown() throws Exception {
+    System.clearProperty("hadoop.log.dir");
+    System.clearProperty("solr.hdfs.blockcache.enabled");
+    
+    super.tearDown();
   }
 
   private JobConf getJobConf() {
@@ -248,7 +310,7 @@ public class MorphlineBasicMiniMRTest extends Assert {
     assertTrue(fs.mkdirs(inDir));
     Path INPATH = new Path(inDir, "input.txt");
     OutputStream os = fs.create(INPATH);
-    Writer wr = new OutputStreamWriter(os, "UTF-8");
+    Writer wr = new OutputStreamWriter(os, Charsets.UTF_8);
     wr.write(DATADIR + "/" + inputAvroFile);
     wr.close();
 
@@ -256,13 +318,13 @@ public class MorphlineBasicMiniMRTest extends Assert {
     fs.copyFromLocalFile(new Path(DOCUMENTS_DIR, inputAvroFile), dataDir);
     
     JobConf jobConf = getJobConf();
+    jobConf.set("jobclient.output.filter", "ALL");
     if (ENABLE_LOCAL_JOB_RUNNER) { // enable Hadoop LocalJobRunner; this enables to run in debugger and set breakpoints
       jobConf.set("mapred.job.tracker", "local");
     }
     jobConf.setMaxMapAttempts(1);
     jobConf.setMaxReduceAttempts(1);
     jobConf.setJar(SEARCH_ARCHIVES_JAR);
-    jobConf.setBoolean(ExtractingParams.IGNORE_TIKA_EXCEPTION, false);
     
     int shards = 2;
     int maxReducers = Integer.MAX_VALUE;
@@ -274,7 +336,7 @@ public class MorphlineBasicMiniMRTest extends Assert {
     }
     
     String[] args = new String[] {
-        "--morphline-file=" + RESOURCES_DIR + "/test-morphlines/solrCellDocumentTypes.conf",
+        "--morphline-file=" + tempDir + "/test-morphlines/solrCellDocumentTypes.conf",
         "--morphline-id=morphline1",
         "--solr-home-dir=" + MINIMR_CONF_DIR.getAbsolutePath(),
         "--output-dir=" + outDir.toString(),
@@ -311,7 +373,7 @@ public class MorphlineBasicMiniMRTest extends Assert {
 
     System.out.println("outputfiles:" + Arrays.toString(outputFiles));
 
-    TestUtils.validateSolrServerDocumentCount(MINIMR_CONF_DIR, fs, outDir, count, shards);
+    UtilsForTests.validateSolrServerDocumentCount(MINIMR_CONF_DIR, fs, outDir, count, shards);
     
     // run again with --dryrun mode:  
     tool = createTool();

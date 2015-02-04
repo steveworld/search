@@ -18,24 +18,29 @@ package org.apache.solr.hadoop;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import com.google.common.base.Charsets;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Locale;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.lucene.util.Constants;
+import org.apache.solr.SolrTestCaseJ4;
+import org.apache.solr.cloud.AbstractZkTestCase;
 import org.apache.solr.hadoop.dedup.NoChangeUpdateConflictResolver;
 import org.apache.solr.hadoop.dedup.RetainMostRecentUpdateConflictResolver;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MapReduceIndexerToolArgumentParserTest extends Assert {
+public class MapReduceIndexerToolArgumentParserTest extends SolrTestCaseJ4 {
   
   private Configuration conf; 
   private MapReduceIndexerTool.MyArgumentParser parser;
@@ -45,14 +50,28 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   private ByteArrayOutputStream bout;
   private ByteArrayOutputStream berr;
   
-  private static final String RESOURCES_DIR = "target/test-classes";  
-  private static final String SOLR_HOME_DIR = "target/test-classes/solr/minimr";
+  private static final String RESOURCES_DIR = getFile("morphlines-core.marker").getParent();  
+  private static final File MINIMR_INSTANCE_DIR = new File(RESOURCES_DIR + "/solr/minimr");
+
   private static final String MORPHLINE_FILE = RESOURCES_DIR + "/test-morphlines/solrCellDocumentTypes.conf";
     
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceIndexerToolArgumentParserTest.class);
-
+  
+  private final File solrHomeDirectory = createTempDir();
+  
+  @BeforeClass
+  public static void beforeClass() {
+    assumeFalse("Does not work on Windows, because it uses UNIX shell commands or POSIX paths", Constants.WINDOWS);
+    assumeFalse("This test fails on UNIX with Turkish default locale (https://issues.apache.org/jira/browse/SOLR-6387)",
+                new Locale("tr").getLanguage().equals(Locale.getDefault().getLanguage()));
+  }
+  
   @Before
-  public void setUp() throws IOException {
+  public void setUp() throws Exception {
+    super.setUp();
+    AbstractZkTestCase.SOLRHOME = solrHomeDirectory;
+    FileUtils.copyDirectory(MINIMR_INSTANCE_DIR, solrHomeDirectory);
+    
     conf = new Configuration();
     parser = new MapReduceIndexerTool.MyArgumentParser();
     opts = new MapReduceIndexerTool.Options();
@@ -65,7 +84,8 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   }
 
   @After
-  public void tearDown() {
+  public void tearDown() throws Exception {
+    super.tearDown();
     System.setOut(oldSystemOut);
     System.setErr(oldSystemErr);
   }
@@ -77,7 +97,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         "--morphline-file", MORPHLINE_FILE,
         "--morphline-id", "morphline_xyz",
         "--output-dir", "file:/tmp/foo",
-        "--solr-home-dir", SOLR_HOME_DIR,
+        "--solr-home-dir", MINIMR_INSTANCE_DIR.getPath(),
         "--mappers", "10", 
         "--reducers", "9", 
         "--fanout", "8", 
@@ -91,7 +111,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
     assertNull(res != null ? res.toString() : "", res);
     assertEquals(Collections.singletonList(new Path("file:///tmp")), opts.inputLists);
     assertEquals(new Path("file:/tmp/foo"), opts.outputDir);
-    assertEquals(new File(SOLR_HOME_DIR), opts.solrHomeDir);
+    assertEquals(new File(MINIMR_INSTANCE_DIR.getPath()), opts.solrHomeDir);
     assertEquals(10, opts.mappers);
     assertEquals(9, opts.reducers);
     assertEquals(8, opts.fanout);
@@ -113,7 +133,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         "--input-list", "file:///",
         "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
-        "--solr-home-dir", SOLR_HOME_DIR, 
+        "--solr-home-dir", MINIMR_INSTANCE_DIR.getPath(), 
         "--shards", "1",
         "file:///home",
         "file:///dev",
@@ -122,7 +142,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
     assertEquals(Arrays.asList(new Path("file:///tmp"), new Path("file:///")), opts.inputLists);
     assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), opts.inputFiles);
     assertEquals(new Path("file:/tmp/foo"), opts.outputDir);
-    assertEquals(new File(SOLR_HOME_DIR), opts.solrHomeDir);
+    assertEquals(new File(MINIMR_INSTANCE_DIR.getPath()), opts.solrHomeDir);
     assertEmptySystemErrAndEmptySystemOut();
   }
 
@@ -132,7 +152,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         "--input-list=file:///tmp",
         "--morphline-file", MORPHLINE_FILE,
         "--output-dir=file:/tmp/foo",
-        "--solr-home-dir=" + SOLR_HOME_DIR, 
+        "--solr-home-dir=" + MINIMR_INSTANCE_DIR.getPath(), 
         "--mappers=10", 
         "--shards", "1",
         "--verbose", 
@@ -142,7 +162,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
     assertNull(parser.parseArgs(args, conf, opts));
     assertEquals(Collections.singletonList(new Path("file:///tmp")), opts.inputLists);
     assertEquals(new Path("file:/tmp/foo"), opts.outputDir);
-    assertEquals(new File(SOLR_HOME_DIR), opts.solrHomeDir);
+    assertEquals(new File(MINIMR_INSTANCE_DIR.getPath()), opts.solrHomeDir);
     assertEquals(10, opts.mappers);
     assertEquals(new Integer(1), opts.shards);
     assertEquals(null, opts.fairSchedulerPool);
@@ -158,7 +178,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         "--input-list=file:///",
         "--morphline-file", MORPHLINE_FILE,
         "--output-dir=file:/tmp/foo",
-        "--solr-home-dir=" + SOLR_HOME_DIR, 
+        "--solr-home-dir=" + MINIMR_INSTANCE_DIR.getPath(), 
         "--shards", "1",
         "file:///home",
         "file:///dev",
@@ -167,7 +187,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
     assertEquals(Arrays.asList(new Path("file:///tmp"), new Path("file:///")), opts.inputLists);
     assertEquals(Arrays.asList(new Path("file:///home"), new Path("file:///dev")), opts.inputFiles);
     assertEquals(new Path("file:/tmp/foo"), opts.outputDir);
-    assertEquals(new File(SOLR_HOME_DIR), opts.solrHomeDir);
+    assertEquals(new File(MINIMR_INSTANCE_DIR.getPath()), opts.solrHomeDir);
     assertEmptySystemErrAndEmptySystemOut();
   }
 
@@ -175,7 +195,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   public void testArgsParserHelp() throws UnsupportedEncodingException  {
     String[] args = new String[] { "--help" };
     assertEquals(new Integer(0), parser.parseArgs(args, conf, opts));
-    String helpText = new String(bout.toByteArray(), "UTF-8");
+    String helpText = new String(bout.toByteArray(), Charsets.UTF_8);
     assertTrue(helpText.contains("MapReduce batch job driver that "));
     assertTrue(helpText.contains("bin/hadoop command"));
     assertEquals(0, berr.toByteArray().length);
@@ -187,7 +207,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         "--input-list", "file:///tmp",
         "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
-        "--solr-home-dir", SOLR_HOME_DIR, 
+        "--solr-home-dir", MINIMR_INSTANCE_DIR.getPath(), 
         "--shards", "1",
         };
     assertNull(parser.parseArgs(args, conf, opts));
@@ -201,7 +221,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         "--input-list", "file:///tmp",
         "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
-        "--solr-home-dir", SOLR_HOME_DIR, 
+        "--solr-home-dir", MINIMR_INSTANCE_DIR.getPath(), 
         "--shards", "1",
         "--update-conflict-resolver", NoChangeUpdateConflictResolver.class.getName(),
         };
@@ -211,31 +231,31 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   }
 
   @Test
-  public void testArgsParserUnknownArgName() {
+  public void testArgsParserUnknownArgName() throws Exception {
     String[] args = new String[] { 
         "--xxxxxxxxinputlist", "file:///tmp",
         "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
-        "--solr-home-dir", SOLR_HOME_DIR, 
+        "--solr-home-dir", MINIMR_INSTANCE_DIR.getPath(), 
         "--shards", "1",
         };
     assertArgumentParserException(args);
   }
 
   @Test
-  public void testArgsParserFileNotFound1() {
+  public void testArgsParserFileNotFound1() throws Exception {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
         "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/fileNotFound/foo",
-        "--solr-home-dir", SOLR_HOME_DIR, 
+        "--solr-home-dir", MINIMR_INSTANCE_DIR.getPath(), 
         "--shards", "1",
         };
     assertArgumentParserException(args);
   }
   
   @Test
-  public void testArgsParserFileNotFound2() {
+  public void testArgsParserFileNotFound2() throws Exception {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
         "--morphline-file", MORPHLINE_FILE,
@@ -247,12 +267,12 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   }
   
   @Test
-  public void testArgsParserIntOutOfRange() {
+  public void testArgsParserIntOutOfRange() throws Exception {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
         "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
-        "--solr-home-dir", SOLR_HOME_DIR, 
+        "--solr-home-dir", MINIMR_INSTANCE_DIR.getPath(), 
         "--shards", "1",
         "--mappers", "-20"
         };
@@ -260,12 +280,12 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   }
   
   @Test
-  public void testArgsParserIllegalFanout() {
+  public void testArgsParserIllegalFanout() throws Exception {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
         "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
-        "--solr-home-dir", SOLR_HOME_DIR, 
+        "--solr-home-dir", MINIMR_INSTANCE_DIR.getPath(), 
         "--shards", "1",
         "--fanout", "1" // must be >= 2
         };
@@ -273,7 +293,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   }
   
   @Test
-  public void testArgsParserSolrHomeMustContainSolrConfigFile() {
+  public void testArgsParserSolrHomeMustContainSolrConfigFile() throws Exception {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
         "--morphline-file", MORPHLINE_FILE,
@@ -290,7 +310,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         "--input-list", "file:///tmp",
         "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
-        "--solr-home-dir", SOLR_HOME_DIR, 
+        "--solr-home-dir", MINIMR_INSTANCE_DIR.getPath(), 
         "--shard-url", "http://localhost:8983/solr/collection1",
         "--shard-url", "http://localhost:8983/solr/collection2",
         };
@@ -304,12 +324,12 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   }
   
   @Test
-  public void testArgsShardUrlMustHaveAParam() {
+  public void testArgsShardUrlMustHaveAParam() throws Exception {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
         "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
-        "--solr-home-dir", SOLR_HOME_DIR, 
+        "--solr-home-dir", MINIMR_INSTANCE_DIR.getPath(), 
         "--shard-url",
         };
     assertArgumentParserException(args);
@@ -321,7 +341,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         "--input-list", "file:///tmp",
         "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
-        "--solr-home-dir", SOLR_HOME_DIR, 
+        "--solr-home-dir", MINIMR_INSTANCE_DIR.getPath(), 
         "--shards", "1", 
         "--shard-url", "http://localhost:8983/solr/collection1",
         };
@@ -335,7 +355,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         "--input-list", "file:///tmp",
         "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
-        "--solr-home-dir", SOLR_HOME_DIR, 
+        "--solr-home-dir", MINIMR_INSTANCE_DIR.getPath(), 
         "--shard-url", "http://localhost:8983/solr/collection1"
         };
     assertNull(parser.parseArgs(args, conf, opts));
@@ -344,12 +364,12 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   }
   
   @Test
-  public void testArgsShardUrlsAndZkhostAreMutuallyExclusive() {
+  public void testArgsShardUrlsAndZkhostAreMutuallyExclusive() throws Exception {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
         "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
-        "--solr-home-dir", SOLR_HOME_DIR, 
+        "--solr-home-dir", MINIMR_INSTANCE_DIR.getPath(), 
         "--shard-url", "http://localhost:8983/solr/collection1",
         "--shard-url", "http://localhost:8983/solr/collection1",
         "--zk-host", "http://localhost:2185",
@@ -364,7 +384,7 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
         "--input-list", "file:///tmp",
         "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
-        "--solr-home-dir", SOLR_HOME_DIR, 
+        "--solr-home-dir", MINIMR_INSTANCE_DIR.getPath(), 
         "--shard-url", "http://localhost:8983/solr/collection1",
         "--shard-url", "http://localhost:8983/solr/collection1",
         "--go-live"
@@ -375,24 +395,24 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   }
   
   @Test
-  public void testArgsZkHostNoGoLive() {
+  public void testArgsZkHostNoGoLive() throws Exception {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
         "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
-        "--solr-home-dir", SOLR_HOME_DIR, 
+        "--solr-home-dir", MINIMR_INSTANCE_DIR.getPath(), 
         "--zk-host", "http://localhost:2185",
         };
     assertArgumentParserException(args);
   }
   
   @Test
-  public void testArgsGoLiveZkHostNoCollection() {
+  public void testArgsGoLiveZkHostNoCollection() throws Exception {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
         "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
-        "--solr-home-dir", SOLR_HOME_DIR, 
+        "--solr-home-dir", MINIMR_INSTANCE_DIR.getPath(), 
         "--zk-host", "http://localhost:2185",
         "--go-live"
         };
@@ -400,19 +420,19 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
   }
   
   @Test
-  public void testArgsGoLiveNoZkHostOrSolrUrl() {
+  public void testArgsGoLiveNoZkHostOrSolrUrl() throws Exception {
     String[] args = new String[] { 
         "--input-list", "file:///tmp",
         "--morphline-file", MORPHLINE_FILE,
         "--output-dir", "file:/tmp/foo",
-        "--solr-home-dir", SOLR_HOME_DIR, 
+        "--solr-home-dir", MINIMR_INSTANCE_DIR.getPath(), 
         "--go-live"
         };
     assertArgumentParserException(args);
   }  
 
   @Test
-  public void testNoSolrHomeDirOrZKHost() {
+  public void testNoSolrHomeDirOrZKHost() throws Exception {
     String[] args = new String[] {
         "--input-list", "file:///tmp",
         "--morphline-file", MORPHLINE_FILE,
@@ -440,17 +460,13 @@ public class MapReduceIndexerToolArgumentParserTest extends Assert {
     assertEquals(0, berr.toByteArray().length);
   }
   
-  private void assertArgumentParserException(String[] args) {
+  private void assertArgumentParserException(String[] args) throws UnsupportedEncodingException {
     assertEquals("should have returned fail code", new Integer(1), parser.parseArgs(args, conf, opts));
-    assertEquals("no sys out expected:" + new String(bout.toByteArray()), 0, bout.toByteArray().length);
+    assertEquals("no sys out expected:" + new String(bout.toByteArray(), Charsets.UTF_8), 0, bout.toByteArray().length);
     String usageText;
-    try {
-      usageText = new String(berr.toByteArray(), "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException("unreachable");
-    }
-    
-    assertTrue("should start with usage msg:" + usageText, usageText.startsWith("usage: hadoop "));
+    usageText = new String(berr.toByteArray(), Charsets.UTF_8);
+
+    assertTrue("should start with usage msg \"usage: hadoop \":" + usageText, usageText.startsWith("usage: hadoop "));
   }
   
 }

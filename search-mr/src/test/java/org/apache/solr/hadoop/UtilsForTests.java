@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.io.IOException;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -30,8 +31,8 @@ import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 
 
-public class TestUtils {
-
+public class UtilsForTests {
+  
   public static void validateSolrServerDocumentCount(File solrHomeDir, FileSystem fs, Path outDir, int expectedDocs, int expectedShards)
       throws IOException, SolrServerException {
     
@@ -57,4 +58,16 @@ public class TestUtils {
     assertEquals(expectedShards, actualShards);
     assertEquals(expectedDocs, actualDocs);
   }
+
+  static void setupMorphline(String tempDir, String file, boolean replaceSolrLocator, String resourcesDir) throws IOException {
+    String morphlineText = FileUtils.readFileToString(new File(resourcesDir + "/" + file + ".conf"), "UTF-8");
+    morphlineText = morphlineText.replace("RESOURCES_DIR", new File(tempDir).getAbsolutePath());
+    if (replaceSolrLocator) {
+      morphlineText = morphlineText.replace("${SOLR_LOCATOR}",
+          "{ collection : collection1 }");
+    }
+    new File(tempDir + "/" + file + ".conf").getParentFile().mkdirs();
+    FileUtils.writeStringToFile(new File(tempDir + "/" + file + ".conf"), morphlineText, "UTF-8");
+  }
+
 }

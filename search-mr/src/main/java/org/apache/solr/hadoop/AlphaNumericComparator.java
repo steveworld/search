@@ -24,10 +24,6 @@ package org.apache.solr.hadoop;
 
 import java.util.Comparator;
 
-/*
- * Created on Sep 27, 2004
- */
-
 /**
  * This is a comparator to perform a mix of alphabetical+numeric comparison. For
  * example, if there is a list {"test10", "test2", "test150", "test25", "test1"}
@@ -40,8 +36,6 @@ import java.util.Comparator;
  * care should be taken when this comparator is used to sort arbitrary Java
  * objects.
  * 
- * 
- * @author Evren Sirin
  */
 final class AlphaNumericComparator implements Comparator {
 

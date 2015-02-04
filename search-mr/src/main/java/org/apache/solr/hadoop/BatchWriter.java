@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -189,7 +190,7 @@ class BatchWriter {
       batchPool.shutdown();
   
       while (!batchPool.isTerminated()) {
-        LOG.info(String.format(
+        LOG.info(String.format(Locale.ENGLISH, 
             "Waiting for %d items and %d threads to finish executing", batchPool
                 .getQueue().size(), batchPool.getActiveCount()));
         batchPool.awaitTermination(5, TimeUnit.SECONDS);
@@ -200,10 +201,10 @@ class BatchWriter {
     context.setStatus("Optimizing Solr");
     int maxSegments = context.getConfiguration().getInt(SolrOutputFormat.SOLR_RECORD_WRITER_MAX_SEGMENTS, 1);
     LOG.info("Optimizing Solr: forcing merge down to {} segments", maxSegments);
-    long start = System.currentTimeMillis();
+    long start = System.nanoTime();
     solr.optimize(true, false, maxSegments);
-    context.getCounter(SolrCounters.class.getName(), SolrCounters.PHYSICAL_REDUCER_MERGE_TIME.toString()).increment(System.currentTimeMillis() - start);
-    float secs = (System.currentTimeMillis() - start) / 1000.0f;
+    context.getCounter(SolrCounters.class.getName(), SolrCounters.PHYSICAL_REDUCER_MERGE_TIME.toString()).increment(System.nanoTime() - start);
+    float secs = (System.nanoTime() - start) / (float)(10^9);
     LOG.info("Optimizing Solr: done forcing merge down to {} segments in {} secs", maxSegments, secs);
     context.setStatus("Committing Solr Phase 2");
     solr.commit(true, false);
@@ -218,8 +219,8 @@ class BatchWriter {
    * 
    * This will loose individual exceptions if the exceptions happen rapidly.
    * 
-   * @throws IOException
-   * @throws SolrServerException
+   * @throws IOException On low level IO error
+   * @throws SolrServerException On Solr Exception
    */
   private void throwIf() throws IOException, SolrServerException {
 

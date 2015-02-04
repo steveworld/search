@@ -20,8 +20,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import com.google.common.base.Charsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
@@ -42,7 +44,6 @@ import org.apache.solr.store.hdfs.HdfsDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 
 /**
@@ -96,6 +97,7 @@ public class TreeMergeOutputFormat extends FileOutputFormat<Text, NullWritable> 
       try {
         Directory mergedIndex = new HdfsDirectory(workDir, context.getConfiguration());
         
+        // TODO: shouldn't we pull the Version from the solrconfig.xml?
         IndexWriterConfig writerConfig = new IndexWriterConfig(Version.LUCENE_CURRENT, null)
             .setOpenMode(OpenMode.CREATE).setUseCompoundFile(false)
             //.setMergePolicy(mergePolicy) // TODO: grab tuned MergePolicy from solrconfig.xml?
@@ -132,7 +134,7 @@ public class TreeMergeOutputFormat extends FileOutputFormat<Text, NullWritable> 
 
         context.setStatus("Logically merging " + shards.size() + " shards into one shard");
         LOG.info("Logically merging " + shards.size() + " shards into one shard: " + workDir);
-        long start = System.currentTimeMillis();
+        long start = System.nanoTime();
         
         writer.addIndexes(indexes); 
         // TODO: avoid intermediate copying of files into dst directory; rename the files into the dir instead (cp -> rename) 
@@ -142,12 +144,12 @@ public class TreeMergeOutputFormat extends FileOutputFormat<Text, NullWritable> 
         if (LOG.isDebugEnabled()) {
           context.getCounter(SolrCounters.class.getName(), SolrCounters.LOGICAL_TREE_MERGE_TIME.toString()).increment(System.currentTimeMillis() - start);
         }
-        float secs = (System.currentTimeMillis() - start) / 1000.0f;
+        float secs = (System.nanoTime() - start) / (float)(10^9);
         LOG.info("Logical merge took {} secs", secs);        
         int maxSegments = context.getConfiguration().getInt(TreeMergeMapper.MAX_SEGMENTS_ON_TREE_MERGE, Integer.MAX_VALUE);
         context.setStatus("Optimizing Solr: forcing mtree merge down to " + maxSegments + " segments");
         LOG.info("Optimizing Solr: forcing tree merge down to {} segments", maxSegments);
-        start = System.currentTimeMillis();
+        start = System.nanoTime();
         if (maxSegments < Integer.MAX_VALUE) {
           writer.forceMerge(maxSegments); 
           // TODO: consider perf enhancement for no-deletes merges: bulk-copy the postings data 
@@ -156,13 +158,13 @@ public class TreeMergeOutputFormat extends FileOutputFormat<Text, NullWritable> 
         if (LOG.isDebugEnabled()) {
           context.getCounter(SolrCounters.class.getName(), SolrCounters.PHYSICAL_TREE_MERGE_TIME.toString()).increment(System.currentTimeMillis() - start);
         }
-        secs = (System.currentTimeMillis() - start) / 1000.0f;
+        secs = (System.nanoTime() - start) / (float)(10^9);
         LOG.info("Optimizing Solr: done forcing tree merge down to {} segments in {} secs", maxSegments, secs);
         
-        start = System.currentTimeMillis();
+        start = System.nanoTime();
         LOG.info("Optimizing Solr: Closing index writer");
         writer.close();
-        secs = (System.currentTimeMillis() - start) / 1000.0f;
+        secs = (System.nanoTime() - start) / (float)(10^9);
         LOG.info("Optimizing Solr: Done closing index writer in {} secs", secs);
         context.setStatus("Done");
       } finally {

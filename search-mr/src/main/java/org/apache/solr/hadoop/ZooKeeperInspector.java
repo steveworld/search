@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.solr.cloud.ZkController;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.cloud.Aliases;
@@ -192,6 +193,7 @@ final class ZooKeeperInspector {
       Files.move(dir, confDir);
       dir = confDir.getParentFile();
     }
+    FileUtils.writeStringToFile(new File(dir, "solr.xml"), "<solr><cores><core name=\"collection1\" instanceDir=\".\" /></cores></solr>", "UTF-8");
     verifyConfigDir(confDir);
     return dir;
   }

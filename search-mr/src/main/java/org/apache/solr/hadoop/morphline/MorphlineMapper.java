@@ -31,10 +31,10 @@ import org.apache.solr.hadoop.HeartBeater;
 import org.apache.solr.hadoop.SolrInputDocumentWritable;
 import org.apache.solr.hadoop.SolrMapper;
 import org.apache.solr.schema.IndexSchema;
+import org.kitesdk.morphline.solr.DocumentLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.kitesdk.morphline.solr.DocumentLoader;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Counting;
 import com.codahale.metrics.Histogram;
@@ -46,7 +46,7 @@ import com.codahale.metrics.Timer;
  * This class takes the input files, extracts the relevant content, transforms
  * it and hands SolrInputDocuments to a set of reducers.
  * 
- * More specifically, it consumes a list of <offset, hdfsFilePath> input pairs.
+ * More specifically, it consumes a list of &lt;offset, hdfsFilePath&gt; input pairs.
  * For each such pair extracts a set of zero or more SolrInputDocuments and
  * sends them to a downstream Reducer. The key for the reducer is the unique id
  * of the SolrInputDocument specified in Solr schema.xml.
@@ -149,7 +149,7 @@ public class MorphlineMapper extends SolrMapper<LongWritable, Text> {
       }
       context.getCounter(MorphlineCounters.class.getName(), MorphlineCounters.DOCS_READ.toString()).increment(1);
     }
-    
+
     @Override
     public void deleteById(String id) {
       throw new UnsupportedOperationException("deleteById");
@@ -159,7 +159,7 @@ public class MorphlineMapper extends SolrMapper<LongWritable, Text> {
     public void deleteByQuery(String query) {
       throw new UnsupportedOperationException("deleteByQuery");
     }
-
+    
     // just an approximation
     private long sizeOf(Object value) {
       if (value instanceof CharSequence) {

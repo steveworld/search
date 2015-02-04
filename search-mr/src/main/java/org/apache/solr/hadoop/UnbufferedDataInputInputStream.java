@@ -17,9 +17,12 @@
 
 package org.apache.solr.hadoop;
 
+import java.io.BufferedReader;
 import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import com.google.common.base.Charsets;
 
 public class UnbufferedDataInputInputStream extends org.apache.solr.common.util.DataInputInputStream {
   private final DataInputStream in;
@@ -93,10 +96,10 @@ public class UnbufferedDataInputInputStream extends org.apache.solr.common.util.
     return in.readDouble();
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public String readLine() throws IOException {
-    return in.readLine();
+    BufferedReader reader = new BufferedReader(new InputStreamReader(in, Charsets.UTF_8));
+    return reader.readLine();
   }
 
   @Override
