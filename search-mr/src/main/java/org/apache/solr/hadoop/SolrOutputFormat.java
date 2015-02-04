@@ -241,11 +241,6 @@ public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
       zos.closeEntry();
     }
     
-    ZipEntry ze = new ZipEntry("solr.xml");
-    zos.putNextEntry(ze);
-    zos.write("<cores><core name=\"collection1\" instanceDir=\".\"/></cores>".getBytes(Charsets.UTF_8));
-    zos.flush();
-    zos.closeEntry();
     zos.close();
   }
 
