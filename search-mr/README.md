@@ -21,7 +21,7 @@ $ hadoop jar target/search-mr-*-job.jar org.apache.solr.hadoop.MapReduceIndexerT
 
 usage: hadoop [GenericOptions]... jar search-mr-*-job.jar org.apache.solr.hadoop.MapReduceIndexerTool
        [--help] --output-dir HDFS_URI [--input-list URI]
-       --morphline-file FILE [--morphline-id STRING]
+       --morphline-file FILE [--morphline-id STRING] [--solr-home-dir DIR]
        [--update-conflict-resolver FQCN] [--mappers INTEGER]
        [--reducers INTEGER] [--max-segments INTEGER]
        [--fair-scheduler-pool STRING] [--dry-run] [--log4j FILE]
@@ -96,6 +96,11 @@ optional arguments:
                          morphline-id option is  ommitted  the first (i.e.
                          top-most) morphline  within  the  config  file is
                          used. Example: morphline1
+  --solr-home-dir DIR    Optional relative or  absolute  path  to  a local
+                         dir containing Solr conf/  dir  and in particular
+                         conf/solrconfig.xml  and  optionally   also  lib/
+                         dir. This directory will  be  uploaded to each MR
+                         task. Example: src/test/resources/solr/minimr
   --update-conflict-resolver FQCN
                          Fully qualified class name  of  a Java class that
                          implements the  UpdateConflictResolver interface.
@@ -238,7 +243,10 @@ Cluster arguments:
                          getting/setting/etc...  '/foo/bar'  would  result
                          in operations being run  on '/solr/foo/bar' (from
                          the server perspective).
-                         
+                                                  
+                         If --solr-home-dir  is  not  specified,  the Solr
+                         home  directory  for   the   collection  will  be
+                         downloaded from this ZooKeeper ensemble.
 
 Go live arguments:
   Arguments for merging  the  shards  that  are  built  into  a  live Solr
