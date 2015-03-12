@@ -168,7 +168,7 @@ export HADOOP_CLASSPATH=$myDependencyJarPaths; hadoop \
   --config /etc/hadoop/conf.cloudera.YARN-1 \
   jar $myDriverJar org.apache.solr.crunch.CrunchIndexerTool \
   --libjars $myDependencyJarFiles \
-  -D 'mapred.child.java.opts=-Xmx500m' \
+  -D 'mapreduce.map.java.opts=-Xmx500m' \
   -D morphlineVariable.ZK_HOST=$(hostname):2181/solr \
   --files $myResourcesDir/test-documents/string.avsc \
   --morphline-file $myResourcesDir/test-morphlines/loadSolrLine.conf \
