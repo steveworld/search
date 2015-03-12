@@ -20,6 +20,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.management.ManagementFactory;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -177,6 +178,7 @@ public final class MorphlineFnBuilder<S,T> {
       if (LOG.isTraceEnabled()) {
         TreeMap map = new TreeMap(System.getProperties());
         LOG.trace("Java System Properties:\n{}", Joiner.on("\n").join(map.entrySet()));
+        LOG.trace("JVM Arguments: {}", ManagementFactory.getRuntimeMXBean().getInputArguments());
       }
       
       String morphlineFileAndId = UUID.randomUUID() + "@" + morphlineId;

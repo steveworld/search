@@ -21,6 +21,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -114,6 +115,7 @@ public final class MorphlineMapRunner {
     if (LOG.isTraceEnabled()) {
       TreeMap map = new TreeMap(System.getProperties());
       LOG.trace("Java System Properties:\n{}", Joiner.on("\n").join(map.entrySet()));
+      LOG.trace("JVM Arguments: {}", ManagementFactory.getRuntimeMXBean().getInputArguments());
     }
     
     FaultTolerance faultTolerance = new FaultTolerance(
