@@ -305,7 +305,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "specified by --morphline-file. If the --morphline-id option is ommitted the first (i.e. " +
               "top-most) morphline within the config file is used. Example: morphline1");
             
-      Argument solrHomeDirArg = nonSolrCloud(parser.addArgument("--solr-home-dir")
+      Argument solrHomeDirArg = parser.addArgument("--solr-home-dir")
         .metavar("DIR")
         .type(new FileArgumentType() {
           @Override
@@ -318,9 +318,9 @@ public class MapReduceIndexerTool extends Configured implements Tool {
           }
         }.verifyIsDirectory().verifyCanRead())
         .required(false)
-        .help("Relative or absolute path to a local dir containing Solr conf/ dir and in particular " +
+        .help("Optional relative or absolute path to a local dir containing Solr conf/ dir and in particular " +
               "conf/solrconfig.xml and optionally also lib/ dir. This directory will be uploaded to each MR task. " +
-              "Example: src/test/resources/solr/minimr"));
+              "Example: src/test/resources/solr/minimr");
         
       Argument updateConflictResolverArg = parser.addArgument("--update-conflict-resolver")
         .metavar("FQCN")
@@ -448,9 +448,9 @@ public class MapReduceIndexerTool extends Configured implements Tool {
             + "would be relative to this root - i.e. getting/setting/etc... "
             + "'/foo/bar' would result in operations being run on "
             + "'/solr/foo/bar' (from the server perspective).\n"
-            + nonSolrCloud("\n"
+            + "\n"
             + "If --solr-home-dir is not specified, the Solr home directory for the collection "
-            + "will be downloaded from this ZooKeeper ensemble."));
+            + "will be downloaded from this ZooKeeper ensemble.");
 
       Argument shardUrlsArg = nonSolrCloud(clusterInfoGroup.addArgument("--shard-url")
         .metavar("URL")
