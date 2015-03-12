@@ -241,7 +241,7 @@ final class CrunchIndexerToolArgumentParser {
                     + "  --config /etc/hadoop/conf.cloudera.YARN-1 \\\n"
                     + "  jar $myDriverJar " + CrunchIndexerTool.class.getName() + " \\\n"
                     + "  --libjars $myDependencyJarFiles \\\n"
-                    + "  -D 'mapred.child.java.opts=-Xmx500m' \\\n"
+                    + "  -D 'mapreduce.map.java.opts=-Xmx500m' \\\n"
                     + "  -D morphlineVariable.ZK_HOST=$(hostname):2181/solr \\\n"
                     + "  --files $myResourcesDir/test-documents/string.avsc \\\n"
                     + "  --morphline-file $myResourcesDir/test-morphlines/loadSolrLine.conf \\\n"
