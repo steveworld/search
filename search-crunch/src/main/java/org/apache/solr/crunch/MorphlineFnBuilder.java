@@ -174,6 +174,11 @@ public final class MorphlineFnBuilder<S,T> {
         LOG.trace("Configuration:\n{}", Joiner.on("\n").join(map.entrySet()));
       }
   
+      if (LOG.isTraceEnabled()) {
+        TreeMap map = new TreeMap(System.getProperties());
+        LOG.trace("Java System Properties:\n{}", Joiner.on("\n").join(map.entrySet()));
+      }
+      
       String morphlineFileAndId = UUID.randomUUID() + "@" + morphlineId;
   
       FaultTolerance faultTolerance = new FaultTolerance(
