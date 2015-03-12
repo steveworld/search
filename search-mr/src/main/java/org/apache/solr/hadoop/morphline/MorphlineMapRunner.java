@@ -38,7 +38,6 @@ import org.kitesdk.morphline.solr.SolrMorphlineContext;
 import org.apache.solr.schema.IndexSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.kitesdk.morphline.api.Command;
 import org.kitesdk.morphline.api.MorphlineCompilationException;
 import org.kitesdk.morphline.api.MorphlineContext;
@@ -48,6 +47,7 @@ import org.kitesdk.morphline.base.FaultTolerance;
 import org.kitesdk.morphline.base.Fields;
 import org.kitesdk.morphline.base.Metrics;
 import org.kitesdk.morphline.base.Notifications;
+
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.google.common.annotations.Beta;
@@ -109,6 +109,11 @@ public final class MorphlineMapRunner {
         map.put(entry.getKey(), entry.getValue());
       }
       LOG.trace("Configuration:\n{}", Joiner.on("\n").join(map.entrySet()));
+    }
+    
+    if (LOG.isTraceEnabled()) {
+      TreeMap map = new TreeMap(System.getProperties());
+      LOG.trace("Java System Properties:\n{}", Joiner.on("\n").join(map.entrySet()));
     }
     
     FaultTolerance faultTolerance = new FaultTolerance(
