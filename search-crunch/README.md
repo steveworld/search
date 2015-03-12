@@ -162,13 +162,14 @@ export myDependencyJarDir=/usr/lib/search/lib/search-crunch # for CDH with packa
 export myDriverJar=$(find $myDriverJarDir -maxdepth 1 -name 'search-crunch-*.jar' ! -name '*-job.jar' ! -name '*-sources.jar')
 export myDependencyJarFiles=$(find $myDependencyJarDir -name '*.jar' | sort | tr '\n' ',' | head -c -1)
 export myDependencyJarPaths=$(find $myDependencyJarDir -name '*.jar' | sort | tr '\n' ':' | head -c -1)
+export myJVMOptions="-DmaxConnectionsPerHost=10000 -DmaxConnections=10000" # for solrj 
 
 # MapReduce on Yarn - Ingest text file line by line into Solr:
-export HADOOP_CLASSPATH=$myDependencyJarPaths; hadoop \
+export HADOOP_CLIENT_OPTS="$myJVMOptions"; export HADOOP_CLASSPATH=$myDependencyJarPaths; hadoop \
   --config /etc/hadoop/conf.cloudera.YARN-1 \
   jar $myDriverJar org.apache.solr.crunch.CrunchIndexerTool \
   --libjars $myDependencyJarFiles \
-  -D 'mapreduce.map.java.opts=-Xmx500m' \
+  -D mapreduce.map.java.opts="-Xmx500m $myJVMOptions" \
   -D morphlineVariable.ZK_HOST=$(hostname):2181/solr \
   --files $myResourcesDir/test-documents/string.avsc \
   --morphline-file $myResourcesDir/test-morphlines/loadSolrLine.conf \
@@ -183,6 +184,8 @@ spark-submit \
   --deploy-mode client \
   --jars $myDependencyJarFiles \
   --executor-memory 500M \
+  --conf "spark.executor.extraJavaOptions=$myJVMOptions" \
+  --driver-java-options "$myJVMOptions" \
   # --driver-library-path /opt/cloudera/parcels/CDH/lib/hadoop/lib/native # for Snappy on CDH with parcels\
   # --driver-library-path /usr/lib/hadoop/lib/native # for Snappy on CDH with packages \
   --class org.apache.solr.crunch.CrunchIndexerTool \
@@ -206,8 +209,10 @@ spark-submit \
   --deploy-mode cluster \
   --jars $myDependencyJarFiles \
   --executor-memory 500M \
+  --conf "spark.executor.extraJavaOptions=$myJVMOptions" \
+  --driver-java-options "$myJVMOptions" \
   --class org.apache.solr.crunch.CrunchIndexerTool \
-  --files $(ls $myResourcesDir/log4j.properties),$(ls $myResourcesDir/test-morphlines/loadSolrLine.conf) \
+  --files $(ls $myResourcesDir/log4j.properties),$(ls $myResourcesDir/test-morphlines/loadSolrLine.conf)\
   $myDriverJar \
   -D hadoop.tmp.dir=/tmp \
   -D morphlineVariable.ZK_HOST=$(hostname):2181/solr \
