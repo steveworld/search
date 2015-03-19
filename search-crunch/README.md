@@ -221,5 +221,36 @@ spark-submit \
   --chatty \
   --log4j log4j.properties \
   /user/systest/input/hello1.txt
+
+# Spark on Yarn in Cluster Mode (for production) - Ingest into Secure (Kerberos-enabled) Solr:
+# Spark requires two additional steps compared to non-secure solr:
+# (NOTE: MapReduce does not require extra steps for communicating with kerberos-enabled Solr)
+# 1) Create a delegation token file
+#    a) kinit as the user who will make solr requests
+#    b) request a delegation token from solr and save it to a file:
+#       e.g. using curl:
+#       "curl --negotiate -u: http://solr-host:port/solr/?op=GETDELEGATIONTOKEN > tokenFile.txt"
+# 2) Pass the delegation token file to spark-submit:
+#    a) add the delegation token file via --files
+#    b) pass the file name via -D tokenFile
+#       spark places this file in the cwd of the executor, so only list the file name, no path
+  spark-submit \
+  --master yarn \
+  --deploy-mode cluster \
+  --jars $myDependencyJarFiles \
+  --executor-memory 500M \
+  --conf "spark.executor.extraJavaOptions=$myJVMOptions" \
+  --driver-java-options "$myJVMOptions" \
+  --class org.apache.solr.crunch.CrunchIndexerTool \
+  --files $(ls $myResourcesDir/log4j.properties),$(ls $myResourcesDir/test-morphlines/loadSolrLine.conf),tokenFile.txt \
+  $myDriverJar \
+  -D hadoop.tmp.dir=/tmp \
+  -D morphlineVariable.ZK_HOST=$(hostname):2181/solr \
+  -D tokenFile=tokenFile.txt \
+  --morphline-file loadSolrLine.conf \
+  --pipeline-type spark \
+  --chatty \
+  --log4j log4j.properties \
+  /user/systest/input/hello1.txt
 </pre>
   
