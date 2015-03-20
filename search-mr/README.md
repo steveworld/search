@@ -352,6 +352,33 @@ sudo -u hdfs hadoop \
   --collection collection1 \
   --go-live \
   hdfs:///user/foo/indir
+
+# MapReduce on Yarn - Pass custom JVM arguments
+HADOOP_CLIENT_OPTS='-DmaxConnectionsPerHost=10000 -DmaxConnections=10000'; \
+sudo -u hdfs hadoop \
+  --config /etc/hadoop/conf.cloudera.mapreduce1 \
+  jar target/search-mr-*-job.jar org.apache.solr.hadoop.MapReduceIndexerTool \
+  -D 'mapreduce.map.java.opts=-DmaxConnectionsPerHost=10000 -DmaxConnections=10000' \
+  -D 'mapreduce.reduce.java.opts=-DmaxConnectionsPerHost=10000 -DmaxConnections=10000' \
+  --log4j src/test/resources/log4j.properties \
+  --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \
+  --solr-home-dir src/test/resources/solr/minimr \
+  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \
+  --shards 1 \
+  hdfs:///user/$USER/test-documents/sample-statuses-20120906-141433.avro
+
+# MapReduce on MR1 - Pass custom JVM arguments
+HADOOP_CLIENT_OPTS='-DmaxConnectionsPerHost=10000 -DmaxConnections=10000'; \
+sudo -u hdfs hadoop \
+  --config /etc/hadoop/conf.cloudera.mapreduce1 \
+  jar target/search-mr-*-job.jar org.apache.solr.hadoop.MapReduceIndexerTool \
+  -D 'mapred.child.java.opts=-DmaxConnectionsPerHost=10000 -DmaxConnections=10000' \
+  --log4j src/test/resources/log4j.properties \
+  --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \
+  --solr-home-dir src/test/resources/solr/minimr \
+  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \
+  --shards 1 \
+  hdfs:///user/$USER/test-documents/sample-statuses-20120906-141433.avro
 </pre>
 
 ## HdfsFindTool
