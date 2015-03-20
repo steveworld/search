@@ -257,7 +257,35 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "  --zk-host zk01.mycompany.com:2181/solr \\\n" + 
               "  --collection collection1 \\\n" + 
               "  --go-live \\\n" + 
-              "  hdfs:///user/foo/indir\n"
+              "  hdfs:///user/foo/indir\n" +
+              "\n" +
+              "# MapReduce on Yarn - Pass custom JVM arguments\n" +
+              "HADOOP_CLIENT_OPTS='-DmaxConnectionsPerHost=10000 -DmaxConnections=10000'; \\\n" +
+              "sudo -u hdfs hadoop \\\n" +
+              "  --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
+              "  jar target/search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
+              "  -D 'mapreduce.map.java.opts=-DmaxConnectionsPerHost=10000 -DmaxConnections=10000' \\\n" +
+              "  -D 'mapreduce.reduce.java.opts=-DmaxConnectionsPerHost=10000 -DmaxConnections=10000' \\\n" +
+              "  --log4j src/test/resources/log4j.properties \\\n" +
+              "  --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \\\n" +
+              "  --solr-home-dir src/test/resources/solr/minimr \\\n" +
+              "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" +
+              "  --shards 1 \\\n" +
+              "  hdfs:///user/$USER/test-documents/sample-statuses-20120906-141433.avro\n" +
+              "\n" +
+              "# MapReduce on MR1 - Pass custom JVM arguments\n" +
+              "HADOOP_CLIENT_OPTS='-DmaxConnectionsPerHost=10000 -DmaxConnections=10000'; \\\n" +
+              "sudo -u hdfs hadoop \\\n" +
+              "  --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
+              "  jar target/search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
+              "  -D 'mapred.child.java.opts=-DmaxConnectionsPerHost=10000 -DmaxConnections=10000' \\\n" +
+              "  --log4j src/test/resources/log4j.properties \\\n" +
+              "  --morphline-file ../search-core/src/test/resources/test-morphlines/tutorialReadAvroContainer.conf \\\n" +
+              "  --solr-home-dir src/test/resources/solr/minimr \\\n" +
+              "  --output-dir hdfs://c2202.mycompany.com/user/$USER/test \\\n" +
+              "  --shards 1 \\\n" +
+              "  hdfs:///user/$USER/test-documents/sample-statuses-20120906-141433.avro\n" +
+              "\n"
             );
             throw new FoundHelpArgument(); // Trick to prevent processing of any remaining arguments
           }
