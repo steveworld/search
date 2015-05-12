@@ -27,6 +27,7 @@ import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimerTask;
 import java.util.TreeMap;
 import java.util.UUID;
 
@@ -134,8 +135,10 @@ public final class MorphlineFnBuilder<S,T> {
     private transient Timer mappingTimer;
     private transient Meter numRecords;
     private transient Meter numFailedRecords;
-    private transient Meter numExceptionRecords;
-  
+    private transient Meter numExceptionRecords;  
+    private transient Map<String, MutableLong> counters;    
+    private transient java.util.Timer metricsPublisher;
+    
     static final String METRICS_GROUP_NAME = "morphline";
     static final String METRICS_LIVE_COUNTER_NAME = MetricRegistry.name(Metrics.MORPHLINE_APP, Metrics.NUM_RECORDS, "live");
     
@@ -166,6 +169,7 @@ public final class MorphlineFnBuilder<S,T> {
   
     @Override
     public void initialize() {
+      counters = new HashMap<String,MutableLong>();
       Utils.getLogConfigFile(getConfiguration());
       if (LOG.isTraceEnabled()) {
         TreeMap map = new TreeMap();
@@ -228,6 +232,16 @@ public final class MorphlineFnBuilder<S,T> {
           MetricRegistry.name(Metrics.MORPHLINE_APP, Metrics.NUM_EXCEPTION_RECORDS));
   
       Notifications.notifyBeginTransaction(morphline);
+      
+      TimerTask timerTask = new TimerTask() {
+        @Override
+        public void run() {
+          addMetricsToMRCounters(morphlineContext.getMetricRegistry());
+        }
+      };
+      long period = getConfiguration().getLong("morphlineMetricsPublicationPeriod", 10 * 1000); 
+      this.metricsPublisher = new java.util.Timer(true);
+      this.metricsPublisher.schedule(timerTask, 0, period); // flush metrics every 10 seconds or so
     }
   
     @Override
@@ -283,6 +297,9 @@ public final class MorphlineFnBuilder<S,T> {
         Notifications.notifyShutdown(morphline);
       } finally {
         addMetricsToMRCounters(morphlineContext.getMetricRegistry());
+        if (metricsPublisher != null) {
+          metricsPublisher.cancel();
+        }
       }
     }
   
@@ -318,9 +335,30 @@ public final class MorphlineFnBuilder<S,T> {
         addCounting(entry.getKey(), entry.getValue(), nanosPerMilliSec);
       }
     }
-  
+
+    /*
+     * Enable the user to view the live metrics counter state, aggregated across multiple machines,
+     * not just after the job has completed, but also while the job is still running. That is,
+     * periodically push metrics to the central metrics aggregation server, every 10 seconds.
+     * 
+     * We locally maintain the previous metrics counter state in order to be able to calculate the
+     * DIFF of the counter state so we can push the DIFF (rather than the absolute counter state) to
+     * the central MR history server.
+     */
     private void addCounting(String metricName, Counting value, long scale) {
-      increment(METRICS_GROUP_NAME, metricName, value.getCount() / scale);
+      String key = METRICS_GROUP_NAME + "@@@###" + metricName;
+      long delta;
+      synchronized (counters) {
+        MutableLong oldCount = counters.get(key);
+        if (oldCount == null) {
+          oldCount = new MutableLong(0);
+          counters.put(key, oldCount);        
+        }
+        long newCount = value.getCount();
+        delta = newCount - oldCount.getValue();
+        oldCount.setValue(newCount);
+      }
+      increment(METRICS_GROUP_NAME, metricName, delta / scale);
     }
   
     private Record getRecord(PathParts parts) {
@@ -413,6 +451,18 @@ public final class MorphlineFnBuilder<S,T> {
         System.setProperty("java.class.path", fullClassPath); // see FastJavaScriptEngine.parse()
       }    
     }
+    
+    
+    ///////////////////////////////////////////////////////////////////////////////
+    // Nested classes:
+    ///////////////////////////////////////////////////////////////////////////////
+    private static final class MutableLong {
+      private long value;
+      public MutableLong(long value) { this.value = value; }
+      public long getValue() { return value; }
+      public void setValue(long value) { this.value = value; }
+      public String toString() { return String.valueOf(value); }
+    };
     
     
     ///////////////////////////////////////////////////////////////////////////////
