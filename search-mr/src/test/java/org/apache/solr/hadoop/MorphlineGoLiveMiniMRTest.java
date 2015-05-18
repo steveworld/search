@@ -24,7 +24,9 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.lang.reflect.Array;
 import java.net.URI;
+
 import com.google.common.base.Charsets;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -209,6 +211,7 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     URI uri = dfsCluster.getFileSystem().getUri();
     System.setProperty("solr.hdfs.home",  uri.toString() + "/" + this.getClass().getName());
     uploadConfFiles();
+    System.setProperty("solr.tests.cloud.cm.enabled", "false"); // disable Solr ChaosMonkey
   }
   
   @Override
