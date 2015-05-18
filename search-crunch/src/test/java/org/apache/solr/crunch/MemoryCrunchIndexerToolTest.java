@@ -89,6 +89,7 @@ public class MemoryCrunchIndexerToolTest extends AbstractSolrMorphlineZkTest {
     
   @Before
   public void setUp() throws Exception {
+    System.setProperty("solr.tests.cloud.cm.enabled", "false"); // disable Solr ChaosMonkey
     super.setUp();
   }
 
