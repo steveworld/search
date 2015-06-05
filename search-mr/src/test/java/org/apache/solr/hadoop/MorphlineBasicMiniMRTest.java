@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
@@ -312,6 +313,14 @@ public class MorphlineBasicMiniMRTest extends Assert {
     System.out.println("outputfiles:" + Arrays.toString(outputFiles));
 
     TestUtils.validateSolrServerDocumentCount(MINIMR_CONF_DIR, fs, outDir, count, shards);
+    
+    Path tlogPath = new Path(outDir, "part-00001/data/tlog");
+    Path[] tlogFiles = FileUtil.stat2Paths(fs.listStatus(tlogPath));
+    
+    for (Path tl : tlogFiles) {
+      FileStatus status = fs.getFileStatus(new Path(tlogPath, tl));
+      assertEquals("Expected to find tlogs with a replication factor of 1", 1, status.getReplication());
+    }
     
     // run again with --dryrun mode:  
     tool = createTool();
