@@ -181,6 +181,7 @@ class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     System.setProperty("solr.hdfs.blockcache.enabled", "false");
     System.setProperty("solr.autoCommit.maxTime", "600000");
     System.setProperty("solr.autoSoftCommit.maxTime", "-1");
+    System.setProperty("solr.ulog.tlogDfsReplication", "1");
     
     CoreContainer container = new CoreContainer(loader);
     container.load();
