@@ -22,17 +22,16 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.lang.reflect.Array;
-import com.google.common.base.Charsets;
 import java.util.Arrays;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
-
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MiniMRCluster;
 import org.apache.hadoop.mapreduce.Job;
@@ -56,6 +55,7 @@ import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope.Scope;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakZombies;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakZombies.Consequence;
+import com.google.common.base.Charsets;
 
 @ThreadLeakAction({Action.WARN})
 @ThreadLeakLingering(linger = 0)
@@ -374,6 +374,14 @@ public class MorphlineBasicMiniMRTest extends SolrTestCaseJ4 {
     System.out.println("outputfiles:" + Arrays.toString(outputFiles));
 
     UtilsForTests.validateSolrServerDocumentCount(MINIMR_CONF_DIR, fs, outDir, count, shards);
+    
+    Path tlogPath = new Path(outDir, "part-00001/data/tlog");
+    Path[] tlogFiles = FileUtil.stat2Paths(fs.listStatus(tlogPath));
+    
+    for (Path tl : tlogFiles) {
+      FileStatus status = fs.getFileStatus(new Path(tlogPath, tl));
+      assertEquals("Expected to find tlogs with a replication factor of 1", 1, status.getReplication());
+    }
     
     // run again with --dryrun mode:  
     tool = createTool();
