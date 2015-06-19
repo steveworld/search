@@ -1458,7 +1458,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
    *
    * Note 2: Ideally we would just set default ACLs on path that would be automatically applied
    * on subdirectory/file creation.  However, the transformation from default mask to mask
-   * is filtered by the umask, so is not effective under a restrictive umask.
+   * is filtered by the umask, so is not effective under a restrictive umask.  This is an HDFS
+   * bug, see https://issues.apache.org/jira/browse/HDFS-6962.
    */
   private void recursiveModifyAclsForGoLive(Path path, FileSystem fs) {
     // let's allow users to disable this if they want to avoid the warning or
