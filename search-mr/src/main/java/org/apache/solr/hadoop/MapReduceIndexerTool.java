@@ -925,7 +925,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       // give the solr process acls to read/execute the results directory, which is necessary
       // for the go-live phase.  Otherwise, if the client is running with a restrictive umask
       // (e.g. 077), solr may be unable to read the directory in order to do the merge.
-      recursiveModifyAclsForGoLive(outputResultsDir, fs);
+      modifyAclsForGoLive(options.outputDir, outputResultsDir, fs);
       if (!new GoLive().goLive(options, listSortedOutputShardDirs(outputResultsDir, fs))) {
         return -1;
       }
@@ -1442,7 +1442,11 @@ public class MapReduceIndexerTool extends Configured implements Tool {
   }
 
   /**
-   * Recursively sets the following ACLs on path.
+   * Recursively sets ACLS on the following paths:
+   * a) outputDir, non-recursively
+   * b) resultsDir, recursively
+   *
+   * The following ACLs are set on the above paths:
    * 1) user:solr:r-x
    * This is necessary so that solr can read the results directory during go-live.  "solr"
    * can be overridden by setting the "solr.authorization.superuser" System property.
@@ -1461,7 +1465,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
    * is filtered by the umask, so is not effective under a restrictive umask.  This is an HDFS
    * bug, see https://issues.apache.org/jira/browse/HDFS-6962.
    */
-  private void recursiveModifyAclsForGoLive(Path path, FileSystem fs) {
+  private void modifyAclsForGoLive(Path outputDir, Path resultsDir, FileSystem fs) {
     // let's allow users to disable this if they want to avoid the warning or
     // something unexpected happens
     boolean skip = Boolean.parseBoolean(System.getProperty("mrit.skipAddHdfsAcls", "false"));
@@ -1469,9 +1473,10 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       // in case the solr process is running as a different user
       String user = System.getProperty("solr.authorization.superuser", "solr");
       try {
-        recursiveModifyAclsForGoLive(path, fs, user);
+        modifyAclsForGoLive(outputDir, fs, user);
+        recursiveModifyAclsForGoLive(resultsDir, fs, user);
       } catch (IOException ioe) {
-        LOG.warn("Unable to set acl for " + path + ", --go-live may fail", ioe);
+        LOG.warn("Unable to set acl for user: " + user + ", --go-live may fail", ioe);
       }
     }
   }
