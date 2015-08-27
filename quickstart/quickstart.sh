@@ -52,17 +52,20 @@ export NAMENODE_CONNECT=${NAMENODE_CONNECT:=${NAMENODE_HOST}:${NAMENODE_PORT}}
 export ZOOKEEPER_HOST=${ZOOKEEPER_HOST:=`hostname`}
 export ZOOKEEPER_PORT=${ZOOKEEPER_PORT:="2181"}
 export ZOOKEEPER_ROOT=${ZOOKEEPER_ROOT:="/solr"}
-export ZOOKEEPER_CONNECT=${ZOOKEEPER_HOST}:${ZOOKEEPER_PORT}${ZOOKEEPER_ROOT}
 
-# Run the sanity checks only if the timeout command is present in $PATH
-if [ $IS_TIMEOUT_PRESENT == 0 ]; then
-    # check that zookeeper is accessible
-    timeout 1 bash -c 'cat < /dev/null > /dev/tcp/$ZOOKEEPER_HOST/$ZOOKEEPER_PORT' >& /dev/null
-    if [ $? != 0 ]; then
-        echo "Unable to access ZooKeeper at ${ZOOKEEPER_HOST}:${ZOOKEEPER_PORT}$ZOOKEEPER_ROOT"
-        exit 1
+if [ -z $ZOOKEEPER_ENSEMBLE ]; then
+    # Run the sanity checks only if the timeout command is present in $PATH
+    if [ $IS_TIMEOUT_PRESENT == 0 ]; then
+        # check that zookeeper is accessible
+        timeout 1 bash -c 'cat < /dev/null > /dev/tcp/$ZOOKEEPER_HOST/$ZOOKEEPER_PORT' >& /dev/null
+        if [ $? != 0 ]; then
+            echo "Unable to access ZooKeeper at ${ZOOKEEPER_HOST}:${ZOOKEEPER_PORT}$ZOOKEEPER_ROOT"
+            exit 1
+        fi
     fi
 fi
+
+export ZOOKEEPER_ENSEMBLE=${ZOOKEEPER_ENSEMBLE:=${ZOOKEEPER_HOST}:${ZOOKEEPER_PORT}${ZOOKEEPER_ROOT}}
 
 export HDFS_USER=${HDFS_USER:="${USER}"}
 
@@ -154,21 +157,21 @@ echo Copy complete, generating configuration, uploading, and creating SolrCloud 
 
 # Generate a template of the instance directory
 rm -fr ${QUICKSTART_WORKINGDIR}/emailSearch || die "Unable to remove ${QUICKSTART_WORKINGDIR}/emailSearch"
-solrctl --zk ${ZOOKEEPER_CONNECT} instancedir --generate ${QUICKSTART_WORKINGDIR}/emailSearch || die "solrctl instancedir command failed"
+solrctl --zk ${ZOOKEEPER_ENSEMBLE} instancedir --generate ${QUICKSTART_WORKINGDIR}/emailSearch || die "solrctl instancedir command failed"
 cd ${QUICKSTART_WORKINGDIR}/emailSearch/conf || die "Unable to cd to ${QUICKSTART_WORKINGDIR}/emailSearch/conf"
 
 # Usecase specific configuration
 rm -f schema.xml
 cp $QUICKSTART_SCRIPT_DIR/schema.xml . || die "Unable to access schema.xml"
 
-solrctl --zk ${ZOOKEEPER_CONNECT} collection --delete enron-email-collection >& /dev/null
-solrctl --zk ${ZOOKEEPER_CONNECT} instancedir --delete enron-email-collection >& /dev/null
+solrctl --zk ${ZOOKEEPER_ENSEMBLE} collection --delete enron-email-collection >& /dev/null
+solrctl --zk ${ZOOKEEPER_ENSEMBLE} instancedir --delete enron-email-collection >& /dev/null
 
 # Upload the configuration to SolrCloud
-solrctl --zk ${ZOOKEEPER_CONNECT} instancedir --create enron-email-collection ${QUICKSTART_WORKINGDIR}/emailSearch || die "Unable to create configuration via solrctl"
+solrctl --zk ${ZOOKEEPER_ENSEMBLE} instancedir --create enron-email-collection ${QUICKSTART_WORKINGDIR}/emailSearch || die "Unable to create configuration via solrctl"
 
 # Create a Solr collection named enron-email-collection. -s 2 indicates that this collection has two shards.
-solrctl --zk ${ZOOKEEPER_CONNECT} collection --create enron-email-collection -s 2 -r 1 -m 2 || die "Unable to create collection"
+solrctl --zk ${ZOOKEEPER_ENSEMBLE} collection --create enron-email-collection -s 2 -r 1 -m 2 || die "Unable to create collection"
 
 # Create a directory that the MapReduceBatchIndexer can write results to. Ensure it's empty
 hadoop fs -rm -f -skipTrash -r ${HDFS_ENRON_OUTDIR} || die "Unable to remove old outdir"
@@ -190,7 +193,7 @@ hadoop \
   --output-dir ${HDFS_ENRON_OUTDIR} \
   --verbose \
   --go-live \
-  --zk-host ${ZOOKEEPER_CONNECT} \
+  --zk-host ${ZOOKEEPER_ENSEMBLE} \
   --collection enron-email-collection \
   ${HDFS_ENRON_INDIR}/maildir/arora-h/inbox
 
