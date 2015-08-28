@@ -47,6 +47,8 @@ import org.apache.solr.cloud.AbstractZkTestCase;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.rules.Timeout;
 import org.junit.Test;
 
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakAction;
@@ -64,6 +66,9 @@ import com.carrotsearch.randomizedtesting.annotations.ThreadLeakZombies.Conseque
 @Slow
 @SuppressSSL // SSL does not work with this test for currently unknown reasons
 public class MorphlineBasicMiniMRTest extends SolrTestCaseJ4 {
+
+  @Rule
+  public Timeout globalTimeout= new Timeout(120*1000);
   
   private static final boolean ENABLE_LOCAL_JOB_RUNNER = false; // for debugging only
   private static final String RESOURCES_DIR = getFile("morphlines-core.marker").getParent();  
