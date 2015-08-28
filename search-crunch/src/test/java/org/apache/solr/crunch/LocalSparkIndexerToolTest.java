@@ -19,6 +19,8 @@ import org.apache.lucene.util.LuceneTestCase.SuppressCodecs;
 import org.apache.solr.crunch.CrunchIndexerToolOptions.PipelineType;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.Timeout;
 
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope.Scope;
@@ -26,6 +28,9 @@ import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope.Scope;
 @ThreadLeakScope(Scope.NONE)
 @SuppressCodecs({"Lucene3x", "Lucene40"})
 public class LocalSparkIndexerToolTest extends MemoryCrunchIndexerToolTest {
+
+  @Rule
+  public Timeout globalTimeout= new Timeout(120*1000);
 
   private String oldSparkMaster;
   

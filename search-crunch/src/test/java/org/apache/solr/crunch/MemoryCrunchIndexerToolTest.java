@@ -37,6 +37,7 @@ import org.apache.solr.crunch.CrunchIndexerToolOptions.PipelineType;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.rules.Timeout;
 import org.kitesdk.morphline.api.MorphlineRuntimeException;
 import org.kitesdk.morphline.solr.AbstractSolrMorphlineZkTest;
 import org.kitesdk.morphline.stdlib.DropRecordBuilder;
@@ -59,7 +60,10 @@ public class MemoryCrunchIndexerToolTest extends AbstractSolrMorphlineZkTest {
   
   @Rule
   public TemporaryPath tmpDir = TemporaryPaths.create();
- 
+
+  @Rule
+  public Timeout globalTimeout= new Timeout(120*1000);
+
   private PipelineType pipelineType;
   private boolean isRandomizingWithDoFn;
   private boolean isDryRun;
