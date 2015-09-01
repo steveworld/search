@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+ Licensed to the Apache Software Foundation (ASF) under one or more
+ contributor license agreements.  See the NOTICE file distributed with
+ this work for additional information regarding copyright ownership.
+ The ASF licenses this file to You under the Apache License, Version 2.0
+ (the "License"); you may not use this file except in compliance with
+ the License.  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<schema name="example" version="1.5">
+ <fields>
+   <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" /> 
+   <field name="user_friends_count" type="tint" indexed="true" stored="true" />
+   <field name="user_location" type="lowercase" indexed="true" stored="true" />
+   <field name="user_description" type="text_en" indexed="true" stored="false"/>
+   <field name="user_statuses_count" type="tint" indexed="true" stored="true" />
+   <field name="user_followers_count" type="tint" indexed="true" stored="true"/>
+   <field name="user_name" type="text_en" indexed="true" stored="true" />
+   <field name="user_screen_name" type="text_en" indexed="true" stored="true" />
+   <field name="created_at" type="tdate" indexed="true" stored="true" />
+   <field name="text" type="text_en" indexed="true" stored="true" />
+   <field name="retweet_count" type="tint" indexed="true" stored="true" />
+   <field name="retweeted" type="boolean" indexed="true" stored="false" />
+   <field name="in_reply_to_user_id" type="long" indexed="true" stored="true" />
+   <field name="source" type="lowercase" indexed="true" stored="true" />
+   <field name="in_reply_to_status_id" type="long" indexed="true" stored="true" multiValued="true"/>
+   <field name="media_url_https" type="string" indexed="false" stored="true" />
+   <field name="expanded_url" type="string" indexed="false" stored="true" />
+
+   <!-- file metadata -->   
+   <field name="file_download_url" type="string" indexed="false" stored="true" />
+   <field name="file_upload_url" type="string" indexed="false" stored="true" />
+   <field name="file_scheme" type="string" indexed="true" stored="true" />
+   <field name="file_host" type="string" indexed="true" stored="true" />
+   <field name="file_port" type="int" indexed="true" stored="true" />
+   <field name="file_path" type="string" indexed="true" stored="true" />
+   <field name="file_name" type="string" indexed="true" stored="true" />
+   <field name="file_length" type="tlong" indexed="true" stored="true" />
+   <field name="file_last_modified" type="tlong" indexed="true" stored="true" />
+   <field name="file_owner" type="string" indexed="true" stored="true" />
+   <field name="file_group" type="string" indexed="true" stored="true" />
+   <field name="file_permissions_user" type="string" indexed="true" stored="true" />
+   <field name="file_permissions_group" type="string" indexed="true" stored="true" />
+   <field name="file_permissions_other" type="string" indexed="true" stored="true" />
+   <field name="file_permissions_stickybit" type="boolean" indexed="true" stored="true" />
+
+   <!-- tika metadata -->
+   <field name="content_type" type="lowercase" indexed="true" stored="true" />
+
+   <field name="_version_" type="long" indexed="true" stored="true"/>
+   <dynamicField name="ignored_*" type="ignored"/>
+   
+ </fields>
+
+
+ <!-- Field to use to determine and enforce document uniqueness. 
+      Unless this field is marked with required="false", it will be a required field
+   -->
+ <uniqueKey>id</uniqueKey>
+
+  <types>
+    <fieldType name="string" class="solr.StrField" sortMissingLast="true" />
+    <fieldType name="boolean" class="solr.BoolField" sortMissingLast="true"/>
+    <fieldType name="int" class="solr.TrieIntField" precisionStep="0" positionIncrementGap="0"/>
+    <fieldType name="float" class="solr.TrieFloatField" precisionStep="0" positionIncrementGap="0"/>
+    <fieldType name="long" class="solr.TrieLongField" precisionStep="0" positionIncrementGap="0"/>
+    <fieldType name="double" class="solr.TrieDoubleField" precisionStep="0" positionIncrementGap="0"/>
+    <fieldType name="tint" class="solr.TrieIntField" precisionStep="8" positionIncrementGap="0"/>
+    <fieldType name="tfloat" class="solr.TrieFloatField" precisionStep="8" positionIncrementGap="0"/>
+    <fieldType name="tlong" class="solr.TrieLongField" precisionStep="8" positionIncrementGap="0"/>
+    <fieldType name="tdouble" class="solr.TrieDoubleField" precisionStep="8" positionIncrementGap="0"/>
+
+    <!-- The format for this date field is of the form 1995-12-31T23:59:59Z, and
+         is a more restricted form of the canonical representation of dateTime
+         http://www.w3.org/TR/xmlschema-2/#dateTime    
+         The trailing "Z" designates UTC time and is mandatory.
+         Optional fractional seconds are allowed: 1995-12-31T23:59:59.999Z
+         All other components are mandatory.
+
+         Expressions can also be used to denote calculations that should be
+         performed relative to "NOW" to determine the value, ie...
+
+               NOW/HOUR
+                  ... Round to the start of the current hour
+               NOW-1DAY
+                  ... Exactly 1 day prior to now
+               NOW/DAY+6MONTHS+3DAYS
+                  ... 6 months and 3 days in the future from the start of
+                      the current day
+                      
+         Consult the TrieDateField javadocs for more information.
+
+         Note: For faster range queries, consider the tdate type
+      -->
+    <fieldType name="date" class="solr.TrieDateField" precisionStep="0" positionIncrementGap="0"/>
+
+    <!-- A Trie based date field for faster date range queries and date faceting. -->
+    <fieldType name="tdate" class="solr.TrieDateField" precisionStep="6" positionIncrementGap="0"/>
+
+    <fieldType name="text_en" class="solr.TextField" positionIncrementGap="100">
+      <analyzer type="index">
+        <tokenizer class="solr.StandardTokenizerFactory"/>
+        <!-- in this example, we will only use synonyms at query time
+        <filter class="solr.SynonymFilterFactory" synonyms="index_synonyms.txt" ignoreCase="true" expand="false"/>
+        -->
+        <!-- Case insensitive stop word removal. -->
+        <filter class="solr.StopFilterFactory"
+                ignoreCase="true"
+                words="lang/stopwords_en.txt"
+                />
+        <filter class="solr.LowerCaseFilterFactory"/>
+        <filter class="solr.EnglishPossessiveFilterFactory"/>
+        <filter class="solr.PorterStemFilterFactory"/>
+      </analyzer>
+    </fieldType>
+
+    <!-- lowercases the entire field value, keeping it as a single token.  -->
+    <fieldType name="lowercase" class="solr.TextField" positionIncrementGap="100">
+      <analyzer>
+        <tokenizer class="solr.KeywordTokenizerFactory"/>
+        <filter class="solr.LowerCaseFilterFactory" />
+      </analyzer>
+    </fieldType>
+
+    <!-- since fields of this type are by default not stored or indexed,
+         any data added to them will be ignored outright.  --> 
+    <fieldType name="ignored" stored="false" indexed="false" multiValued="true" class="solr.StrField" />
+ </types>
+</schema>

@@ -22,11 +22,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-import java.lang.reflect.Array;
-import java.net.URI;
-
-import com.google.common.base.Charsets;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,18 +30,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.permission.FsPermission;
-import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.MiniMRCluster;
-import org.apache.hadoop.security.authorize.ProxyUsers;
-import org.apache.hadoop.util.JarFinder;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.lucene.util.Constants;
-import org.apache.lucene.util.LuceneTestCase;
 import org.apache.lucene.util.LuceneTestCase.Slow;
 import org.apache.lucene.util.LuceneTestCase.SuppressCodecs;
 import org.apache.solr.SolrTestCaseJ4.SuppressSSL;
@@ -58,24 +45,16 @@ import org.apache.solr.client.solrj.embedded.JettySolrRunner;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.request.QueryRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.cloud.AbstractFullDistribZkTestBase;
-import org.apache.solr.cloud.AbstractZkTestCase;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.cloud.Replica;
 import org.apache.solr.common.cloud.Slice;
-import org.apache.solr.common.cloud.SolrZkClient;
 import org.apache.solr.common.cloud.ZkCoreNodeProps;
 import org.apache.solr.common.params.CollectionParams.CollectionAction;
 import org.apache.solr.common.params.CoreAdminParams;
 import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.util.NamedList;
-import org.kitesdk.morphline.solr.AbstractSolrMorphlineTest;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakAction;
@@ -85,6 +64,7 @@ import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope.Scope;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakZombies;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakZombies.Consequence;
+import com.google.common.base.Charsets;
 
 @ThreadLeakAction({Action.WARN})
 @ThreadLeakLingering(linger = 0)
@@ -93,165 +73,13 @@ import com.carrotsearch.randomizedtesting.annotations.ThreadLeakZombies.Conseque
 @SuppressCodecs({"Lucene3x", "Lucene40"})
 @SuppressSSL // SSL does not work with this test for currently unknown reasons
 @Slow
-public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
+public class MorphlineGoLiveMiniMRTest extends MiniMRBase {
   
   private static final boolean TEST_NIGHTLY = true;
   private static final int RECORD_COUNT = 2104;
-  private static final String RESOURCES_DIR = getFile("morphlines-core.marker").getParent();  
-  private static final String DOCUMENTS_DIR = RESOURCES_DIR + "/test-documents";
-  private static final File MINIMR_INSTANCE_DIR = new File(RESOURCES_DIR + "/solr/minimr");
-  private static final File MINIMR_CONF_DIR = new File(RESOURCES_DIR + "/solr/minimr");
-  
-  private static final String SEARCH_ARCHIVES_JAR = JarFinder.getJar(MapReduceIndexerTool.class);
-  
-  private static MiniDFSCluster dfsCluster = null;
-  private static MiniMRCluster mrCluster = null;
-  private static String tempDir;
- 
-  private final String inputAvroFile1;
-  private final String inputAvroFile2;
-  private final String inputAvroFile3;
 
-  private static File solrHomeDirectory;
-
-  @Override
-  public String getSolrHome() {
-    return solrHomeDirectory.getPath();
-  }
-  
   public MorphlineGoLiveMiniMRTest() {
-    this.inputAvroFile1 = "sample-statuses-20120521-100919.avro";
-    this.inputAvroFile2 = "sample-statuses-20120906-141433.avro";
-    this.inputAvroFile3 = "sample-statuses-20120906-141433-medium.avro";
-    
-    fixShardCount = true;
-    sliceCount = TEST_NIGHTLY ? 7 : 3;
-    shardCount = TEST_NIGHTLY ? 7 : 3;
-  }
-  
-  @BeforeClass
-  public static void setupClass() throws Exception {
-    System.setProperty("solr.hdfs.blockcache.global", Boolean.toString(LuceneTestCase.random().nextBoolean()));
-    System.setProperty("solr.hdfs.blockcache.enabled", Boolean.toString(LuceneTestCase.random().nextBoolean()));
-    System.setProperty("solr.hdfs.blockcache.blocksperbank", "2048");
-    
-    solrHomeDirectory = createTempDir();
-    assumeTrue(
-            "Currently this test can only be run without the lucene test security policy in place",
-            System.getProperty("java.security.manager", "").equals(""));
-
-    assumeFalse("HDFS tests were disabled by -Dtests.disableHdfs",
-        Boolean.parseBoolean(System.getProperty("tests.disableHdfs", "false")));
-    
-    assumeFalse("FIXME: This test does not work with Windows because of native library requirements", Constants.WINDOWS);
-    assumeFalse("FIXME: This test fails under Java 8 due to the Saxon dependency - see SOLR-1301", Constants.JRE_IS_MINIMUM_JAVA8);
-    assumeFalse("FIXME: This test fails under J9 due to the Saxon dependency - see SOLR-1301", System.getProperty("java.vm.info", "<?>").contains("IBM J9"));
-    
-    AbstractZkTestCase.SOLRHOME = solrHomeDirectory;
-    FileUtils.copyDirectory(MINIMR_INSTANCE_DIR, AbstractZkTestCase.SOLRHOME);
-    tempDir = createTempDir().getAbsolutePath();
-
-    new File(tempDir).mkdirs();
-
-    FileUtils.copyFile(new File(RESOURCES_DIR + "/custom-mimetypes.xml"), new File(tempDir + "/custom-mimetypes.xml"));
-    
-    UtilsForTests.setupMorphline(tempDir, "test-morphlines/solrCellDocumentTypes", true, RESOURCES_DIR);
-    
-    
-    System.setProperty("hadoop.log.dir", new File(tempDir, "logs").getAbsolutePath());
-    
-    int taskTrackers = 2;
-    int dataNodes = 2;
-    
-    JobConf conf = new JobConf();
-    conf.set("dfs.block.access.token.enable", "false");
-    conf.set("dfs.permissions", "true");
-    conf.set("hadoop.security.authentication", "simple");
-
-//    conf.set(YarnConfiguration.NM_LOCAL_DIRS, tempDir + File.separator +  "nm-local-dirs");
-//    conf.set(YarnConfiguration.DEFAULT_NM_LOG_DIRS, tempDir + File.separator +  "nm-logs");
-
-    
-    new File(tempDir + File.separator +  "nm-local-dirs").mkdirs();
-    
-    System.setProperty("test.build.dir", tempDir + File.separator + "hdfs" + File.separator + "test-build-dir");
-    System.setProperty("test.build.data", tempDir + File.separator + "hdfs" + File.separator + "build");
-    System.setProperty("test.cache.data", tempDir + File.separator + "hdfs" + File.separator + "cache");
-    
-    dfsCluster = new MiniDFSCluster(conf, dataNodes, true, null);
-    FileSystem fileSystem = dfsCluster.getFileSystem();
-    fileSystem.mkdirs(new Path("/tmp"));
-    fileSystem.mkdirs(new Path("/user"));
-    fileSystem.mkdirs(new Path("/hadoop/mapred/system"));
-    fileSystem.setPermission(new Path("/tmp"),
-        FsPermission.valueOf("-rwxrwxrwx"));
-    fileSystem.setPermission(new Path("/user"),
-        FsPermission.valueOf("-rwxrwxrwx"));
-    fileSystem.setPermission(new Path("/hadoop/mapred/system"),
-        FsPermission.valueOf("-rwx------"));
-    
-//    mrCluster = MiniMRClientClusterFactory.create(MorphlineGoLiveMiniMRTest.class, 1, conf, new File(tempDir, "mrCluster")); 
-    String nnURI = fileSystem.getUri().toString();
-    int numDirs = 1;
-    String[] racks = null;
-    String[] hosts = null;
-    
-    mrCluster = new MiniMRCluster(0, 0, taskTrackers, nnURI, numDirs, racks,
-        hosts, null, conf);
-
-    ProxyUsers.refreshSuperUserGroupsConfiguration(conf);
-  }
-  
-  @Override
-  @Before
-  public void setUp() throws Exception {
-    super.setUp();
-    System.setProperty("host", "127.0.0.1");
-    System.setProperty("numShards", Integer.toString(sliceCount));
-    URI uri = dfsCluster.getFileSystem().getUri();
-    System.setProperty("solr.hdfs.home",  uri.toString() + "/" + this.getClass().getName());
-    uploadConfFiles();
-    System.setProperty("solr.tests.cloud.cm.enabled", "false"); // disable Solr ChaosMonkey
-  }
-  
-  @Override
-  @After
-  public void tearDown() throws Exception {
-    super.tearDown();
-    System.clearProperty("host");
-    System.clearProperty("numShards");
-    System.clearProperty("solr.hdfs.home");
-  }
-  
-  @AfterClass
-  public static void teardownClass() throws Exception {
-    System.clearProperty("solr.hdfs.blockcache.global");
-    System.clearProperty("solr.hdfs.blockcache.blocksperbank");
-    System.clearProperty("solr.hdfs.blockcache.enabled");
-    System.clearProperty("hadoop.log.dir");
-    System.clearProperty("test.build.dir");
-    System.clearProperty("test.build.data");
-    System.clearProperty("test.cache.data");
-    
-    if (mrCluster != null) {
-      //mrCluster.shutdown();
-      mrCluster = null;
-    }
-    if (dfsCluster != null) {
-      dfsCluster.shutdown();
-      dfsCluster = null;
-    }
-    FileSystem.closeAll();
-  }
-  
-  private JobConf getJobConf() {
-    return mrCluster.createJobConf();
-  }
-  
-  @Test
-  @Override
-  public void testDistribSearch() throws Exception {
-    super.testDistribSearch();
+    super();
   }
   
   @Test
@@ -756,7 +584,7 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     fs.copyFromLocalFile(new Path(DOCUMENTS_DIR, localFile), dataDir);
     return INPATH;
   }
-  
+
   @Override
   public JettySolrRunner createJetty(File solrHome, String dataDir,
       String shardList, String solrConfigOverride, String schemaOverride)
@@ -777,103 +605,7 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     
     return jetty;
   }
-  
-  private static void putConfig(SolrZkClient zkClient, File solrhome, String name) throws Exception {
-    putConfig(zkClient, solrhome, name, name);
-  }
-  
-  private static void putConfig(SolrZkClient zkClient, File solrhome, String srcName, String destName)
-      throws Exception {
-    
-    File file = new File(solrhome, "conf" + File.separator + srcName);
-    if (!file.exists()) {
-      // LOG.info("skipping " + file.getAbsolutePath() +
-      // " because it doesn't exist");
-      return;
-    }
-    
-    String destPath = "/configs/conf1/" + destName;
-    // LOG.info("put " + file.getAbsolutePath() + " to " + destPath);
-    zkClient.makePath(destPath, file, false, true);
-  }
-  
-  private void uploadConfFiles() throws Exception {
-    // upload our own config files
-    SolrZkClient zkClient = new SolrZkClient(zkServer.getZkAddress(), 10000);
-    putConfig(zkClient, new File(RESOURCES_DIR + "/solr/solrcloud"),
-        "solrconfig.xml");
-    putConfig(zkClient, MINIMR_CONF_DIR, "schema.xml");
-    putConfig(zkClient, MINIMR_CONF_DIR, "elevate.xml");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_en.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_ar.txt");
-    
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_bg.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_ca.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_cz.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_da.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_el.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_es.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_eu.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_de.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_fa.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_fi.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_fr.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_ga.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_gl.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_hi.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_hu.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_hy.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_id.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_it.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_ja.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_lv.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_nl.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_no.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_pt.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_ro.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_ru.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_sv.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_th.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stopwords_tr.txt");
-    
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/contractions_ca.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/contractions_fr.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/contractions_ga.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/contractions_it.txt");
-    
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/stemdict_nl.txt");
-    
-    putConfig(zkClient, MINIMR_CONF_DIR, "lang/hyphenations_ga.txt");
-    
-    putConfig(zkClient, MINIMR_CONF_DIR, "stopwords.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "protwords.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "currency.xml");
-    putConfig(zkClient, MINIMR_CONF_DIR, "open-exchange-rates.json");
-    putConfig(zkClient, MINIMR_CONF_DIR, "mapping-ISOLatin1Accent.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "old_synonyms.txt");
-    putConfig(zkClient, MINIMR_CONF_DIR, "synonyms.txt");
-    zkClient.close();
-  }
-  
-  protected static <T> T[] concat(T[]... arrays) {
-    if (arrays.length <= 0) {
-      throw new IllegalArgumentException();
-    }
-    Class clazz = null;
-    int length = 0;
-    for (T[] array : arrays) {
-      clazz = array.getClass();
-      length += array.length;
-    }
-    T[] result = (T[]) Array.newInstance(clazz.getComponentType(), length);
-    int pos = 0;
-    for (T[] array : arrays) {
-      System.arraycopy(array, 0, result, pos, array.length);
-      pos += array.length;
-    }
-    return result;
-  }
-  
+
   private NamedList<Object> createAlias(String alias, String collections) throws SolrServerException, IOException {
     ModifiableSolrParams params = new ModifiableSolrParams();
     params.set("collections", collections);
@@ -884,5 +616,4 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     return cloudClient.request(request);
   }
 
-  
 }
