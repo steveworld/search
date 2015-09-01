@@ -23,6 +23,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -343,7 +344,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
           @Override
           public File convert(ArgumentParser parser, Argument arg, String value) throws ArgumentParserException {
             File solrHomeDir = super.convert(parser, arg, value);
-            File solrConfigFile = new File(new File(solrHomeDir, "conf"), "solrconfig.xml");
+            File solrConfigFile = getSolrConfig(solrHomeDir);
             new FileArgumentType().verifyExists().verifyIsFile().verifyCanRead().convert(
                 parser, arg, solrConfigFile.getPath());
             return solrHomeDir;
@@ -482,8 +483,12 @@ public class MapReduceIndexerTool extends Configured implements Tool {
             + "'/solr/foo/bar' (from the server perspective).\n"
             + "\n"
             + "If --solr-home-dir is not specified, the Solr home directory for the collection "
-            + "will be downloaded from this ZooKeeper ensemble.");
+            + "may be downloaded from this ZooKeeper ensemble.");
 
+      Argument useZkSolrConfig = clusterInfoGroup.addArgument("--use-zk-solrconfig.xml")
+          .action(Arguments.storeTrue())
+          .help(FeatureControl.SUPPRESS);
+ 
       Argument shardUrlsArg = nonSolrCloud(clusterInfoGroup.addArgument("--shard-url")
         .metavar("URL")
         .type(String.class)
@@ -535,6 +540,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       } catch (FoundHelpArgument e) {
         return 0;
       } catch (ArgumentParserException e) {
+        LOG.warn("", e);
         parser.handleError(e);
         return 1;
       }
@@ -563,6 +569,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       opts.isDryRun = ns.getBoolean(dryRunArg.getDest());
       opts.isVerbose = ns.getBoolean(verboseArg.getDest());
       opts.zkHost = ns.getString(zkHostArg.getDest());
+      opts.useZkSolrConfig = ns.getBoolean(useZkSolrConfig.getDest());
       opts.shards = ns.getInt(shardsArg.getDest());
       opts.shardUrls = buildShardUrls(ns.getList(shardUrlsArg.getDest()), opts.shards);
       opts.goLive = ns.getBoolean(goLiveArg.getDest());
@@ -626,6 +633,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
     boolean goLive;
     String collection;
     String zkHost;
+    boolean useZkSolrConfig;
     Integer goLiveThreads;
     List<List<String>> shardUrls;
     List<Path> inputLists;
@@ -647,7 +655,14 @@ public class MapReduceIndexerTool extends Configured implements Tool {
   }
   // END OF INNER CLASS  
 
-  
+  /**
+   * @param solrHomeDir A Solr home directory
+   * @return The conf/solrconfig.xml from the given directory
+   */
+  private static File getSolrConfig(File solrHomeDir) {
+    return new File(new File(solrHomeDir, "conf"), "solrconfig.xml");
+  }
+
   /** API for command line clients */
   public static void main(String[] args) throws Exception  {
     int res = ToolRunner.run(new Configuration(), new MapReduceIndexerTool(), args);
@@ -813,14 +828,24 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       assert options.zkHost != null;
       // use the config that this collection uses for the SolrHomeCache.
       ZooKeeperInspector zki = new ZooKeeperInspector();
-      SolrZkClient zkClient = zki.getZkClient(options.zkHost);
-      try {
+      try (SolrZkClient zkClient = zki.getZkClient(options.zkHost)) {
         String configName = zki.readConfigName(zkClient, options.collection);
         File tmpSolrHomeDir = zki.downloadConfigDir(zkClient, configName);
+
+        if (!options.useZkSolrConfig) {
+          // replace downloaded solrconfig.xml with embedded one
+          try (InputStream source = MapReduceIndexerTool.class.getResourceAsStream("/solrconfig.indexer.xml");
+              FileOutputStream destination = new FileOutputStream(getSolrConfig(tmpSolrHomeDir))) {
+            ByteStreams.copy(source, destination);
+          }
+          LOG.debug("Replaced zookeeper's solrconfig.xml with embedded version.");
+        } else {
+          LOG.debug("Keeping downloaded solrconfig.xml:");
+          
+        }
+
         SolrOutputFormat.setupSolrHomeCache(tmpSolrHomeDir, job);
         options.solrHomeDir = tmpSolrHomeDir;
-      } finally {
-        zkClient.close();
       }
     }
     
