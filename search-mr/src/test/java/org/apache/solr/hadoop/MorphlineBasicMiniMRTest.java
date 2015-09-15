@@ -68,7 +68,7 @@ import com.carrotsearch.randomizedtesting.annotations.ThreadLeakZombies.Conseque
 public class MorphlineBasicMiniMRTest extends SolrTestCaseJ4 {
 
   @Rule
-  public Timeout globalTimeout= new Timeout(120*1000);
+  public Timeout globalTimeout= new Timeout(180*1000);
   
   private static final boolean ENABLE_LOCAL_JOB_RUNNER = false; // for debugging only
   private static final String RESOURCES_DIR = getFile("morphlines-core.marker").getParent();  
