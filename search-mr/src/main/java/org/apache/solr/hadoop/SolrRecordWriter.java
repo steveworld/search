@@ -151,6 +151,14 @@ class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
             solrHomeDir, solrHomeDir.toUri(), loader.getInstanceDir(),
             loader.getConfigDir(), dataDirStr, outputShardDir));
 
+    // TODO: This is fragile and should be well documented
+    System.setProperty("solr.directoryFactory", HdfsDirectoryFactory.class.getName()); 
+    System.setProperty("solr.lock.type", "hdfs"); 
+    System.setProperty("solr.hdfs.nrtcachingdirectory", "false");
+    System.setProperty("solr.hdfs.blockcache.enabled", "false");
+    System.setProperty("solr.autoCommit.maxTime", "600000");
+    System.setProperty("solr.autoSoftCommit.maxTime", "-1");
+    
     CoreContainer container = new CoreContainer(loader);
     container.load();
     
