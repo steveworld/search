@@ -775,7 +775,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
         return -1; // job failed
       }
     }
-    float secs = (System.nanoTime() - startTime) / (float)(10^9);
+    float secs = (System.nanoTime() - startTime) / (float)(1.0e9);
     LOG.info("Done. Randomizing list of {} input files took {} secs", numFiles, secs);
     
     
@@ -854,7 +854,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       LOG.info("Indexing {} files in dryrun mode", numFiles);
       startTime = System.nanoTime();
       dryRun(runner, fs, fullInputList);
-      secs = (System.nanoTime() - startTime) / (float)(10^9);
+      secs = (System.nanoTime() - startTime) / (float)(1.0e9);
       LOG.info("Done. Indexing {} files in dryrun mode took {} secs", numFiles, secs);
       goodbye(null, programStartTime);
       return 0;
@@ -870,7 +870,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       return -1; // job failed
     }
 
-    secs = (System.nanoTime() - startTime) / (float)(10^9);
+    secs = (System.nanoTime() - startTime) / (float)(1.0e9);
     LOG.info("Done. Indexing {} files using {} real mappers into {} reducers took {} secs", new Object[] {numFiles, realMappers, reducers, secs});
 
     int mtreeMergeIterations = 0;
@@ -910,7 +910,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
       if (!renameTreeMergeShardDirs(outputTreeMergeStep, job, fs)) {
         return -1;
       }
-      secs = (System.nanoTime() - startTime) / (float)(10^9);
+      secs = (System.nanoTime() - startTime) / (float)(1.0e9);
       LOG.info("MTree merge iteration {}/{}: Done. Merging {} shards into {} shards using fanout {} took {} secs",
           new Object[] {mtreeMergeIteration, mtreeMergeIterations, reducers, (reducers / options.fanout), options.fanout, secs});
       
@@ -1439,7 +1439,7 @@ public class MapReduceIndexerTool extends Configured implements Tool {
   }
 
   private void goodbye(Job job, long startTime) {
-    float secs = (System.nanoTime() - startTime) / (float)(10^9);
+    float secs = (System.nanoTime() - startTime) / (float)(1.0e9);
     if (job != null) {
       LOG.info("Succeeded with job: " + getJobInfo(job));
     }
