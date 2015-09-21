@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.net.URI;
+import java.text.NumberFormat;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.fs.FileSystem;
@@ -84,6 +85,8 @@ public abstract class MiniMRBase extends AbstractFullDistribZkTestBase {
         Boolean.parseBoolean(System.getProperty("tests.disableHdfs", "false")));
     
     assumeFalse("FIXME: This test does not work with Windows because of native library requirements", Constants.WINDOWS);
+    assumeTrue("This test has issues with locales with non-Arabic digits",
+        "1".equals(NumberFormat.getInstance().format(1)));
     
     AbstractZkTestCase.SOLRHOME = solrHomeDirectory;
     FileUtils.copyDirectory(MINIMR_INSTANCE_DIR, AbstractZkTestCase.SOLRHOME);
