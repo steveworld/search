@@ -32,6 +32,7 @@ import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.apache.hadoop.hdfs.XAttrHelper;
 
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MiniMRCluster;
@@ -115,6 +116,15 @@ public class MorphlineBasicMiniMRTest extends SolrTestCaseJ4 {
 
   }
 
+  private static boolean canBuildXAttr() {
+    try {
+      XAttrHelper.buildXAttr("security.something", null);
+    } catch (Exception ex) {
+      return false;
+    }
+    return true;
+  }
+
   @BeforeClass
   public static void setupClass() throws Exception {
     solrHomeDirectory = createTempDir();
@@ -130,6 +140,8 @@ public class MorphlineBasicMiniMRTest extends SolrTestCaseJ4 {
     assumeFalse("FIXME: This test fails under J9 due to the Saxon dependency - see SOLR-1301", System.getProperty("java.vm.info", "<?>").contains("IBM J9"));
     assumeTrue("This test has issues with locales with non-Arabic digits",
         "1".equals(NumberFormat.getInstance().format(1)));
+    assumeTrue("This test has issues with HDFS Xttrs",
+        canBuildXAttr());
     
     AbstractZkTestCase.SOLRHOME = solrHomeDirectory;
     FileUtils.copyDirectory(MINIMR_CONF_DIR, solrHomeDirectory);
