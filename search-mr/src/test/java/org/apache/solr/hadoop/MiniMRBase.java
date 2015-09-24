@@ -28,6 +28,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.apache.hadoop.hdfs.XAttrHelper;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MiniMRCluster;
 import org.apache.hadoop.security.authorize.ProxyUsers;
@@ -73,6 +74,15 @@ public abstract class MiniMRBase extends AbstractFullDistribZkTestBase {
     shardCount = sliceCount;
   }
 
+  private static boolean canBuildXAttr() {
+    try {
+      XAttrHelper.buildXAttr("security.something", null);
+    } catch (Exception ex) {
+      return false;
+    }
+    return true;
+  }
+
   @BeforeClass
   public static void setupClass() throws Exception {
     System.setProperty("solr.hdfs.blockcache.global", Boolean.toString(LuceneTestCase.random().nextBoolean()));
@@ -87,6 +97,8 @@ public abstract class MiniMRBase extends AbstractFullDistribZkTestBase {
     assumeFalse("FIXME: This test does not work with Windows because of native library requirements", Constants.WINDOWS);
     assumeTrue("This test has issues with locales with non-Arabic digits",
         "1".equals(NumberFormat.getInstance().format(1)));
+    assumeTrue("This test has issues with HDFS Xttrs",
+        canBuildXAttr());
     
     AbstractZkTestCase.SOLRHOME = solrHomeDirectory;
     FileUtils.copyDirectory(MINIMR_INSTANCE_DIR, AbstractZkTestCase.SOLRHOME);
