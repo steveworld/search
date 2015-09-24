@@ -41,6 +41,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.apache.hadoop.hdfs.XAttrHelper;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MiniMRCluster;
 import org.apache.hadoop.security.authorize.ProxyUsers;
@@ -130,6 +131,15 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     shardCount = TEST_NIGHTLY ? 7 : 3;
   }
   
+  private static boolean canBuildXAttr() {
+    try {
+      XAttrHelper.buildXAttr("security.something", null);
+    } catch (Exception ex) {
+      return false;
+    }
+    return true;
+  }
+
   @BeforeClass
   public static void setupClass() throws Exception {
     System.setProperty("solr.hdfs.blockcache.global", Boolean.toString(LuceneTestCase.random().nextBoolean()));
@@ -149,6 +159,8 @@ public class MorphlineGoLiveMiniMRTest extends AbstractFullDistribZkTestBase {
     assumeFalse("FIXME: This test fails under J9 due to the Saxon dependency - see SOLR-1301", System.getProperty("java.vm.info", "<?>").contains("IBM J9"));
     assumeTrue("This test has issues with locales with non-Arabic digits",
         "1".equals(NumberFormat.getInstance().format(1)));
+    assumeTrue("This test has issues with HDFS Xttrs",
+        canBuildXAttr());
     
     AbstractZkTestCase.SOLRHOME = solrHomeDirectory;
     FileUtils.copyDirectory(MINIMR_INSTANCE_DIR, AbstractZkTestCase.SOLRHOME);
