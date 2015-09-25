@@ -30,7 +30,7 @@ import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope.Scope;
 public class LocalSparkIndexerToolTest extends MemoryCrunchIndexerToolTest {
 
   @Rule
-  public Timeout globalTimeout= new Timeout(120*1000);
+  public Timeout globalTimeout= new Timeout(180*1000);
 
   private String oldSparkMaster;
   

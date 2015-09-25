@@ -28,7 +28,7 @@ import org.junit.rules.Timeout;
 public class MapReduceCrunchIndexerToolTest extends MemoryCrunchIndexerToolTest {
 
   @Rule
-  public Timeout globalTimeout= new Timeout(120*1000);
+  public Timeout globalTimeout= new Timeout(180*1000);
 
   public MapReduceCrunchIndexerToolTest() {
     super(PipelineType.mapreduce, false);
