@@ -62,7 +62,7 @@ public class MemoryCrunchIndexerToolTest extends AbstractSolrMorphlineZkTest {
   public TemporaryPath tmpDir = TemporaryPaths.create();
 
   @Rule
-  public Timeout globalTimeout= new Timeout(120*1000);
+  public Timeout globalTimeout= new Timeout(180*1000);
 
   private PipelineType pipelineType;
   private boolean isRandomizingWithDoFn;
