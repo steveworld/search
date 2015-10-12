@@ -20,8 +20,8 @@ package org.apache.solr.hadoop;
 
 import org.apache.hadoop.fs.FsShell;
 import org.apache.hadoop.fs.shell.CommandFactory;
-import org.apache.hadoop.fs.shell.Find;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.solr.hadoop.fs.shell.Find;
 
 /**
  * HDFS version of Linux 'find' command line tool. Borrowed from
