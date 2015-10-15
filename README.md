@@ -200,7 +200,7 @@ mvn clean package
 ls search-dist/target/*.tar.gz
 </pre>
 
-## Integrating with Eclipse
+## Integrating with Eclipse:
 
 * This section describes how to integrate the codeline with Eclipse.
 * Build the software as described above. Then create Eclipse projects like this:
