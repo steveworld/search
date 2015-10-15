@@ -311,16 +311,14 @@ public class MemoryCrunchIndexerToolTest extends AbstractSolrMorphlineZkTest {
   
   private void testCommandThatThrowsException() throws Exception {
     String inputPath = tmpDir.copyResourceFileName("test-documents/hello1.txt");
-    String[] expected = new String[] {};
     String[] args = getInitialArgs(THROW_EXCEPTION_FILE);
     args = ObjectArrays.concat(args, inputPath);    
     numExpectedExceptionRecords = 1;
-    if (pipelineType != PipelineType.memory) {
-      PipelineResult pipelineResult = runIntoSolr(args, expected);
-      Assert.assertTrue(pipelineResult.getStageResults().get(0).getCounterValue("morphline", "morphline.app.numRecords") > 0);
+    if (pipelineType == PipelineType.mapreduce) {
+      runPipeline(args, true);
     } else {
       try {
-        runIntoSolr(args, expected);
+        runPipeline(args, true);
         Assert.fail();
       } catch (MorphlineRuntimeException e) {
         ; // expected
@@ -392,8 +390,12 @@ public class MemoryCrunchIndexerToolTest extends AbstractSolrMorphlineZkTest {
     }    
     return pipelineResult;
   }
-  
+
   private PipelineResult runPipeline(String[] args) throws Exception {
+    return runPipeline(args, false);
+  }
+
+  private PipelineResult runPipeline(String[] args, boolean expectFailure) throws Exception {
     CrunchIndexerTool tool = new CrunchIndexerTool();
     Configuration config = tmpDir.getDefaultConfiguration();
     config.set(CrunchIndexerTool.MORPHLINE_VARIABLE_PARAM + ".ZK_HOST", zkServer.getZkAddress());
@@ -402,12 +404,18 @@ public class MemoryCrunchIndexerToolTest extends AbstractSolrMorphlineZkTest {
       config.setInt(CrunchIndexerTool.MAIN_MEMORY_RANDOMIZATION_THRESHOLD, -1); 
     }
     int res = ToolRunner.run(config, tool, args);
-    Assert.assertEquals(0, res);
-    Assert.assertTrue(tool.pipelineResult.succeeded());      
-    Assert.assertEquals(1, tool.pipelineResult.getStageResults().size());
-    StageResult stageResult = tool.pipelineResult.getStageResults().get(0);
-    Assert.assertEquals(numExpectedFailedRecords, stageResult.getCounterValue("morphline", "morphline.app.numFailedRecords"));
-    Assert.assertEquals(numExpectedExceptionRecords, stageResult.getCounterValue("morphline", "morphline.app.numExceptionRecords"));
+    if (expectFailure) {
+      Assert.assertEquals(1, res);
+      Assert.assertFalse(tool.pipelineResult.succeeded());      
+      Assert.assertEquals(0, tool.pipelineResult.getStageResults().size());
+    } else {
+      Assert.assertEquals(0, res);
+      Assert.assertTrue(tool.pipelineResult.succeeded());      
+      Assert.assertEquals(1, tool.pipelineResult.getStageResults().size());
+      StageResult stageResult = tool.pipelineResult.getStageResults().get(0);
+      Assert.assertEquals(numExpectedFailedRecords, stageResult.getCounterValue("morphline", "morphline.app.numFailedRecords"));
+      Assert.assertEquals(numExpectedExceptionRecords, stageResult.getCounterValue("morphline", "morphline.app.numExceptionRecords"));
+    }
     return tool.pipelineResult;
   }
   

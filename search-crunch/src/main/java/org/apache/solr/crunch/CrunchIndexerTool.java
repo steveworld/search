@@ -498,7 +498,6 @@ public class CrunchIndexerTool extends Configured implements Tool {
       CredentialsExecutor credentialsExecutor) {
     boolean isVerbose = opts.isVerbose;
     if (isVerbose) {
-      job.enableDebug();
       job.getConfiguration().setBoolean(RuntimeParameters.LOG_JOB_PROGRESS, true);
     }    
     String name = job.getName();
