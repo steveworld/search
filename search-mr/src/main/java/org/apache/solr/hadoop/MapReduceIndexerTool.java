@@ -264,8 +264,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "  --go-live \\\n" + 
               "  hdfs:///user/foo/indir\n" +
               "\n" +
-              "# MapReduce on Yarn - Pass custom JVM arguments\n" +
-              "HADOOP_CLIENT_OPTS='-DmaxConnectionsPerHost=10000 -DmaxConnections=10000'; \\\n" +
+              "# MapReduce on Yarn - Pass custom JVM arguments (including a custom tmp directory)\n" +
+              "HADOOP_CLIENT_OPTS='-DmaxConnectionsPerHost=10000 -DmaxConnections=10000 -Djava.io.tmpdir=/my/tmp/dir/'; \\\n" +
               "sudo -u hdfs hadoop \\\n" +
               "  --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
               "  jar target/search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +
@@ -278,8 +278,8 @@ public class MapReduceIndexerTool extends Configured implements Tool {
               "  --shards 1 \\\n" +
               "  hdfs:///user/$USER/test-documents/sample-statuses-20120906-141433.avro\n" +
               "\n" +
-              "# MapReduce on MR1 - Pass custom JVM arguments\n" +
-              "HADOOP_CLIENT_OPTS='-DmaxConnectionsPerHost=10000 -DmaxConnections=10000'; \\\n" +
+              "# MapReduce on MR1 - Pass custom JVM arguments (including a custom tmp directory)\n" +
+              "HADOOP_CLIENT_OPTS='-DmaxConnectionsPerHost=10000 -DmaxConnections=10000 -Djava.io.tmpdir=/my/tmp/dir/'; \\\n" +
               "sudo -u hdfs hadoop \\\n" +
               "  --config /etc/hadoop/conf.cloudera.mapreduce1 \\\n" +
               "  jar target/search-mr-*-job.jar " + MapReduceIndexerTool.class.getName() + " \\\n" +

@@ -162,7 +162,7 @@ export myDependencyJarDir=/usr/lib/search/lib/search-crunch # for CDH with packa
 export myDriverJar=$(find $myDriverJarDir -maxdepth 1 -name 'search-crunch-*.jar' ! -name '*-job.jar' ! -name '*-sources.jar')
 export myDependencyJarFiles=$(find $myDependencyJarDir -name '*.jar' | sort | tr '\n' ',' | head -c -1)
 export myDependencyJarPaths=$(find $myDependencyJarDir -name '*.jar' | sort | tr '\n' ':' | head -c -1)
-export myJVMOptions="-DmaxConnectionsPerHost=10000 -DmaxConnections=10000" # for solrj 
+export myJVMOptions="-DmaxConnectionsPerHost=10000 -DmaxConnections=10000 -Djava.io.tmpdir=/my/tmp/dir/" # connection settings for solrj, also custom tmp dir
 
 # MapReduce on Yarn - Ingest text file line by line into Solr:
 export HADOOP_CLIENT_OPTS="$myJVMOptions"; export HADOOP_CLASSPATH=$myDependencyJarPaths; hadoop \

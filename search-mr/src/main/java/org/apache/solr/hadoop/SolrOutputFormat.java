@@ -176,6 +176,7 @@ public class SolrOutputFormat<K, V> extends FileOutputFormat<K, V> {
       throw new IOException("Invalid solr home: " + solrHomeDir);
     }
     File solrHomeZip = File.createTempFile("solr", ".zip");
+    solrHomeZip.deleteOnExit();
     createZip(solrHomeDir, solrHomeZip);
     return solrHomeZip;
   }
