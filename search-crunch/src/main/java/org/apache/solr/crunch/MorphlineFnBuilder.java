@@ -331,8 +331,7 @@ public final class MorphlineFnBuilder<S,T> {
         addCounting(entry.getKey(), entry.getValue(), 1);
       }
       for (Map.Entry<String, Timer> entry : metricRegistry.getTimers().entrySet()) {
-        long nanosPerMilliSec = 1000 * 1000;
-        addCounting(entry.getKey(), entry.getValue(), nanosPerMilliSec);
+        addCounting(entry.getKey(), entry.getValue(), 1);
       }
     }
 
