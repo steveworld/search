@@ -42,6 +42,7 @@ final class CrunchIndexerToolOptions {
   File log4jConfigFile;
   boolean isVerbose;
   int mappers;
+  int parallelMorphlineInits;
 
   public CrunchIndexerToolOptions() {}
     

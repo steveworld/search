@@ -34,6 +34,7 @@ import java.util.UUID;
 import org.apache.crunch.CrunchRuntimeException;
 import org.apache.crunch.DoFn;
 import org.apache.crunch.Emitter;
+import org.apache.curator.framework.recipes.locks.Lease;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.solr.security.util.job.JobSecurityUtil;
 import org.kitesdk.morphline.api.Command;
@@ -212,38 +213,64 @@ public final class MorphlineFnBuilder<S,T> {
         throw new CrunchRuntimeException(e);
       }
   
+      int parallelMorphlineInits = getConfiguration().getInt(
+          CrunchIndexerTool.PARALLEL_MORPHLINE_INITS, MorphlineInitRateLimiter.UNLIMITED_PARALLEL_MORPHLINE_INITS);
+      MorphlineInitRateLimiter initRateLimiter = null;
+      Lease clusterLock = null;
+      long rampupStartTime = 0;
       try {
-        Files.write(morphlineFileContents, morphlineTmpFile, Charsets.UTF_8);
-        collector = new Collector();
-        morphline = new Compiler().compile(morphlineTmpFile, morphlineId, morphlineContext, collector, override);
-      } catch (Exception e) {
-        throw new CrunchRuntimeException(e);
-      } finally {
-        morphlineTmpFile.delete();
-      }
-  
-      this.mappingTimer = morphlineContext.getMetricRegistry().timer(
-          MetricRegistry.name(Metrics.MORPHLINE_APP, Metrics.ELAPSED_TIME));
-      this.numRecords = morphlineContext.getMetricRegistry().meter(
-          MetricRegistry.name(Metrics.MORPHLINE_APP, Metrics.NUM_RECORDS));
-      this.numFailedRecords = morphlineContext.getMetricRegistry().meter(
-          MetricRegistry.name(Metrics.MORPHLINE_APP, Metrics.NUM_FAILED_RECORDS));
-      this.numExceptionRecords = morphlineContext.getMetricRegistry().meter(
-          MetricRegistry.name(Metrics.MORPHLINE_APP, Metrics.NUM_EXCEPTION_RECORDS));
-  
-      Notifications.notifyBeginTransaction(morphline);
-      
-      TimerTask timerTask = new TimerTask() {
-        @Override
-        public void run() {
-          addMetricsToMRCounters(morphlineContext.getMetricRegistry());
+        if (parallelMorphlineInits != MorphlineInitRateLimiter.UNLIMITED_PARALLEL_MORPHLINE_INITS) {
+          String rampupZkEnsemble = getConfiguration().get(CrunchIndexerTool.ZK_ENSEMBLE_FOR_PARALLEL_MORPHLINE_INITS);
+          initRateLimiter = new MorphlineInitRateLimiter(getConfiguration(), rampupZkEnsemble, false);
+          clusterLock = initRateLimiter.acquireLease(parallelMorphlineInits);
+          rampupStartTime = System.currentTimeMillis();
         }
-      };
-      long period = getConfiguration().getLong("morphlineMetricsPublicationPeriod", 10 * 1000); 
-      this.metricsPublisher = new java.util.Timer(true);
-      this.metricsPublisher.schedule(timerTask, 0, period); // flush metrics every 10 seconds or so
+        
+        try {
+          Files.write(morphlineFileContents, morphlineTmpFile, Charsets.UTF_8);
+          collector = new Collector();
+          morphline = new Compiler().compile(morphlineTmpFile, morphlineId, morphlineContext, collector, override);
+        } catch (Exception e) {
+          throw new CrunchRuntimeException(e);
+        } finally {
+          morphlineTmpFile.delete();
+        }
+        
+        this.mappingTimer = morphlineContext.getMetricRegistry().timer(
+            MetricRegistry.name(Metrics.MORPHLINE_APP, Metrics.ELAPSED_TIME));
+        this.numRecords = morphlineContext.getMetricRegistry().meter(
+            MetricRegistry.name(Metrics.MORPHLINE_APP, Metrics.NUM_RECORDS));
+        this.numFailedRecords = morphlineContext.getMetricRegistry().meter(
+            MetricRegistry.name(Metrics.MORPHLINE_APP, Metrics.NUM_FAILED_RECORDS));
+        this.numExceptionRecords = morphlineContext.getMetricRegistry().meter(
+            MetricRegistry.name(Metrics.MORPHLINE_APP, Metrics.NUM_EXCEPTION_RECORDS));
+    
+        Notifications.notifyBeginTransaction(morphline);
+        
+        TimerTask timerTask = new TimerTask() {
+          @Override
+          public void run() {
+            addMetricsToMRCounters(morphlineContext.getMetricRegistry());
+          }
+        };
+        long period = getConfiguration().getLong("morphlineMetricsPublicationPeriod", 10 * 1000); 
+        this.metricsPublisher = new java.util.Timer(true);
+        this.metricsPublisher.schedule(timerTask, 0, period); // flush metrics every 10 seconds or so
+      } finally {
+        try {
+          if (clusterLock != null) {
+            Closeables.closeQuietly(clusterLock);
+            float secs = (System.currentTimeMillis() - rampupStartTime) / 1000.0f;
+            LOG.info("Released distributed rampup lease for rate limiting on morphline init (held lease for " + secs + " seconds)");
+          }
+        } finally {
+          if (initRateLimiter != null) {
+            initRateLimiter.close();
+          }
+        }
+      }    
     }
-  
+
     @Override
     public void process(S item, Emitter<T> emitter) {
       // This live counter can be monitored while the task is running, not just after task termination:

@@ -75,8 +75,8 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.security.util.job.JobSecurityUtil;
 import org.apache.solr.crunch.CrunchIndexerToolOptions.PipelineType;
+import org.apache.solr.security.util.job.JobSecurityUtil;
 import org.kitesdk.morphline.api.MorphlineContext;
 import org.kitesdk.morphline.api.TypedSettings;
 import org.kitesdk.morphline.base.Compiler;
@@ -85,14 +85,14 @@ import org.kitesdk.morphline.solr.SolrLocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import parquet.avro.AvroParquetInputFormat;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+
+import parquet.avro.AvroParquetInputFormat;
 
 
 /**
@@ -129,7 +129,13 @@ public class CrunchIndexerTool extends Configured implements Tool {
    */
   static final String SECURE_CONF_SERVICE_NAME =
     "org.apache.solr.crunch.security.service.name";
+  
+  static final String PARALLEL_MORPHLINE_INITS = 
+    CrunchIndexerTool.class.getName() + ".parallelMorphlineInits";
 
+  static final String ZK_ENSEMBLE_FOR_PARALLEL_MORPHLINE_INITS = 
+    CrunchIndexerTool.class.getName() + ".zkEnsembleForParallelMorphlineInits";
+    
   private static final Logger LOG = LoggerFactory.getLogger(CrunchIndexerTool.class);
 
   /** API for command line clients */
@@ -174,6 +180,17 @@ public class CrunchIndexerTool extends Configured implements Tool {
     Config morphlineConfig = new Compiler().find(opts.morphlineId, config, opts.morphlineFile.getPath());
     CredentialsExecutor credentialsExecutor = null;
 
+    MorphlineInitRateLimiter initRateLimiter = null;
+    getConf().setInt(PARALLEL_MORPHLINE_INITS, opts.parallelMorphlineInits);
+    if (opts.parallelMorphlineInits <= 0) {
+      throw new IllegalArgumentException("parallelMorphlineInits must be a positive number: " + opts.parallelMorphlineInits);
+    }
+    LOG.info("Using parallelMorphlineInits: {}", opts.parallelMorphlineInits);
+    if (opts.parallelMorphlineInits != MorphlineInitRateLimiter.UNLIMITED_PARALLEL_MORPHLINE_INITS) {
+      String zkEnsemble = getZkEnsembleForParallelMorphlineInit(morphlineConfig);
+      initRateLimiter = new MorphlineInitRateLimiter(getConf(), zkEnsemble, true);
+    }
+    
     int mappers = 1;
     Pipeline pipeline; // coordinates pipeline creation and execution
     if (opts.pipelineType == PipelineType.memory) {
@@ -270,8 +287,14 @@ public class CrunchIndexerTool extends Configured implements Tool {
           tmpFile = null;
         }
       } finally {
-        if (credentialsExecutor != null) {
-          credentialsExecutor.cleanupCredentials();
+        try {
+          if (initRateLimiter != null) {
+            initRateLimiter.close();
+          }
+        } finally {
+          if (credentialsExecutor != null) {
+            credentialsExecutor.cleanupCredentials();
+          }
         }
       }
     }
@@ -518,7 +541,9 @@ public class CrunchIndexerTool extends Configured implements Tool {
   // Implements CDH-22673 (CrunchIndexerTool should send a commit to Solr on job success)
   private void commitSolr(Config morphlineConfig, boolean isDryRun, CredentialsExecutor credentialsExecutor) {
     Set<Map<String,Object>> solrLocatorMaps = new LinkedHashSet();
-    collectSolrLocators(morphlineConfig.root().unwrapped(), solrLocatorMaps);
+    String loadSolrName = new LoadSolrBuilder().getNames().iterator().next();
+    Preconditions.checkNotNull(loadSolrName);    
+    collectSolrLocators(morphlineConfig.root().unwrapped(), loadSolrName, solrLocatorMaps);
     LOG.debug("Committing Solr at all of: {} ", solrLocatorMaps);
     boolean shouldLoadCredentials = credentialsExecutor != null;
     for (Map<String,Object> solrLocatorMap : solrLocatorMaps) {
@@ -555,16 +580,14 @@ public class CrunchIndexerTool extends Configured implements Tool {
     }        
   }
   
-  private void collectSolrLocators(Object configNode, Set<Map<String,Object>> solrLocators) {
+  private void collectSolrLocators(Object configNode, String loadSolrName, Set<Map<String,Object>> solrLocators) {
     if (configNode instanceof List) {
       for (Object item : (List)configNode) {
-        collectSolrLocators(item, solrLocators);
+        collectSolrLocators(item, loadSolrName, solrLocators);
       }
     } else if (configNode instanceof Map) {
-      String loadSolrName = new LoadSolrBuilder().getNames().iterator().next();
-      Preconditions.checkNotNull(loadSolrName);
       for (Map.Entry<String,Object> entry : ((Map<String,Object>) configNode).entrySet()) {
-        if (entry.getKey().equals(loadSolrName)) {
+        if (loadSolrName == null || entry.getKey().equals(loadSolrName)) {
           if (entry.getValue() instanceof Map) {
             Map<String,Object> loadSolrMap = (Map<String,Object>)entry.getValue();
             Object solrLocator = loadSolrMap.get(LoadSolrBuilder.SOLR_LOCATOR_PARAM);
@@ -572,16 +595,42 @@ public class CrunchIndexerTool extends Configured implements Tool {
               solrLocators.add((Map<String,Object>)solrLocator);
             }
           }
+          if (loadSolrName == null) {
+            collectSolrLocators(entry.getValue(), loadSolrName, solrLocators);
+          }
         } else {
-          collectSolrLocators(entry.getValue(), solrLocators);
+          collectSolrLocators(entry.getValue(), loadSolrName, solrLocators);
         }
       }
     }
   }
 
+  private String getZkEnsembleForParallelMorphlineInit(Config morphlineConfig) {
+    String zkEnsemble = getConf().get(ZK_ENSEMBLE_FOR_PARALLEL_MORPHLINE_INITS);
+    if (zkEnsemble == null) {
+      Set<Map<String,Object>> solrLocatorMaps = new LinkedHashSet();
+      collectSolrLocators(morphlineConfig.root().unwrapped(), null, solrLocatorMaps);
+      for (Map<String,Object> solrLocatorMap : solrLocatorMaps) {
+        SolrLocator solrLocator = new SolrLocator(
+          ConfigFactory.parseMap(solrLocatorMap),
+          new MorphlineContext.Builder().build());
+        zkEnsemble = solrLocator.getZkHost();
+        if (zkEnsemble != null) {
+          break;
+        }
+      }
+      Preconditions.checkNotNull(zkEnsemble, 
+        "Missing solrLocator in morphline config file for use with --parallel-morphline-inits");
+      getConf().set(ZK_ENSEMBLE_FOR_PARALLEL_MORPHLINE_INITS, zkEnsemble);
+    }
+    return zkEnsemble;
+  }
+
   private SolrLocator getSecureSolrLocator(Config morphlineConfig) {
     Set<Map<String,Object>> solrLocatorMaps = new LinkedHashSet();
-    collectSolrLocators(morphlineConfig.root().unwrapped(), solrLocatorMaps);
+    String loadSolrName = new LoadSolrBuilder().getNames().iterator().next();
+    Preconditions.checkNotNull(loadSolrName);
+    collectSolrLocators(morphlineConfig.root().unwrapped(), loadSolrName, solrLocatorMaps);
     SolrLocator zkHostLocator = null;
     SolrLocator solrUrlLocator = null;
     for (Map<String,Object> solrLocatorMap : solrLocatorMaps) {

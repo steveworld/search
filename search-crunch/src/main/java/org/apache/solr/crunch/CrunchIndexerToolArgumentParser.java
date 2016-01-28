@@ -22,6 +22,19 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Map;
 
+import org.apache.avro.Schema;
+import org.apache.crunch.types.avro.AvroInputFormat;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.log4j.PropertyConfigurator;
+import org.apache.solr.crunch.CrunchIndexerToolOptions.PipelineType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.impl.action.HelpArgumentAction;
@@ -33,21 +46,7 @@ import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.FeatureControl;
 import net.sourceforge.argparse4j.inf.Namespace;
-
-import org.apache.avro.Schema;
-import org.apache.crunch.types.avro.AvroInputFormat;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-import org.apache.log4j.PropertyConfigurator;
-import org.apache.solr.crunch.CrunchIndexerToolOptions.PipelineType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import parquet.avro.AvroParquetInputFormat;
-
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 
 
 /**
@@ -341,6 +340,18 @@ final class CrunchIndexerToolArgumentParser {
         .help("Tuning knob that indicates the maximum number of MR mapper tasks to use. -1 indicates use all map slots " +
             "available on the cluster. This parameter only applies to non-splittable input files");
 
+    Argument parallelMorphlineInits = miscArgGroup.addArgument("--parallel-morphline-inits")
+        .metavar("INTEGER")
+        .type(Integer.class)
+        .choices(new RangeArgumentChoice(1, Integer.MAX_VALUE))
+        .setDefault(MorphlineInitRateLimiter.UNLIMITED_PARALLEL_MORPHLINE_INITS)
+        .help("Tuning knob that indicates the maximum number of morphline instances to initialize at the same time. "
+            + "This kind of rate limiting on rampup can be useful to avoid overload conditions such as ZooKeeper "
+            + "connection limits or DNS lookup limits when using many parallel mapper tasks because each such task "
+            + "contains one morphline. 1 indicates initialize each morphline separately. "
+            + "This feature is implemented with a distributed semaphore. "
+            + "The default is to use no rate limiting");
+
     Argument noCommitArg = miscArgGroup.addArgument("--no-commit")
         .action(Arguments.storeTrue())
         .help(FeatureControl.SUPPRESS);
@@ -382,6 +393,7 @@ final class CrunchIndexerToolArgumentParser {
     opts.morphlineFile = ns.get(morphlineFileArg.getDest());
     opts.morphlineId = ns.get(morphlineIdArg.getDest());
     opts.pipelineType = ns.get(pipelineTypeArg.getDest());
+    opts.parallelMorphlineInits = (Integer) ns.get(parallelMorphlineInits.getDest());
     opts.isNoCommit = (Boolean) ns.get(noCommitArg.getDest());
     opts.isDryRun = (Boolean) ns.get(dryRunArg.getDest());
     opts.isVerbose = (Boolean) ns.get(verboseArg.getDest());

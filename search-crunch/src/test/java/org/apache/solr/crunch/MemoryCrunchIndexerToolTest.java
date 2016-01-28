@@ -69,6 +69,7 @@ public class MemoryCrunchIndexerToolTest extends AbstractSolrMorphlineZkTest {
   private boolean isDryRun;
   private int numExpectedFailedRecords;
   private int numExpectedExceptionRecords;
+  private int parallelMorphlineInits;
 
   private static final String SCHEMA_FILE = "src/test/resources/test-documents/string.avsc";
   private static final String NOP = "nop.conf";
@@ -154,6 +155,7 @@ public class MemoryCrunchIndexerToolTest extends AbstractSolrMorphlineZkTest {
     isRandomizingWithDoFn = false;
     numExpectedFailedRecords = 0;
     numExpectedExceptionRecords = 0;
+    parallelMorphlineInits = MorphlineInitRateLimiter.UNLIMITED_PARALLEL_MORPHLINE_INITS;
     
     cloudClient.deleteByQuery("*:*"); // delete everything!
     cloudClient.commit();
@@ -164,6 +166,7 @@ public class MemoryCrunchIndexerToolTest extends AbstractSolrMorphlineZkTest {
         "--log4j=" + RESOURCES_DIR + "/log4j.properties",
         "--chatty",
         "--pipeline-type=" + pipelineType,
+        "--parallel-morphline-inits=" + parallelMorphlineInits,
     };
     if (morphlineConfigFile != null) {
       args = ObjectArrays.concat(args, "--morphline-file=" + RESOURCES_DIR + "/test-morphlines/" + morphlineConfigFile);
@@ -267,6 +270,7 @@ public class MemoryCrunchIndexerToolTest extends AbstractSolrMorphlineZkTest {
   private void testFileList() throws Exception {
     String inputPath = tmpDir.copyResourceFileName("test-documents/filelist1.txt");
     String[] expected = new String[] {"hello foo", "hello world", "hello2 file"};
+    parallelMorphlineInits = 1;
     String[] args = getInitialArgs(LOAD_SOLR_LINE);
     args = ObjectArrays.concat(args, "--input-file-list=" + inputPath);    
     runIntoSolr(args, expected);
@@ -275,6 +279,7 @@ public class MemoryCrunchIndexerToolTest extends AbstractSolrMorphlineZkTest {
   private void testFileListWithScheme() throws Exception {
     String inputPath = tmpDir.copyResourceFileName("test-documents/filelist1.txt");
     String[] expected = new String[] {"hello foo", "hello world", "hello2 file"};
+    parallelMorphlineInits = 1;
     String[] args = getInitialArgs(LOAD_SOLR_LINE);
     args = ObjectArrays.concat(args, "--input-file-list=file:" + inputPath);    
     runIntoSolr(args, expected);

@@ -33,15 +33,15 @@ MapReduceUsage: export HADOOP_CLASSPATH=$myDependencyJarPaths; hadoop jar $myDri
 org.apache.solr.crunch.CrunchIndexerTool --libjars $myDependencyJarFiles [MapReduceGenericOptions]...
         [--input-file-list URI] [--input-file-format FQCN] [--input-file-projection-schema FILE]
         [--input-file-reader-schema FILE] --morphline-file FILE [--morphline-id STRING]
-        [--pipeline-type STRING] [--xhelp] [--mappers INTEGER] [--dry-run] [--log4j FILE] [--chatty]
-        [HDFS_URI [HDFS_URI ...]]
+        [--pipeline-type STRING] [--xhelp] [--mappers INTEGER] [--parallel-morphline-inits INTEGER]
+        [--dry-run] [--log4j FILE] [--chatty] [HDFS_URI [HDFS_URI ...]]
 
 SparkUsage: spark-submit [SparkGenericOptions]... --master local|yarn --deploy-mode client|cluster
 --jars $myDependencyJarFiles --class org.apache.solr.crunch.CrunchIndexerTool $myDriverJar
         [--input-file-list URI] [--input-file-format FQCN] [--input-file-projection-schema FILE]
         [--input-file-reader-schema FILE] --morphline-file FILE [--morphline-id STRING]
-        [--pipeline-type STRING] [--xhelp] [--mappers INTEGER] [--dry-run] [--log4j FILE] [--chatty]
-        [HDFS_URI [HDFS_URI ...]]
+        [--pipeline-type STRING] [--xhelp] [--mappers INTEGER] [--parallel-morphline-inits INTEGER]
+        [--dry-run] [--log4j FILE] [--chatty] [HDFS_URI [HDFS_URI ...]]
 
 Spark or MapReduce ETL batch job that pipes  data  from  (splittable or non-splittable) HDFS files into Apache
 Solr, and along the way runs the data  through  a  Morphline for extraction and transformation. The program is
@@ -115,6 +115,13 @@ CrunchIndexerOptions:
   --mappers INTEGER      Tuning knob that  indicates  the  maximum  number  of  MR  mapper  tasks  to  use. -1
                          indicates use all map slots available on  the cluster. This parameter only applies to
                          non-splittable input files (default: -1)
+  --parallel-morphline-inits INTEGER
+                         Tuning knob that indicates the  maximum  number  of morphline instances to initialize
+                         at the same time. This  kind  of  rate  limiting  on  rampup  can  be useful to avoid
+                         overload conditions such as ZooKeeper  connection  limits  or  DNS lookup limits when
+                         using many parallel mapper tasks  because  each  such  task contains one morphline. 1
+                         indicates initialize each morphline separately.  This  feature  is implemented with a
+                         distributed semaphore. The default is to use no rate limiting (default: 2147483647)
   --dry-run              Run the pipeline but print documents  to  stdout  instead  of loading them into Solr.
                          This can be  used  for  quicker  turnaround  during  early  trial  &  debug sessions.
                          (default: false)
