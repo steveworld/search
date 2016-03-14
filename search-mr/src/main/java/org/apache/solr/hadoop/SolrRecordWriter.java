@@ -209,34 +209,6 @@ class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
               .getSetupOk(), SolrOutputFormat.getZipName(conf)));
     }
     for (Path unpackedDir : localArchives) {
-      // Only logged if debugging
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(String.format(Locale.ENGLISH, "Examining unpack directory %s for %s",
-            unpackedDir, SolrOutputFormat.getZipName(conf)));
-
-        ProcessBuilder lsCmd = new ProcessBuilder(new String[] { "/bin/ls",
-            "-lR", unpackedDir.toString() });
-        lsCmd.redirectErrorStream();
-        Process ls = lsCmd.start();
-        byte[] buf = new byte[16 * 1024];
-        InputStream all = ls.getInputStream();
-        try {
-          int count;
-          while ((count = all.read(buf)) >= 0) {
-            System.err.write(buf, 0, count);
-          }
-        } catch (IOException ignore) {
-        } finally {
-          all.close();
-        }
-        String exitValue;
-        try {
-          exitValue = String.valueOf(ls.waitFor());
-        } catch (InterruptedException e) {
-          exitValue = "interrupted";
-        }
-        System.err.format(Locale.ENGLISH, "Exit value of 'ls -lR' is %s%n", exitValue);
-      }
       if (unpackedDir.getName().equals(SolrOutputFormat.getZipName(conf))) {
         LOG.info("Using this unpacked directory as solr home: {}", unpackedDir);
         solrHome = unpackedDir;
