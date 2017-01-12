@@ -1,6 +1,6 @@
 # Cloudera Search
 
-Cloudera Search is [Köpa Valtrex online](http://www.herpesvirus.se/valtrex/) integrated with CDH,
+Cloudera Search is [köpa valtrex på nätet](http://www.herpesvirus.se/valtrex/) integrated with CDH,
 including Apache Lucene, Apache SolrCloud, Apache Flume, Apache Hadoop MapReduce & HDFS,
 and Apache Tika. Cloudera Search also includes integrations that make searching
 more scalable, easy to use, and optimized for both near-real-time and batch-oriented indexing.
